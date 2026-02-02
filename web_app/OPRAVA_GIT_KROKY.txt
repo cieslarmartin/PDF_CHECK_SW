@@ -1,0 +1,45 @@
+OPRAVA: Git v slozce 41 (nested repo) - postup
+==============================================
+
+Problém: Ve složce 41 jste spustili "git init", takže 41 má vlastní .git.
+         Z C:\Claude pak "git add 41" selhává.
+
+Řešení: Smažte .git UVNITŘ složky 41 (ne v C:\Claude!). Pak z C:\Claude znovu přidejte 41.
+
+--- KROK 1: Otevřete PowerShell nebo CMD ---
+
+--- KROK 2: Smažte .git uvnitř 41 ---
+
+V příkazové řádce napište (celé zkopírujte a vložte):
+
+   rmdir /s /q "C:\Claude\41\.git"
+
+Zmáčkněte Enter. Může se zeptat "Are you sure (Y/N)?" - napište Y a Enter.
+
+(Pokud používáte PowerShell, můžete místo toho napsat:
+   Remove-Item -Recurse -Force "C:\Claude\41\.git"
+)
+
+--- KROK 3: Přejděte do C:\Claude a přidejte 41 do Gitu ---
+
+   cd C:\Claude
+
+   git add 41
+
+   git commit -m "Prvni verze webu v41"
+
+   git branch -M main
+
+   git push -u origin main
+
+--- Hotovo ---
+
+Po "git push" se může zeptat na přihlášení do GitHubu (uživatel, heslo nebo token).
+Pak zkontrolujte na github.com/cieslarmartin/pdf-dokucheck-web - měla by tam být složka 41 se soubory.
+
+
+
+
+
+
+eeeeeeeeeeee

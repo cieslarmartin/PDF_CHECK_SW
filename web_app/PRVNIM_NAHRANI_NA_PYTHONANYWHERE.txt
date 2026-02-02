@@ -1,0 +1,84 @@
+========================================
+  POPRVÉ: NAHRÁNÍ Z GITHUBU NA PYTHONANYWHERE
+========================================
+
+Projekt je na GitHubu: https://github.com/cieslarmartin/pdf-dokucheck-web
+Složka s webem je "41". Níže přesné kroky na PythonAnywhere.
+
+----------------------------------------
+  KROK 1 – Přihlášení a konzole
+----------------------------------------
+
+1. Jděte na https://www.pythonanywhere.com a přihlaste se.
+2. Nahoře klikněte na záložku "Consoles".
+3. Klikněte na "Bash" (otevře se nová konzole).
+
+----------------------------------------
+  KROK 2 – Naklonování z GitHubu
+----------------------------------------
+
+V konzoli napište (jedno řádek po druhém, Enter na konci):
+
+   cd ~
+   git clone https://github.com/cieslarmartin/pdf-dokucheck-web.git
+   cd pdf-dokucheck-web
+
+Tím se stáhne celý repozitář. Projekt s webem je ve složce 41, takže cesta k aplikaci bude:
+   /home/VASE_UZIVATELSKE_JMENO/pdf-dokucheck-web/41
+
+(VASE_UZIVATELSKE_JMENO nahraďte svým přihlašovacím jménem na PythonAnywhere – je nahoře vpravo po přihlášení.)
+
+----------------------------------------
+  KROK 3 – Záložka Web (Source code)
+----------------------------------------
+
+1. Nahoře klikněte na záložku "Web".
+2. U položky "Source code" klikněte na cestu (nebo "Enter path") a zadejte:
+
+   /home/VASE_UZIVATELSKE_JMENO/pdf-dokucheck-web/41
+
+3. Klikněte na zelené tlačítko vedle cesty (nebo Enter), aby se cesta uložila.
+4. Do pole "WSGI configuration file" by měla být automaticky nabídnuta cesta k WSGI souboru. Klikněte na ni (nebo zadejte):
+
+   /home/VASE_UZIVATELSKE_JMENO/pdf-dokucheck-web/41/cieslar_pythonanywhere_com_wsgi.py
+
+----------------------------------------
+  KROK 4 – Virtualenv (doporučené)
+----------------------------------------
+
+1. V záložce "Web" scrollujte k "Virtualenv".
+2. Zadejte cestu k novému virtuálnímu prostředí, např.:
+
+   /home/VASE_UZIVATELSKE_JMENO/.virtualenvs/pdf-dokucheck
+
+   Pokud ještě neexistuje: záložka "Consoles" → v konzoli:
+     mkvirtualenv pdf-dokucheck
+     pip install flask
+     (a další balíčky, které projekt potřebuje – viz requirements.txt ve složce 41, pokud je tam)
+   Nebo v konzoli:
+     cd ~/pdf-dokucheck-web/41
+     pip install -r requirements.txt
+   (pokud máte v 41 soubor requirements.txt)
+3. V záložce "Web" u Virtualenv zadejte cestu k tomuto virtualenv a uložte.
+
+----------------------------------------
+  KROK 5 – Reload webu
+
+1. V záložce "Web" scrollujte nahoru.
+2. Klikněte na zelené tlačítko "Reload" u vaší webové aplikace.
+
+----------------------------------------
+  KROK 6 – Ověření
+
+Otevřete v prohlížeči vaši adresu (např. https://cieslar.pythonanywhere.com/).
+Měla by se zobrazit úvodní stránka PDF DokuCheck (nebo přihlášení / admin podle toho, co aplikace nabízí).
+
+----------------------------------------
+  SHRNUTÍ CEST (nahraďte VASE_JMENO)
+----------------------------------------
+
+  Source code:     /home/VASE_JMENO/pdf-dokucheck-web/41
+  WSGI file:        /home/VASE_JMENO/pdf-dokucheck-web/41/cieslar_pythonanywhere_com_wsgi.py
+  (Cesta v WSGI se nastaví sama podle umístění souboru.)
+
+========================================

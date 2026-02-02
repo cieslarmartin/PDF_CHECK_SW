@@ -1,0 +1,8 @@
+# Archiv modulu podepisování PDF (PFX, token, TSA)
+pikepdf>=8.0.0
+pyhanko>=0.21.0
+pyhanko-certvalidator
+cryptography>=41.0.0
+tkinterdnd2>=0.3.0
+requests>=2.28.0
+python-pkcs11>=0.7.0

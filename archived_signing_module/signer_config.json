@@ -1,0 +1,25 @@
+{
+  "tsa_url": "http://tsa.postsignum.cz/tsp",
+  "tsa_enabled": true,
+  "pkcs11_libraries": {
+    "isignum": [
+      "C:\\Program Files\\iSignum\\pkcs11.dll",
+      "C:\\Program Files (x86)\\iSignum\\pkcs11.dll"
+    ],
+    "postsignum": [
+      "C:\\Program Files\\PostSignum\\pkcs11.dll",
+      "C:\\Program Files (x86)\\PostSignum\\pkcs11.dll"
+    ],
+    "bit4id": [
+      "C:\\Windows\\System32\\bit4xpki.dll",
+      "C:\\Program Files\\BIT4ID\\bit4xpki.dll"
+    ],
+    "safenet": [
+      "C:\\Windows\\System32\\eTPKCS11.dll",
+      "C:\\Program Files\\SafeNet\\Authentication\\SAC\\x64\\eTPKCS11.dll"
+    ]
+  },
+  "hash_algorithm": "SHA-256",
+  "signature_mechanism": "RSA_PKCS1v15",
+  "pades_level": "PAdES-B-LT"
+}

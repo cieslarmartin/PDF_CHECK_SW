@@ -1,0 +1,27 @@
+================================================================================
+  JAK AKTUALIZOVAT WEB NA PYTHONANYWHERE (git pull + reload)
+================================================================================
+
+Máte 3 možnosti:
+
+--- 1) Z PC jedním klikem (pokud funguje /api/deploy) ---
+  • Na PC spusťte:  NAHRAT_NA_GITHUB.bat  (v C:\Claude\PDF_DOKU_Final)
+  • Ten udělá: git push + zavolá na PA endpoint /api/deploy?token=XXX
+  • Na PA se provede git pull a Reload.
+  • Pokud se objeví chyba 502 nebo "JSON parse" – použijte možnost 2 nebo 3.
+
+--- 2) Na PythonAnywhere: tlačítko v adminu ---
+  • Otevřete: https://vase-domena.pythonanywhere.com/login
+  • Přihlaste se (admin), v hlavičce klikněte: „Stáhnout z GitHubu“
+  • Na serveru se spustí git pull a Reload (bez Bash).
+
+--- 3) Na PythonAnywhere: skript v Bash (vždy funguje) ---
+  • Jednou na PA: zkopírujte deploy_on_pa.env.example na deploy_on_pa.env
+    a vyplňte PA_USERNAME, PA_API_TOKEN, PA_DOMAIN (token z Account na PA).
+  • Po každém push z PC: na PA otevřete Bash a spusťte:
+      cd ~/pdf-dokucheck-web/v42
+      bash deploy_on_pa.sh
+  • Skript udělá: git pull + Reload webu přes PA API.
+
+================================================================================
+wwwwwwwwwwwwwwwwwwwwwwwwwwwwwww

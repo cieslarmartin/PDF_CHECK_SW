@@ -1,0 +1,12 @@
+# Čistý config BEZ API klíče – pro testování jako uživatel, který si klíč zadá až v aplikaci
+# Použití: zkopírujte jako config.yaml a spusťte agenta (python pdf_check_agent_main.py).
+# Při startu se zobrazí přihlášení: zadejte e-mail a heslo (z webu / od administrátora)
+# NEBO vložte licenční klíč. Po přihlášení uvidíte své údaje a můžete se odhlásit / přihlásit jako někdo jiný.
+
+agent:
+  auto_send: true
+  show_results_window: true
+
+api:
+  url: https://cieslar.pythonanywhere.com
+  key: ""

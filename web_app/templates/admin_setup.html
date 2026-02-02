@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF DokuCheck - Admin Setup</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e5a8a 0%, #2d7ab8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .setup-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-text {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        .logo-text .pdf { color: #1e5a8a; }
+        .logo-text .doku { color: #374151; }
+        .logo-subtitle {
+            color: #9ca3af;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+        h2 {
+            text-align: center;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .intro {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #6b7280;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1e5a8a;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #047857;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .alert-info {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 24px;
+        }
+        .warning-box-title {
+            color: #b45309;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+        }
+        .warning-box-text {
+            color: #92400e;
+            font-size: 0.8em;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #9ca3af;
+            font-size: 0.75em;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="logo">
+            <div class="logo-text">
+                <span class="pdf">PDF</span><span class="doku">DokuCheck</span>
+            </div>
+            <div class="logo-subtitle">Initial Setup</div>
+        </div>
+
+        <h2>Vytvoreni Admin uctu</h2>
+        <p class="intro">
+            Zadny admin ucet neexistuje. Vytvorte prvni administratorsky ucet
+            pro spravu licenci.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="warning-box">
+            <div class="warning-box-title">Dulezite</div>
+            <div class="warning-box-text">
+                Tento ucet bude mit plna administratorska opravneni.
+                Zvolte silne heslo a uschovejte ho na bezpecnem miste.
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.setup') }}">
+            <div class="form-group">
+                <label for="email">Admin Email</label>
+                <input type="email" id="email" name="email" required
+                       placeholder="admin@vasedomena.cz" autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Heslo (min 6 znaku)</label>
+                <input type="password" id="password" name="password" required
+                       minlength="6" placeholder="Silne heslo">
+            </div>
+
+            <div class="form-group">
+                <label for="password2">Potvrzeni hesla</label>
+                <input type="password" id="password2" name="password2" required
+                       minlength="6" placeholder="Zopakujte heslo">
+            </div>
+
+            <button type="submit" class="btn">Vytvorit Admin ucet</button>
+        </form>
+
+        <div class="footer">
+            PDF DokuCheck PRO v42<br>
+            &copy; 2025 Ing. Martin Cieslar
+        </div>
+    </div>
+</body>
+</html>

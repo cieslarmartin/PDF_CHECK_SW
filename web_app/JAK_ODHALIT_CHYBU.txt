@@ -1,0 +1,33 @@
+================================================================================
+  JAK ODHALIT CHYBU NA WEBU – jednoduchý test (bez F12)
+================================================================================
+
+1. NAHRAJTE web na server (PythonAnywhere) a otevřete stránku v prohlížeči.
+
+2. CO ZKONTROLOVAT:
+
+   A) Červený pruh nahoře
+      - Pokud se po načtení stránky NEBO po kliknutí na tlačítko objeví
+        nahoře ČERVENÝ pruh s textem "Chyba na stránce: ..."
+      → Zkopírujte CELÝ text z toho červeného pruhu a pošlete mi ho.
+        (Tlačítko "Skrýt" pruh schová, ale text už máte zkopírovaný.)
+
+   B) V hlavičce vpravo (vedle "Přihlásit se")
+      - Po načtení stránky by se tam měl objevit šedý text: "Script OK"
+      - Pokud "Script OK" NENÍ vidět
+      → Napište: "Script OK se neobjevuje" – znamená to, že se skript
+        vůbec nenačetl (např. chyba v kódu před načtením).
+
+   C) Kliknutí na tlačítko
+      - Klikněte na "Přihlásit se" nebo "Nápověda"
+      - Pokud se nic nestane A zároveň se objeví červený pruh
+      → Zkopírujte text z červeného pruhu a pošlete mi ho.
+
+3. CO MI NAPSAT (stačí jeden z těchto):
+
+   • "Červený pruh: [zkopírovaný text]"
+   • "Script OK se neobjevuje"
+   • "Script OK je vidět, ale po kliknutí na Přihlásit se se objevil červený pruh: [text]"
+   • "Funguje to" – pokud tlačítka reagují a nic červeného nevidíte
+
+================================================================================

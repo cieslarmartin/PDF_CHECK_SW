@@ -1,0 +1,30 @@
+{
+  "signing_profiles": [
+    {
+      "name": "Marrtin Cieslar firemni podpis",
+      "type": "pfx",
+      "path": "C:/Claude/elektronicke podpisy/podpis chvat_test222_73.pfx",
+      "password": "6666"
+    },
+    {
+      "name": "martin jina podpis tioken",
+      "type": "pfx",
+      "path": "C:/Claude/elektronicke podpisy/podpis chvat_test222_73.pfx",
+      "password": "6666"
+    }
+  ],
+  "tsa_profiles": [
+    {
+      "name": "cieslar",
+      "url": "https://www.postsignum.cz/TSS/TSS_user/",
+      "username": "cieslarm@seznam.cz",
+      "password": "Martinpostsignum8204075253"
+    },
+    {
+      "name": "chvalek",
+      "url": "https://www.postsignum.cz/TSS/TSS_user/",
+      "username": "cieslarm@seznam.cz",
+      "password": "Martinpostsignum8204075253"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+agent:
+  auto_send: true
+  show_results_window: true
+api:
+  key: ''
+  url: https://cieslar.pythonanywhere.com

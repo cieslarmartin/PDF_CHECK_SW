@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF DokuCheck - Admin Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            background: #ECF0F1;
+            color: #2C3E50;
+            font-size: 14px;
+            display: flex;
+        }
+
+        /* Sidebar - Enterprise Dashboard */
+        .sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: #2C3E50;
+            color: #bdc3c7;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+        .sidebar .logo-text {
+            font-size: 1.1em;
+            font-weight: 700;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 16px;
+        }
+        .sidebar .logo-text .pdf { color: #3498DB; }
+        .sidebar .logo-text .doku { color: #ecf0f1; }
+        .sidebar-nav {
+            list-style: none;
+        }
+        .sidebar-nav a {
+            display: block;
+            padding: 12px 20px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: #34495e;
+            color: #fff;
+        }
+        .sidebar-nav a.active { color: #3498DB; }
+        .sidebar .user-info {
+            padding: 16px 20px;
+            border-top: 1px solid #34495e;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        .sidebar .btn-logout {
+            display: block;
+            margin: 12px 20px 0;
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+        }
+        .sidebar .btn-logout:hover { background: #e74c3c; color: white; }
+
+        /* Main + Header */
+        .main-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .header {
+            background: #ECF0F1;
+            border-bottom: 1px solid #bdc3c7;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-badge { background: #3498DB; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header .btn { padding: 8px 14px; font-size: 0.85em; }
+
+        /* Main Content */
+        .main-content {
+            padding: 24px;
+            flex: 1;
+            overflow: auto;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #3498DB;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+        .stat-card.highlight {
+            background: #3498DB;
+        }
+        .stat-card.highlight .stat-value,
+        .stat-card.highlight .stat-label {
+            color: white;
+        }
+
+        /* Actions Bar */
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .actions-bar h2 {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #3498DB;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8em;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .api-key {
+            font-family: 'Consolas', monospace;
+            font-size: 0.85em;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .api-key:hover {
+            max-width: none;
+            position: relative;
+            z-index: 10;
+            background: #e5e7eb;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .badge-free { background: #f3f4f6; color: #6b7280; }
+        .badge-basic { background: #dbeafe; color: #1d4ed8; }
+        .badge-pro { background: #ede9fe; color: #7c3aed; }
+        .badge-enterprise { background: #fef3c7; color: #b45309; }
+        .badge-active { background: #27ae60; color: white; border-radius: 12px; padding: 3px 10px; }
+        .badge-inactive { background: #e74c3c; color: white; border-radius: 12px; padding: 3px 10px; }
+        .badge-expired { background: #f39c12; color: white; border-radius: 12px; padding: 3px 10px; }
+
+        /* Actions Column */
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+        .action-btn {
+            padding: 6px 10px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+        .action-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .action-btn.danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .modal-close:hover {
+            color: #374151;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            color: #6b7280;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498DB;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9em;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .alert-info {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .table-dense td, .table-dense th { padding: 0.4rem 0.5rem; font-size: 0.85em; }
+        .table-dense .actions-cell { display: flex; gap: 4px; flex-wrap: wrap; }
+        .table-dense .action-btn { padding: 4px 8px; font-size: 0.75em; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 12px; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 600px; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo-text">
+            <span class="pdf">PDF</span><span class="doku">DokuCheck</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('admin.dashboard') }}" class="active">Dashboard</a></li>
+            <li><a href="{{ url_for('admin.tiers') }}">Tier definice</a></li>
+            <li><a href="{{ url_for('admin.logs') }}">Logs</a></li>
+            <li><a href="{{ url_for('admin.settings') }}">Global Config</a></li>
+        </ul>
+        <div class="user-info">
+            {{ user.display_name }}<br>
+            <small>{{ user.email }}</small>
+        </div>
+        <a href="{{ url_for('admin.logout') }}" class="btn-logout">Odhlásit</a>
+    </aside>
+
+    <div class="main-wrap">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <span class="header-badge">ADMIN</span>
+                <span style="font-size:0.75em;color:#7f8c8d;font-weight:600;margin-left:8px;">v42</span>
+            </div>
+            <div class="header-right">
+                <button type="button" class="btn btn-secondary btn-small" id="btn-git-pull" onclick="doGitPull()" title="Stáhnout z GitHubu">&#128260; Stáhnout z GitHubu</button>
+                <a href="{{ url_for('admin.settings') }}" class="btn btn-secondary btn-small">Global Config</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Charts row: Line (Activity 30d) + Doughnut (Users by Tier) -->
+        <div class="charts-row" style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+            <div class="chart-card" style="flex:1;min-width:280px;max-width:55%;background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                <div class="chart-title" style="font-size:0.85em;font-weight:600;margin-bottom:8px;">Activity (Files Processed) – Last 30 Days</div>
+                <canvas id="chartActivity" height="120"></canvas>
+            </div>
+            <div class="chart-card" style="flex:0 0 200px;background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                <div class="chart-title" style="font-size:0.85em;font-weight:600;margin-bottom:8px;">Users by Tier</div>
+                <canvas id="chartTiers" height="120"></canvas>
+            </div>
+        </div>
+
+        <div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h2 style="font-size:1.1em;margin:0;">Users</h2>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ New license</button>
+        </div>
+
+        <!-- Compact User Table -->
+        <div class="table-container">
+            <table class="table-dense">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Tier</th>
+                        <th>Devices</th>
+                        <th>Last Active</th>
+                        <th>Total Files</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for license in licenses %}
+                    <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-tier="{{ license.license_tier or 0 }}" data-days-remaining="{{ license.days_remaining if license.days_remaining is not none and license.days_remaining >= 0 else '' }}">
+                        <td>
+                            <strong>{{ license.email or '-' }}</strong>
+                            {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
+                        </td>
+                        <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
+                        <td>{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}</td>
+                        <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
+                        <td>{{ license.total_checks }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="User Audit">Audit</a>
+                                <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Edit tier">Edit</button>
+                                <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Password">&#128274;</button>
+                                <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Block' if license.is_active else 'Unblock' }}">{{ 'Block' if license.is_active else 'Unblock' }}</button>
+                                <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Delete">Del</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-3">Žádné licence. Klikněte na „New license“.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+    </div>
+
+    <!-- Create License Modal -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Vytvorit novou licenci</h3>
+                <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
+            </div>
+            <form id="createForm" onsubmit="submitCreateForm(event)">
+                <div class="form-group">
+                    <label for="create_user_name">Jmeno uzivatele</label>
+                    <input type="text" id="create_user_name" name="user_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="create_email">Email</label>
+                    <input type="email" id="create_email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="create_tier">Tier</label>
+                    <select id="create_tier" name="tier">
+                        <option value="0">Free</option>
+                        <option value="1">Basic</option>
+                        <option value="2">Pro</option>
+                        <option value="3">Enterprise</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="create_password">Heslo pro uzivatele (pro prihlaseni e-mailem v agentovi – bez hesla prihlaseni v agentovi nefunguje)</label>
+                    <input type="password" id="create_password" name="password" placeholder="Doporučeno vyplnit">
+                </div>
+                <div class="form-group">
+                    <label for="create_days">Platnost (dni, prazdne = neomezeno)</label>
+                    <input type="number" id="create_days" name="days" value="365" min="1">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Zrusit</button>
+                    <button type="submit" class="btn btn-primary">Vytvorit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User: ONLY Tier dropdown -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Upravit uživatele – Tier</h3>
+                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <form id="editForm" onsubmit="submitEditForm(event)">
+                <input type="hidden" id="edit_api_key" name="api_key">
+                <div class="form-group">
+                    <label for="edit_tier_id">Tier</label>
+                    <select id="edit_tier_id" name="tier_id">
+                        {% for t in tiers_list %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% endfor %}
+                        {% if not tiers_list %}
+                        <option value="1">Free</option><option value="2">Basic</option><option value="3">Pro</option><option value="4">Enterprise</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change user password Modal -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Zmenit heslo uzivatele</h3>
+                <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
+            </div>
+            <p style="margin-bottom:16px;color:#6b7280;">Uzivatel: <strong id="changePasswordUserDisplay"></strong></p>
+            <p style="font-size:0.85em;color:#9ca3af;margin-bottom:16px;">Heslo slouzi pro prihlaseni v agentovi (e-mail + heslo). Aktualni heslo nelze zobrazit.</p>
+            <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
+                <input type="hidden" id="changePasswordApiKey" name="api_key">
+                <div class="form-group">
+                    <label for="changePasswordNew">Nove heslo</label>
+                    <input type="password" id="changePasswordNew" name="new_password" required minlength="6" placeholder="Min. 6 znaku">
+                </div>
+                <div class="form-group">
+                    <label for="changePasswordNew2">Nove heslo znovu</label>
+                    <input type="password" id="changePasswordNew2" name="new_password2" required minlength="6">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Zrusit</button>
+                    <button type="submit" class="btn btn-primary">Ulozit heslo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Vysledek</h3>
+                <button class="modal-close" onclick="closeModal('resultModal')">&times;</button>
+            </div>
+            <div id="resultContent"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeModal('resultModal'); location.reload();">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function openCreateModal() {
+            document.getElementById('createForm').reset();
+            openModal('createModal');
+        }
+
+        function openEditModalFromRow(tr) {
+            var apiKey = tr.getAttribute('data-api-key');
+            var tierId = tr.getAttribute('data-tier-id') || '';
+            document.getElementById('edit_api_key').value = apiKey;
+            var sel = document.getElementById('edit_tier_id');
+            if (tierId && tierId !== 'None') sel.value = tierId;
+            else if (sel.options.length) sel.selectedIndex = 0;
+            openModal('editModal');
+        }
+
+        function openChangePasswordModal(btn) {
+            var apiKey = btn.getAttribute('data-api-key');
+            var display = btn.getAttribute('data-user-display') || apiKey;
+            document.getElementById('changePasswordApiKey').value = apiKey;
+            document.getElementById('changePasswordUserDisplay').textContent = display;
+            document.getElementById('changePasswordForm').reset();
+            document.getElementById('changePasswordApiKey').value = apiKey;
+            openModal('changePasswordModal');
+        }
+
+        async function submitChangePassword(e) {
+            e.preventDefault();
+            var apiKey = document.getElementById('changePasswordApiKey').value;
+            var newPass = document.getElementById('changePasswordNew').value;
+            var newPass2 = document.getElementById('changePasswordNew2').value;
+            if (newPass !== newPass2) {
+                showResult('Hesla se neshoduji', true);
+                return;
+            }
+            if (newPass.length < 6) {
+                showResult('Heslo musi mit alespon 6 znaku', true);
+                return;
+            }
+            var data = new FormData();
+            data.append('api_key', apiKey);
+            data.append('new_password', newPass);
+            data.append('new_password2', newPass2);
+            try {
+                var resp = await fetch('/admin/api/license/set-password', { method: 'POST', body: data });
+                var result = await resp.json();
+                closeModal('changePasswordModal');
+                showResult(result.message || result.error, !result.success);
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        function showResult(message, isError) {
+            const content = document.getElementById('resultContent');
+            content.innerHTML = `<div class="alert alert-${isError ? 'error' : 'success'}">${message}</div>`;
+            openModal('resultModal');
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('API klic zkopirovan do schranky');
+            });
+        }
+
+        // Git pull (stáhnout z GitHubu na serveru)
+        async function doGitPull() {
+            var btn = document.getElementById('btn-git-pull');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.textContent = '... probíhá ...';
+            try {
+                var resp = await fetch('{{ url_for("admin.api_git_pull") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                var text = await resp.text();
+                var data;
+                try {
+                    data = (text && text.trim().startsWith('{')) ? JSON.parse(text) : { success: false, log: ['Odpověď není JSON (server mohl vrátit 502/500).'] };
+                } catch (parseErr) {
+                    data = { success: false, log: [
+                        'Server vrátil stránku místo JSON (často 502 Bad Gateway).',
+                        'Postup: Na PythonAnywhere otevřete Bash, přejděte do složky projektu (např. cd ~/pdf-dokucheck-web/v42), spusťte: git pull',
+                        'Pak v záložce Web klikněte na Reload.'
+                    ]};
+                }
+                var log = (data.log || []).join('\n');
+                if (data.success) {
+                    alert('Hotovo.\n\n' + log);
+                } else {
+                    alert('Chyba:\n\n' + log);
+                }
+            } catch (e) {
+                alert('Chyba pri volani: ' + e.message);
+            }
+            btn.disabled = false;
+            btn.textContent = '🔄 Stáhnout z GitHubu';
+        }
+
+        // API functions
+        async function submitCreateForm(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            data.set('tier', document.getElementById('create_tier').value);
+
+            try {
+                const response = await fetch('/admin/api/license/create', {
+                    method: 'POST',
+                    body: data
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('createModal');
+                    showResult(`
+                        <p><strong>Licence vytvorena!</strong></p>
+                        <p style="margin-top: 12px;">API klic:</p>
+                        <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; font-family: monospace; word-break: break-all; margin-top: 8px;">
+                            ${result.api_key}
+                        </div>
+                        <button class="btn btn-secondary btn-small" style="margin-top: 12px;" onclick="copyToClipboard('${result.api_key}')">Kopirovat</button>
+                    `, false);
+                } else {
+                    showResult(result.error || 'Chyba pri vytvareni', true);
+                }
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        async function submitEditForm(e) {
+            e.preventDefault();
+            var data = new FormData();
+            data.append('api_key', document.getElementById('edit_api_key').value);
+            data.append('tier_id', document.getElementById('edit_tier_id').value);
+            try {
+                var response = await fetch('{{ url_for("admin.api_update_license") }}', { method: 'POST', body: data });
+                var result = await response.json();
+                closeModal('editModal');
+                showResult(result.message || result.error, !result.success);
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        async function resetDevices(apiKey) {
+            if (!confirm('Opravdu chcete resetovat vsechna zarizeni pro tuto licenci?')) return;
+
+            const data = new FormData();
+            data.append('api_key', apiKey);
+
+            try {
+                const response = await fetch('/admin/api/license/reset-devices', {
+                    method: 'POST',
+                    body: data
+                });
+                const result = await response.json();
+                showResult(result.message || result.error, !result.success);
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        async function toggleLicense(apiKey, activate) {
+            const action = activate ? 'aktivovat' : 'deaktivovat';
+            if (!confirm(`Opravdu chcete ${action} tuto licenci?`)) return;
+
+            const data = new FormData();
+            data.append('api_key', apiKey);
+            data.append('is_active', activate ? '1' : '0');
+
+            try {
+                const response = await fetch('/admin/api/license/toggle', {
+                    method: 'POST',
+                    body: data
+                });
+                const result = await response.json();
+                showResult(result.message || result.error, !result.success);
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        async function deleteLicense(apiKey) {
+            if (!confirm('VAROVANI: Opravdu chcete SMAZAT tuto licenci? Tato akce je nevratna!')) return;
+            if (!confirm('Potvrzujete smazani licence?')) return;
+
+            const data = new FormData();
+            data.append('api_key', apiKey);
+
+            try {
+                const response = await fetch('/admin/api/license/delete', {
+                    method: 'POST',
+                    body: data
+                });
+                const result = await response.json();
+                showResult(result.message || result.error, !result.success);
+            } catch (err) {
+                showResult('Chyba: ' + err.message, true);
+            }
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => modal.classList.remove('active'));
+            }
+        });
+
+        var activityData = {{ (activity_30 or []) | tojson }};
+        var tierData = {{ (by_tier_counts or {}) | tojson }};
+        if (typeof Chart !== 'undefined' && document.getElementById('chartActivity')) {
+            new Chart(document.getElementById('chartActivity'), {
+                type: 'line',
+                data: {
+                    labels: activityData.map(function(x) { return x.date; }),
+                    datasets: [{ label: 'Files', data: activityData.map(function(x) { return x.files; }), borderColor: '#3498DB', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.3 }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        if (typeof Chart !== 'undefined' && document.getElementById('chartTiers')) {
+            var labels = Object.keys(tierData);
+            var values = Object.values(tierData);
+            var colors = ['#9ca3af', '#3b82f6', '#8b5cf6', '#f59e0b'];
+            new Chart(document.getElementById('chartTiers'), {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+    </script>
+</body>
+</html>

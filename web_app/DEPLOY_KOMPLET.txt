@@ -1,0 +1,107 @@
+================================================================================
+  KOMPLETNÍ DEPLOY NA PYTHONANYWHERE – KROK ZA KROKEM (účet: cieslar)
+================================================================================
+
+--------------------------------------------------------------------------------
+KROK 1 – NA PC
+--------------------------------------------------------------------------------
+1. Otevři příkazovou řádku ve složce:  C:\Claude\PDF_CHECK_SW
+2. Spusť:  python create_deploy_zip.py
+3. Vznikne soubor:  web_app_deploy.zip
+4. Na PythonAnywhere (pythonanywhere.com) → záložka Files → jdi do  /home/cieslar/
+5. Nahraj tam soubor  web_app_deploy.zip  (Upload a file).
+   (Pokud tam už nějaký starý web_app_deploy.zip je, přepíšeš ho.)
+
+--------------------------------------------------------------------------------
+KROK 2 – NA PA: BASH KONZOLE (rozbalení ZIPu + virtualenv + pip)
+--------------------------------------------------------------------------------
+Rozbalení přes webové tlačítko "Unzip" na PA často nefunguje – použij BASH.
+
+Záložka  Consoles  →  Bash  (nebo otevři novou Bash konzoli).
+Zkopíruj a vlož CELÝ blok níže a stiskni Enter (jeden blok stačí):
+
+------ BEGIN BASH – zkopíruj odtud ------
+cd /home/cieslar
+rm -rf web_app
+unzip -o web_app_deploy.zip
+virtualenv web_app-virtualenv --python=python3.10
+source web_app-virtualenv/bin/activate
+pip install --upgrade pip
+pip install -r web_app/requirements.txt
+deactivate
+echo "Hotovo. Teď nastav Web a WSGI."
+------ END BASH – kopíruj až sem ------
+
+(Pokud virtualenv hlásí chybu s python3.10, zkus:  --python=python3.11  nebo  --python=python3)
+
+Jen rozbalit ZIP (bez virtualenv a pip) – zkopíruj a vlož do Bash:
+------ JEN UNZIP ------
+cd /home/cieslar
+rm -rf web_app
+unzip -o web_app_deploy.zip
+ls -la web_app
+------ KONEC JEN UNZIP ------
+
+--------------------------------------------------------------------------------
+KROK 3 – NA PA: ZÁLOŽKA WEB (nastavení)
+--------------------------------------------------------------------------------
+Záložka  Web.
+
+• Source code:   /home/cieslar/web_app
+• Working directory:   /home/cieslar/web_app
+• WSGI configuration file:   /home/cieslar/web_app/wsgi_pythonanywhere.py
+• Virtualenv:   /home/cieslar/web_app-virtualenv
+
+Klikni  Save.
+
+--------------------------------------------------------------------------------
+KROK 4 – WSGI: PŘESNÝ OBSAH SOUBORU
+--------------------------------------------------------------------------------
+Na PA v záložce Web klikni na odkaz k WSGI configuration file (otevře editor).
+Smaž vše v editoru a vlož PŘESNĚ tento kód (nic neměň):
+
+------ BEGIN WSGI – vlož do WSGI editoru na PA ------
+import sys
+import os
+
+path = os.path.dirname(os.path.abspath(__file__))
+if path not in sys.path:
+    sys.path.insert(0, path)
+os.chdir(path)
+
+from pdf_check_web_main import app as application
+------ END WSGI – konec vkládání ------
+
+Ulož (Save).
+
+--------------------------------------------------------------------------------
+KROK 5 – DATABÁZE (přihlášení)
+--------------------------------------------------------------------------------
+Máš‑li soubor  pdfcheck_results.db  (s uživateli):
+• Záložka Files → otevři  /home/cieslar/web_app/
+• Upload a file → vyber  pdfcheck_results.db
+Soubor musí být ve složce  web_app  vedle  database.py.
+
+--------------------------------------------------------------------------------
+KROK 6 – RELOAD
+--------------------------------------------------------------------------------
+Záložka  Web  → zelené tlačítko  Reload.
+
+--------------------------------------------------------------------------------
+OVĚŘENÍ
+--------------------------------------------------------------------------------
+• Web:   https://cieslar.pythonanywhere.com/
+• Přihlášení:   https://cieslar.pythonanywhere.com/login
+
+================================================================================
+  SHRNUTÍ – CO KAM (cieslar)
+================================================================================
+• web_app_deploy.zip     → nahát do  /home/cieslar/
+• Bash                   → rozbalit (unzip), vytvořit virtualenv, pip install
+• Source code            → /home/cieslar/web_app
+• Working directory       → /home/cieslar/web_app
+• WSGI configuration file → /home/cieslar/web_app/wsgi_pythonanywhere.py
+• WSGI obsah              → viz KROK 4 (import z pdf_check_web_main)
+• Virtualenv              → /home/cieslar/web_app-virtualenv
+• pdfcheck_results.db     → do  /home/cieslar/web_app/
+================================================================================

@@ -1,0 +1,30 @@
+========================================
+  PRÁCE NA V42 – SLOŽKA Z GITHUBU
+========================================
+
+Tato složka (C:\Claude\v42) obsahuje kompletní kopii projektu
+staženou z GitHubu (repo: cieslarmartin/pdf-dokucheck-web, složka 41).
+
+- Všechny soubory zde můžete upravovat.
+- Hlavní aplikace: pdf_dokucheck_pro_v41_with_api.py
+- Admin: templates/admin_dashboard.html, admin_routes.py
+- API: api_endpoint.py
+
+----------------------------------------
+  JAK NAHRÁT ZMĚNY NA GITHUB
+----------------------------------------
+
+1. V C:\Claude dvakrát klikněte na:
+   NAHRAT_V42_NA_GITHUB.bat
+
+2. .bat zkopíruje obsah v42 do 41 a nahraje na GitHub
+   (a volitelně zavolá deploy na PythonAnywhere).
+
+----------------------------------------
+  SHRNUTÍ
+----------------------------------------
+
+- Pracujte v: C:\Claude\v42
+- Nahrání na GitHub: dvojklik na NAHRAT_V42_NA_GITHUB.bat (v C:\Claude)
+
+========================================
