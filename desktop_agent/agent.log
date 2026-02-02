@@ -522,3 +522,7 @@
 2026-02-02 21:39:32,521 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka/E_Doklady_MZ\Doklady_MZ_II_faze_250825\007_SmVaK_site.pdf
 2026-02-02 21:39:32,627 - INFO - Analýza dokončena: 007_SmVaK_site.pdf
 2026-02-02 21:39:32,629 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-02 21:45:10,801 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 21:45:10,821 - INFO - Spouštím GUI...
+2026-02-02 21:45:11,298 - INFO - První spuštění – licence není aktivována
+2026-02-02 21:45:11,298 - INFO - Agent běží

@@ -764,13 +764,17 @@ class Database:
             return False, "Pro tento účet není nastaveno heslo – použijte licenční klíč v agentovi"
         if not self._verify_password(password, ph):
             return False, "Neplatný e-mail nebo heslo"
-        # Vrátit údaje bez password_hash
+        # Vrátit údaje včetně tier_name a max_batch_size z get_user_license (DB tier, ne hardcoded)
+        license_info = self.get_user_license(row['api_key'])
+        tier_name = (license_info or {}).get('tier_name') or tier_to_string(LicenseTier(row.get('license_tier', 0)))
+        max_batch_size = (license_info or {}).get('max_batch_size')
         out = {
             'api_key': row['api_key'],
             'user_name': row.get('user_name'),
             'email': row.get('email'),
             'license_tier': row.get('license_tier', 0),
-            'tier_name': tier_to_string(LicenseTier(row.get('license_tier', 0))),
+            'tier_name': tier_name,
+            'max_batch_size': max_batch_size,
         }
         return True, out
 
@@ -1811,6 +1815,38 @@ class Database:
         )
 
         return api_key if success else None
+
+    def admin_create_license_by_tier_id(self, user_name: str, email: str, tier_id: int,
+                                         days: int = 365, password: str = None) -> str:
+        """Vytvoří licenci s tier_id z DB (Free/Basic/Pro/Trial). Vrací api_key nebo None."""
+        tier_row = self.get_tier_by_id(tier_id)
+        if not tier_row:
+            return None
+        prefix = 'sk_tier_'
+        api_key = prefix + secrets.token_hex(16)
+        license_expires = (datetime.now() + timedelta(days=days)).isoformat() if days and days > 0 else None
+        password_hash = self._hash_password(password) if password and str(password).strip() else None
+        max_files = tier_row.get('max_files_limit', 10)
+        max_devices = tier_row.get('max_devices', 1)
+        allow_sig = 1 if tier_row.get('allow_signatures') else 0
+        allow_ts = 1 if tier_row.get('allow_timestamp') else 0
+        allow_excel = 1 if tier_row.get('allow_excel_export') else 0
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO api_keys (api_key, user_name, email, tier_id, license_expires,
+                    password_hash, max_batch_size, max_devices, rate_limit_hour,
+                    allow_signatures, allow_timestamp, allow_excel_export, license_tier, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10, ?, ?, ?, 0, 1)
+            ''', (api_key, user_name, email, tier_id, license_expires, password_hash,
+                  max_files, max_devices, allow_sig, allow_ts, allow_excel))
+            conn.commit()
+            return api_key
+        except sqlite3.IntegrityError:
+            return None
+        finally:
+            conn.close()
 
 
 # Helper funkce pro generování API klíče

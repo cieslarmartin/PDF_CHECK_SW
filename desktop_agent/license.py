@@ -7,6 +7,10 @@ import yaml
 import os
 from pathlib import Path
 
+# Demo Trial účet pro tlačítko "Vyzkoušet zdarma" (heslo musí odpovídat migrate_tiers.py)
+DEMO_TRIAL_EMAIL = 'demo_trial@dokucheck.app'
+DEMO_TRIAL_PASSWORD = 'demo123'
+
 try:
     from machine_id import get_machine_id, get_hostname
 except ImportError:
@@ -132,9 +136,13 @@ class LicenseManager:
                     api_key = data["api_key"]
                     self.save_api_key(api_key)
                     self.api_key = api_key
-                    user_name = data.get("user_name") or data.get("email") or "—"
                     tier_name = data.get("tier_name") or "—"
-                    display = f"{user_name} ({data.get('email', '')}) – {tier_name}"
+                    max_batch = data.get("max_batch_size")
+                    if str(tier_name).strip().lower() == "trial":
+                        display = f"Režim: Trial verze – Limit {max_batch if max_batch is not None else 5} souborů"
+                    else:
+                        user_name = data.get("user_name") or data.get("email") or "—"
+                        display = f"{user_name} ({data.get('email', '')}) – {tier_name}"
                     return True, api_key, display
                 return False, None, data.get("error", "Chyba přihlášení")
             err = (response.json() or {}).get("error", f"Server vrátil {response.status_code}")

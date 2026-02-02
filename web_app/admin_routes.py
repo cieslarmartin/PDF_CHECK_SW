@@ -315,17 +315,22 @@ def api_users_by_tier():
 @admin_bp.route('/admin/api/license/create', methods=['POST'])
 @admin_required
 def api_create_license():
-    """Vytvoří novou licenci"""
+    """Vytvoří novou licenci. tier_id z dropdown (DB tier) má přednost před tier 0–3."""
     db = get_db()
 
     user_name = request.form.get('user_name', '').strip()
     email = request.form.get('email', '').strip()
     password = request.form.get('password', '').strip() or None
+    tier_id_raw = request.form.get('tier_id', '').strip()
+    try:
+        tier_id = int(tier_id_raw) if tier_id_raw else None
+    except (TypeError, ValueError):
+        tier_id = None
     try:
         tier = int(request.form.get('tier', 0))
     except (TypeError, ValueError):
         tier = 0
-    tier = max(0, min(3, tier))  # 0-3
+    tier = max(0, min(3, tier))
     try:
         days = int(request.form.get('days', 365))
     except (TypeError, ValueError):
@@ -334,7 +339,6 @@ def api_create_license():
     if not user_name or not email:
         return jsonify({'success': False, 'error': 'Vyplňte jméno a email'}), 400
 
-    # E-mail musí být unikátní – jeden e-mail = jedna aktivní licence (aby přihlášení fungovalo)
     existing = db.get_license_by_email(email)
     if existing:
         return jsonify({
@@ -342,7 +346,10 @@ def api_create_license():
             'error': 'Tento e-mail už je použit u jiné aktivní licence. Zvolte jiný e-mail.'
         }), 400
 
-    api_key = db.admin_generate_license_key(user_name, email, tier, days, password=password)
+    if tier_id is not None:
+        api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=days, password=password)
+    else:
+        api_key = db.admin_generate_license_key(user_name, email, tier, days, password=password)
 
     if api_key:
         return jsonify({
@@ -350,8 +357,7 @@ def api_create_license():
             'api_key': api_key,
             'message': f'Licence vytvořena pro {email}'
         })
-    else:
-        return jsonify({'success': False, 'error': 'Chyba při vytváření licence'}), 500
+    return jsonify({'success': False, 'error': 'Chyba při vytváření licence'}), 500
 
 
 @admin_bp.route('/admin/api/license/update', methods=['POST'])

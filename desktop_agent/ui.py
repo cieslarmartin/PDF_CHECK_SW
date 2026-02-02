@@ -30,7 +30,7 @@ def _format_result_summary(filename, status, result):
 
     if result is None:
         if status == 'skipped':
-            lines.append("Tento soubor nebyl odeslán ke kontrole z důvodu limitu licence.")
+            lines.append("Přeskočeno z důvodu limitu licence.")
         else:
             lines.append("Čeká na zpracování.")
         return "\n".join(lines)
@@ -41,7 +41,7 @@ def _format_result_summary(filename, status, result):
 
     # Skipped / limit reached
     if result.get('skipped') or (result.get('success') is False and 'limit' in str(result.get('error', '')).lower()):
-        lines.append("Tento soubor nebyl odeslán ke kontrole z důvodu limitu licence.")
+        lines.append("Přeskočeno z důvodu limitu licence.")
         return "\n".join(lines)
 
     # Time processed
@@ -90,6 +90,10 @@ def _format_result_summary(filename, status, result):
         lines.append("Chyby validace:")
         for e in errors:
             lines.append(f"  • {e}")
+    else:
+        if result.get('success'):
+            lines.append("")
+            lines.append("Dokument je v pořádku.")
 
     return "\n".join(lines)
 
@@ -278,11 +282,16 @@ class PDFCheckUI:
         # --- Left: Treeview (hierarchical queue: úkoly = složky/soubory, děti = soubory) ---
         tk.Label(left_panel, text="Fronta úkolů", font=("Segoe UI", 10, "bold"),
                  bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, pady=(4, 4))
+        tree_style = ttk.Style()
+        tree_style.theme_use("clam")
+        tree_style.configure("Treeview", rowheight=28, fieldbackground="#ffffff")
+        tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)])
         tree_frame = tk.Frame(left_panel, bg=self.BG_WHITE)
         tree_frame.pack(fill=tk.BOTH, expand=True)
         tree_scroll = ttk.Scrollbar(tree_frame)
         self.queue_tree = ttk.Treeview(tree_frame, columns=("name",), show="tree headings", height=12,
                                        yscrollcommand=tree_scroll.set, selectmode="browse")
+        self.queue_tree.configure(selectbackground=self.ACCENT_BTN)
         tree_scroll.config(command=self.queue_tree.yview)
         self.queue_tree.heading("#0", text=" ")
         self.queue_tree.heading("name", text="Úkol / Soubor")
@@ -604,7 +613,7 @@ class PDFCheckUI:
                 pass
 
     def update_queue_display(self):
-        """Aktualizuje hierarchický Treeview: úkoly (složka/soubor) a děti (soubory), se sloupcem checkbox."""
+        """Aktualizuje hierarchický Treeview: úkoly (složka/soubor) a děti (soubory), se sloupcem checkbox. Auto-expand složek."""
         for row in self.queue_tree.get_children():
             self.queue_tree.delete(row)
         self._iid_to_qidx.clear()
@@ -612,14 +621,14 @@ class PDFCheckUI:
         qidx = 0
         for task_ix, task in enumerate(self.tasks):
             file_paths = task.get('file_paths', [])
-            # Checkbox pro kořen: ☑ pokud jsou všechny děti zaškrtnuté, jinak ☐
             children_checked = [self.queue_display[qidx + j].get('checked', True) for j in range(len(file_paths)) if qidx + j < len(self.queue_display)]
             all_checked = len(children_checked) > 0 and all(children_checked)
             root_check = "☑" if all_checked else "☐"
             icon = "📁" if task.get('type') == 'folder' else "📄"
             name = task.get('name', '')
             iid_task = f"task_{task_ix}"
-            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{icon} {name}",), text=root_check)
+            tag = "odd" if task_ix % 2 == 0 else "even"
+            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{icon} {name}",), text=root_check, tags=(tag,))
             for j, _ in enumerate(file_paths):
                 if qidx >= len(self.queue_display):
                     break
@@ -627,9 +636,11 @@ class PDFCheckUI:
                 chk = "☑" if item.get('checked', True) else "☐"
                 st_icon = status_icons.get(item.get('status', 'pending'), '⏳')
                 iid_file = f"task_{task_ix}_file_{j}"
-                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  {st_icon} {item.get('filename', '')}",), text=chk)
+                child_tag = "odd" if (task_ix + j) % 2 == 0 else "even"
+                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  {st_icon} {item.get('filename', '')}",), text=chk, tags=(child_tag,))
                 self._iid_to_qidx[iid_file] = qidx
                 qidx += 1
+            self.queue_tree.item(iid_task, open=True)
 
     def on_check_clicked(self):
         """Handler pro tlačítko Spustit kontrolu – zpracují se pouze zaškrtnuté položky (☑)."""
@@ -901,6 +912,20 @@ class PDFCheckUI:
         status_label = tk.Label(dialog, text="", font=("Segoe UI", 9), bg=self.BG_WHITE)
         status_label.pack(pady=8)
 
+        def do_trial():
+            try:
+                from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
+                email_var.set(DEMO_TRIAL_EMAIL)
+                pass_var.set(DEMO_TRIAL_PASSWORD)
+                do_login()
+            except ImportError:
+                status_label.config(text="Nelze načíst demo účet.", fg=self.ERROR_RED)
+
+        btn_trial = tk.Button(dialog, text="Vyzkoušet zdarma", font=("Segoe UI", 9),
+                              bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
+                              padx=16, pady=6, cursor="hand2", command=do_trial)
+        btn_trial.pack(pady=(0, 4))
+
         def do_login():
             email = email_var.get().strip()
             password = pass_var.get()
@@ -916,7 +941,7 @@ class PDFCheckUI:
                 if success:
                     status_label.config(text=message or "Přihlášeno.", fg=self.SUCCESS_GREEN)
                     if display_text:
-                        self.set_license_display("Přihlášen: " + display_text)
+                        self.set_license_display(display_text if str(display_text).strip().startswith("Režim:") else "Přihlášen: " + display_text)
                     if self.on_after_login_callback:
                         self.on_after_login_callback()
                     dialog.after(1200, dialog.destroy)
@@ -934,7 +959,7 @@ class PDFCheckUI:
                 if success:
                     status_label.config(text=message, fg=self.SUCCESS_GREEN)
                     if display_text:
-                        self.set_license_display("Přihlášen: " + display_text)
+                        self.set_license_display(display_text if str(display_text).strip().startswith("Režim:") else "Přihlášen: " + display_text)
                     if self.on_after_login_callback:
                         self.on_after_login_callback()
                     dialog.after(1200, dialog.destroy)

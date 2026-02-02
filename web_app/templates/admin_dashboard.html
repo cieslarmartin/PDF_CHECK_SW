@@ -490,12 +490,14 @@
                     <input type="email" id="create_email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <label for="create_tier">Tier</label>
-                    <select id="create_tier" name="tier">
-                        <option value="0">Free</option>
-                        <option value="1">Basic</option>
-                        <option value="2">Pro</option>
-                        <option value="3">Enterprise</option>
+                    <label for="create_tier_id">Tier</label>
+                    <select id="create_tier_id" name="tier_id">
+                        {% for t in tiers_list %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% endfor %}
+                        {% if not tiers_list %}
+                        <option value="1">Free</option><option value="2">Basic</option><option value="3">Pro</option><option value="4">Enterprise</option><option value="5">Trial</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div class="form-group">
@@ -695,7 +697,7 @@
             e.preventDefault();
             const form = e.target;
             const data = new FormData(form);
-            data.set('tier', document.getElementById('create_tier').value);
+            data.append('tier_id', document.getElementById('create_tier_id').value);
 
             try {
                 const response = await fetch('/admin/api/license/create', {

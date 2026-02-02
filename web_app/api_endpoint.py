@@ -406,6 +406,7 @@ def register_api_routes(app):
                         return jsonify({'success': False, 'error': 'Licence limit reached. Contact support.'}), 403
                 db.upsert_user_device(api_key, machine_id, machine_name)
             db.insert_user_log(api_key, 'login', file_count=0, total_size_kb=0, ip_address=ip_address, machine_id=machine_id, status='ok')
+            # max_batch_size z DB (Trial a ostatní tier definice) – agent zobrazí "Trial verze - Limit X souborů"
             return jsonify({
                 'success': True,
                 'api_key': api_key,
@@ -413,6 +414,7 @@ def register_api_routes(app):
                 'email': result.get('email'),
                 'tier': result.get('license_tier', 0),
                 'tier_name': result.get('tier_name'),
+                'max_batch_size': result.get('max_batch_size'),
             }), 200
         except Exception as e:
             logger.exception(f"Chyba user-login: {e}")
@@ -1131,10 +1133,19 @@ def register_api_routes(app):
             if not license_info:
                 return jsonify({'error': 'Invalid API key'}), 401
 
-            # Přidej features a limits
-            tier = LicenseTier(license_info.get('license_tier', 0))
-            license_info['features'] = get_tier_features(tier)
-            license_info['limits'] = get_tier_limits(tier)
+            # Když má uživatel tier_id (Trial, Free, Basic… z DB), použij limity z DB – ne hardcoded
+            if license_info.get('tier_id'):
+                license_info['features'] = []
+                license_info['limits'] = {
+                    'max_files_per_batch': license_info.get('max_batch_size'),
+                    'max_devices': license_info.get('max_devices'),
+                }
+            else:
+                tier = LicenseTier(license_info.get('license_tier', 0))
+                license_info['features'] = get_tier_features(tier)
+                license_info['limits'] = get_tier_limits(tier)
+            if license_info.get('limits', {}).get('max_files_per_batch') is None:
+                license_info.setdefault('limits', {})['max_files_per_batch'] = license_info.get('max_batch_size')
 
             return jsonify({
                 'success': True,

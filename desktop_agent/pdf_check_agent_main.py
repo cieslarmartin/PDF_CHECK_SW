@@ -299,14 +299,19 @@ class PDFCheckAgent:
         return max_f if max_f is not None and max_f >= 0 else 99999
 
     def _refresh_license_display(self):
-        """Načte údaje o licenci a zobrazí je v dolní liště (Přihlášen: email (Tier))."""
+        """Načte údaje o licenci a zobrazí je (Přihlášen: email (Tier) nebo Trial verze – Limit X souborů)."""
         if not self.app or not self.license_manager.has_valid_key():
             return
         ok, info = self.license_manager.get_license_info()
         if ok and info:
-            email = info.get("email") or info.get("user_name") or "—"
-            tier = info.get("tier_name") or "—"
-            self.app.set_license_display(f"{email} ({tier})")
+            tier_name = (info.get("tier_name") or "").strip()
+            if tier_name.lower() == "trial":
+                max_f = (info.get("limits") or {}).get("max_files_per_batch") or info.get("max_batch_size") or 5
+                self.app.set_license_display(f"Režim: Trial verze – Limit {max_f} souborů")
+            else:
+                email = info.get("email") or info.get("user_name") or "—"
+                tier = info.get("tier_name") or "—"
+                self.app.set_license_display(f"{email} ({tier})")
         else:
             self.app.set_license_display("")
 
