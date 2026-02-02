@@ -7,7 +7,7 @@
 #
 # Spuštění: python pdf_check_web_main.py
 
-from flask import Flask, request, jsonify, render_template_string, Response
+from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for
 import io
 import re
 import os
@@ -2704,7 +2704,20 @@ def count_pdfs_in_folder(folder_path):
 
 @app.route('/')
 def index():
+    """Landing page DokuCheck."""
+    return render_template('landing.html')
+
+
+@app.route('/app')
+def app_main():
+    """Hlavní aplikace – kontrola PDF (původní UI)."""
     return render_template_string(HTML_TEMPLATE)
+
+
+@app.route('/download')
+def download():
+    """Stránka stažení desktop agenta – propojení na budoucí odkaz ke stažení."""
+    return redirect(url_for('app_main'))
 
 @app.route('/analyze', methods=['POST'])
 def analyze():

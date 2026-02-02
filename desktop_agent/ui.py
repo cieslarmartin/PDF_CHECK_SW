@@ -172,7 +172,7 @@ class PDFCheckUI:
         self.cancel_requested = False
         self.is_running = False
 
-        # Okno – moderní rozhraní (výchozí 1000x700)
+        # Okno – výchozí velikost 1000x700 (WINDOW SIZE)
         self.root.title("PDF DokuCheck Agent")
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
@@ -201,10 +201,36 @@ class PDFCheckUI:
         webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
 
     def create_widgets(self):
-        """Vytvoří všechny GUI elementy"""
+        """Vytvoří všechny GUI elementy. FIXED LAYOUT: Footer a Header jsou pevné, scrolluje jen střed (Treeview)."""
+        # --- Treeview styl HNED na začátku (aby se nepřepsal výchozím theme) ---
+        _tree_style = ttk.Style()
+        _tree_style.theme_use("clam")
+        _tree_style.configure(
+            "Treeview",
+            rowheight=35,
+            font=("Segoe UI", 10),
+            background="#ffffff",
+            fieldbackground="#ffffff",
+            foreground="#1a202c",
+        )
+        _tree_style.configure(
+            "Treeview.Heading",
+            font=("Segoe UI", 10, "bold"),
+            background="#f7fafc",
+            foreground="#2d3748",
+        )
+        _tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)], foreground=[("selected", "#ffffff")])
 
-        # === FIXED LAYOUT: Header a Footer se NIKDY nescrollují ===
-        # HEADER – tmavě modrý pruh (pevný nahoře)
+        # 1) FOOTER FIRST – rezervuje spodek okna (nikdy nescrolluje)
+        bottom_frame = tk.Frame(self.root, bg="#e2e8f0", height=40)
+        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        bottom_frame.pack_propagate(False)
+        self.license_status_label = tk.Label(bottom_frame, text="", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_DARK)
+        self.license_status_label.pack(side=tk.LEFT, padx=20, pady=8)
+        version_label = tk.Label(bottom_frame, text="Build 42", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_MUTED)
+        version_label.pack(side=tk.RIGHT, padx=20, pady=8)
+
+        # 2) HEADER – pevný nahoře (nikdy nescrolluje)
         header_frame = tk.Frame(self.root, bg=self.BG_HEADER, height=56)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
@@ -262,17 +288,17 @@ class PDFCheckUI:
         )
         web_btn.pack(side=tk.RIGHT, padx=8, pady=10)
 
-        # === STATS BAR (pevný, ne scrolluje): Soubory | Složky | Odhadovaný čas ===
-        stats_frame = tk.Frame(self.root, bg=self.BG_LIGHT, height=32)
+        # 3) STATS BAR – pevný pod hlavičkou, horizontální pruh (Soubory | Složky | Odhad: Xs)
+        stats_frame = tk.Frame(self.root, bg="#ffffff", height=36, highlightbackground="#cbd5e0", highlightthickness=1)
         stats_frame.pack(fill=tk.X)
         stats_frame.pack_propagate(False)
         self.stats_label = tk.Label(
-            stats_frame, text="Soubory: 0 | Složky: 0 | Odhadovaný čas: — s",
-            font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_MUTED
+            stats_frame, text="Soubory: 0 | Složky: 0 | Odhad: 0s",
+            font=("Segoe UI", 10, "bold"), bg="#ffffff", fg="#2d3748"
         )
-        self.stats_label.pack(side=tk.LEFT, padx=20, pady=6)
+        self.stats_label.pack(side=tk.LEFT, padx=20, pady=8)
 
-        # === SPLIT VIEW: Left 40% (queue + controls), Right 60% (detail) ===
+        # 4) MIDDLE – JEDINÁ ROLLOVATELNÁ OBLAST (paned + treeview)
         paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=self.BG_APP, sashwidth=6)
         paned.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
 
@@ -297,13 +323,9 @@ class PDFCheckUI:
                   font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
                   padx=10, pady=8, cursor="hand2").pack(side=tk.RIGHT)
 
-        # --- Left: Treeview (hierarchical queue: úkoly = složky/soubory, děti = soubory) ---
+        # --- Left: Treeview (styl už nastaven výše: rowheight 35, Segoe UI 10, bílé pozadí) ---
         tk.Label(left_panel, text="Fronta úkolů", font=("Segoe UI", 10, "bold"),
                  bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, pady=(4, 4))
-        tree_style = ttk.Style()
-        tree_style.theme_use("clam")
-        tree_style.configure("Treeview", rowheight=35, fieldbackground="#ffffff", font=("Segoe UI", 9))
-        tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)], foreground=[("selected", "#ffffff")])
         tree_frame = tk.Frame(left_panel, bg=self.BG_WHITE)
         tree_frame.pack(fill=tk.BOTH, expand=True)
         tree_scroll = ttk.Scrollbar(tree_frame)
@@ -364,17 +386,6 @@ class PDFCheckUI:
         self.progress.pack(fill=tk.X, pady=(4, 0))
 
         self.results_text = self.detail_text
-
-        # FOOTER (pevný dole – tlačítka a stav licence se NIKDY nescrollují)
-        bottom_frame = tk.Frame(self.root, bg=self.BG_LIGHT, height=36)
-        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
-        bottom_frame.pack_propagate(False)
-        self.license_status_label = tk.Label(bottom_frame, text="", font=("Segoe UI", 8),
-                                            bg=self.BG_LIGHT, fg=self.TEXT_MUTED)
-        self.license_status_label.pack(side=tk.LEFT, padx=20, pady=8)
-        version_label = tk.Label(bottom_frame, text="Build 42", font=("Segoe UI", 8),
-                                 bg=self.BG_LIGHT, fg=self.TEXT_MUTED)
-        version_label.pack(side=tk.RIGHT, padx=20, pady=8)
 
         # Pro zpětnou kompatibilitu (set_license_display používá logout_btn)
         self.logout_btn = self.logout_btn_header
@@ -471,17 +482,13 @@ class PDFCheckUI:
         self.update_queue_display()
 
     def _update_header_stats(self):
-        """Aktualizuje pevný řádek statistik: Soubory | Složky | Odhadovaný čas (s). Nikdy nescrolluje."""
+        """Aktualizuje stats bar nad treeview (live): Soubory: X | Složky: Y | Odhad: Zs."""
         if not hasattr(self, 'stats_label'):
             return
         n_files = sum(len(t.get('file_paths', [])) for t in self.tasks)
         n_folders = sum(1 for t in self.tasks if t.get('type') == 'folder')
-        if n_files == 0:
-            est_s = "—"
-        else:
-            est_seconds = max(1, n_files * 5)
-            est_s = str(est_seconds)
-        text = f"Soubory: {n_files} | Složky: {n_folders} | Odhadovaný čas: {est_s} s"
+        est_s = str(max(0, n_files * 5)) if n_files else "0"
+        text = f"Soubory: {n_files} | Složky: {n_folders} | Odhad: {est_s}s"
         self.stats_label.config(text=text)
 
     def _show_session_summary(self):
@@ -673,6 +680,12 @@ class PDFCheckUI:
                 self._iid_to_qidx[iid_file] = qidx
                 qidx += 1
             self.queue_tree.item(iid_task, open=True)
+        # Auto-expand ALL nodes (každý uzel s dětmi rozbalen)
+        def _open_all(parent=""):
+            for iid in self.queue_tree.get_children(parent):
+                self.queue_tree.item(iid, open=True)
+                _open_all(iid)
+        _open_all("")
         self._update_header_stats()
 
     def on_check_clicked(self):

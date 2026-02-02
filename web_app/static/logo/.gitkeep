@@ -1,0 +1,2 @@
+# Logo: zkopírujte sem logo.png z kořene projektu:
+#   copy "logo\Návrhy loga pro DokuCheck.png" "web_app\static\logo\logo.png"

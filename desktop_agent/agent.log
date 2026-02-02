@@ -1055,3 +1055,52 @@ _tkinter.TclError: unknown option "-selectbackground"
 2026-02-02 22:49:43,698 - INFO - Odesílám 100 výsledků na server (jeden request)...
 2026-02-02 22:49:47,767 - INFO - Batch úspěšně odeslán: batch_20260202_214934_3c18e057 - Uloženo 100 souborů
 2026-02-02 22:55:47,962 - INFO - Agent ukončen
+2026-02-02 23:19:29,584 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 23:19:29,584 - INFO - Spouštím GUI...
+2026-02-02 23:19:29,879 - INFO - Ověřuji licenci se serverem...
+2026-02-02 23:19:31,223 - INFO - Agent běží
+2026-02-02 23:19:45,993 - INFO - Agent ukončen
+2026-02-02 23:24:13,203 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 23:24:13,204 - INFO - Spouštím GUI...
+2026-02-02 23:24:13,431 - INFO - Ověřuji licenci se serverem...
+2026-02-02 23:24:14,875 - INFO - Agent běží
+2026-02-02 23:24:26,983 - INFO - Přihlášení e-mailem a heslem...
+2026-02-02 23:24:27,906 - INFO - Přihlášeno.
+2026-02-02 23:24:50,443 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\17-044-3_B_STZ_r07_2020.pdf
+2026-02-02 23:24:50,496 - INFO - Analýza dokončena: 17-044-3_B_STZ_r07_2020.pdf
+2026-02-02 23:24:50,496 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-09 Řez A01.pdf
+2026-02-02 23:24:50,509 - INFO - Analýza dokončena: 230208_D1.1-09 Řez A01.pdf
+2026-02-02 23:24:50,509 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-10 Řez A02.pdf
+2026-02-02 23:24:50,524 - INFO - Analýza dokončena: 230208_D1.1-10 Řez A02.pdf
+2026-02-02 23:24:50,524 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-11 Řez A03.pdf
+2026-02-02 23:24:50,535 - INFO - Analýza dokončena: 230208_D1.1-11 Řez A03.pdf
+2026-02-02 23:24:50,536 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-12 Severovýchodní a severozápadní pohled.pdf
+2026-02-02 23:24:50,554 - INFO - Analýza dokončena: 230208_D1.1-12 Severovýchodní a severozápadní pohled.pdf
+2026-02-02 23:24:50,555 - INFO - Odesílám 5 výsledků na server (jeden request)...
+2026-02-02 23:24:51,579 - INFO - Batch úspěšně odeslán: batch_20260202_222440_96b9122e - Uloženo 5 souborů
+2026-02-02 23:25:07,289 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf
+2026-02-02 23:25:07,317 - INFO - Analýza dokončena: 230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf
+2026-02-02 23:25:07,317 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\C2_KATASTRALNI SITUACNI VYKRES_uprava.pdf
+2026-02-02 23:25:07,332 - INFO - Analýza dokončena: C2_KATASTRALNI SITUACNI VYKRES_uprava.pdf
+2026-02-02 23:25:07,332 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\C3_KOORDINACNI SITUACNI VYKRES_C_uprava.pdf
+2026-02-02 23:25:07,351 - INFO - Analýza dokončena: C3_KOORDINACNI SITUACNI VYKRES_C_uprava.pdf
+2026-02-02 23:25:07,351 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\D.1.06 ŘEZ A-A´, B-B´.pdf
+2026-02-02 23:25:07,389 - INFO - Analýza dokončena: D.1.06 ŘEZ A-A´, B-B´.pdf
+2026-02-02 23:25:07,390 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\D.1.07 POHLED JIHOVÝCHODNÍ, SEVEROVÝCHODNÍ.pdf
+2026-02-02 23:25:07,464 - INFO - Analýza dokončena: D.1.07 POHLED JIHOVÝCHODNÍ, SEVEROVÝCHODNÍ.pdf
+2026-02-02 23:25:07,465 - INFO - Odesílám 5 výsledků na server (jeden request)...
+2026-02-02 23:25:08,546 - INFO - Batch úspěšně odeslán: batch_20260202_222457_3bc1d956 - Uloženo 5 souborů
+2026-02-02 23:25:10,980 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\D.1.08 POHLEDY SEVEROZÁPADNÍ, JIHOZÁPADNÍ.pdf
+2026-02-02 23:25:11,076 - INFO - Analýza dokončena: D.1.08 POHLEDY SEVEROZÁPADNÍ, JIHOZÁPADNÍ.pdf
+2026-02-02 23:25:11,076 - INFO - Odesílám 1 výsledků na server (jeden request)...
+2026-02-02 23:25:11,810 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.
+2026-02-02 23:25:26,941 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR/230208_D1.1-11 Řez A03.pdf
+2026-02-02 23:25:26,950 - INFO - Analýza dokončena: 230208_D1.1-11 Řez A03.pdf
+2026-02-02 23:25:26,951 - INFO - Odesílám 1 výsledků na server (jeden request)...
+2026-02-02 23:25:27,661 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.
+2026-02-02 23:27:13,470 - INFO - Přihlášení e-mailem a heslem...
+2026-02-02 23:27:14,420 - INFO - Přihlášeno.
+2026-02-02 23:27:19,532 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR/230208_D1.1-10 Řez A02.pdf
+2026-02-02 23:27:19,544 - INFO - Analýza dokončena: 230208_D1.1-10 Řez A02.pdf
+2026-02-02 23:27:19,544 - INFO - Odesílám 1 výsledků na server (jeden request)...
+2026-02-02 23:27:20,255 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.

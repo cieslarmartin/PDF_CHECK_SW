@@ -1,0 +1,29 @@
+---
+description: Pracovní postup, technický kontext a marketingová identita DokuCheck
+alwaysApply: true
+---
+
+# DokuCheck – Workflow a kontext
+
+## 1. Pracovní postup (na konci každého úkolu)
+
+- Vypiš **seznam změněných souborů**.
+- Zeptej se: **„Chcete tyto změny nyní nahrát na GitHub? [Ano/Ne]“**.
+- Po **„Ano“** spusť: `git add .` → `git commit -m "vhodná zpráva"` → `git push origin main` a potvrď výsledek.
+
+## 2. Technický kontext
+
+- **Server:** PythonAnywhere, venv opraveno na Python 3.10.
+- **Databáze:** SQLite s tabulkou `license_tiers`.
+- **Login:** Anonymní „Vyzkoušet zdarma“ přes Machine-ID (demo_trial@dokucheck.app).
+- **UI (Agent):** Připraveno na redesign – 1000×700, fixní header/footer, moderní Treeview (rowheight 35, Segoe UI 10), Auto-Expand, stats bar „Soubory | Složky | Odhad“.
+
+## 3. Marketingová identita
+
+- **Produkt:** DokuCheck (případně Projektový Strážce).
+- **Cílová skupina:** Projektanti a architekti (Portál stavebníka).
+- **Jazyk:** Všechny texty v aplikaci i v Admin Dashboardu musí být v **češtině**.
+
+## 4. Efektivita
+
+- Související změny provádět v rámci jednoho „Editu“, šetřit Fast Requests.
