@@ -18,10 +18,11 @@
 <body class="d-flex">
     <aside class="sidebar">
         <div class="px-3 pb-2 text-white fw-bold"><span class="text-primary">PDF</span> DokuCheck</div>
-        <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('admin.tiers') }}" class="active">Tier definice</a>
-        <a href="{{ url_for('admin.logs') }}">Logs</a>
-        <a href="{{ url_for('admin.settings') }}">Global Config</a>
+        <a href="{{ url_for('admin.dashboard') }}">📊 Nástěnka</a>
+        <a href="{{ url_for('admin.tiers') }}" class="active">📋 Tier definice</a>
+        <a href="{{ url_for('admin.trial') }}">🧪 Trial správa</a>
+        <a href="{{ url_for('admin.logs') }}">📜 Logy</a>
+        <a href="{{ url_for('admin.settings') }}">⚙️ Nastavení</a>
         <div class="mt-auto px-3 pt-3 border-top border-secondary"><small>{{ user.email }}</small><br><a href="{{ url_for('admin.logout') }}" class="text-danger small">Odhlásit</a></div>
     </aside>
     <main class="main">

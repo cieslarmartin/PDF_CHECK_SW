@@ -219,6 +219,13 @@ class LicenseManager:
                 return True, msg, batch_id, data
             elif response.status_code == 401:
                 return False, "Neplatný API klíč", None, None
+            elif response.status_code == 403:
+                try:
+                    data = response.json()
+                    err = data.get('error') or data.get('message') or "Přístup odepřen"
+                    return False, err, None, None
+                except Exception:
+                    return False, "Zkušební limit vyčerpán. Zakupte si prosím licenci.", None, None
             elif response.status_code == 413:
                 return False, "Data jsou příliš velká", None, None
             else:

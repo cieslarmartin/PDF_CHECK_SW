@@ -216,6 +216,55 @@ class Database:
             )
         ''')
 
+        # Trial usage: celkový počet souborů zpracovaných na zařízení (Machine-ID) v režimu Trial
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS trial_usage (
+                machine_id TEXT PRIMARY KEY,
+                total_files INTEGER NOT NULL DEFAULT 0,
+                last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_trial_usage_last_seen ON trial_usage(last_seen)')
+
+        # Historie fakturace (pro uživatele)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS billing_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                api_key TEXT NOT NULL,
+                description TEXT,
+                amount_cents INTEGER,
+                paid_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (api_key) REFERENCES api_keys(api_key)
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_billing_api_key ON billing_history(api_key)')
+
+        # Systémové logy (chyby serveru, starty aplikací)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS admin_system_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                level TEXT NOT NULL,
+                message TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                user_id TEXT
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON admin_system_logs(timestamp)')
+
+        # Platební logy (změny tarifů, platby)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS payment_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                details TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES api_keys(api_key)
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_payment_logs_user ON payment_logs(user_id)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -241,6 +290,8 @@ class Database:
             'allow_signatures': 'BOOLEAN DEFAULT 1',
             'allow_timestamp': 'BOOLEAN DEFAULT 1',
             'allow_excel_export': 'BOOLEAN DEFAULT 1',
+            'payment_method': 'TEXT',  # Karta, Převod
+            'last_payment_date': 'TIMESTAMP',
         }
 
         for col_name, col_type in new_columns.items():
@@ -841,6 +892,67 @@ class Database:
         result['active_devices'] = self.count_active_devices(api_key)
 
         return result
+
+    # =========================================================================
+    # TRIAL USAGE (Machine-ID binding, hard limit)
+    # =========================================================================
+
+    TRIAL_LIMIT_TOTAL_FILES = 10  # Celkový počet souborů na jedno zařízení v Trial režimu
+
+    def get_trial_usage(self, machine_id):
+        """Vrátí { total_files, last_seen } pro dané machine_id, nebo None."""
+        if not machine_id or not str(machine_id).strip():
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT total_files, last_seen FROM trial_usage WHERE machine_id = ?',
+            (str(machine_id).strip(),)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else {'total_files': 0, 'last_seen': None}
+
+    def increment_trial_usage(self, machine_id, count=1):
+        """Zvýší total_files pro machine_id a aktualizuje last_seen."""
+        if not machine_id or not str(machine_id).strip() or count < 1:
+            return
+        mid = str(machine_id).strip()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        now = datetime.now().isoformat()
+        cursor.execute('''
+            INSERT INTO trial_usage (machine_id, total_files, last_seen)
+            VALUES (?, ?, ?)
+            ON CONFLICT(machine_id) DO UPDATE SET
+                total_files = total_files + ?,
+                last_seen = ?
+        ''', (mid, count, now, count, now))
+        conn.commit()
+        conn.close()
+
+    def reset_trial_usage(self, machine_id):
+        """Vynuluje počítadlo Trial pro dané machine_id."""
+        if not machine_id or not str(machine_id).strip():
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM trial_usage WHERE machine_id = ?', (str(machine_id).strip(),))
+        conn.commit()
+        deleted = cursor.rowcount
+        conn.close()
+        return deleted > 0
+
+    def list_trial_usage(self):
+        """Vrátí seznam všech Trial použití: [ { machine_id, total_files, last_seen }, ... ]."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT machine_id, total_files, last_seen FROM trial_usage ORDER BY last_seen DESC'
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
 
     def update_license_tier(self, api_key, new_tier, license_days=None):
         """Aktualizuje licenční tier pro uživatele"""
@@ -1566,33 +1678,43 @@ class Database:
     # USER LOGS (pro Admin Logs stránku a User Audit)
     # =========================================================================
 
-    def get_user_logs(self, user_id=None, limit=500, offset=0, search=None):
-        """Vrátí záznamy z user_logs. user_id = api_key (volitelné). search = filtr na action_type nebo user_id."""
+    def get_user_logs(self, user_id=None, limit=500, offset=0, search=None, date_from=None, date_to=None):
+        """Vrátí záznamy z user_logs. user_id = api_key (volitelné). search = filtr. date_from/date_to = YYYY-MM-DD."""
         conn = self.get_connection()
         cursor = conn.cursor()
+        sql_extra = []
+        params_extra = []
+        if date_from:
+            sql_extra.append('DATE(timestamp) >= ?')
+            params_extra.append(date_from)
+        if date_to:
+            sql_extra.append('DATE(timestamp) <= ?')
+            params_extra.append(date_to)
+        where_extra = (' AND ' + ' AND '.join(sql_extra)) if sql_extra else ''
         if user_id:
             if search:
                 cursor.execute('''
                     SELECT * FROM user_logs
-                    WHERE user_id = ? AND (action_type LIKE ? OR status LIKE ? OR ip_address LIKE ?)
+                    WHERE user_id = ? AND (action_type LIKE ? OR status LIKE ? OR ip_address LIKE ?)''' + where_extra + '''
                     ORDER BY timestamp DESC LIMIT ? OFFSET ?
-                ''', (user_id, f'%{search}%', f'%{search}%', f'%{search}%', limit, offset))
+                ''', (user_id, f'%{search}%', f'%{search}%', f'%{search}%', *params_extra, limit, offset))
             else:
                 cursor.execute('''
-                    SELECT * FROM user_logs WHERE user_id = ?
+                    SELECT * FROM user_logs WHERE user_id = ?''' + where_extra + '''
                     ORDER BY timestamp DESC LIMIT ? OFFSET ?
-                ''', (user_id, limit, offset))
+                ''', (user_id, *params_extra, limit, offset))
         else:
             if search:
                 cursor.execute('''
                     SELECT * FROM user_logs
-                    WHERE action_type LIKE ? OR user_id LIKE ? OR status LIKE ? OR ip_address LIKE ?
+                    WHERE (action_type LIKE ? OR user_id LIKE ? OR status LIKE ? OR ip_address LIKE ?)''' + where_extra + '''
                     ORDER BY timestamp DESC LIMIT ? OFFSET ?
-                ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%', limit, offset))
+                ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%', *params_extra, limit, offset))
             else:
                 cursor.execute('''
-                    SELECT * FROM user_logs ORDER BY timestamp DESC LIMIT ? OFFSET ?
-                ''', (limit, offset))
+                    SELECT * FROM user_logs WHERE 1=1''' + where_extra + '''
+                    ORDER BY timestamp DESC LIMIT ? OFFSET ?
+                ''', (*params_extra, limit, offset))
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
@@ -1611,6 +1733,233 @@ class Database:
         rows = [{'date': row['d'], 'files': row['total'] or 0} for row in cursor.fetchall()]
         conn.close()
         return rows
+
+    def get_activity_for_period(self, date_from=None, date_to=None):
+        """Počet kontrol (souborů) za období. date_from/date_to ve formátu YYYY-MM-DD."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        sql = '''
+            SELECT DATE(timestamp) AS d, SUM(file_count) AS total
+            FROM user_logs
+            WHERE action_type = 'batch_upload'
+        '''
+        params = []
+        if date_from:
+            sql += ' AND DATE(timestamp) >= ?'
+            params.append(date_from)
+        if date_to:
+            sql += ' AND DATE(timestamp) <= ?'
+            params.append(date_to)
+        sql += ' GROUP BY DATE(timestamp) ORDER BY d'
+        cursor.execute(sql, params)
+        rows = [{'date': row['d'], 'files': row['total'] or 0} for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_user_activity_ranking(self, limit=10):
+        """Nejaktivnější uživatelé (součet file_count z user_logs). Vrací [{user_id, email, total_files}, ...]."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT ul.user_id, SUM(ul.file_count) AS total
+            FROM user_logs ul
+            WHERE ul.action_type = 'batch_upload' AND ul.timestamp >= DATE('now', '-30 days')
+            GROUP BY ul.user_id
+            ORDER BY total DESC
+            LIMIT ?
+        ''', (limit,))
+        rows = cursor.fetchall()
+        result = []
+        for row in rows:
+            cursor.execute('SELECT email, user_name FROM api_keys WHERE api_key = ?', (row['user_id'],))
+            ak = cursor.fetchone()
+            result.append({
+                'user_id': row['user_id'],
+                'email': ak['email'] if ak else row['user_id'][:20],
+                'user_name': ak['user_name'] if ak else None,
+                'total_files': row['total'] or 0,
+            })
+        conn.close()
+        return result
+
+    def get_trial_stats(self):
+        """Statistiky Trialu: počet unikátních Machine-ID, celkem souborů, seznam (pro graf)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) AS cnt FROM trial_usage')
+        unique_machines = cursor.fetchone()['cnt']
+        cursor.execute('SELECT COALESCE(SUM(total_files), 0) AS total FROM trial_usage')
+        total_files = cursor.fetchone()['total']
+        cursor.execute('SELECT machine_id, total_files, last_seen FROM trial_usage ORDER BY total_files DESC LIMIT 20')
+        top = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return {'unique_machines': unique_machines, 'total_files': total_files, 'top': top}
+
+    def get_dashboard_kpis(self):
+        """KPI: celkový obrat (simulovaný), aktivní licence Free vs Paid, chybovost (úspěšné vs neúspěšné)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) AS c FROM api_keys WHERE is_active = 1')
+        active_total = cursor.fetchone()['c']
+        try:
+            cursor.execute('''
+                SELECT COUNT(*) AS c FROM api_keys ak
+                LEFT JOIN license_tiers lt ON ak.tier_id = lt.id
+                WHERE ak.is_active = 1 AND (
+                    UPPER(TRIM(COALESCE(lt.name, ''))) IN ('FREE', 'TRIAL') OR
+                    (ak.tier_id IS NULL AND COALESCE(ak.license_tier, 0) = 0)
+                )
+            ''')
+            free_count = cursor.fetchone()['c']
+        except Exception:
+            free_count = active_total
+        paid_count = max(0, active_total - free_count)
+        cursor.execute('SELECT COUNT(*) AS ok FROM check_results WHERE has_errors = 0')
+        ok_count = cursor.fetchone()['ok']
+        cursor.execute('SELECT COUNT(*) AS err FROM check_results WHERE has_errors = 1')
+        err_count = cursor.fetchone()['err']
+        total_checks = ok_count + err_count
+        error_rate = (err_count / total_checks * 100) if total_checks else 0
+        conn.close()
+        return {
+            'turnover': 0,  # zatím fixní/simulovaný
+            'active_licenses': active_total,
+            'free_licenses': free_count,
+            'paid_licenses': paid_count,
+            'total_checks': total_checks,
+            'success_checks': ok_count,
+            'error_checks': err_count,
+            'error_rate_percent': round(error_rate, 1),
+        }
+
+    def get_logs_filtered(self, category='user', user_id=None, date_from=None, date_to=None, level=None, limit=200, offset=0):
+        """Logy podle kategorie: system, user, payment. level jen pro system."""
+        if category == 'system':
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            sql = 'SELECT * FROM admin_system_logs WHERE 1=1'
+            params = []
+            if level:
+                sql += ' AND level = ?'
+                params.append(level)
+            if date_from:
+                sql += ' AND DATE(timestamp) >= ?'
+                params.append(date_from)
+            if date_to:
+                sql += ' AND DATE(timestamp) <= ?'
+                params.append(date_to)
+            if user_id:
+                sql += ' AND user_id = ?'
+                params.append(user_id)
+            sql += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?'
+            params.extend([limit, offset])
+            cursor.execute(sql, params)
+            rows = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            return rows
+        if category == 'payment':
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            sql = 'SELECT * FROM payment_logs WHERE 1=1'
+            params = []
+            if user_id:
+                sql += ' AND user_id = ?'
+                params.append(user_id)
+            if date_from:
+                sql += ' AND DATE(timestamp) >= ?'
+                params.append(date_from)
+            if date_to:
+                sql += ' AND DATE(timestamp) <= ?'
+                params.append(date_to)
+            sql += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?'
+            params.extend([limit, offset])
+            cursor.execute(sql, params)
+            rows = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            return rows
+        # user
+        return self.get_user_logs(user_id=user_id, limit=limit, offset=offset, search=None, date_from=date_from, date_to=date_to)
+
+    def insert_system_log(self, level, message, user_id=None):
+        """Zápis do systémových logů."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO admin_system_logs (level, message, user_id) VALUES (?, ?, ?)',
+            (level, message, user_id)
+        )
+        conn.commit()
+        conn.close()
+
+    def insert_payment_log(self, user_id, action, details=None):
+        """Zápis do platebních logů (změna tieru, platba)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO payment_logs (user_id, action, details) VALUES (?, ?, ?)',
+            (user_id, action, details)
+        )
+        conn.commit()
+        conn.close()
+
+    def get_billing_history(self, api_key, limit=50):
+        """Historie fakturace pro uživatele."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT * FROM billing_history WHERE api_key = ? ORDER BY created_at DESC LIMIT ?',
+            (api_key, limit)
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def add_billing_record(self, api_key, description=None, amount_cents=None, paid_at=None):
+        """Přidá záznam do historie fakturace."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO billing_history (api_key, description, amount_cents, paid_at) VALUES (?, ?, ?, ?)',
+            (api_key, description, amount_cents, paid_at)
+        )
+        conn.commit()
+        conn.close()
+
+    def admin_update_user_full(self, api_key, user_name=None, email=None, license_expires=None,
+                                is_active=None, payment_method=None, last_payment_date=None):
+        """Rozšířená aktualizace uživatele: jméno, email, expirace, status, platební údaje."""
+        if not api_key or not str(api_key).strip():
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        updates, values = [], []
+        if user_name is not None:
+            updates.append('user_name = ?')
+            values.append(user_name)
+        if email is not None:
+            updates.append('email = ?')
+            values.append(email)
+        if license_expires is not None:
+            updates.append('license_expires = ?')
+            values.append(license_expires)
+        if is_active is not None:
+            updates.append('is_active = ?')
+            values.append(1 if is_active else 0)
+        if payment_method is not None:
+            updates.append('payment_method = ?')
+            values.append(payment_method)
+        if last_payment_date is not None:
+            updates.append('last_payment_date = ?')
+            values.append(last_payment_date)
+        if not updates:
+            conn.close()
+            return True
+        values.append(api_key.strip())
+        cursor.execute(f'UPDATE api_keys SET {", ".join(updates)} WHERE api_key = ?', values)
+        ok = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return ok
 
     def get_user_last_active(self, api_key):
         """Vrátí čas poslední aktivity uživatele (max timestamp z user_logs) nebo None."""

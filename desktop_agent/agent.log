@@ -526,3 +526,532 @@
 2026-02-02 21:45:10,821 - INFO - Spouštím GUI...
 2026-02-02 21:45:11,298 - INFO - První spuštění – licence není aktivována
 2026-02-02 21:45:11,298 - INFO - Agent běží
+2026-02-02 22:37:20,880 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 22:37:20,880 - INFO - Spouštím GUI...
+2026-02-02 22:37:21,042 - ERROR - Kritická chyba: unknown option "-selectbackground"
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 391, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 337, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 994, in create_app
+    app = PDFCheckUI(
+          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 175, in __init__
+    self.create_widgets()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 294, in create_widgets
+    self.queue_tree.configure(selectbackground=self.ACCENT_BTN)
+  File "C:\Users\cieslar\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1722, in configure
+    return self._configure('configure', cnf, kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cieslar\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1712, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+_tkinter.TclError: unknown option "-selectbackground"
+2026-02-02 22:37:35,476 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 22:37:35,476 - INFO - Spouštím GUI...
+2026-02-02 22:37:35,607 - ERROR - Kritická chyba: unknown option "-selectbackground"
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 391, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 337, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 994, in create_app
+    app = PDFCheckUI(
+          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 175, in __init__
+    self.create_widgets()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 294, in create_widgets
+    self.queue_tree.configure(selectbackground=self.ACCENT_BTN)
+  File "C:\Users\cieslar\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1722, in configure
+    return self._configure('configure', cnf, kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cieslar\AppData\Local\Programs\Python\Python312\Lib\tkinter\__init__.py", line 1712, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+_tkinter.TclError: unknown option "-selectbackground"
+2026-02-02 22:44:06,632 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-02 22:44:06,633 - INFO - Spouštím GUI...
+2026-02-02 22:44:06,846 - INFO - První spuštění – licence není aktivována
+2026-02-02 22:44:06,847 - INFO - Agent běží
+2026-02-02 22:44:12,093 - INFO - Přihlášení e-mailem a heslem...
+2026-02-02 22:44:13,174 - INFO - Přihlášeno.
+2026-02-02 22:44:58,139 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ/01.1.51-VYT/01.51_PDF/4_01.1.51-03_Pud1.NP_sign.pdf
+2026-02-02 22:44:58,208 - INFO - Analýza dokončena: 4_01.1.51-03_Pud1.NP_sign.pdf
+2026-02-02 22:44:58,208 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-01 TZ.pdf
+2026-02-02 22:44:58,280 - INFO - Analýza dokončena: 4_01.1.10-01 TZ.pdf
+2026-02-02 22:44:58,280 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-02 Půdorys 1.PP - bourací práce_R02.pdf
+2026-02-02 22:44:58,351 - INFO - Analýza dokončena: 4_01.1.10-02 Půdorys 1.PP - bourací práce_R02.pdf
+2026-02-02 22:44:58,351 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-02a Půdorys 1.PP - nový stav_R02.pdf
+2026-02-02 22:44:58,426 - INFO - Analýza dokončena: 4_01.1.10-02a Půdorys 1.PP - nový stav_R02.pdf
+2026-02-02 22:44:58,427 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-03 Půdorys 1.NP - bourací práce_R02.pdf
+2026-02-02 22:44:58,497 - INFO - Analýza dokončena: 4_01.1.10-03 Půdorys 1.NP - bourací práce_R02.pdf
+2026-02-02 22:44:58,497 - INFO - Odesílám 5 výsledků na server (jeden request)...
+2026-02-02 22:44:59,426 - INFO - Batch úspěšně odeslán: batch_20260202_214448_ac12f7f7 - Uloženo 5 souborů
+2026-02-02 22:45:19,933 - INFO - Přihlášení e-mailem a heslem...
+2026-02-02 22:45:20,904 - INFO - Přihlášeno.
+2026-02-02 22:45:29,824 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-00_TL_sez.pdf
+2026-02-02 22:45:29,858 - INFO - Analýza dokončena: 4_IO.01-00_TL_sez.pdf
+2026-02-02 22:45:29,859 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-01_TZ.pdf
+2026-02-02 22:45:29,910 - INFO - Analýza dokončena: 4_IO.01-01_TZ.pdf
+2026-02-02 22:45:29,911 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-02_Sit.pdf
+2026-02-02 22:45:29,950 - INFO - Analýza dokončena: 4_IO.01-02_Sit.pdf
+2026-02-02 22:45:29,951 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-03_Sit_HT.pdf
+2026-02-02 22:45:29,987 - INFO - Analýza dokončena: 4_IO.01-03_Sit_HT.pdf
+2026-02-02 22:45:29,992 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-04_PP_ulo.pdf
+2026-02-02 22:45:30,022 - INFO - Analýza dokončena: 4_IO.01-04_PP_ulo.pdf
+2026-02-02 22:45:30,023 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-05_vzorové objekty.pdf
+2026-02-02 22:45:30,099 - INFO - Analýza dokončena: 4_IO.01-05_vzorové objekty.pdf
+2026-02-02 22:45:30,126 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-02.1_Pripojky kanalizace MZ\PDF\4_IO02.1-00_TL.pdf
+2026-02-02 22:45:30,147 - INFO - Analýza dokončena: 4_IO02.1-00_TL.pdf
+2026-02-02 22:45:30,160 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-02.1_Pripojky kanalizace MZ\PDF\4_IO02.1-01_TZ.pdf
+2026-02-02 22:45:30,186 - INFO - Analýza dokončena: 4_IO02.1-01_TZ.pdf
+2026-02-02 22:45:30,187 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-02.1_Pripojky kanalizace MZ\PDF\4_IO02.1-02_Sit.pdf
+2026-02-02 22:45:30,224 - INFO - Analýza dokončena: 4_IO02.1-02_Sit.pdf
+2026-02-02 22:45:30,226 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-02.1_Pripojky kanalizace MZ\PDF\4_IO02.1-03_pp(ULO).pdf
+2026-02-02 22:45:30,252 - INFO - Analýza dokončena: 4_IO02.1-03_pp(ULO).pdf
+2026-02-02 22:45:30,255 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-03.1_Pripojka vodovodu_MZ\PDF\4_IO03.1-00_tl_sez.pdf
+2026-02-02 22:45:30,276 - INFO - Analýza dokončena: 4_IO03.1-00_tl_sez.pdf
+2026-02-02 22:45:30,289 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-03.1_Pripojka vodovodu_MZ\PDF\4_IO03.1-01_TZ.pdf
+2026-02-02 22:45:30,320 - INFO - Analýza dokončena: 4_IO03.1-01_TZ.pdf
+2026-02-02 22:45:30,320 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-03.1_Pripojka vodovodu_MZ\PDF\4_IO03.1-02_Sit.pdf
+2026-02-02 22:45:30,349 - INFO - Analýza dokončena: 4_IO03.1-02_Sit.pdf
+2026-02-02 22:45:30,350 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_01_TZ.pdf
+2026-02-02 22:45:30,359 - INFO - Analýza dokončena: 4_02_IO05_01_TZ.pdf
+2026-02-02 22:45:30,359 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_02_Trubni_situace.pdf
+2026-02-02 22:45:30,365 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace.pdf
+2026-02-02 22:45:30,366 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_03_Podelne_profily.pdf
+2026-02-02 22:45:30,370 - INFO - Analýza dokončena: 4_02_IO05_03_Podelne_profily.pdf
+2026-02-02 22:45:30,370 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_04_Ukonceni_pripojky.pdf
+2026-02-02 22:45:30,375 - INFO - Analýza dokončena: 4_02_IO05_04_Ukonceni_pripojky.pdf
+2026-02-02 22:45:30,376 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_Seznam.pdf
+2026-02-02 22:45:30,384 - INFO - Analýza dokončena: 4_02_IO05_Seznam.pdf
+2026-02-02 22:45:30,384 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-05_Teplovod\PDFAutorizovane\4_02_IO05_Titul.pdf
+2026-02-02 22:45:30,392 - INFO - Analýza dokončena: 4_02_IO05_Titul.pdf
+2026-02-02 22:45:30,397 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-08_Datová_přípojka\IO08-01_TZ_SLB.pdf
+2026-02-02 22:45:30,419 - INFO - Analýza dokončena: IO08-01_TZ_SLB.pdf
+2026-02-02 22:45:30,487 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-08_Datová_přípojka\IO08-01_TZ_SLB_sign.pdf
+2026-02-02 22:45:30,523 - INFO - Analýza dokončena: IO08-01_TZ_SLB_sign.pdf
+2026-02-02 22:45:30,523 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-01 TZ.pdf
+2026-02-02 22:45:30,590 - INFO - Analýza dokončena: 4_01.1.10-01 TZ.pdf
+2026-02-02 22:45:30,591 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-02 Půdorys 1.PP - bourací práce_R02.pdf
+2026-02-02 22:45:30,662 - INFO - Analýza dokončena: 4_01.1.10-02 Půdorys 1.PP - bourací práce_R02.pdf
+2026-02-02 22:45:30,663 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-02a Půdorys 1.PP - nový stav_R02.pdf
+2026-02-02 22:45:30,733 - INFO - Analýza dokončena: 4_01.1.10-02a Půdorys 1.PP - nový stav_R02.pdf
+2026-02-02 22:45:30,734 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-03 Půdorys 1.NP - bourací práce_R02.pdf
+2026-02-02 22:45:30,803 - INFO - Analýza dokončena: 4_01.1.10-03 Půdorys 1.NP - bourací práce_R02.pdf
+2026-02-02 22:45:30,803 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-03a Půdorys 1.NP - nový stav_R02.pdf
+2026-02-02 22:45:30,875 - INFO - Analýza dokončena: 4_01.1.10-03a Půdorys 1.NP - nový stav_R02.pdf
+2026-02-02 22:45:30,875 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-04 Půdorys 2.NP - bourací práce_R02.pdf
+2026-02-02 22:45:30,946 - INFO - Analýza dokončena: 4_01.1.10-04 Půdorys 2.NP - bourací práce_R02.pdf
+2026-02-02 22:45:30,947 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-04a Půdorys 2.N - nový stav_R02.pdf
+2026-02-02 22:45:31,020 - INFO - Analýza dokončena: 4_01.1.10-04a Půdorys 2.N - nový stav_R02.pdf
+2026-02-02 22:45:31,034 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-05 Půdorys 3.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,106 - INFO - Analýza dokončena: 4_01.1.10-05 Půdorys 3.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,107 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-05a Půdorys 3.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,177 - INFO - Analýza dokončena: 4_01.1.10-05a Půdorys 3.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,177 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-06 Půdorys 4.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,251 - INFO - Analýza dokončena: 4_01.1.10-06 Půdorys 4.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,270 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-06a Půdorys 4.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,342 - INFO - Analýza dokončena: 4_01.1.10-06a Půdorys 4.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,365 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-07 Půdorys 5.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,437 - INFO - Analýza dokončena: 4_01.1.10-07 Půdorys 5.NP - bourací práce_R02.pdf
+2026-02-02 22:45:31,438 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-07a Půdorys 5.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,507 - INFO - Analýza dokončena: 4_01.1.10-07a Půdorys 5.NP - nový stav_R02.pdf
+2026-02-02 22:45:31,524 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-08 Půdorys střecha - bourací práce_R02.pdf
+2026-02-02 22:45:31,593 - INFO - Analýza dokončena: 4_01.1.10-08 Půdorys střecha - bourací práce_R02.pdf
+2026-02-02 22:45:31,614 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-08a Půdorys střecha - nový stav_R02.pdf
+2026-02-02 22:45:31,684 - INFO - Analýza dokončena: 4_01.1.10-08a Půdorys střecha - nový stav_R02.pdf
+2026-02-02 22:45:31,784 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-09 Řezy - bourací práce_R02.pdf
+2026-02-02 22:45:31,857 - INFO - Analýza dokončena: 4_01.1.10-09 Řezy - bourací práce_R02.pdf
+2026-02-02 22:45:31,947 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-10 Řez A1 - nový stav_R02.pdf
+2026-02-02 22:45:32,022 - INFO - Analýza dokončena: 4_01.1.10-10 Řez A1 - nový stav_R02.pdf
+2026-02-02 22:45:32,022 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-11 Řez A2 - nový stav_R02.pdf
+2026-02-02 22:45:32,093 - INFO - Analýza dokončena: 4_01.1.10-11 Řez A2 - nový stav_R02.pdf
+2026-02-02 22:45:32,115 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-12 Řez A3 - nový stav_R02.pdf
+2026-02-02 22:45:32,184 - INFO - Analýza dokončena: 4_01.1.10-12 Řez A3 - nový stav_R02.pdf
+2026-02-02 22:45:32,193 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-13 Řez A4 - nový stav_R02.pdf
+2026-02-02 22:45:32,266 - INFO - Analýza dokončena: 4_01.1.10-13 Řez A4 - nový stav_R02.pdf
+2026-02-02 22:45:32,266 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-14 Pohled severní - bourací práce_R02.pdf
+2026-02-02 22:45:32,336 - INFO - Analýza dokončena: 4_01.1.10-14 Pohled severní - bourací práce_R02.pdf
+2026-02-02 22:45:32,350 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-15 Pohled jižní - bourací práce_R02.pdf
+2026-02-02 22:45:32,422 - INFO - Analýza dokončena: 4_01.1.10-15 Pohled jižní - bourací práce_R02.pdf
+2026-02-02 22:45:32,467 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-16 Pohled západní - bourací práce_R02.pdf
+2026-02-02 22:45:32,539 - INFO - Analýza dokončena: 4_01.1.10-16 Pohled západní - bourací práce_R02.pdf
+2026-02-02 22:45:32,539 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-17 Pohled severní - nový stav_R02.pdf
+2026-02-02 22:45:32,609 - INFO - Analýza dokončena: 4_01.1.10-17 Pohled severní - nový stav_R02.pdf
+2026-02-02 22:45:32,646 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-18 Pohled jižní - nový stav_R02.pdf
+2026-02-02 22:45:32,717 - INFO - Analýza dokončena: 4_01.1.10-18 Pohled jižní - nový stav_R02.pdf
+2026-02-02 22:45:32,752 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.10-ASR\01.10_PDF_autorizace\4_01.1.10-19 Pohled západní - nový stav_R02.pdf
+2026-02-02 22:45:32,823 - INFO - Analýza dokončena: 4_01.1.10-19 Pohled západní - nový stav_R02.pdf
+2026-02-02 22:45:32,829 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-01_Technická_Zpráva_sign.pdf
+2026-02-02 22:45:32,849 - INFO - Analýza dokončena: 4_01.1.40-01_Technická_Zpráva_sign.pdf
+2026-02-02 22:45:32,853 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-02 půdorys 1.PP - Vodovod_sign.pdf
+2026-02-02 22:45:32,905 - INFO - Analýza dokončena: 4_01.1.40-02 půdorys 1.PP - Vodovod_sign.pdf
+2026-02-02 22:45:32,907 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,016 - INFO - Analýza dokončena: 4_01.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,097 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-04 půdorys 2.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,140 - INFO - Analýza dokončena: 4_01.1.40-04 půdorys 2.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,144 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-05 půdorys 3.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,190 - INFO - Analýza dokončena: 4_01.1.40-05 půdorys 3.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,191 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-06 půdorys 4.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,244 - INFO - Analýza dokončena: 4_01.1.40-06 půdorys 4.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,244 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-07 půdorys 5.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,287 - INFO - Analýza dokončena: 4_01.1.40-07 půdorys 5.NP - Vodovod_sign.pdf
+2026-02-02 22:45:33,291 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-08 půdorys základů - Kanalizace_sign.pdf
+2026-02-02 22:45:33,331 - INFO - Analýza dokončena: 4_01.1.40-08 půdorys základů - Kanalizace_sign.pdf
+2026-02-02 22:45:33,332 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-09 půdorys 1.PP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,384 - INFO - Analýza dokončena: 4_01.1.40-09 půdorys 1.PP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,388 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-10 půdorys 1.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,432 - INFO - Analýza dokončena: 4_01.1.40-10 půdorys 1.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,460 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-11 půdorys 2.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,503 - INFO - Analýza dokončena: 4_01.1.40-11 půdorys 2.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,503 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-12 půdorys 3.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,549 - INFO - Analýza dokončena: 4_01.1.40-12 půdorys 3.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,549 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-13 půdorys 4.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,603 - INFO - Analýza dokončena: 4_01.1.40-13 půdorys 4.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,604 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\4_01.1.40-14 půdorys 5.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,647 - INFO - Analýza dokončena: 4_01.1.40-14 půdorys 5.NP - Kanalizace_sign.pdf
+2026-02-02 22:45:33,647 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.40-ZTI\01.40_PDF\Seznam dokumentace_ZTI MZ (A4).pdf
+2026-02-02 22:45:33,658 - INFO - Analýza dokončena: Seznam dokumentace_ZTI MZ (A4).pdf
+2026-02-02 22:45:33,658 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-01_TZ_sign.pdf
+2026-02-02 22:45:33,697 - INFO - Analýza dokončena: 4_01.1.50-01_TZ_sign.pdf
+2026-02-02 22:45:33,757 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-02_Pud_1.PP_sign.pdf
+2026-02-02 22:45:33,805 - INFO - Analýza dokončena: 4_01.1.50-02_Pud_1.PP_sign.pdf
+2026-02-02 22:45:33,867 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-03_Pud_1.NP_sign.pdf
+2026-02-02 22:45:33,911 - INFO - Analýza dokončena: 4_01.1.50-03_Pud_1.NP_sign.pdf
+2026-02-02 22:45:33,937 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-04_Pud_2.NP_sign.pdf
+2026-02-02 22:45:33,987 - INFO - Analýza dokončena: 4_01.1.50-04_Pud_2.NP_sign.pdf
+2026-02-02 22:45:33,988 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-05_Pud_3.NP_sign.pdf
+2026-02-02 22:45:34,031 - INFO - Analýza dokončena: 4_01.1.50-05_Pud_3.NP_sign.pdf
+2026-02-02 22:45:34,031 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-06_Pud_4.NP_sign.pdf
+2026-02-02 22:45:34,076 - INFO - Analýza dokončena: 4_01.1.50-06_Pud_4.NP_sign.pdf
+2026-02-02 22:45:34,077 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-07_Pud_5.NP_sign.pdf
+2026-02-02 22:45:34,120 - INFO - Analýza dokončena: 4_01.1.50-07_Pud_5.NP_sign.pdf
+2026-02-02 22:45:34,120 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\4_01.1.50-08_Pud_6.NP_sign.pdf
+2026-02-02 22:45:34,161 - INFO - Analýza dokončena: 4_01.1.50-08_Pud_6.NP_sign.pdf
+2026-02-02 22:45:34,162 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.50-VZT\01.50_PDF\Seznam dokumentace_VZT MZ (A4).pdf
+2026-02-02 22:45:34,172 - INFO - Analýza dokončena: Seznam dokumentace_VZT MZ (A4).pdf
+2026-02-02 22:45:34,172 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-00_Seznam dokumentace_VYT MZ (A4).pdf
+2026-02-02 22:45:34,183 - INFO - Analýza dokončena: 4_01.1.51-00_Seznam dokumentace_VYT MZ (A4).pdf
+2026-02-02 22:45:34,183 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-01_TZ_sign.pdf
+2026-02-02 22:45:34,233 - INFO - Analýza dokončena: 4_01.1.51-01_TZ_sign.pdf
+2026-02-02 22:45:34,233 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-02_Pud1.PP_sign.pdf
+2026-02-02 22:45:34,287 - INFO - Analýza dokončena: 4_01.1.51-02_Pud1.PP_sign.pdf
+2026-02-02 22:45:34,288 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-03_Pud1.NP_sign.pdf
+2026-02-02 22:45:34,340 - INFO - Analýza dokončena: 4_01.1.51-03_Pud1.NP_sign.pdf
+2026-02-02 22:45:34,340 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-04_Pud2.NP_sign.pdf
+2026-02-02 22:45:34,392 - INFO - Analýza dokončena: 4_01.1.51-04_Pud2.NP_sign.pdf
+2026-02-02 22:45:34,392 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-05_Pud3.NP_sign.pdf
+2026-02-02 22:45:34,443 - INFO - Analýza dokončena: 4_01.1.51-05_Pud3.NP_sign.pdf
+2026-02-02 22:45:34,444 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-06_Pud4.NP_sign.pdf
+2026-02-02 22:45:34,496 - INFO - Analýza dokončena: 4_01.1.51-06_Pud4.NP_sign.pdf
+2026-02-02 22:45:34,497 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.51-VYT\01.51_PDF\4_01.1.51-07_Pud5.NP_sign.pdf
+2026-02-02 22:45:34,530 - INFO - Analýza dokončena: 4_01.1.51-07_Pud5.NP_sign.pdf
+2026-02-02 22:45:34,530 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_01.1.52-01_TZ_sign.pdf
+2026-02-02 22:45:34,573 - INFO - Analýza dokončena: 4_01.1.52-01_TZ_sign.pdf
+2026-02-02 22:45:34,574 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-00_Seznam dokumentace_CHL MZ (A4).pdf
+2026-02-02 22:45:34,584 - INFO - Analýza dokončena: 4_02.1.1.52-00_Seznam dokumentace_CHL MZ (A4).pdf
+2026-02-02 22:45:34,585 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-02_Pud1PP_sign.pdf
+2026-02-02 22:45:34,636 - INFO - Analýza dokončena: 4_02.1.1.52-02_Pud1PP_sign.pdf
+2026-02-02 22:45:34,636 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-03_Pud1NP_sign.pdf
+2026-02-02 22:45:34,692 - INFO - Analýza dokončena: 4_02.1.1.52-03_Pud1NP_sign.pdf
+2026-02-02 22:45:34,692 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-04_Pud2NP_sign.pdf
+2026-02-02 22:45:34,744 - INFO - Analýza dokončena: 4_02.1.1.52-04_Pud2NP_sign.pdf
+2026-02-02 22:45:34,744 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-05_Pud3NP_sign.pdf
+2026-02-02 22:45:34,797 - INFO - Analýza dokončena: 4_02.1.1.52-05_Pud3NP_sign.pdf
+2026-02-02 22:45:34,797 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-06_Pud4NP_sign.pdf
+2026-02-02 22:45:34,850 - INFO - Analýza dokončena: 4_02.1.1.52-06_Pud4NP_sign.pdf
+2026-02-02 22:45:34,850 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.52-CHL\01.52_PDF\4_02.1.1.52-07_Pud5NP_sign.pdf
+2026-02-02 22:45:34,892 - INFO - Analýza dokončena: 4_02.1.1.52-07_Pud5NP_sign.pdf
+2026-02-02 22:45:34,892 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-01_Technická zpráva.pdf
+2026-02-02 22:45:34,972 - INFO - Analýza dokončena: 4_01.1.60-01_Technická zpráva.pdf
+2026-02-02 22:45:34,973 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-02 Řízení rizika dle ČEN EN 62 305 ed.2.pdf
+2026-02-02 22:45:35,037 - INFO - Analýza dokončena: 4_01.1.60-02 Řízení rizika dle ČEN EN 62 305 ed.2.pdf
+2026-02-02 22:45:35,038 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-03 Elektroinstalace-1.PP.pdf
+2026-02-02 22:45:35,126 - INFO - Analýza dokončena: 4_01.1.60-03 Elektroinstalace-1.PP.pdf
+2026-02-02 22:45:35,127 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-04 Elektroinstalace-1.NP.pdf
+2026-02-02 22:45:35,219 - INFO - Analýza dokončena: 4_01.1.60-04 Elektroinstalace-1.NP.pdf
+2026-02-02 22:45:35,219 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-05 Elektroinstalace-2.NP.pdf
+2026-02-02 22:45:35,307 - INFO - Analýza dokončena: 4_01.1.60-05 Elektroinstalace-2.NP.pdf
+2026-02-02 22:45:35,307 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-06 Elektroinstalace-3.NP.pdf
+2026-02-02 22:45:35,398 - INFO - Analýza dokončena: 4_01.1.60-06 Elektroinstalace-3.NP.pdf
+2026-02-02 22:45:35,399 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-07 Elektroinstalace-4.NP.pdf
+2026-02-02 22:45:35,489 - INFO - Analýza dokončena: 4_01.1.60-07 Elektroinstalace-4.NP.pdf
+2026-02-02 22:45:35,494 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-08 Elektroinstalace-5.NP.pdf
+2026-02-02 22:45:35,575 - INFO - Analýza dokončena: 4_01.1.60-08 Elektroinstalace-5.NP.pdf
+2026-02-02 22:45:35,575 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.60-SLN\01.60_PDF_autorizace\4_01.1.60-09 Umělé osvětlení - výpočet.pdf
+2026-02-02 22:45:35,653 - INFO - Analýza dokončena: 4_01.1.60-09 Umělé osvětlení - výpočet.pdf
+2026-02-02 22:45:35,653 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-01_TZ-SLB_sign.pdf
+2026-02-02 22:45:35,683 - INFO - Analýza dokončena: 4_01.1.1.70-01_TZ-SLB_sign.pdf
+2026-02-02 22:45:35,683 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-02_Pudorys_1PP_sign.pdf
+2026-02-02 22:45:35,734 - INFO - Analýza dokončena: 4_01.1.1.70-02_Pudorys_1PP_sign.pdf
+2026-02-02 22:45:35,734 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-03_Pudorys_1NP_sign.pdf
+2026-02-02 22:45:35,780 - INFO - Analýza dokončena: 4_01.1.1.70-03_Pudorys_1NP_sign.pdf
+2026-02-02 22:45:35,780 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-04_Pudorys_2NP_sign.pdf
+2026-02-02 22:45:35,831 - INFO - Analýza dokončena: 4_01.1.1.70-04_Pudorys_2NP_sign.pdf
+2026-02-02 22:45:35,832 - INFO - Odesílám 100 výsledků na server (jeden request)...
+2026-02-02 22:45:39,854 - INFO - Batch úspěšně odeslán: batch_20260202_214526_c7c9fd4b - Uloženo 100 souborů
+2026-02-02 22:45:51,320 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-05_Pudorys_3NP_sign.pdf
+2026-02-02 22:45:51,370 - INFO - Analýza dokončena: 4_01.1.1.70-05_Pudorys_3NP_sign.pdf
+2026-02-02 22:45:51,370 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-06_Pudorys_4NP_sign.pdf
+2026-02-02 22:45:51,421 - INFO - Analýza dokončena: 4_01.1.1.70-06_Pudorys_4NP_sign.pdf
+2026-02-02 22:45:51,421 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-07_Pudorys_5NP_R01_2025_08_20_sign.pdf
+2026-02-02 22:45:51,463 - INFO - Analýza dokončena: 4_01.1.1.70-07_Pudorys_5NP_R01_2025_08_20_sign.pdf
+2026-02-02 22:45:51,464 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.70-SLB\PDF\4_01.1.1.70-SLB seznam výkresů.pdf
+2026-02-02 22:45:51,471 - INFO - Analýza dokončena: 4_01.1.1.70-SLB seznam výkresů.pdf
+2026-02-02 22:45:51,471 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-01_TZ-EPS a ERO_sign.pdf
+2026-02-02 22:45:51,521 - INFO - Analýza dokončena: 4_01.1.1.71-01_TZ-EPS a ERO_sign.pdf
+2026-02-02 22:45:51,521 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-02_Pudorys_1PP_sign.pdf
+2026-02-02 22:45:51,571 - INFO - Analýza dokončena: 4_01.1.1.71-02_Pudorys_1PP_sign.pdf
+2026-02-02 22:45:51,571 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-03_Pudorys_1NP_sign.pdf
+2026-02-02 22:45:51,613 - INFO - Analýza dokončena: 4_01.1.1.71-03_Pudorys_1NP_sign.pdf
+2026-02-02 22:45:51,614 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-04_Pudorys_2NP_sign.pdf
+2026-02-02 22:45:51,663 - INFO - Analýza dokončena: 4_01.1.1.71-04_Pudorys_2NP_sign.pdf
+2026-02-02 22:45:51,665 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-05_Pudorys_3NP_sign.pdf
+2026-02-02 22:45:51,715 - INFO - Analýza dokončena: 4_01.1.1.71-05_Pudorys_3NP_sign.pdf
+2026-02-02 22:45:51,715 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-06_Pudorys_4NP_sign.pdf
+2026-02-02 22:45:51,765 - INFO - Analýza dokončena: 4_01.1.1.71-06_Pudorys_4NP_sign.pdf
+2026-02-02 22:45:51,766 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-07_Pudorys_5NP_R01_2025_08_20_sign.pdf
+2026-02-02 22:45:51,807 - INFO - Analýza dokončena: 4_01.1.1.71-07_Pudorys_5NP_R01_2025_08_20_sign.pdf
+2026-02-02 22:45:51,807 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.1.71-EPS+ERO\PDF\4_01.1.1.71-EPS a ERO seznam výkresů.pdf
+2026-02-02 22:45:51,812 - INFO - Analýza dokončena: 4_01.1.1.71-EPS a ERO seznam výkresů.pdf
+2026-02-02 22:45:51,813 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.2.20_SKR\02.20_PDF\PDF\4_01.2.20-01_nkcfm_mz_TZ_sign.pdf
+2026-02-02 22:45:51,884 - INFO - Analýza dokončena: 4_01.2.20-01_nkcfm_mz_TZ_sign.pdf
+2026-02-02 22:45:51,885 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.2.20_SKR\02.20_PDF\PDF\4_01.2.20-02_nkcfm_mz_SV_vse_sign.pdf
+2026-02-02 22:45:51,951 - INFO - Analýza dokončena: 4_01.2.20-02_nkcfm_mz_SV_vse_sign.pdf
+2026-02-02 22:45:51,952 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.2.21_SKR_drevo\02.21_PDF\4_01.2.21_P03_STADK_ZÁLOŽNA_FM_DSP_STATIKA_TZ_SK_AKTUAL-P.pdf
+2026-02-02 22:45:52,030 - INFO - Analýza dokončena: 4_01.2.21_P03_STADK_ZÁLOŽNA_FM_DSP_STATIKA_TZ_SK_AKTUAL-P.pdf
+2026-02-02 22:45:52,030 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.2.21_SKR_drevo\02.21_PDF\4_01.2.21_P04_STADK_ZÁLOŽNA_FM_STATICKÝ VÝPOČET_DM+SK_AKTUAL-P.pdf
+2026-02-02 22:45:52,112 - INFO - Analýza dokončena: 4_01.2.21_P04_STADK_ZÁLOŽNA_FM_STATICKÝ VÝPOČET_DM+SK_AKTUAL-P.pdf
+2026-02-02 22:45:52,113 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-01_TZ .pdf
+2026-02-02 22:45:52,143 - INFO - Analýza dokončena: 4_01.3.30-01_TZ .pdf
+2026-02-02 22:45:52,144 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-02_1.PP.pdf
+2026-02-02 22:45:52,210 - INFO - Analýza dokončena: 4_01.3.30-02_1.PP.pdf
+2026-02-02 22:45:52,210 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-03_1.NP .pdf
+2026-02-02 22:45:52,277 - INFO - Analýza dokončena: 4_01.3.30-03_1.NP .pdf
+2026-02-02 22:45:52,278 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-04_2.NP .pdf
+2026-02-02 22:45:52,352 - INFO - Analýza dokončena: 4_01.3.30-04_2.NP .pdf
+2026-02-02 22:45:52,352 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-05_3.NP .pdf
+2026-02-02 22:45:52,418 - INFO - Analýza dokončena: 4_01.3.30-05_3.NP .pdf
+2026-02-02 22:45:52,418 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-06_4.NP .pdf
+2026-02-02 22:45:52,486 - INFO - Analýza dokončena: 4_01.3.30-06_4.NP .pdf
+2026-02-02 22:45:52,486 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-01_MZ\01.3.30_PBR\pdf\4_01.3.30-07_5.NP .pdf
+2026-02-02 22:45:52,538 - INFO - Analýza dokončena: 4_01.3.30-07_5.NP .pdf
+2026-02-02 22:45:52,538 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05.01-00_TL.pdf
+2026-02-02 22:45:52,571 - INFO - Analýza dokončena: 4_05.01-00_TL.pdf
+2026-02-02 22:45:52,571 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05.01-01_TZ.pdf
+2026-02-02 22:45:52,610 - INFO - Analýza dokončena: 4_05.01-01_TZ.pdf
+2026-02-02 22:45:52,610 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05.01_00_sez.pdf
+2026-02-02 22:45:52,641 - INFO - Analýza dokončena: 4_05.01_00_sez.pdf
+2026-02-02 22:45:52,641 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05_01_02_SIT.pdf
+2026-02-02 22:45:52,745 - INFO - Analýza dokončena: 4_05_01_02_SIT.pdf
+2026-02-02 22:45:52,745 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05_01_03_vzor.pdf
+2026-02-02 22:45:52,792 - INFO - Analýza dokončena: 4_05_01_03_vzor.pdf
+2026-02-02 22:45:52,792 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\SO-05.01_ZP_pl\PDF\4_05_01_04_podel.pdf
+2026-02-02 22:45:52,844 - INFO - Analýza dokončena: 4_05_01_04_podel.pdf
+2026-02-02 22:45:52,844 - INFO - Odesílám 29 výsledků na server (jeden request)...
+2026-02-02 22:45:55,107 - INFO - Batch úspěšně odeslán: batch_20260202_214543_d0ccafac - Uloženo 29 souborů
+2026-02-02 22:46:41,289 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV/PDF/4_IO.01-01_TZ.pdf
+2026-02-02 22:46:41,347 - INFO - Analýza dokončena: 4_IO.01-01_TZ.pdf
+2026-02-02 22:46:41,347 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\výpočet denního osvětlení.pdf
+2026-02-02 22:46:56,818 - INFO - Analýza dokončena: výpočet denního osvětlení.pdf
+2026-02-02 22:46:56,820 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\17-044-3_A_PZ_r02_2019.pdf
+2026-02-02 22:46:57,233 - INFO - Analýza dokončena: 17-044-3_A_PZ_r02_2019.pdf
+2026-02-02 22:46:57,235 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\17-044-3_B_STZ_r08_2020.pdf
+2026-02-02 22:46:58,115 - INFO - Analýza dokončena: 17-044-3_B_STZ_r08_2020.pdf
+2026-02-02 22:46:58,116 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_A_PZ_r01_2018.pdf
+2026-02-02 22:46:58,836 - INFO - Analýza dokončena: 17-044-3_A_PZ_r01_2018.pdf
+2026-02-02 22:46:58,836 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_B_STZ_r01_2018.pdf
+2026-02-02 22:47:00,213 - INFO - Analýza dokončena: 17-044-3_B_STZ_r01_2018.pdf
+2026-02-02 22:47:00,213 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_B_STZ_r02_2018.pdf
+2026-02-02 22:47:01,099 - INFO - Analýza dokončena: 17-044-3_B_STZ_r02_2018.pdf
+2026-02-02 22:47:01,100 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_B_STZ_r04.pdf
+2026-02-02 22:47:02,991 - INFO - Analýza dokončena: 17-044-3_B_STZ_r04.pdf
+2026-02-02 22:47:02,991 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_B_STZ_r05_2020.pdf
+2026-02-02 22:47:04,547 - INFO - Analýza dokončena: 17-044-3_B_STZ_r05_2020.pdf
+2026-02-02 22:47:04,547 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\!_Zpravy_seznamy\neplatne\17-044-3_B_STZ_r06_2020.pdf
+2026-02-02 22:47:05,697 - INFO - Analýza dokončena: 17-044-3_B_STZ_r06_2020.pdf
+2026-02-02 22:47:05,711 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_C-Situace\C2_KATASTRALNI SITUACNI VYKRES_uprava.pdf
+2026-02-02 22:47:06,204 - INFO - Analýza dokončena: C2_KATASTRALNI SITUACNI VYKRES_uprava.pdf
+2026-02-02 22:47:06,204 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_C-Situace\C3_KOORDINACNI SITUACNI VYKRES_C_uprava.pdf
+2026-02-02 22:47:07,206 - INFO - Analýza dokončena: C3_KOORDINACNI SITUACNI VYKRES_C_uprava.pdf
+2026-02-02 22:47:07,206 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D.1.3_PBR\TZ-20-020 Bytový dům FM - DUR.pdf
+2026-02-02 22:47:08,079 - INFO - Analýza dokončena: TZ-20-020 Bytový dům FM - DUR.pdf
+2026-02-02 22:47:08,080 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.02 PŮDORYS 1.NP.pdf
+2026-02-02 22:47:08,525 - INFO - Analýza dokončena: D.1.02 PŮDORYS 1.NP.pdf
+2026-02-02 22:47:08,529 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.03 PŮDORYS 2.NP.pdf
+2026-02-02 22:47:09,157 - INFO - Analýza dokončena: D.1.03 PŮDORYS 2.NP.pdf
+2026-02-02 22:47:09,159 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.04 PŮDORYS 3.NP.pdf
+2026-02-02 22:47:09,514 - INFO - Analýza dokončena: D.1.04 PŮDORYS 3.NP.pdf
+2026-02-02 22:47:09,520 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.05 PŮDORYS 4.NP.pdf
+2026-02-02 22:47:10,060 - INFO - Analýza dokončena: D.1.05 PŮDORYS 4.NP.pdf
+2026-02-02 22:47:10,141 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.06 ŘEZ A-A´, B-B´.pdf
+2026-02-02 22:47:11,444 - INFO - Analýza dokončena: D.1.06 ŘEZ A-A´, B-B´.pdf
+2026-02-02 22:47:11,444 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.07 POHLED JIHOVÝCHODNÍ, SEVEROVÝCHODNÍ.pdf
+2026-02-02 22:47:12,647 - INFO - Analýza dokončena: D.1.07 POHLED JIHOVÝCHODNÍ, SEVEROVÝCHODNÍ.pdf
+2026-02-02 22:47:12,647 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.08 POHLEDY SEVEROZÁPADNÍ, JIHOZÁPADNÍ.pdf
+2026-02-02 22:47:14,627 - INFO - Analýza dokončena: D.1.08 POHLEDY SEVEROZÁPADNÍ, JIHOZÁPADNÍ.pdf
+2026-02-02 22:47:14,627 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.09 DIAGRAM ZASTÍNĚNÍ  - POSUZOVANÝ BYT 1 V 1. NP.pdf
+2026-02-02 22:47:15,062 - INFO - Analýza dokončena: D.1.09 DIAGRAM ZASTÍNĚNÍ  - POSUZOVANÝ BYT 1 V 1. NP.pdf
+2026-02-02 22:47:15,063 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-01_BD_PDF_r02\D.1.10 DIAGRAM ZASTÍNĚNÍ  - POSUZOVANÝ BYT 2 V 1. NP.pdf
+2026-02-02 22:47:15,527 - INFO - Analýza dokončena: D.1.10 DIAGRAM ZASTÍNĚNÍ  - POSUZOVANÝ BYT 2 V 1. NP.pdf
+2026-02-02 22:47:15,529 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-02_Zpevnene_plochy_a_chodniky_r02\SO02_D1_SITUACE-NAVRH.PDF
+2026-02-02 22:47:15,939 - INFO - Analýza dokončena: SO02_D1_SITUACE-NAVRH.PDF
+2026-02-02 22:47:15,940 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-02_Zpevnene_plochy_a_chodniky_r02\SO02_D2_CHARAKTERISTICKÉ ŘEZY.PDF
+2026-02-02 22:47:17,054 - INFO - Analýza dokončena: SO02_D2_CHARAKTERISTICKÉ ŘEZY.PDF
+2026-02-02 22:47:17,061 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03-01_TZ.pdf
+2026-02-02 22:47:17,787 - INFO - Analýza dokončena: D.03-01_TZ.pdf
+2026-02-02 22:47:17,788 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03-02_Situace.pdf
+2026-02-02 22:47:18,780 - INFO - Analýza dokončena: D.03-02_Situace.pdf
+2026-02-02 22:47:18,780 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03-03_Podélný profil.pdf
+2026-02-02 22:47:19,352 - INFO - Analýza dokončena: D.03-03_Podélný profil.pdf
+2026-02-02 22:47:19,353 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03-04_Detail uloženi.pdf
+2026-02-02 22:47:19,740 - INFO - Analýza dokončena: D.03-04_Detail uloženi.pdf
+2026-02-02 22:47:19,743 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:20,116 - INFO - Analýza dokončena: D.03_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:20,116 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-03_Pripojka_vody\SO_03 PDF\D.03_seznam_DUR.pdf
+2026-02-02 22:47:20,400 - INFO - Analýza dokončena: D.03_seznam_DUR.pdf
+2026-02-02 22:47:20,400 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04-02_Situace.pdf
+2026-02-02 22:47:20,951 - INFO - Analýza dokončena: D.04-02_Situace.pdf
+2026-02-02 22:47:20,951 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04-03_Rozvinutý řez.pdf
+2026-02-02 22:47:21,390 - INFO - Analýza dokončena: D.04-03_Rozvinutý řez.pdf
+2026-02-02 22:47:21,390 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04-04_Detail uložení.pdf
+2026-02-02 22:47:21,872 - INFO - Analýza dokončena: D.04-04_Detail uložení.pdf
+2026-02-02 22:47:21,874 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04-05_Revizní šachta.pdf
+2026-02-02 22:47:22,459 - INFO - Analýza dokončena: D.04-05_Revizní šachta.pdf
+2026-02-02 22:47:22,459 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04_01_TZ.pdf
+2026-02-02 22:47:22,793 - INFO - Analýza dokončena: D.04_01_TZ.pdf
+2026-02-02 22:47:22,794 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:23,043 - INFO - Analýza dokončena: D.04_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:23,043 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-04_Pripojka_kanalizace\SO 04 PDF\D.04__seznamy.pdf
+2026-02-02 22:47:23,334 - INFO - Analýza dokončena: D.04__seznamy.pdf
+2026-02-02 22:47:23,334 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-05_Pripojka_CZT\Koord. sit.teplovod Kolárova FM.pdf
+2026-02-02 22:47:24,022 - INFO - Analýza dokončena: Koord. sit.teplovod Kolárova FM.pdf
+2026-02-02 22:47:24,022 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-05_Pripojka_CZT\SO05 - Teplovod Kolárova FM.pdf
+2026-02-02 22:47:24,366 - INFO - Analýza dokončena: SO05 - Teplovod Kolárova FM.pdf
+2026-02-02 22:47:24,367 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D.08-02_SITUACE.pdf
+2026-02-02 22:47:25,021 - INFO - Analýza dokončena: D.08-02_SITUACE.pdf
+2026-02-02 22:47:25,021 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D.08-03_Vsakovací objekt.pdf
+2026-02-02 22:47:25,409 - INFO - Analýza dokončena: D.08-03_Vsakovací objekt.pdf
+2026-02-02 22:47:25,410 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D.08-04_Detail uložení.pdf
+2026-02-02 22:47:25,777 - INFO - Analýza dokončena: D.08-04_Detail uložení.pdf
+2026-02-02 22:47:25,777 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D.08_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:26,128 - INFO - Analýza dokončena: D.08_Hlavni_tutulni_list_DUR.pdf
+2026-02-02 22:47:26,129 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D.08_Seznamy_.pdf
+2026-02-02 22:47:26,375 - INFO - Analýza dokončena: D.08_Seznamy_.pdf
+2026-02-02 22:47:26,375 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_D_SO-08_Likvidace_destovych_vod\SO 08 PDF\D08-01_TZ_r02_2019.pdf
+2026-02-02 22:47:26,743 - INFO - Analýza dokončena: D08-01_TZ_r02_2019.pdf
+2026-02-02 22:47:26,746 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\001_GASNET.pdf
+2026-02-02 22:47:28,740 - INFO - Analýza dokončena: 001_GASNET.pdf
+2026-02-02 22:47:28,741 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\002_Cetin.pdf
+2026-02-02 22:47:34,396 - INFO - Analýza dokončena: 002_Cetin.pdf
+2026-02-02 22:47:34,397 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\003_Biocel Paskov.pdf
+2026-02-02 22:47:35,466 - INFO - Analýza dokončena: 003_Biocel Paskov.pdf
+2026-02-02 22:47:35,467 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\004_Vodafone.pdf
+2026-02-02 22:47:35,972 - INFO - Analýza dokončena: 004_Vodafone.pdf
+2026-02-02 22:47:35,972 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\005_O2.pdf
+2026-02-02 22:47:36,474 - INFO - Analýza dokončena: 005_O2.pdf
+2026-02-02 22:47:36,474 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\006_C2NET.pdf
+2026-02-02 22:47:36,981 - INFO - Analýza dokončena: 006_C2NET.pdf
+2026-02-02 22:47:36,981 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\007_ČD Telematika.pdf
+2026-02-02 22:47:37,994 - INFO - Analýza dokončena: 007_ČD Telematika.pdf
+2026-02-02 22:47:37,994 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\008_RIO media.pdf
+2026-02-02 22:47:39,387 - INFO - Analýza dokončena: 008_RIO media.pdf
+2026-02-02 22:47:39,388 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\009_DISTEP.pdf
+2026-02-02 22:47:42,945 - INFO - Analýza dokončena: 009_DISTEP.pdf
+2026-02-02 22:47:42,946 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\010_UPC.pdf
+2026-02-02 22:47:45,649 - INFO - Analýza dokončena: 010_UPC.pdf
+2026-02-02 22:47:45,649 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\011_TS.pdf
+2026-02-02 22:47:48,156 - INFO - Analýza dokončena: 011_TS.pdf
+2026-02-02 22:47:48,157 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\012_Veolia prum.pdf
+2026-02-02 22:47:49,055 - INFO - Analýza dokončena: 012_Veolia prum.pdf
+2026-02-02 22:47:49,056 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\013_CEZ Distrubuce.pdf
+2026-02-02 22:47:52,042 - INFO - Analýza dokončena: 013_CEZ Distrubuce.pdf
+2026-02-02 22:47:52,042 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\014_CEZ Telco.pdf
+2026-02-02 22:47:53,193 - INFO - Analýza dokončena: 014_CEZ Telco.pdf
+2026-02-02 22:47:53,194 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\015_SmVaK.pdf
+2026-02-02 22:47:56,425 - INFO - Analýza dokončena: 015_SmVaK.pdf
+2026-02-02 22:47:56,426 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\016_Tmobile.pdf
+2026-02-02 22:47:57,205 - INFO - Analýza dokončena: 016_Tmobile.pdf
+2026-02-02 22:47:57,206 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\017_I.G.B..pdf
+2026-02-02 22:47:58,055 - INFO - Analýza dokončena: 017_I.G.B..pdf
+2026-02-02 22:47:58,055 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\018_Veolia Energie.pdf
+2026-02-02 22:47:59,370 - INFO - Analýza dokončena: 018_Veolia Energie.pdf
+2026-02-02 22:47:59,371 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\019_Radiokomunikace.pdf
+2026-02-02 22:48:01,235 - INFO - Analýza dokončena: 019_Radiokomunikace.pdf
+2026-02-02 22:48:01,235 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\020_PODA.pdf
+2026-02-02 22:48:01,999 - INFO - Analýza dokončena: 020_PODA.pdf
+2026-02-02 22:48:02,000 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\021_GreenGas.pdf
+2026-02-02 22:48:02,459 - INFO - Analýza dokončena: 021_GreenGas.pdf
+2026-02-02 22:48:02,459 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\022_NEW TELEKOM.pdf
+2026-02-02 22:48:02,836 - INFO - Analýza dokončena: 022_NEW TELEKOM.pdf
+2026-02-02 22:48:02,836 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\023_CEZ DISTRIBUCE smlouva.pdf
+2026-02-02 22:48:08,057 - INFO - Analýza dokončena: 023_CEZ DISTRIBUCE smlouva.pdf
+2026-02-02 22:48:08,057 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\024_KHSMS_stanovisko.pdf
+2026-02-02 22:48:09,148 - INFO - Analýza dokončena: 024_KHSMS_stanovisko.pdf
+2026-02-02 22:48:09,150 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\025_MSK_stanovisko.pdf
+2026-02-02 22:48:11,226 - INFO - Analýza dokončena: 025_MSK_stanovisko.pdf
+2026-02-02 22:48:11,227 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\026_CETIN_vyjádření k UR.pdf
+2026-02-02 22:48:11,947 - INFO - Analýza dokončena: 026_CETIN_vyjádření k UR.pdf
+2026-02-02 22:48:11,947 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\027_vyjádření_Pov.Odry.pdf
+2026-02-02 22:48:12,788 - INFO - Analýza dokončena: 027_vyjádření_Pov.Odry.pdf
+2026-02-02 22:48:12,789 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\028_vyjádření_ČEZdistribuce.pdf
+2026-02-02 22:48:13,552 - INFO - Analýza dokončena: 028_vyjádření_ČEZdistribuce.pdf
+2026-02-02 22:48:13,553 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\029_PČR_vyjádření.pdf
+2026-02-02 22:48:14,980 - INFO - Analýza dokončena: 029_PČR_vyjádření.pdf
+2026-02-02 22:48:14,980 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\030_HSOS_vyjádření.pdf
+2026-02-02 22:48:15,886 - INFO - Analýza dokončena: 030_HSOS_vyjádření.pdf
+2026-02-02 22:48:15,888 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\031_DISTEP vyjádření k UR.pdf
+2026-02-02 22:48:18,873 - INFO - Analýza dokončena: 031_DISTEP vyjádření k UR.pdf
+2026-02-02 22:48:18,874 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\032_GasNet vyjádření UR.pdf
+2026-02-02 22:48:23,489 - INFO - Analýza dokončena: 032_GasNet vyjádření UR.pdf
+2026-02-02 22:48:23,489 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\033_koordinované.pdf
+2026-02-02 22:48:28,088 - INFO - Analýza dokončena: 033_koordinované.pdf
+2026-02-02 22:48:28,090 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\034_Cetin_vyjádření kPD.pdf
+2026-02-02 22:48:29,351 - INFO - Analýza dokončena: 034_Cetin_vyjádření kPD.pdf
+2026-02-02 22:48:29,351 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\035_Hodnocení radonového indexu.pdf
+2026-02-02 22:48:33,699 - INFO - Analýza dokončena: 035_Hodnocení radonového indexu.pdf
+2026-02-02 22:48:33,699 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\036_Výpočet ekvivaletních hladin.pdf
+2026-02-02 22:48:36,499 - INFO - Analýza dokončena: 036_Výpočet ekvivaletních hladin.pdf
+2026-02-02 22:48:36,502 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\037_Z19-065 BD Kollárova - HG posouzení vlivu stavby.pdf
+2026-02-02 22:48:38,646 - INFO - Analýza dokončena: 037_Z19-065 BD Kollárova - HG posouzení vlivu stavby.pdf
+2026-02-02 22:48:38,647 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\038_TS_stanovisko.pdf
+2026-02-02 22:48:39,690 - INFO - Analýza dokončena: 038_TS_stanovisko.pdf
+2026-02-02 22:48:39,691 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\039_TS_stanovisko.pdf
+2026-02-02 22:48:40,481 - INFO - Analýza dokončena: 039_TS_stanovisko.pdf
+2026-02-02 22:48:40,481 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\040_SmVaK_vyjádření.pdf
+2026-02-02 22:48:43,087 - INFO - Analýza dokončena: 040_SmVaK_vyjádření.pdf
+2026-02-02 22:48:43,087 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\041_Smlouva SEK_UPC.pdf
+2026-02-02 22:48:44,236 - INFO - Analýza dokončena: 041_Smlouva SEK_UPC.pdf
+2026-02-02 22:48:44,236 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\042_Katastrálka_razítko MMFM.pdf
+2026-02-02 22:48:44,741 - INFO - Analýza dokončena: 042_Katastrálka_razítko MMFM.pdf
+2026-02-02 22:48:44,744 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\042_Smlouva o smlouvě budoucí.pdf
+2026-02-02 22:48:49,213 - INFO - Analýza dokončena: 042_Smlouva o smlouvě budoucí.pdf
+2026-02-02 22:48:49,228 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\043_Souhlas vlastníka místní komunikace.pdf
+2026-02-02 22:48:50,427 - INFO - Analýza dokončena: 043_Souhlas vlastníka místní komunikace.pdf
+2026-02-02 22:48:50,428 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\044_Rozhodnutí o povolení sjezdu.pdf
+2026-02-02 22:48:52,899 - INFO - Analýza dokončena: 044_Rozhodnutí o povolení sjezdu.pdf
+2026-02-02 22:48:52,900 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\045_SmVaK_Likvidace dešťových vod.pdf
+2026-02-02 22:48:55,110 - INFO - Analýza dokončena: 045_SmVaK_Likvidace dešťových vod.pdf
+2026-02-02 22:48:55,115 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\046_Závazné stanovisko_Od.živ.prost..pdf
+2026-02-02 22:48:57,105 - INFO - Analýza dokončena: 046_Závazné stanovisko_Od.živ.prost..pdf
+2026-02-02 22:48:57,105 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\047_Rozhodnutí o umístění stavby.pdf
+2026-02-02 22:49:12,720 - INFO - Analýza dokončena: 047_Rozhodnutí o umístění stavby.pdf
+2026-02-02 22:49:12,721 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\048_Závazné stanovisko_územní plánování.pdf
+2026-02-02 22:49:15,116 - INFO - Analýza dokončena: 048_Závazné stanovisko_územní plánování.pdf
+2026-02-02 22:49:15,116 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\049_PBŘ_stanovisko.pdf
+2026-02-02 22:49:15,845 - INFO - Analýza dokončena: 049_PBŘ_stanovisko.pdf
+2026-02-02 22:49:15,845 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\050_Razítko katastrálka.pdf
+2026-02-02 22:49:16,954 - INFO - Analýza dokončena: 050_Razítko katastrálka.pdf
+2026-02-02 22:49:16,971 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\051_rozhodnutí o odvolání proti novému ÚR Bytový dům F-M.fin .pdf
+2026-02-02 22:49:19,091 - INFO - Analýza dokončena: 051_rozhodnutí o odvolání proti novému ÚR Bytový dům F-M.fin .pdf
+2026-02-02 22:49:19,092 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\052_Rouhodnutí o umístění stavby_pravní moc.pdf
+2026-02-02 22:49:33,637 - INFO - Analýza dokončena: 052_Rouhodnutí o umístění stavby_pravní moc.pdf
+2026-02-02 22:49:33,642 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\052_Rozhodnutí o úmístění stavby_bez prav.moci.pdf
+2026-02-02 22:49:34,683 - INFO - Analýza dokončena: 052_Rozhodnutí o úmístění stavby_bez prav.moci.pdf
+2026-02-02 22:49:34,683 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP\01_Pracovni\00_Podklady_dok_DUR\17-044-3_E_Dokladová část\22.Rozhodnuti_MSK.pdf
+2026-02-02 22:49:43,698 - INFO - Analýza dokončena: 22.Rozhodnuti_MSK.pdf
+2026-02-02 22:49:43,698 - INFO - Odesílám 100 výsledků na server (jeden request)...
+2026-02-02 22:49:47,767 - INFO - Batch úspěšně odeslán: batch_20260202_214934_3c18e057 - Uloženo 100 souborů
+2026-02-02 22:55:47,962 - INFO - Agent ukončen

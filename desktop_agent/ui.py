@@ -36,8 +36,15 @@ def _format_result_summary(filename, status, result):
         return "\n".join(lines)
 
     if not isinstance(result, dict):
-        lines.append("Žádná data k zobrazení.")
-        return "\n".join(lines)
+        if isinstance(result, str) and result.strip().startswith("{"):
+            try:
+                import json
+                result = json.loads(result)
+            except Exception:
+                result = None
+        if not isinstance(result, dict):
+            lines.append("Žádná data k zobrazení.")
+            return "\n".join(lines)
 
     # Skipped / limit reached
     if result.get('skipped') or (result.get('success') is False and 'limit' in str(result.get('error', '')).lower()):
@@ -165,10 +172,10 @@ class PDFCheckUI:
         self.cancel_requested = False
         self.is_running = False
 
-        # Okno – moderní rozhraní
+        # Okno – moderní rozhraní (výchozí 1000x700)
         self.root.title("PDF DokuCheck Agent")
-        self.root.geometry("820x680")
-        self.root.minsize(720, 580)
+        self.root.geometry("1000x700")
+        self.root.minsize(800, 600)
         self.root.configure(bg=self.BG_APP)
 
         self.center_window()
@@ -177,8 +184,8 @@ class PDFCheckUI:
     def center_window(self):
         """Vycentruje okno na obrazovce"""
         self.root.update_idletasks()
-        width = 820
-        height = 680
+        width = 1000
+        height = 700
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f'{width}x{height}+{x}+{y}')
@@ -196,7 +203,8 @@ class PDFCheckUI:
     def create_widgets(self):
         """Vytvoří všechny GUI elementy"""
 
-        # === HEADER – tmavě modrý pruh ===
+        # === FIXED LAYOUT: Header a Footer se NIKDY nescrollují ===
+        # HEADER – tmavě modrý pruh (pevný nahoře)
         header_frame = tk.Frame(self.root, bg=self.BG_HEADER, height=56)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
@@ -254,6 +262,16 @@ class PDFCheckUI:
         )
         web_btn.pack(side=tk.RIGHT, padx=8, pady=10)
 
+        # === STATS BAR (pevný, ne scrolluje): Soubory | Složky | Odhadovaný čas ===
+        stats_frame = tk.Frame(self.root, bg=self.BG_LIGHT, height=32)
+        stats_frame.pack(fill=tk.X)
+        stats_frame.pack_propagate(False)
+        self.stats_label = tk.Label(
+            stats_frame, text="Soubory: 0 | Složky: 0 | Odhadovaný čas: — s",
+            font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_MUTED
+        )
+        self.stats_label.pack(side=tk.LEFT, padx=20, pady=6)
+
         # === SPLIT VIEW: Left 40% (queue + controls), Right 60% (detail) ===
         paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=self.BG_APP, sashwidth=6)
         paned.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
@@ -284,14 +302,13 @@ class PDFCheckUI:
                  bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, pady=(4, 4))
         tree_style = ttk.Style()
         tree_style.theme_use("clam")
-        tree_style.configure("Treeview", rowheight=28, fieldbackground="#ffffff")
-        tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)])
+        tree_style.configure("Treeview", rowheight=35, fieldbackground="#ffffff", font=("Segoe UI", 9))
+        tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)], foreground=[("selected", "#ffffff")])
         tree_frame = tk.Frame(left_panel, bg=self.BG_WHITE)
         tree_frame.pack(fill=tk.BOTH, expand=True)
         tree_scroll = ttk.Scrollbar(tree_frame)
         self.queue_tree = ttk.Treeview(tree_frame, columns=("name",), show="tree headings", height=12,
                                        yscrollcommand=tree_scroll.set, selectmode="browse")
-        self.queue_tree.configure(selectbackground=self.ACCENT_BTN)
         tree_scroll.config(command=self.queue_tree.yview)
         self.queue_tree.heading("#0", text=" ")
         self.queue_tree.heading("name", text="Úkol / Soubor")
@@ -348,9 +365,9 @@ class PDFCheckUI:
 
         self.results_text = self.detail_text
 
-        # Spodní lišta
+        # FOOTER (pevný dole – tlačítka a stav licence se NIKDY nescrollují)
         bottom_frame = tk.Frame(self.root, bg=self.BG_LIGHT, height=36)
-        bottom_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         bottom_frame.pack_propagate(False)
         self.license_status_label = tk.Label(bottom_frame, text="", font=("Segoe UI", 8),
                                             bg=self.BG_LIGHT, fg=self.TEXT_MUTED)
@@ -453,6 +470,20 @@ class PDFCheckUI:
                     pass
         self.update_queue_display()
 
+    def _update_header_stats(self):
+        """Aktualizuje pevný řádek statistik: Soubory | Složky | Odhadovaný čas (s). Nikdy nescrolluje."""
+        if not hasattr(self, 'stats_label'):
+            return
+        n_files = sum(len(t.get('file_paths', [])) for t in self.tasks)
+        n_folders = sum(1 for t in self.tasks if t.get('type') == 'folder')
+        if n_files == 0:
+            est_s = "—"
+        else:
+            est_seconds = max(1, n_files * 5)
+            est_s = str(est_seconds)
+        text = f"Soubory: {n_files} | Složky: {n_folders} | Odhadovaný čas: {est_s} s"
+        self.stats_label.config(text=text)
+
     def _show_session_summary(self):
         """Zobrazí v pravém panelu souhrn relace (když nic není vybráno)."""
         self.detail_text.config(state=tk.NORMAL)
@@ -521,6 +552,7 @@ class PDFCheckUI:
         self.queue_display = []
         self._iid_to_qidx.clear()
         self.update_queue_display()
+        self._update_header_stats()
         self._show_session_summary()
 
     def remove_from_queue(self, index):
@@ -641,6 +673,7 @@ class PDFCheckUI:
                 self._iid_to_qidx[iid_file] = qidx
                 qidx += 1
             self.queue_tree.item(iid_task, open=True)
+        self._update_header_stats()
 
     def on_check_clicked(self):
         """Handler pro tlačítko Spustit kontrolu – zpracují se pouze zaškrtnuté položky (☑)."""
@@ -694,20 +727,24 @@ class PDFCheckUI:
                 return
 
             response_data = None
+            upload_error = None
             results_only = [r for _, r in all_results]
             if self.on_send_batch_callback:
                 try:
                     out = self.on_send_batch_callback(results_only, None)
-                    if len(out) >= 4 and out[3]:
+                    if out and len(out) >= 2 and not out[0]:
+                        upload_error = out[1] or "Chyba odeslání na server"
+                    if out and len(out) >= 4 and out[3]:
                         response_data = out[3]
-                except Exception:
-                    pass
+                except Exception as e:
+                    upload_error = str(e)
 
             summary = {
                 'results_with_qidx': all_results,
                 'response_data': response_data,
                 'truncated': truncated,
                 'max_files': max_files,
+                'upload_error': upload_error,
             }
             self.root.after(0, lambda: self.display_results(summary))
 
@@ -784,10 +821,12 @@ class PDFCheckUI:
         """
         Aktualizuje stav ve frontě podle (qidx, result). Úspěšné odškrtne (☐), neúspěšné/skipped nechá zaškrtnuté (☑).
         Zvýší session_files_checked o počet úspěšných.
+        Při upload_error (např. Zkušební limit vyčerpán) zobrazí popup a status bar.
         """
         import time
         results_with_qidx = result.get('results_with_qidx', [])
         response_data = result.get('response_data')
+        upload_error = result.get('upload_error')
 
         for qidx, res in results_with_qidx:
             if 0 <= qidx < len(self.queue_display):
@@ -826,6 +865,11 @@ class PDFCheckUI:
         if response_data and response_data.get('status') == 'partial':
             self.results_text.insert(tk.END, f"\n{response_data.get('message', '')}\n")
         self.results_text.insert(tk.END, "\nKlikněte na řádek ve frontě pro detail souboru.\n")
+        if upload_error:
+            self.results_text.insert(tk.END, f"\n⚠ Odeslání na server: {upload_error}\n")
+            if "Zkušební limit" in upload_error or "vyčerpán" in upload_error:
+                messagebox.showwarning("Zkušební limit", upload_error)
+                self.license_status_label.config(text=upload_error[:60] + ("…" if len(upload_error) > 60 else ""), fg=self.ERROR_RED)
         self.results_text.config(state=tk.DISABLED)
 
     def display_error(self, error_msg):
@@ -866,17 +910,17 @@ class PDFCheckUI:
             self.on_logout_callback()
 
     def show_api_key_dialog(self):
-        """Dialog přihlášení: e-mail + heslo NEBO licenční klíč. Po přihlášení se zobrazí údaje uživatele."""
+        """Dialog přihlášení: Vyzkoušet zdarma (Trial) nebo e-mail + heslo pro placené účty."""
         dialog = tk.Toplevel(self.root)
-        dialog.title("Přihlášení – licence přiřazena k e-mailu a heslu")
-        dialog.geometry("520x420")
+        dialog.title("Přihlášení")
+        dialog.geometry("480x380")
         dialog.configure(bg=self.BG_WHITE)
         dialog.transient(self.root)
         dialog.grab_set()
 
         dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - 260
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - 210
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - 240
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - 190
         dialog.geometry(f"+{x}+{y}")
 
         title = tk.Label(dialog, text="Přihlášení k účtu", font=("Segoe UI", 12, "bold"),
@@ -889,47 +933,53 @@ class PDFCheckUI:
         tk.Label(server_frame, text=self.api_url, font=("Consolas", 9),
                  bg=self.BG_LIGHT, fg=self.TEXT_DARK, padx=8, pady=4).pack(side=tk.LEFT, padx=8)
 
-        # E-mail + heslo
-        tk.Label(dialog, text="Přihlásit e-mailem a heslem (údaje z webu / od administrátora):",
-                 font=("Segoe UI", 9, "bold"), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(12, 4))
-        email_var = tk.StringVar()
-        pass_var = tk.StringVar()
-        tk.Label(dialog, text="E-mail:", font=("Segoe UI", 9), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(2, 0))
-        email_entry = tk.Entry(dialog, textvariable=email_var, font=("Consolas", 11), width=50)
-        email_entry.pack(pady=2, padx=20, fill=tk.X)
-        tk.Label(dialog, text="Heslo:", font=("Segoe UI", 9), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(6, 0))
-        pass_entry = tk.Entry(dialog, textvariable=pass_var, font=("Consolas", 11), width=50, show="*")
-        pass_entry.pack(pady=2, padx=20, fill=tk.X)
-        email_entry.focus()
-
-        # Nebo licenční klíč
-        tk.Label(dialog, text="Nebo zadejte licenční klíč (API klíč):", font=("Segoe UI", 9, "bold"),
-                 bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(14, 4))
-        key_var = tk.StringVar()
-        key_entry = tk.Entry(dialog, textvariable=key_var, font=("Consolas", 10), width=50, show="")
-        key_entry.pack(pady=4, padx=20, fill=tk.X)
-
         status_label = tk.Label(dialog, text="", font=("Segoe UI", 9), bg=self.BG_WHITE)
         status_label.pack(pady=8)
 
         def do_trial():
+            status_label.config(text="Režim: Zkušební verze (Trial)", fg=self.ACCENT)
+            dialog.update()
             try:
                 from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
-                email_var.set(DEMO_TRIAL_EMAIL)
-                pass_var.set(DEMO_TRIAL_PASSWORD)
-                do_login()
+                email, password = DEMO_TRIAL_EMAIL or "demo_trial@dokucheck.app", DEMO_TRIAL_PASSWORD or "demo123"
             except ImportError:
-                status_label.config(text="Nelze načíst demo účet.", fg=self.ERROR_RED)
+                email, password = "demo_trial@dokucheck.app", "demo123"
+            if self.on_login_password_callback:
+                result = self.on_login_password_callback(email, password)
+                success = result[0] if result else False
+                message = result[1] if len(result) > 1 else ""
+                display_text = result[2] if len(result) > 2 else None
+                if success:
+                    status_label.config(text="Režim: Zkušební verze (Trial)", fg=self.SUCCESS_GREEN)
+                    self.set_license_display("Režim: Zkušební verze (Trial)")
+                    if self.on_after_login_callback:
+                        self.on_after_login_callback()
+                    dialog.after(800, dialog.destroy)
+                else:
+                    status_label.config(text=message or "Chyba přihlášení", fg=self.ERROR_RED)
+            else:
+                status_label.config(text="Chyba: chybí callback", fg=self.ERROR_RED)
 
-        btn_trial = tk.Button(dialog, text="Vyzkoušet zdarma", font=("Segoe UI", 9),
-                              bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
-                              padx=16, pady=6, cursor="hand2", command=do_trial)
-        btn_trial.pack(pady=(0, 4))
+        btn_trial = tk.Button(dialog, text="Vyzkoušet zdarma", font=("Segoe UI", 10, "bold"),
+                              bg=self.ACCENT_BTN, fg=self.BUTTON_TEXT, relief=tk.FLAT,
+                              padx=20, pady=10, cursor="hand2", command=do_trial)
+        btn_trial.pack(pady=(8, 16))
+
+        tk.Label(dialog, text="Přihlásit se (e-mail + heslo – placený účet):",
+                 font=("Segoe UI", 9, "bold"), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(8, 4))
+        email_var = tk.StringVar()
+        pass_var = tk.StringVar()
+        tk.Label(dialog, text="E-mail:", font=("Segoe UI", 9), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(2, 0))
+        email_entry = tk.Entry(dialog, textvariable=email_var, font=("Consolas", 11), width=42)
+        email_entry.pack(pady=2, padx=20, fill=tk.X)
+        tk.Label(dialog, text="Heslo:", font=("Segoe UI", 9), bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, padx=20, pady=(6, 0))
+        pass_entry = tk.Entry(dialog, textvariable=pass_var, font=("Consolas", 11), width=42, show="*")
+        pass_entry.pack(pady=2, padx=20, fill=tk.X)
+        email_entry.focus()
 
         def do_login():
             email = email_var.get().strip()
             password = pass_var.get()
-            api_key = key_var.get().strip()
 
             if email and password and self.on_login_password_callback:
                 status_label.config(text="Ověřuji e-mail a heslo…", fg=self.WARNING_ORANGE)
@@ -949,33 +999,15 @@ class PDFCheckUI:
                     status_label.config(text=message or "Chyba přihlášení", fg=self.ERROR_RED)
                 return
 
-            if api_key and self.on_api_key_callback:
-                status_label.config(text="Ověřuji licenční klíč…", fg=self.WARNING_ORANGE)
-                dialog.update()
-                result = self.on_api_key_callback(api_key)
-                success = result[0] if result else False
-                message = result[1] if len(result) > 1 else ""
-                display_text = result[2] if len(result) > 2 else None
-                if success:
-                    status_label.config(text=message, fg=self.SUCCESS_GREEN)
-                    if display_text:
-                        self.set_license_display(display_text if str(display_text).strip().startswith("Režim:") else "Přihlášen: " + display_text)
-                    if self.on_after_login_callback:
-                        self.on_after_login_callback()
-                    dialog.after(1200, dialog.destroy)
-                else:
-                    status_label.config(text=message, fg=self.ERROR_RED)
-                return
+            status_label.config(text="Zadejte e-mail a heslo.", fg=self.ERROR_RED)
 
-            status_label.config(text="Zadejte e-mail a heslo NEBO licenční klíč.", fg=self.ERROR_RED)
-
-        btn = tk.Button(dialog, text="Přihlásit / Ověřit a uložit", font=("Segoe UI", 10, "bold"),
+        btn = tk.Button(dialog, text="Přihlásit se", font=("Segoe UI", 10, "bold"),
                         bg=self.ACCENT, fg=self.BUTTON_TEXT, relief=tk.FLAT,
                         padx=20, pady=8, cursor="hand2", command=do_login)
-        btn.pack(pady=6)
+        btn.pack(pady=10)
 
         pass_entry.bind("<Return>", lambda e: do_login())
-        key_entry.bind("<Return>", lambda e: do_login())
+        email_entry.bind("<Return>", lambda e: do_login())
 
 
 def create_app(on_check_callback, on_api_key_callback, api_url="",

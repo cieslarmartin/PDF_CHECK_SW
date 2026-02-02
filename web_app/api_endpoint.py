@@ -152,9 +152,27 @@ def register_api_routes(app):
 
             # Limit podle licence: použij max_batch_size z licence (nebo tier default)
             license_info = db.get_user_license(api_key)
+            tier_name = (license_info or {}).get('tier_name') or ''
+            is_trial = str(tier_name).strip().lower() == 'trial'
+
+            # Trial: vázáno na Machine-ID, celkový limit souborů napříč relacemi
+            if is_trial:
+                if not machine_id or not str(machine_id).strip():
+                    return jsonify({
+                        'error': 'Zkušební režim vyžaduje identifikaci zařízení (X-Machine-ID). Restartujte agenta.'
+                    }), 403
+                usage = db.get_trial_usage(machine_id)
+                total_so_far = (usage or {}).get('total_files', 0)
+                limit = getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+                if total_so_far >= limit:
+                    return jsonify({
+                        'error': 'Zkušební limit vyčerpán. Zakupte si prosím licenci.'
+                    }), 403
+                # Po zpracování batch zvýšíme trial_usage (viz níže)
+
             max_files = license_info.get('max_batch_size', 5) if license_info else 5
             max_devices = license_info.get('max_devices', 1) if license_info else 1
-            if machine_id:
+            if machine_id and not is_trial:
                 existing = {d['machine_id'] for d in db.get_user_devices_list(api_key)}
                 if machine_id not in existing and max_devices >= 0:
                     if db.count_user_devices_non_blocked(api_key) >= max_devices:
@@ -163,6 +181,19 @@ def register_api_routes(app):
             # -1 = neomezeno
             if max_files >= 0 and total_submitted > max_files:
                 results = results[:max_files]  # slice – zpracuj jen povolený počet
+
+            # Trial: zkontroluj znovu, že po oříznutí nepřekročíme celkový limit
+            if is_trial and machine_id:
+                usage = db.get_trial_usage(machine_id)
+                total_so_far = (usage or {}).get('total_files', 0)
+                limit = getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+                remaining = max(0, limit - total_so_far)
+                if remaining <= 0:
+                    return jsonify({
+                        'error': 'Zkušební limit vyčerpán. Zakupte si prosím licenci.'
+                    }), 403
+                if len(results) > remaining:
+                    results = results[:remaining]
 
             # Vytvoř batch
             batch_id = db.create_batch(api_key, batch_name, source_folder)
@@ -175,6 +206,10 @@ def register_api_routes(app):
                 success, _ = db.save_result(api_key, result, batch_id)
                 if success:
                     saved_count += 1
+
+            # Trial: zvýš počítadlo pro toto zařízení
+            if is_trial and machine_id and saved_count > 0:
+                db.increment_trial_usage(machine_id, saved_count)
 
             # Aktualizuj statistiky batch
             db.update_batch_stats(batch_id)

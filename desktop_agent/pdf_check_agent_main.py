@@ -306,8 +306,7 @@ class PDFCheckAgent:
         if ok and info:
             tier_name = (info.get("tier_name") or "").strip()
             if tier_name.lower() == "trial":
-                max_f = (info.get("limits") or {}).get("max_files_per_batch") or info.get("max_batch_size") or 5
-                self.app.set_license_display(f"Režim: Trial verze – Limit {max_f} souborů")
+                self.app.set_license_display("Režim: Zkušební verze (Trial)")
             else:
                 email = info.get("email") or info.get("user_name") or "—"
                 tier = info.get("tier_name") or "—"

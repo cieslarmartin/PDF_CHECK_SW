@@ -113,27 +113,41 @@ def logout():
 @admin_bp.route('/admin/dashboard')
 @admin_required
 def dashboard():
-    """Admin dashboard - správa licencí"""
+    """Admin dashboard - správa licencí, KPI, přepínatelné grafy."""
     db = get_db()
 
-    # Získej všechny licence
+    # Filtry: vyhledávání, tarif, stav
+    search = (request.args.get('q') or '').strip()
+    tier_filter = (request.args.get('tier') or '').strip()
+    status_filter = (request.args.get('status') or '').strip()  # active, blocked
+
     licenses = db.admin_get_all_licenses()
 
-    # Statistiky
+    if search:
+        search_lower = search.lower()
+        licenses = [l for l in licenses if (
+            (l.get('email') or '').lower().find(search_lower) >= 0 or
+            (l.get('user_name') or '').lower().find(search_lower) >= 0 or
+            (l.get('api_key') or '').lower().find(search_lower) >= 0
+        )]
+    if tier_filter:
+        licenses = [l for l in licenses if (l.get('tier_name') or '').lower() == tier_filter.lower()]
+    if status_filter == 'blocked':
+        licenses = [l for l in licenses if not l.get('is_active')]
+    elif status_filter == 'active':
+        licenses = [l for l in licenses if l.get('is_active')]
+
     stats = {
         'total_licenses': len(licenses),
-        'active_licenses': sum(1 for l in licenses if l['is_active'] and not l.get('is_expired')),
+        'active_licenses': sum(1 for l in licenses if l.get('is_active') and not l.get('is_expired')),
         'expired_licenses': sum(1 for l in licenses if l.get('is_expired')),
         'total_devices': sum(l.get('active_devices', 0) for l in licenses),
         'total_checks': sum(l.get('total_checks', 0) for l in licenses),
         'by_tier': {}
     }
-
-    # Počet podle tierů
     for tier in LicenseTier:
-        stats['by_tier'][tier.name] = sum(1 for l in licenses if l['license_tier'] == tier.value)
+        stats['by_tier'][tier.name] = sum(1 for l in licenses if l.get('license_tier') == tier.value)
 
-    # Data pro grafy (Chart.js)
     activity_30 = db.get_activity_last_30_days()
     tiers_list = db.get_all_license_tiers()
     by_tier_counts = {}
@@ -143,6 +157,10 @@ def dashboard():
         if t['name'] not in by_tier_counts:
             by_tier_counts[t['name']] = 0
 
+    kpis = db.get_dashboard_kpis()
+    user_ranking = db.get_user_activity_ranking(limit=10)
+    trial_stats = db.get_trial_stats()
+
     return render_template('admin_dashboard.html',
                           licenses=licenses,
                           stats=stats,
@@ -150,6 +168,12 @@ def dashboard():
                           tiers_list=tiers_list or [],
                           activity_30=activity_30 or [],
                           by_tier_counts=by_tier_counts or {},
+                          kpis=kpis,
+                          user_ranking=user_ranking or [],
+                          trial_stats=trial_stats or {},
+                          search=search,
+                          tier_filter=tier_filter,
+                          status_filter=status_filter,
                           user=session.get('admin_user'))
 
 
@@ -189,17 +213,44 @@ def tiers():
     return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=session.get('admin_user'))
 
 
+@admin_bp.route('/admin/trial')
+@admin_required
+def trial():
+    """Správa Trial použití: Machine-ID | Celkem souborů | Poslední aktivita | Reset."""
+    db = get_db()
+    trial_list = db.list_trial_usage()
+    return render_template('admin_trial.html', trial_list=trial_list or [], user=session.get('admin_user'))
+
+
 @admin_bp.route('/admin/logs')
 @admin_required
 def logs():
-    """Stránka logů (user_logs) s filtrem/vyhledáváním."""
+    """Logy: Systémové / Uživatelské / Platební s filtry (datum, úroveň, uživatel)."""
     db = get_db()
-    search = request.args.get('q', '').strip()
+    category = request.args.get('category', 'user').strip() or 'user'
+    if category not in ('system', 'user', 'payment'):
+        category = 'user'
+    user_id = request.args.get('user_id', '').strip() or None
+    date_from = request.args.get('date_from', '').strip() or None
+    date_to = request.args.get('date_to', '').strip() or None
+    level = request.args.get('level', '').strip() or None
     page = max(1, int(request.args.get('page', 1)))
     per_page = 100
     offset = (page - 1) * per_page
-    logs_list = db.get_user_logs(user_id=None, limit=per_page, offset=offset, search=search if search else None)
-    return render_template('admin_logs.html', logs=logs_list, search=search, page=page, per_page=per_page, user=session.get('admin_user'))
+    logs_list = db.get_logs_filtered(
+        category=category, user_id=user_id, date_from=date_from, date_to=date_to,
+        level=level, limit=per_page, offset=offset
+    )
+    return render_template('admin_logs.html',
+                          logs_list=logs_list,
+                          category=category,
+                          user_id=user_id or '',
+                          date_from=date_from or '',
+                          date_to=date_to or '',
+                          level=level or '',
+                          page=page,
+                          per_page=per_page,
+                          user=session.get('admin_user'))
 
 
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
@@ -248,6 +299,34 @@ def settings():
 # API ENDPOINTS PRO ADMIN AKCE
 # =============================================================================
 
+@admin_bp.route('/admin/api/trial/reset', methods=['POST'])
+@admin_required
+def api_trial_reset():
+    """Vynuluje Trial počítadlo pro dané machine_id (umožní znovu vyzkoušet)."""
+    db = get_db()
+    machine_id = (request.form.get('machine_id') or '').strip()
+    if not machine_id and request.is_json:
+        try:
+            data = request.get_json(silent=True) or {}
+            machine_id = (data.get('machine_id') or '').strip()
+        except Exception:
+            pass
+    if not machine_id:
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Chybí machine_id'}), 400
+        flash('Chybí machine_id', 'error')
+        return redirect(url_for('admin.trial'))
+    if db.reset_trial_usage(machine_id):
+        flash(f'Trial vynulován pro zařízení {machine_id[:20]}…', 'success')
+        if request.is_json:
+            return jsonify({'success': True, 'message': 'Trial resetován'}), 200
+        return redirect(url_for('admin.trial'))
+    if request.is_json:
+        return jsonify({'success': False, 'error': 'Zařízení nenalezeno nebo již vynulováno'}), 404
+    flash('Zařízení nenalezeno nebo již vynulováno', 'error')
+    return redirect(url_for('admin.trial'))
+
+
 @admin_bp.route('/admin/api/tier/update', methods=['POST'])
 @admin_required
 def api_update_tier():
@@ -292,9 +371,42 @@ def api_update_tier():
 @admin_bp.route('/admin/api/activity')
 @admin_required
 def api_activity():
-    """JSON pro Chart.js: aktivita (soubory) za posledních 30 dní."""
+    """JSON pro Chart.js: aktivita (soubory) za období. Query: from=YYYY-MM-DD, to=YYYY-MM-DD."""
     db = get_db()
-    data = db.get_activity_last_30_days()
+    date_from = request.args.get('from', '').strip() or None
+    date_to = request.args.get('to', '').strip() or None
+    if date_from or date_to:
+        data = db.get_activity_for_period(date_from=date_from, date_to=date_to)
+    else:
+        data = db.get_activity_last_30_days()
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/admin/api/stats/kpis')
+@admin_required
+def api_stats_kpis():
+    """KPI: obrat, aktivní licence Free/Paid, chybovost."""
+    db = get_db()
+    kpis = db.get_dashboard_kpis()
+    return jsonify({'success': True, 'data': kpis})
+
+
+@admin_bp.route('/admin/api/stats/users-ranking')
+@admin_required
+def api_stats_users_ranking():
+    """Nejaktivnější uživatelé (počet souborů)."""
+    db = get_db()
+    limit = min(20, max(5, int(request.args.get('limit', 10))))
+    data = db.get_user_activity_ranking(limit=limit)
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/admin/api/stats/trial')
+@admin_required
+def api_stats_trial():
+    """Statistiky Trialu: unikátní Machine-ID, celkem souborů, top."""
+    db = get_db()
+    data = db.get_trial_stats()
     return jsonify({'success': True, 'data': data})
 
 
@@ -363,7 +475,7 @@ def api_create_license():
 @admin_bp.route('/admin/api/license/update', methods=['POST'])
 @admin_required
 def api_update_license():
-    """Aktualizuje licenci. Pokud je poslán pouze tier_id (dropdown Tier), nastaví jen tier. Jinak tier + expirace + heslo."""
+    """Aktualizuje licenci: tier, jméno, email, expirace, status, platební údaje, heslo, feature flags."""
     db = get_db()
 
     api_key = request.form.get('api_key', '').strip()
@@ -373,21 +485,32 @@ def api_update_license():
     except (TypeError, ValueError):
         tier_id = None
 
-    # Režim "pouze Tier" (dropdown v /admin/users): jen tier_id
-    if tier_id is not None and not request.form.get('days') and not request.form.get('new_password'):
+    # Pouze Tier (dropdown)
+    if tier_id is not None and not request.form.get('days') and not request.form.get('new_password') and not request.form.get('user_name') and not request.form.get('email'):
         if not api_key:
             return jsonify({'success': False, 'error': 'Chybí API klíč'}), 400
+        old_lic = db.get_user_license(api_key)
         if db.admin_set_user_tier(api_key, tier_id):
-            return jsonify({'success': True, 'message': 'Tier uživatele aktualizován'})
+            if old_lic:
+                db.insert_payment_log(api_key, 'změna_tarifu', details=f"Tier -> {tier_id}")
+            return jsonify({'success': True, 'message': 'Tarif uživatele aktualizován'})
         return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
 
-    # Plná aktualizace (legacy / rozšířený formulář)
-    try:
-        tier = int(request.form.get('tier', 0))
-    except (TypeError, ValueError):
-        tier = 0
-    tier = max(0, min(3, tier))
-    days = request.form.get('days')
+    # Rozšířená aktualizace
+    user_name = request.form.get('user_name', '').strip() or None
+    email = request.form.get('email', '').strip() or None
+    license_expires = request.form.get('license_expires', '').strip() or None
+    if not license_expires and request.form.get('days'):
+        try:
+            from datetime import datetime, timedelta
+            days = int(request.form.get('days'))
+            license_expires = (datetime.now() + timedelta(days=days)).isoformat()[:10]
+        except (TypeError, ValueError):
+            pass
+    is_active_raw = request.form.get('is_active')
+    is_active = None if is_active_raw is None or is_active_raw == '' else (is_active_raw in ('1', 'true', 'ano'))
+    payment_method = request.form.get('payment_method', '').strip() or None
+    last_payment_date = request.form.get('last_payment_date', '').strip() or None
     new_password = request.form.get('new_password', '').strip() or None
     max_batch_size_raw = request.form.get('max_batch_size', '').strip()
     try:
@@ -402,17 +525,30 @@ def api_update_license():
         max_devices = int(max_devices_raw) if max_devices_raw else None
     except (TypeError, ValueError):
         max_devices = None
+    try:
+        tier = int(request.form.get('tier', 0))
+    except (TypeError, ValueError):
+        tier = 0
+    tier = max(0, min(3, tier))
 
     if not api_key:
         return jsonify({'success': False, 'error': 'Chybí API klíč'}), 400
 
-    license_days = int(days) if days and str(days).strip() else None
-    success = db.update_license_tier(api_key, tier, license_days)
-    if not success:
-        return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
-
+    db.admin_update_user_full(
+        api_key,
+        user_name=user_name,
+        email=email,
+        license_expires=license_expires,
+        is_active=is_active,
+        payment_method=payment_method,
+        last_payment_date=last_payment_date,
+    )
     if tier_id is not None:
         db.admin_set_user_tier(api_key, tier_id)
+        db.insert_payment_log(api_key, 'změna_tarifu', details=f"Tier ID {tier_id}")
+    if request.form.get('days'):
+        license_days = int(request.form.get('days'))
+        db.update_license_tier(api_key, tier, license_days)
     if new_password:
         db.admin_set_license_password(api_key, new_password)
     db.admin_update_license_features(
@@ -452,6 +588,39 @@ def api_set_license_password():
         return jsonify({'success': True, 'message': 'Heslo uživatele bylo změněno'})
     else:
         return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
+
+
+@admin_bp.route('/admin/api/license/billing')
+@admin_required
+def api_license_billing_list():
+    """Historie fakturace pro uživatele (api_key v query)."""
+    db = get_db()
+    api_key = request.args.get('api_key', '').strip()
+    if not api_key:
+        return jsonify({'success': False, 'error': 'Chybí api_key'}), 400
+    rows = db.get_billing_history(api_key, limit=100)
+    return jsonify({'success': True, 'data': rows})
+
+
+@admin_bp.route('/admin/api/license/billing', methods=['POST'])
+@admin_required
+def api_license_billing_add():
+    """Přidá záznam do historie fakturace."""
+    db = get_db()
+    api_key = request.form.get('api_key', '').strip()
+    description = request.form.get('description', '').strip() or None
+    amount_cents = request.form.get('amount_cents', '').strip()
+    try:
+        amount_cents = int(amount_cents) if amount_cents else None
+    except (TypeError, ValueError):
+        amount_cents = None
+    paid_at = request.form.get('paid_at', '').strip() or None
+    if not api_key:
+        return jsonify({'success': False, 'error': 'Chybí api_key'}), 400
+    db.add_billing_record(api_key, description=description, amount_cents=amount_cents, paid_at=paid_at)
+    db.admin_update_user_full(api_key, last_payment_date=paid_at)
+    db.insert_payment_log(api_key, 'fakturace', details=description or str(amount_cents))
+    return jsonify({'success': True, 'message': 'Záznam přidán'})
 
 
 @admin_bp.route('/admin/api/license/toggle', methods=['POST'])
