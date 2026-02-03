@@ -1,7 +1,7 @@
 # pdf_dokucheck_pro_v41_with_api.py
 # PDF DokuCheck PRO - Build 41 (Flask verze s API + Agent data)
 # AKTUALIZACE 41: Excel export, TSA filtr, příprava pro licenční systém
-# Režimy: "Z Agenta" (primární) | "Lokální" (upload/disk)
+# Režimy: "Z Agenta" (primární) | "Na server, nebo na cloud" (upload/disk)
 #
 # © 2025 Ing. Martin Cieślar
 #
@@ -670,8 +670,9 @@ HTML_TEMPLATE = '''
                 <div class="sidebar-content">
                     <div class="mode-switcher">
                         <button class="mode-btn active" id="mode-agent" onclick="setMode('agent')">🌐 Z Agenta</button>
-                        <button class="mode-btn" id="mode-local" onclick="setMode('local')">💻 Lokální</button>
+                        <button class="mode-btn" id="mode-local" onclick="setMode('local')">💻 Na server, nebo na cloud</button>
                     </div>
+                    <div style="font-size:0.7em;color:#6b7280;margin-bottom:10px;padding:0 4px;"><strong>Z Agenta</strong> = soubory zůstaly na disku, na server šla jen metadata. <strong>Na server, nebo na cloud</strong> = nahrání PDF zde – celé soubory jdou na server (cloud).</div>
 
                     <!-- AGENT MODE - načítání dat z API -->
                     <div id="agent-mode">
@@ -683,8 +684,8 @@ HTML_TEMPLATE = '''
                         </div>
                         <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;margin-bottom:12px;">
                             <div style="font-size:2em;margin-bottom:8px;">🌐</div>
-                            <div style="font-weight:600;color:#1e5a8a;">Výsledky z Desktop Agenta</div>
-                            <div style="font-size:0.8em;color:#6b7280;margin-top:4px;">Data odeslaná z lokální aplikace</div>
+                            <div style="font-weight:600;color:#1e5a8a;">Z Agenta – výsledky z Desktop aplikace</div>
+                            <div style="font-size:0.8em;color:#6b7280;margin-top:4px;">Soubory zůstaly na disku, na server šla jen metadata (výsledky kontroly)</div>
                         </div>
                         <button class="btn btn-primary" onclick="loadAgentResults()">🔄 Načíst výsledky</button>
                         <div id="agent-stats" style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;display:none;">
@@ -701,15 +702,16 @@ HTML_TEMPLATE = '''
                             </div>
                         </div>
                         <div id="free-trial-hint" style="margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:0.85em;">
-                            <strong>Bez přihlášení (Free trial):</strong> Zkontrolovat PDF můžete v režimu <strong>Lokální</strong> – klikněte vlevo na „Lokální“ a přetáhněte soubory nebo vyberte soubory (max 5).
+                            <strong>Bez přihlášení:</strong> Záložka <strong>Na server, nebo na cloud</strong> = nahrání PDF – celé soubory jdou na server. Pro soukromí: Desktop aplikace (<strong>Z Agenta</strong>) – soubory na disku, na server jen metadata.
                         </div>
                         <div class="disk-tip" style="margin-top:12px;">
-                            💡 <strong>Tip:</strong> Desktop agent kontroluje PDF lokálně a odesílá výsledky sem.
+                            💡 <strong>Z Agenta:</strong> Soubory zůstávají na disku, na server odcházejí jen metadata (výsledky kontroly).
                         </div>
                     </div>
 
-                    <!-- UPLOAD MODE - původní funkcionalita -->
+                    <!-- UPLOAD MODE - Na server, nebo na cloud = celé soubory jdou na server -->
                     <div id="upload-mode" class="hidden">
+                        <div style="font-size:0.75em;color:#6b7280;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;">Celé PDF soubory se odesílají na server (cloud). Pro kontrolu bez odeslání souborů použijte Desktop aplikaci (Z Agenta – na server jdou jen metadata).</div>
                         <div class="drop-zone" id="drop-zone">
                             <div class="drop-zone-icon">📂</div>
                             <div class="drop-zone-text">Přetáhněte PDF soubory</div>

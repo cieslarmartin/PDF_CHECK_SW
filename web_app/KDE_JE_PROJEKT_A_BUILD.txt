@@ -30,9 +30,28 @@ pdf-dokucheck-web, v42 mimo tento projekt) se na web neprojeví.
    Při každé nasazené změně zvyš toto číslo (45, 46, …).
 
    Kde se build zobrazí:
-   - Admin dashboard: v hlavičce vedle badge "ADMIN" (build 44).
-   - Landing page: v patičce stránky "Web build 44".
-   - Konzole při spuštění serveru: "Web build 44".
+   - Admin dashboard: v hlavičce vedle badge "ADMIN" (build 45).
+   - Landing page: v patičce stránky "Web build 45".
+   - Konzole při spuštění serveru: "Web build 45".
+
+4. JAK SPUSTIT WEB Z DISKU (lokální test)
+   Ve složce web_app spusť:
+     SPUSTIT_WEB_Z_DISKU.bat
+   nebo v příkazové řádce:
+     cd C:\Claude\PDF_CHECK_SW\web_app
+     python pdf_check_web_main.py
+   Pak v prohlížeči otevři: http://127.0.0.1:5000/
+   Uvidíš aktuální build (version.py) a všechny změny.
+
+5. PROČ NA PYTHONANYWHERE ZŮSTÁVÁ VERZE 42?
+   PA musí běžet z repozitáře PDF_CHECK_SW (ne z pdf-dokucheck-web ani z v42).
+   - Na PA v záložce Consoles: cd do složky, kde je web (měla by být klonovaná
+     z https://github.com/cieslarmartin/PDF_CHECK_SW). Proveď: git pull origin main.
+   - V záložce Web u své aplikace klikni na zelené tlačítko Reload (restart).
+   Pokud tam máte jiný repozitář (pdf-dokucheck-web) nebo složku v42, nasazuje se
+   starý kód – tam je build 42 a staré šablony. Řešení: na PA naklonovat nebo
+   přepnout projekt na PDF_CHECK_SW a WSGI nastavit na aplikaci z této složky
+   (např. web_app/pdf_check_web_main.py nebo wsgi_pythonanywhere.py).
 
    Šablony používají {{ web_build }} – hodnota se bere z version.py přes
    context_processor v pdf_check_web_main.py.

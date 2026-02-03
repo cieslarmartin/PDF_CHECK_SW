@@ -1,0 +1,2 @@
+# Database – mění se na serveru, způsobuje konflikty při git pull
+web_app/pdfcheck_results.db

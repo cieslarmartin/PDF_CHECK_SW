@@ -282,6 +282,7 @@
         <nav class="header-nav">
             <a href="#proc">Proč DokuCheck</a>
             <a href="#jak">Jak to funguje</a>
+            <a href="#dva-rezimy">Metadata vs. cloud</a>
             <a href="#roadmap">Připravujeme</a>
             <a href="#cenik">Ceník</a>
             <a href="#vyzkouset">Vyzkoušet</a>
@@ -300,7 +301,7 @@
                 <a href="/app" class="btn btn-primary">Vyzkoušet ONLINE Check</a>
                 <a href="#download" class="btn btn-secondary">Stáhnout aplikaci zdarma</a>
             </div>
-            <p class="hero-hint">V aplikaci přepněte do režimu <strong>Lokální</strong> (místo Z Agenta / Gantt) a nahrajte projekty.</p>
+            <p class="hero-hint"><strong>Z Agenta</strong> = soubory zůstávají na disku, na server jdou jen metadata (výsledky kontroly). Záložka <strong>Na server, nebo na cloud</strong> na webu = celé PDF jde na cloud (kontrola na serveru).</p>
             <div class="hero-visual">
                 <p>Screenshot UI / animované video demo – placeholder</p>
             </div>
@@ -336,7 +337,7 @@
             <div class="steps">
                 <div class="step">
                     <div class="step-num">1. Nahraj projekty</div>
-                    <p>V aplikaci zvolte režim <strong>Lokální</strong>, nahrajte PDF projekty z disku nebo přes web.</p>
+                    <p>V Desktop aplikaci (režim <strong>Z Agenta</strong>) nebo na webu záložkou <strong>Na server, nebo na cloud</strong> (nahrání na server). Rozdíl viz níže „Dva režimy – metadata vs. cloud“. </p>
                 </div>
                 <div class="step">
                     <div class="step-num">2. Proveď kontrolu</div>
@@ -345,6 +346,25 @@
                 <div class="step">
                     <div class="step-num">3. Exportuj výsledky</div>
                     <p>Prohlížejte reporty v aplikaci nebo exportujte výsledky pro další použití.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="dva-rezimy" style="background:#f0f9ff;border:1px solid #bfdbfe;border-radius:12px;padding:28px 24px;margin:24px 0;">
+        <div class="container">
+            <h2>Dva režimy kontroly: metadata vs. cloud</h2>
+            <p class="product-text" style="margin-bottom:20px;">Důležité rozlišení – kam vaše data jdou:</p>
+            <div class="benefits" style="grid-template-columns:1fr 1fr;gap:24px;">
+                <div class="benefit" style="border:2px solid #1e5a8a;background:#fff;">
+                    <div class="benefit-icon">💻 Z Agenta</div>
+                    <h3>Soubory na disku, na server jen metadata</h3>
+                    <p>Použijete <strong>Desktop aplikaci</strong> (Agent). PDF soubory zůstávají na vašem počítači. Na náš server se neodesílají celé dokumenty – odcházejí jen <strong>metadata</strong> (výsledky kontroly: zda je dokument PDF/A, počet podpisů, platnost podpisů, razítko atd.). Maximální soukromí a ochrana duševního vlastnictví.</p>
+                </div>
+                <div class="benefit" style="border:1px solid #e5e7eb;">
+                    <div class="benefit-icon">☁️ Na server, nebo na cloud</div>
+                    <h3>Celé soubory jdou na cloud</h3>
+                    <p>Záložka <strong>Na server, nebo na cloud</strong> na webu nebo „ONLINE Check“ znamená, že <strong>celé PDF soubory</strong> nahrajete na náš server a kontrola proběhne tam. Vhodné pro rychlé vyzkoušení. Pro důvěrné dokumenty doporučujeme Desktop aplikaci (Z Agenta).</p>
                 </div>
             </div>
         </div>
@@ -365,19 +385,19 @@
                         <li>Snadná oprava nevyhovujících PDF pro Portál stavebníka.</li>
                     </ul>
                     <p class="benefit">→ Méně vrácení dokumentace, rychlejší odeslání na portál.</p>
-                    <span class="badge-agent">100 % režim Z AGENTA – data neopouštějí vaše PC</span>
+                    <span class="badge-agent">Z AGENTA – soubory na disku, na server jen metadata</span>
                 </div>
                 <div class="roadmap-card">
                     <span class="badge-coming">COMING SOON</span>
                     <h3>Path &amp; Name Analyzer (Nástavba Agenta)</h3>
                     <p class="subtitle">Diagnostika cest a názvů souborů</p>
                     <ul>
-                        <li>Lokální kontrola délky názvů a cest (Path Length) – prevence pádů na OneDrive/SharePoint.</li>
+                        <li>Kontrola délky názvů a cest (Path Length) na vašem PC – prevence pádů na OneDrive/SharePoint.</li>
                         <li>Blesková kontrola tisíců souborů najednou.</li>
                         <li>Export problematických souborů do Excelu pro rychlou opravu.</li>
                     </ul>
                     <p class="benefit">→ Žádné neočekávané pády u velkých zakázek.</p>
-                    <span class="badge-agent">100 % režim Z AGENTA – vše běží na vašem PC</span>
+                    <span class="badge-agent">Z AGENTA – vše běží na vašem PC, na server jen metadata</span>
                 </div>
             </div>
         </div>
@@ -386,7 +406,7 @@
     <section>
         <div class="container">
             <h2>Produkt</h2>
-            <p class="product-text">DokuCheck je nástroj pro kontrolu stavební dokumentace: desktopová aplikace (Agent) pro hromadné kontroly a soukromí, webová aplikace pro rychlé vyzkoušení. Jednotná pravidla a výstupy.</p>
+            <p class="product-text">DokuCheck je nástroj pro kontrolu stavební dokumentace: desktopová aplikace (Agent) pro hromadné kontroly – <strong>soubory zůstávají na disku, na server jdou jen metadata</strong> – a webová aplikace pro rychlé vyzkoušení (nahrání na cloud). Jednotná pravidla a výstupy.</p>
             <div class="product-visual">Demo video / carousel screenshotů – placeholder</div>
         </div>
     </section>
@@ -402,11 +422,11 @@
                     <p class="tier-price-note">/ rok</p>
                     <p class="tier-desc">Ideální pro samostatné projektanty a kontrolu vlastních expedicí před odesláním objednateli.</p>
                     <ul class="tier-features">
-                        <li>Lokální kontrola (režim Z Agenta)</li>
-                        <li>Kontrola metadat a podpisů</li>
+                        <li>Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
+                        <li>Kontrola PDF/A, metadat a podpisů</li>
                         <li>Standardní UI</li>
                     </ul>
-                    <p class="tier-security">🔒 Režim Z Agenta – data zůstávají u vás, ochrana duševního vlastnictví.</p>
+                    <p class="tier-security">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
                     <a href="/checkout?tarif=basic" class="btn btn-secondary btn-tier">Zakoupit Basic</a>
                 </div>
                 <div class="tier-card pro-tier">
@@ -422,7 +442,7 @@
                         <li class="highlight">Sofistikované filtry chyb</li>
                         <li>Prioritní podpora</li>
                     </ul>
-                    <p class="tier-security">🔒 Režim Z Agenta – data zůstávají u vás, ochrana duševního vlastnictví.</p>
+                    <p class="tier-security">🔒 Z Agenta: soubory u vás, na server jen metadata (výsledky kontroly).</p>
                     <a href="/checkout?tarif=standard" class="btn btn-tier">Zakoupit Pro</a>
                 </div>
             </div>
@@ -435,7 +455,7 @@
         <div class="container">
             <div class="try-online">
                 <h2>Vyzkoušej online</h2>
-                <p>Chcete vyzkoušet kontrolu bez instalace? Otevřete naši aplikaci, přepněte z režimu <strong>Z Agenta (Gantt)</strong> do režimu <strong>Lokální</strong>, nahrajte projekty a spusťte kontrolu. V režimu Lokální můžete nahrát soubory a spustit ONLINE Check.</p>
+                <p>Chcete vyzkoušet kontrolu bez instalace? Zvolte záložku <strong>Na server, nebo na cloud</strong> – nahrajte PDF (max. 3× 2 MB); <strong>celé soubory jdou na server</strong>. Pro soukromí: <strong>Desktop aplikace (Z Agenta)</strong> – soubory na disku, na server jen metadata.</p>
                 <div class="cta-row">
                     <a href="/app" class="btn btn-primary">Otevřít aplikaci</a>
                 </div>
@@ -464,7 +484,7 @@
                 </details>
                 <details class="faq-item">
                     <summary>Jak vyzkoušet online?</summary>
-                    <p>V menu aplikace zvolte režim <strong>Lokální</strong> (místo Z Agenta / Gantt), nahrajte projekty a spusťte kontrolu.</p>
+                    <p>Na webu záložka <strong>Na server, nebo na cloud</strong> = nahrání PDF na server (cloud). V Desktop aplikaci <strong>Z Agenta</strong> = soubory na disku, na server jdou jen metadata.</p>
                 </details>
                 <details class="faq-item">
                     <summary>Jaké soubory mohu nahrát?</summary>
@@ -481,7 +501,7 @@
     <section id="download">
         <div class="container">
             <h2>Stažení aplikace</h2>
-            <p class="download-text">Stáhněte si DokuCheck pro Windows nebo Mac. V aplikaci přepněte do režimu <strong>Lokální</strong>, abyste mohli nahrát projekty a spustit kontrolu. Výhody: soukromí, rychlost, neomezená velikost souborů.</p>
+            <p class="download-text">Stáhněte si DokuCheck pro Windows nebo Mac. V Desktop aplikaci (<strong>Z Agenta</strong>) soubory zůstávají na disku – na server jdou jen metadata. Výhody: soukromí, rychlost, neomezená velikost souborů.</p>
             <div class="download-buttons">
                 <a href="/download" class="btn btn-primary">🪟 Windows (.exe)</a>
                 <a href="/download" class="btn btn-secondary">🍎 Mac (.dmg)</a>
