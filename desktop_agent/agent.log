@@ -1104,3 +1104,21 @@ _tkinter.TclError: unknown option "-selectbackground"
 2026-02-02 23:27:19,544 - INFO - Analýza dokončena: 230208_D1.1-10 Řez A02.pdf
 2026-02-02 23:27:19,544 - INFO - Odesílám 1 výsledků na server (jeden request)...
 2026-02-02 23:27:20,255 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.
+2026-02-03 20:23:09,115 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-03 20:23:09,116 - INFO - Spouštím GUI...
+2026-02-03 20:23:09,387 - INFO - Ověřuji licenci se serverem...
+2026-02-03 20:23:15,485 - INFO - Agent běží
+2026-02-03 20:25:16,957 - INFO - Přihlášení e-mailem a heslem...
+2026-02-03 20:25:17,879 - INFO - Přihlášeno.
+2026-02-03 20:25:52,851 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\17-044-3_B_STZ_r07_2020.pdf
+2026-02-03 20:25:52,900 - INFO - Analýza dokončena: 17-044-3_B_STZ_r07_2020.pdf
+2026-02-03 20:25:52,900 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-09 Řez A01.pdf
+2026-02-03 20:25:52,912 - INFO - Analýza dokončena: 230208_D1.1-09 Řez A01.pdf
+2026-02-03 20:25:52,912 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-10 Řez A02.pdf
+2026-02-03 20:25:52,927 - INFO - Analýza dokončena: 230208_D1.1-10 Řez A02.pdf
+2026-02-03 20:25:52,927 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-11 Řez A03.pdf
+2026-02-03 20:25:52,938 - INFO - Analýza dokončena: 230208_D1.1-11 Řez A03.pdf
+2026-02-03 20:25:52,938 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR\230208_D1.1-12 Severovýchodní a severozápadní pohled.pdf
+2026-02-03 20:25:52,955 - INFO - Analýza dokončena: 230208_D1.1-12 Severovýchodní a severozápadní pohled.pdf
+2026-02-03 20:25:52,955 - INFO - Odesílám 5 výsledků na server (jeden request)...
+2026-02-03 20:25:53,648 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.

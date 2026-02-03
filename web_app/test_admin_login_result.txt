@@ -1,0 +1,14 @@
+=== Test admin přístupu (dashboard) ===
+
+Účet: admin@admin.cz
+Heslo: admin
+
+OK – Přihlášení funguje.
+  Uživatel: Admin, role: ADMIN
+
+Přístup k dashboardu a admin funkcím:
+  1. Otevřete v prohlížeči: /login
+  2. Zadejte e-mail: admin@admin.cz
+  3. Zadejte heslo: admin
+  4. Po přihlášení: /admin nebo /admin/dashboard
+  (Licence, Tiery, Čeká na platbu, Trial, Logy, Nastavení, Změna hesla, atd.)

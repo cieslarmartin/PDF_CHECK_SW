@@ -69,12 +69,55 @@ def admin_required(f):
 
 
 # =============================================================================
+# VÝCHOZÍ ADMIN A PŘÍSTUP K DASHBOARDU
+# =============================================================================
+
+# Výchozí přihlašovací údaje pro admin dashboard (login + všechny admin funkce)
+DEFAULT_ADMIN_EMAIL = 'admin@admin.cz'
+DEFAULT_ADMIN_PASSWORD = 'admin'
+
+
+def get_default_admin_credentials():
+    """Vrátí (email, heslo) pro přístup k admin dashboardu a všem admin funkcím."""
+    return (DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
+
+
+def ensure_default_admin():
+    """
+    Zajistí, že v DB existuje admin účet admin@admin.cz s heslem 'admin'.
+    Volá se při načtení přihlašovací stránky – po přihlášení máte přístup k dashboardu
+    (/admin, /admin/dashboard) a všem admin funkcím (licence, tiery, objednávky, logy, atd.).
+    """
+    db = get_db()
+    user = db.get_admin_by_email(DEFAULT_ADMIN_EMAIL)
+    if user:
+        return True
+    success, _ = db.create_admin_user(
+        email=DEFAULT_ADMIN_EMAIL,
+        password=DEFAULT_ADMIN_PASSWORD,
+        role='ADMIN',
+        display_name='Admin'
+    )
+    return success
+
+
+def reset_default_admin_password():
+    """Nastaví heslo účtu admin@admin.cz na 'admin'. Vrací True pokud účet existoval a byl aktualizován."""
+    db = get_db()
+    user = db.get_admin_by_email(DEFAULT_ADMIN_EMAIL)
+    if not user:
+        return False
+    return db.update_admin_user(user['id'], password=DEFAULT_ADMIN_PASSWORD)
+
+
+# =============================================================================
 # AUTH ROUTES
 # =============================================================================
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Přihlašovací stránka"""
+    ensure_default_admin()
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
@@ -891,20 +934,15 @@ def init_test_data():
     Inicializuje testovací data
 
     Volej tuto funkci pro vytvoření testovacích účtů:
-    - admin@pdfcheck.cz / admin123 / ADMIN
+    - admin@admin.cz / admin (výchozí přístup k dashboardu – viz ensure_default_admin)
     - tester-basic@test.cz / test123 / BASIC license
     - tester-pro@test.cz / test123 / PRO license
     """
     db = get_db()
 
-    # Vytvoř admin účet
-    success, msg = db.create_admin_user(
-        email='admin@pdfcheck.cz',
-        password='admin123',
-        role='ADMIN',
-        display_name='Administrator'
-    )
-    print(f"Admin account: {success} - {msg}")
+    # Výchozí admin pro dashboard: admin@admin.cz / admin
+    ensure_default_admin()
+    print("Admin (dashboard): admin@admin.cz / admin")
 
     # Vytvoř testovací licence
     # Basic tester
