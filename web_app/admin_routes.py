@@ -44,26 +44,31 @@ def get_db():
 
 
 def login_required(f):
-    """Dekorátor pro ověření přihlášení"""
+    """Dekorátor: DOČASNĚ VYPNOUT – vždy propustí (viz admin_required)."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_user' not in session:
-            flash('Prosím přihlaste se', 'warning')
-            return redirect(url_for('admin.login'))
+            session['admin_user'] = {
+                'id': 0,
+                'email': 'admin@admin.cz',
+                'role': 'ADMIN',
+                'display_name': 'Admin (bez přihlášení)',
+            }
         return f(*args, **kwargs)
     return decorated_function
 
 
 def admin_required(f):
-    """Dekorátor pro ověření admin role"""
+    """Dekorátor: DOČASNĚ VYPNOUT – vždy propustí bez přihlášení (heslo vyřešíme až na konci projektu)."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_user' not in session:
-            flash('Prosím přihlaste se', 'warning')
-            return redirect(url_for('admin.login'))
-        if session.get('admin_user', {}).get('role') != 'ADMIN':
-            flash('Nemáte oprávnění pro tuto akci', 'error')
-            return redirect(url_for('admin.login'))
+            session['admin_user'] = {
+                'id': 0,
+                'email': 'admin@admin.cz',
+                'role': 'ADMIN',
+                'display_name': 'Admin (bez přihlášení)',
+            }
         return f(*args, **kwargs)
     return decorated_function
 
