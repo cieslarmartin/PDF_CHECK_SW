@@ -12,7 +12,9 @@ import hashlib
 import hmac
 
 # =============================================================================
-# LICENCE TIERS (úrovně)
+# LICENCE TIERS (úrovně) – podle cenové politiky: Free, Basic, Pro (+ Trial v DB)
+# Basic = PROJEKTANT (1290 Kč/rok), Pro = VEDOUCÍ PROJEKTANT (1990 Kč/rok)
+# ENTERPRISE = zachován pro zpětnou kompatibilitu, chová se jako Pro
 # =============================================================================
 
 class LicenseTier(IntEnum):
@@ -20,15 +22,15 @@ class LicenseTier(IntEnum):
     FREE = 0
     BASIC = 1
     PRO = 2
-    ENTERPRISE = 3
+    ENTERPRISE = 3  # Zpětná kompatibilita; na serveru nepoužívat, = Pro
 
 
-# Názvy tierů pro zobrazení
+# Názvy tierů pro zobrazení (v aplikaci a adminu)
 TIER_NAMES = {
     LicenseTier.FREE: "Free",
     LicenseTier.BASIC: "Basic",
     LicenseTier.PRO: "Pro",
-    LicenseTier.ENTERPRISE: "Enterprise"
+    LicenseTier.ENTERPRISE: "Pro",  # Zobrazit jako Pro
 }
 
 # Barvy tierů pro UI
@@ -41,53 +43,49 @@ TIER_COLORS = {
 
 
 # =============================================================================
-# FEATURE FLAGS - definice funkcí a jejich dostupnosti
+# FEATURE FLAGS – podle cenové politiky: Basic (PROJEKTANT) vs Pro (VEDOUCÍ PROJEKTANT)
+# Basic: kontrola PDF, podpisy, 100 souborů/dávka, BEZ exportu Excel.
+# Pro: vše + export Excel/CSV, vyšší limity, 3 zařízení.
 # =============================================================================
 
 class Feature:
     """Definice feature flagu"""
 
-    # Základní funkce (všechny tiery)
-    PDF_CHECK = "pdf_check"                    # Kontrola PDF
-    SIGNATURE_CHECK = "signature_check"        # Kontrola podpisů
+    # Základní (Free, Basic, Pro)
+    PDF_CHECK = "pdf_check"
+    SIGNATURE_CHECK = "signature_check"
 
-    # Basic+ funkce (Basic: 100 souborů, bez exportu Excel/CSV)
-    BATCH_UPLOAD = "batch_upload"              # Hromadný upload
-    DETAILED_VIEW = "detailed_view"            # Detailní pohled na soubor
-    HISTORY_30_DAYS = "history_30_days"        # Historie 30 dní
+    # Basic: 100 souborů, bez exportu Excel
+    BATCH_UPLOAD = "batch_upload"
+    DETAILED_VIEW = "detailed_view"
+    HISTORY_30_DAYS = "history_30_days"
 
-    # Pro+ funkce (Pro: vše včetně exportu)
-    EXPORT_EXCEL = "export_excel"               # Export do Excelu (jen Pro+)
-    EXPORT_CSV = "export_csv"                   # Export do CSV (jen Pro+)
-    BATCH_UNLIMITED = "batch_unlimited"         # Neomezený batch
-    EXPORT_ALL = "export_all"                  # Export všech dat najednou
-    TREE_STRUCTURE = "tree_structure"          # Stromová struktura složek
-    TSA_FILTER = "tsa_filter"                  # Filtr podle TSA
-    ADVANCED_FILTERS = "advanced_filters"      # Pokročilé filtry
-    API_ACCESS = "api_access"                  # Přímý API přístup
-    HISTORY_90_DAYS = "history_90_days"        # Historie 90 dní
+    # Jen Pro: export Excel/CSV, vyšší limity
+    EXPORT_EXCEL = "export_excel"
+    EXPORT_CSV = "export_csv"
+    BATCH_UNLIMITED = "batch_unlimited"
+    EXPORT_ALL = "export_all"
+    TREE_STRUCTURE = "tree_structure"
+    TSA_FILTER = "tsa_filter"
+    ADVANCED_FILTERS = "advanced_filters"
+    API_ACCESS = "api_access"
+    HISTORY_90_DAYS = "history_90_days"
 
-    # Enterprise funkce
-    MULTI_USER = "multi_user"                  # Více uživatelů
-    MULTI_DEVICE = "multi_device"              # Více zařízení
-    PRIORITY_SUPPORT = "priority_support"      # Prioritní podpora
-    CUSTOM_BRANDING = "custom_branding"        # Vlastní branding
-    HISTORY_UNLIMITED = "history_unlimited"    # Neomezená historie
+    # Enterprise = Pro (zpětná kompatibilita)
+    MULTI_USER = "multi_user"
+    MULTI_DEVICE = "multi_device"
+    PRIORITY_SUPPORT = "priority_support"
+    CUSTOM_BRANDING = "custom_branding"
+    HISTORY_UNLIMITED = "history_unlimited"
 
 
-# Mapování funkcí na tiery
-# Free: 5 souborů | Basic: 100 souborů, bez exportu Excel/CSV | Pro: vše
+# Mapování funkcí na tiery (Free | Basic | Pro; ENTERPRISE = stejné jako Pro)
 FEATURE_TIERS: Dict[str, List[LicenseTier]] = {
-    # Základní - všechny tiery
     Feature.PDF_CHECK: [LicenseTier.FREE, LicenseTier.BASIC, LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.SIGNATURE_CHECK: [LicenseTier.FREE, LicenseTier.BASIC, LicenseTier.PRO, LicenseTier.ENTERPRISE],
-
-    # Basic: 100 souborů, bez exportu
     Feature.BATCH_UPLOAD: [LicenseTier.BASIC, LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.DETAILED_VIEW: [LicenseTier.BASIC, LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.HISTORY_30_DAYS: [LicenseTier.BASIC, LicenseTier.PRO, LicenseTier.ENTERPRISE],
-
-    # Pro+: export Excel/CSV a vše ostatní
     Feature.EXPORT_EXCEL: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.EXPORT_CSV: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.BATCH_UNLIMITED: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
@@ -97,21 +95,20 @@ FEATURE_TIERS: Dict[str, List[LicenseTier]] = {
     Feature.ADVANCED_FILTERS: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.API_ACCESS: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
     Feature.HISTORY_90_DAYS: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
-
-    # Enterprise
-    Feature.MULTI_USER: [LicenseTier.ENTERPRISE],
-    Feature.MULTI_DEVICE: [LicenseTier.ENTERPRISE],
-    Feature.PRIORITY_SUPPORT: [LicenseTier.ENTERPRISE],
-    Feature.CUSTOM_BRANDING: [LicenseTier.ENTERPRISE],
-    Feature.HISTORY_UNLIMITED: [LicenseTier.ENTERPRISE],
+    Feature.MULTI_USER: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
+    Feature.MULTI_DEVICE: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
+    Feature.PRIORITY_SUPPORT: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
+    Feature.CUSTOM_BRANDING: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
+    Feature.HISTORY_UNLIMITED: [LicenseTier.PRO, LicenseTier.ENTERPRISE],
 }
 
 
 # =============================================================================
-# LIMITY - numerické limity podle tieru
+# LIMITY – podle cenové politiky (Basic 1290 Kč, Pro 1990 Kč)
+# Free: 5 souborů, 1 zařízení. Basic: 100 souborů, 1 zařízení, bez Excel.
+# Pro: neomezeno / vysoké limity, 3 zařízení, export Excel.
 # =============================================================================
 
-# Free: 5 souborů | Basic: 100 souborů, bez exportu | Pro: vše
 TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
     LicenseTier.FREE: {
         'max_files_per_batch': 5,
@@ -140,13 +137,14 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'rate_limit_per_hour': 1000,
         'can_use_agent': True,
     },
+    # Enterprise = stejné jako Pro (zpětná kompatibilita)
     LicenseTier.ENTERPRISE: {
-        'max_files_per_batch': -1,  # Neomezeno
-        'max_file_size_mb': -1,     # Neomezeno
-        'max_batches_stored': -1,   # Neomezeno
-        'history_days': -1,         # Neomezeno
-        'max_devices': -1,          # Neomezeno
-        'rate_limit_per_hour': -1,  # Neomezeno
+        'max_files_per_batch': -1,
+        'max_file_size_mb': 100,
+        'max_batches_stored': 50,
+        'history_days': 90,
+        'max_devices': 3,
+        'rate_limit_per_hour': 1000,
         'can_use_agent': True,
     },
 }

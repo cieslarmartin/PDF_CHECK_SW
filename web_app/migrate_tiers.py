@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # migrate_tiers.py
 # DATABASE UPGRADE: Tier-Based License System
-# - Vytvoří tabulku license_tiers (id, name, max_files, max_devices, allow_signatures, ...).
-# - Přidá sloupec tier_id do api_keys (projekt používá api_keys, ne "users").
-# - Vloží výchozí tiery: Free (10/1), Basic (100/2), Trial (5/999999, bez podpisů).
-# - Vytvoří uživatele demo_trial@dokucheck.app (heslo: demo123) a přiřadí Trial tier.
+# Cenová politika: Basic (PROJEKTANT) 1290 Kč/rok, Pro (VEDOUCÍ PROJEKTANT) 1990 Kč/rok.
+# Výchozí tiery: Free, Basic, Pro, Trial (bez Enterprise – zredukováno na 4 licence).
 # Spusť: cd ~/web_app && python migrate_tiers.py
 # © 2025 Ing. Martin Cieślar
 
@@ -50,27 +48,27 @@ def run():
     ''')
     cur.execute("SELECT COUNT(*) FROM license_tiers")
     if cur.fetchone()[0] == 0:
+        # Pouze 4 tiery podle cenové politiky: Free, Basic (PROJEKTANT), Pro (VEDOUCÍ PROJEKTANT), Trial
         cur.executemany(
             '''INSERT INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
                VALUES (?, ?, ?, ?, ?, ?, ?)''',
             [
-                (1, 'Free', 10, 0, 0, 0, 1),
-                (2, 'Basic', 100, 1, 1, 1, 2),
-                (3, 'Pro', 1000, 1, 1, 1, 5),
-                (4, 'Enterprise', 99999, 1, 1, 1, 10),
-                (5, 'Trial', 5, 0, 0, 0, 999999),
+                (1, 'Free', 5, 0, 0, 0, 1),
+                (2, 'Basic', 100, 1, 1, 0, 1),   # PROJEKTANT – bez exportu Excel
+                (3, 'Pro', 99999, 1, 1, 1, 3),   # VEDOUCÍ PROJEKTANT – export Excel, 3 zařízení
+                (4, 'Trial', 5, 0, 0, 0, 1),     # Demo účet
             ]
         )
-        print("Vloženy výchozí tier definice: Free (10/1), Basic (100/2), Pro (1000/5), Enterprise, Trial (5/999999, bez podpisů).")
+        print("Vloženy výchozí tier definice: Free (5/1), Basic (100/1, bez Excel), Pro (99999/3, s Excel), Trial (5/1).")
     else:
-        print("Tabulka license_tiers již obsahuje data.")
-    # Trial tier: vytvoř pokud chybí (upgrade)
+        print("Tabulka license_tiers již obsahuje data – neprovádí se změna.")
+    # Trial tier: vytvoř pokud chybí (upgrade ze staré migrace)
     cur.execute("SELECT id FROM license_tiers WHERE name = 'Trial'")
     if cur.fetchone() is None:
         cur.execute(
             '''INSERT INTO license_tiers (name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
                VALUES (?, ?, ?, ?, ?, ?)''',
-            ('Trial', 5, 0, 0, 0, 999999)
+            ('Trial', 5, 0, 0, 0, 1)
         )
         print("Přidán tier Trial.")
 

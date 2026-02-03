@@ -203,6 +203,10 @@ def dashboard():
 
     activity_30 = db.get_activity_last_30_days()
     tiers_list = db.get_all_license_tiers()
+    # Pro nové licence nabízíme pouze Free, Basic, Pro, Trial (bez Enterprise)
+    product_tiers = [t for t in tiers_list if (t.get('name') or '').strip() in ('Free', 'Basic', 'Pro', 'Trial')]
+    if not product_tiers:
+        product_tiers = tiers_list
     by_tier_counts = {}
     for t in tiers_list:
         by_tier_counts[t['name']] = sum(1 for l in licenses if (l.get('tier_id') == t['id']) or (l.get('tier_name') == t['name']))
@@ -215,11 +219,16 @@ def dashboard():
     trial_stats = db.get_trial_stats()
     online_demo_log = db.get_online_demo_log(limit=200)
 
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_dashboard.html',
                           licenses=licenses,
                           stats=stats,
                           tiers=TIER_NAMES,
                           tiers_list=tiers_list or [],
+                          product_tiers=product_tiers,
                           activity_30=activity_30 or [],
                           by_tier_counts=by_tier_counts or {},
                           kpis=kpis,
@@ -229,7 +238,8 @@ def dashboard():
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
-                          user=session.get('admin_user'))
+                          user=user,
+                          active_page='dashboard')
 
 
 @admin_bp.route('/admin/users')
@@ -256,7 +266,11 @@ def user_audit():
     conn.close()
     user_email = row['email'] if row else (user_id[:20] + '...')
     user_display = (row['user_name'] or row['email']) if row else (user_id[:20] + '...')
-    return render_template('admin_user_audit.html', logs=logs, user_id=user_id, user_email=user_email, user_display=user_display, user=session.get('admin_user'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_user_audit.html', logs=logs, user_id=user_id, user_email=user_email, user_display=user_display, user=user, active_page='dashboard')
 
 
 @admin_bp.route('/admin/tiers')
@@ -265,7 +279,11 @@ def tiers():
     """Globální definice tierů (Free, Basic, Pro, Enterprise) – pouze úprava limitů, ne per-user."""
     db = get_db()
     tiers_list = db.get_all_license_tiers()
-    return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=session.get('admin_user'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=user, active_page='tiers')
 
 
 @admin_bp.route('/admin/pending-orders')
@@ -274,7 +292,11 @@ def pending_orders():
     """Čekající objednávky (fakturační formulář – Čeká na platbu)."""
     db = get_db()
     orders = db.get_pending_orders(status=None, limit=200)
-    return render_template('admin_pending_orders.html', orders=orders or [], user=session.get('admin_user'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_pending_orders.html', orders=orders or [], user=user, active_page='pending_orders')
 
 
 @admin_bp.route('/admin/trial')
@@ -283,7 +305,11 @@ def trial():
     """Správa Trial použití: Machine-ID | Celkem souborů | Poslední aktivita | Reset."""
     db = get_db()
     trial_list = db.list_trial_usage()
-    return render_template('admin_trial.html', trial_list=trial_list or [], user=session.get('admin_user'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_trial.html', trial_list=trial_list or [], user=user, active_page='trial')
 
 
 @admin_bp.route('/admin/logs')
@@ -305,6 +331,10 @@ def logs():
         category=category, user_id=user_id, date_from=date_from, date_to=date_to,
         level=level, limit=per_page, offset=offset
     )
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_logs.html',
                           logs_list=logs_list,
                           category=category,
@@ -314,7 +344,8 @@ def logs():
                           level=level or '',
                           page=page,
                           per_page=per_page,
-                          user=session.get('admin_user'))
+                          user=user,
+                          active_page='logs')
 
 
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
@@ -355,8 +386,13 @@ def settings():
 
     maintenance = db.get_global_setting('maintenance_mode', False)
     allow_reg = db.get_global_setting('allow_new_registrations', True)
-    return render_template('admin_settings.html', user=session.get('admin_user'),
-                          maintenance_mode=maintenance, allow_new_registrations=allow_reg)
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_settings.html', user=user,
+                          maintenance_mode=maintenance, allow_new_registrations=allow_reg,
+                          active_page='settings')
 
 
 # =============================================================================
