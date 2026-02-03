@@ -4,271 +4,421 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DokuCheck – Dokumentace bez chyb | Portál stavebníka</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        header: '#1a365d',
-                        'accent-btn': '#007ACC',
-                        'success': '#38a169',
-                        'error': '#e53e3e',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .btn-primary { background: #007ACC; }
-        .btn-primary:hover { background: #2b6cb0; }
-        .hero-visual { background: linear-gradient(135deg, rgba(26, 54, 93, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%); border: 2px dashed rgba(148, 163, 184, 0.4); }
-        .faq-item summary { cursor: pointer; list-style: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            background: #f3f4f6;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Header – stejný jako webová aplikace */
+        #header {
+            background: white;
+            border-bottom: 2px solid #1e5a8a;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header-logo { display: flex; align-items: center; gap: 12px; }
+        .header-logo-title { font-size: 1.1em; font-weight: 700; }
+        .header-logo-title .pdf { color: #1e5a8a; }
+        .header-logo-title .doku { color: #374151; }
+        .header-logo-title .pro { color: #9ca3af; font-weight: 400; }
+        .header-nav { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .header-nav a {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.9em;
+            padding: 6px 0;
+        }
+        .header-nav a:hover { color: #1e5a8a; }
+        .header-nav img { height: 36px; width: auto; object-fit: contain; }
+        .header-nav img[style*="display: none"] { display: none !important; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+        section { padding: 40px 0; }
+        section h2 { font-size: 1.4em; color: #1f2937; margin-bottom: 16px; font-weight: 600; }
+        section h3 { font-size: 1em; color: #374151; margin-bottom: 8px; font-weight: 600; }
+
+        /* Hero – světlé pozadí, karty jako v aplikaci */
+        .hero {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 48px 24px;
+            text-align: center;
+        }
+        .hero h1 { font-size: 1.6em; color: #1f2937; margin-bottom: 12px; line-height: 1.3; font-weight: 700; }
+        .hero .subtitle { font-size: 1em; color: #6b7280; max-width: 560px; margin: 0 auto 20px; }
+        .hero .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 20px; }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-primary { background: #1e5a8a; color: white; }
+        .btn-primary:hover { background: #174a6e; }
+        .btn-secondary {
+            background: white;
+            color: #1e5a8a;
+            border: 1px solid #1e5a8a;
+        }
+        .btn-secondary:hover { background: #eff6ff; }
+        .hero-hint { font-size: 0.8em; color: #6b7280; margin-top: 12px; }
+        .hero-hint strong { color: #374151; }
+        .hero-visual {
+            margin-top: 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero-visual p { color: #9ca3af; font-size: 0.9em; }
+
+        /* Karty – bílé na šedém, jako v aplikaci */
+        .benefits { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .benefit {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .benefit-icon { font-size: 1.6em; margin-bottom: 10px; }
+        .benefit p { font-size: 0.85em; color: #6b7280; }
+
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .step {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #1e5a8a;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .step-num { font-weight: 600; color: #1e5a8a; margin-bottom: 8px; font-size: 0.9em; }
+        .step p { font-size: 0.85em; color: #6b7280; }
+
+        /* Produkt */
+        .product-text { color: #6b7280; margin-bottom: 20px; font-size: 0.95em; }
+        .product-visual {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+
+        /* Ceník – tabulka jako v aplikaci */
+        .pricing-table {
+            width: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+        .pricing-table th {
+            background: #f9fafb;
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.85em;
+        }
+        .pricing-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+            font-size: 0.9em;
+        }
+        .pricing-table tr:last-child td { border-bottom: none; }
+        .pricing-table .tarif { font-weight: 600; color: #1f2937; }
+        .pricing-table .btn-small { padding: 6px 12px; font-size: 0.8em; }
+        .pricing-table .badge-soon {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f3f4f6;
+            color: #9ca3af;
+            border-radius: 6px;
+            font-size: 0.8em;
+        }
+        .pricing-hint { font-size: 0.8em; color: #9ca3af; margin-top: 12px; text-align: center; }
+        .pricing-hint a { color: #1e5a8a; text-decoration: none; }
+        .pricing-hint a:hover { text-decoration: underline; }
+
+        /* Vyzkoušej online – světlá bublina jako v aplikaci */
+        .try-online {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .try-online h2 { color: #1e5a8a; margin-bottom: 12px; }
+        .try-online p { color: #1e3a5f; margin-bottom: 12px; font-size: 0.95em; }
+        .try-online strong { color: #1e5a8a; }
+        .try-online .cta-row { margin-top: 16px; }
+
+        /* Reference */
+        .refs { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; align-items: center; }
+        .ref-box {
+            width: 120px;
+            height: 56px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            color: #9ca3af;
+        }
+        .ref-note { font-size: 0.85em; color: #9ca3af; }
+
+        /* FAQ – karty jako v aplikaci */
+        .faq-list { display: flex; flex-direction: column; gap: 8px; }
+        .faq-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+        .faq-item summary { cursor: pointer; list-style: none; font-weight: 600; color: #1e5a8a; }
         .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item p { font-size: 0.9em; color: #6b7280; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f4f6; }
+        .faq-item strong { color: #374151; }
+
+        /* Download */
+        #download { background: #f9fafb; border-top: 1px solid #e5e7eb; }
+        .download-text { color: #6b7280; margin-bottom: 16px; font-size: 0.95em; }
+        .download-text strong { color: #374151; }
+        .download-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 16px; }
+
+        /* Footer – jako v aplikaci */
+        .footer {
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 24px 20px;
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px; margin-bottom: 24px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .footer h3 { font-size: 0.95em; color: #374151; margin-bottom: 8px; font-weight: 600; }
+        .footer a { color: #1e5a8a; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .footer-bottom { text-align: center; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 0.8em; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
-    <!-- Navigace -->
-    <nav class="fixed top-0 left-0 right-0 z-50 border-b border-slate-700/50" style="background: #1a365d;">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-white">DokuCheck</a>
-            <div class="flex items-center gap-6">
-                <a href="#proc" class="text-slate-300 hover:text-white transition hidden sm:inline">Proč DokuCheck</a>
-                <a href="#jak" class="text-slate-300 hover:text-white transition hidden sm:inline">Jak to funguje</a>
-                <a href="#cenik" class="text-slate-300 hover:text-white transition">Ceník</a>
-                <a href="#vyzkouset" class="text-slate-300 hover:text-white transition">Vyzkoušet</a>
-                <a href="#download" class="text-slate-300 hover:text-white transition">Stažení</a>
-                <a href="/portal" class="text-slate-300 hover:text-white transition">Můj účet</a>
-                <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="DokuCheck" class="h-10 w-auto object-contain" onerror="this.style.display='none'">
-            </div>
+<body>
+    <header id="header">
+        <div class="header-logo">
+            <span class="header-logo-title"><span class="pdf">PDF</span><span class="doku">Doku</span><span class="pro">Check PRO</span></span>
         </div>
-    </nav>
+        <nav class="header-nav">
+            <a href="#proc">Proč DokuCheck</a>
+            <a href="#jak">Jak to funguje</a>
+            <a href="#cenik">Ceník</a>
+            <a href="#vyzkouset">Vyzkoušet</a>
+            <a href="#download">Stažení</a>
+            <a href="/portal">Můj účet</a>
+            <a href="/app">Aplikace</a>
+            <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="DokuCheck" onerror="this.style.display='none'">
+        </nav>
+    </header>
 
-    <!-- Hero -->
-    <section class="pt-28 pb-16 px-6 scroll-mt-16">
-        <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
-            <div class="flex-1 text-center lg:text-left">
-                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
-                    DokuCheck – Dokumentace bez chyb pro Portál stavebníka
-                </h1>
-                <p class="text-lg md:text-xl text-slate-400 mb-8 max-w-xl mx-auto lg:mx-0">
-                    Rychlá kontrola PDF/PDF-A, podpisů a souladu dokumentů během minut.
-                </p>
-                <div class="flex flex-wrap justify-center lg:justify-start gap-4">
-                    <a href="/app" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-white shadow-lg btn-primary">
-                        Vyzkoušet ONLINE Check
-                    </a>
-                    <a href="#download" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition">
-                        Stáhnout aplikaci zdarma
-                    </a>
-                </div>
-                <p class="text-slate-500 text-sm mt-4 max-w-xl mx-auto lg:mx-0">V aplikaci přepněte do režimu <strong class="text-slate-400">Lokální</strong> (místo Z Agenta / Gantt) a nahrajte projekty.</p>
+    <section class="hero">
+        <div class="container">
+            <h1>DokuCheck – Dokumentace bez chyb pro Portál stavebníka</h1>
+            <p class="subtitle">Rychlá kontrola PDF/PDF-A, podpisů a souladu dokumentů během minut.</p>
+            <div class="cta-row">
+                <a href="/app" class="btn btn-primary">Vyzkoušet ONLINE Check</a>
+                <a href="#download" class="btn btn-secondary">Stáhnout aplikaci zdarma</a>
             </div>
-            <div class="flex-1 w-full max-w-lg">
-                <div class="hero-visual rounded-xl aspect-video flex items-center justify-center">
-                    <div class="text-center text-slate-500 p-6">
-                        <p class="text-sm font-medium">Screenshot UI / animované video demo</p>
-                        <p class="text-xs mt-2 opacity-80">Placeholder</p>
-                    </div>
-                </div>
+            <p class="hero-hint">V aplikaci přepněte do režimu <strong>Lokální</strong> (místo Z Agenta / Gantt) a nahrajte projekty.</p>
+            <div class="hero-visual">
+                <p>Screenshot UI / animované video demo – placeholder</p>
             </div>
         </div>
     </section>
 
-    <!-- Proč DokuCheck? -->
-    <section id="proc" class="py-16 px-6 bg-slate-800/30 scroll-mt-20">
-        <div class="max-w-5xl mx-auto">
-            <h2 class="text-2xl md:text-3xl font-bold text-white text-center mb-12">Proč DokuCheck?</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center p-6 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <span class="text-4xl mb-4 block">🕒</span>
-                    <h3 class="text-lg font-bold text-white mb-2">Rychlá kontrola</h3>
-                    <p class="text-slate-400 text-sm">Kontrola PDF/PDF-A, podpisů a souladu dokumentace v jednom kroku. Výsledky během chvilky.</p>
+    <section id="proc">
+        <div class="container">
+            <h2>Proč DokuCheck?</h2>
+            <div class="benefits">
+                <div class="benefit">
+                    <div class="benefit-icon">🕒</div>
+                    <h3>Rychlá kontrola</h3>
+                    <p>Kontrola PDF/PDF-A, podpisů a souladu dokumentace v jednom kroku. Výsledky během chvilky.</p>
                 </div>
-                <div class="text-center p-6 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <span class="text-4xl mb-4 block">✅</span>
-                    <h3 class="text-lg font-bold text-white mb-2">Bez chyb</h3>
-                    <p class="text-slate-400 text-sm">Automatická kontrola podle pravidel Portálu stavebníka. Méně chyb, méně vrácení dokumentace.</p>
+                <div class="benefit">
+                    <div class="benefit-icon">✅</div>
+                    <h3>Bez chyb</h3>
+                    <p>Automatická kontrola podle pravidel Portálu stavebníka. Méně chyb, méně vrácení dokumentace.</p>
                 </div>
-                <div class="text-center p-6 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <span class="text-4xl mb-4 block">💼</span>
-                    <h3 class="text-lg font-bold text-white mb-2">Pro profesionály</h3>
-                    <p class="text-slate-400 text-sm">Pro projektanty, stavební firmy a úřady. Desktopová aplikace i webová verze.</p>
+                <div class="benefit">
+                    <div class="benefit-icon">💼</div>
+                    <h3>Pro profesionály</h3>
+                    <p>Pro projektanty, stavební firmy a úřady. Desktopová aplikace i webová verze.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Jak to funguje -->
-    <section id="jak" class="py-16 px-6 scroll-mt-20">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-2xl md:text-3xl font-bold text-white text-center mb-12">Jak to funguje</h2>
-            <ol class="space-y-8">
-                <li class="flex gap-6 items-start">
-                    <span class="flex-shrink-0 w-12 h-12 rounded-full text-white flex items-center justify-center font-bold text-lg btn-primary">1</span>
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Nahraj projekty</h3>
-                        <p class="text-slate-400">V aplikaci zvolte režim <strong class="text-slate-300">Lokální</strong>, nahrajte PDF projekty z disku nebo přes web.</p>
-                    </div>
-                </li>
-                <li class="flex gap-6 items-start">
-                    <span class="flex-shrink-0 w-12 h-12 rounded-full text-white flex items-center justify-center font-bold text-lg btn-primary">2</span>
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Proveď kontrolu</h3>
-                        <p class="text-slate-400">DokuCheck zkontroluje PDF-A, podpisy a soulad s požadavky Portálu stavebníka.</p>
-                    </div>
-                </li>
-                <li class="flex gap-6 items-start">
-                    <span class="flex-shrink-0 w-12 h-12 rounded-full text-white flex items-center justify-center font-bold text-lg btn-primary">3</span>
-                    <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Export výsledků</h3>
-                        <p class="text-slate-400">Prohlížejte reporty v aplikaci nebo exportujte výsledky pro další použití.</p>
-                    </div>
-                </li>
-            </ol>
-        </div>
-    </section>
-
-    <!-- Produkt – demo video / carousel -->
-    <section class="py-16 px-6 bg-slate-800/30">
-        <div class="max-w-5xl mx-auto">
-            <h2 class="text-2xl md:text-3xl font-bold text-white text-center mb-8">Produkt</h2>
-            <p class="text-slate-400 text-center mb-10">DokuCheck je nástroj pro kontrolu stavební dokumentace: desktopová aplikace (Agent) pro hromadné kontroly a soukromí, webová aplikace pro rychlé vyzkoušení. Jednotná pravidla a výstupy.</p>
-            <div class="hero-visual rounded-xl aspect-video flex items-center justify-center">
-                <div class="text-center text-slate-500 p-6">
-                    <p class="text-lg font-medium">Demo video / carousel screenshotů</p>
-                    <p class="text-sm mt-2 opacity-80">Placeholder – ukázka výsledků, validace podpisů, přehled</p>
+    <section id="jak">
+        <div class="container">
+            <h2>Jak to funguje</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1. Nahraj projekty</div>
+                    <p>V aplikaci zvolte režim <strong>Lokální</strong>, nahrajte PDF projekty z disku nebo přes web.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2. Proveď kontrolu</div>
+                    <p>DokuCheck zkontroluje PDF-A, podpisy a soulad s požadavky Portálu stavebníka.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3. Exportuj výsledky</div>
+                    <p>Prohlížejte reporty v aplikaci nebo exportujte výsledky pro další použití.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Ceník -->
-    <section id="cenik" class="py-16 px-6 scroll-mt-20">
-        <div class="max-w-5xl mx-auto">
-            <h2 class="text-2xl md:text-3xl font-bold text-white text-center mb-10">Ceník</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700">
-                    <thead>
-                        <tr class="border-b border-slate-700">
-                            <th class="text-left py-4 px-6 text-white font-semibold">Tarif</th>
-                            <th class="text-left py-4 px-6 text-white font-semibold">Cena</th>
-                            <th class="text-left py-4 px-6 text-white font-semibold">Co obsahuje</th>
-                            <th class="text-left py-4 px-6 text-white font-semibold">CTA</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-slate-300">
-                        <tr class="border-b border-slate-700">
-                            <td class="py-4 px-6 font-semibold text-white">BASIC</td>
-                            <td class="py-4 px-6">250 Kč/měs</td>
-                            <td class="py-4 px-6">Základní kontrola</td>
-                            <td class="py-4 px-6"><a href="/checkout?tarif=basic" class="inline-block py-2 px-4 rounded-lg font-semibold text-white btn-primary text-sm">Zakoupit</a></td>
-                        </tr>
-                        <tr class="border-b border-slate-700">
-                            <td class="py-4 px-6 font-semibold text-white">STANDARD</td>
-                            <td class="py-4 px-6">500 Kč/měs</td>
-                            <td class="py-4 px-6">Hromadná kontrola, podpora</td>
-                            <td class="py-4 px-6"><a href="/checkout?tarif=standard" class="inline-block py-2 px-4 rounded-lg font-semibold text-white btn-primary text-sm">Zakoupit</a></td>
-                        </tr>
-                        <tr>
-                            <td class="py-4 px-6 font-semibold text-white">PREMIUM</td>
-                            <td class="py-4 px-6">750 Kč/měs</td>
-                            <td class="py-4 px-6">API + integrace</td>
-                            <td class="py-4 px-6"><span class="inline-block py-2 px-4 rounded-lg font-semibold bg-slate-700 text-slate-400 text-sm">Coming Soon</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p class="text-slate-500 text-sm text-center mt-4">CTA vedou do Checkout nebo do <a href="#kontakt" class="text-[#007ACC] hover:underline">Kontakt</a> formuláře</p>
+    <section>
+        <div class="container">
+            <h2>Produkt</h2>
+            <p class="product-text">DokuCheck je nástroj pro kontrolu stavební dokumentace: desktopová aplikace (Agent) pro hromadné kontroly a soukromí, webová aplikace pro rychlé vyzkoušení. Jednotná pravidla a výstupy.</p>
+            <div class="product-visual">Demo video / carousel screenshotů – placeholder</div>
         </div>
     </section>
 
-    <!-- Vyzkoušej online – odkaz na naši aplikaci, režim Lokální -->
-    <section id="vyzkouset" class="py-16 px-6 bg-slate-800/30 scroll-mt-20">
-        <div class="max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold text-white text-center mb-4">Vyzkoušej online</h2>
-            <p class="text-slate-400 text-center mb-6">Chcete vyzkoušet kontrolu bez instalace? Otevřete naši aplikaci, přepněte z režimu <strong class="text-slate-300">Z Agenta (Gantt)</strong> do režimu <strong class="text-slate-300">Lokální</strong>, nahrajte projekty a spusťte kontrolu. V režimu Lokální můžete nahrát soubory a spustit ONLINE Check.</p>
-            <div class="text-center">
-                <a href="/app" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold text-white shadow-lg btn-primary">Otevřít aplikaci</a>
-            </div>
+    <section id="cenik">
+        <div class="container">
+            <h2>Ceník</h2>
+            <table class="pricing-table">
+                <thead>
+                    <tr>
+                        <th>Tarif</th>
+                        <th>Cena</th>
+                        <th>Co obsahuje</th>
+                        <th>CTA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tarif">BASIC</td>
+                        <td>250 Kč/měs</td>
+                        <td>Základní kontrola</td>
+                        <td><a href="/checkout?tarif=basic" class="btn btn-primary btn-small">Zakoupit</a></td>
+                    </tr>
+                    <tr>
+                        <td class="tarif">STANDARD</td>
+                        <td>500 Kč/měs</td>
+                        <td>Hromadná kontrola, podpora</td>
+                        <td><a href="/checkout?tarif=standard" class="btn btn-primary btn-small">Zakoupit</a></td>
+                    </tr>
+                    <tr>
+                        <td class="tarif">PREMIUM</td>
+                        <td>750 Kč/měs</td>
+                        <td>API + integrace</td>
+                        <td><span class="badge-soon">Coming Soon</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="pricing-hint">CTA vedou do Checkout nebo do <a href="#kontakt">Kontakt</a> formuláře.</p>
         </div>
     </section>
 
-    <!-- Sociální důkazy & reference -->
-    <section class="py-16 px-6 scroll-mt-20">
-        <div class="max-w-5xl mx-auto">
-            <h2 class="text-2xl font-bold text-white text-center mb-8">Důvěřují nám</h2>
-            <div class="flex flex-wrap justify-center items-center gap-12 text-slate-500">
-                <div class="w-32 h-16 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-xs">Logo firmy A</div>
-                <div class="w-32 h-16 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center text-xs">Logo firmy B</div>
-                <p class="text-slate-400 text-sm">Reálné reference klientů – placeholder</p>
+    <section id="vyzkouset">
+        <div class="container">
+            <div class="try-online">
+                <h2>Vyzkoušej online</h2>
+                <p>Chcete vyzkoušet kontrolu bez instalace? Otevřete naši aplikaci, přepněte z režimu <strong>Z Agenta (Gantt)</strong> do režimu <strong>Lokální</strong>, nahrajte projekty a spusťte kontrolu. V režimu Lokální můžete nahrát soubory a spustit ONLINE Check.</p>
+                <div class="cta-row">
+                    <a href="/app" class="btn btn-primary">Otevřít aplikaci</a>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- FAQ -->
-    <section class="py-16 px-6 bg-slate-800/30">
-        <div class="max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold text-white text-center mb-10">Časté dotazy</h2>
-            <div class="space-y-2">
-                <details class="faq-item p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <summary class="font-semibold text-white py-2">Co je DokuCheck?</summary>
-                    <p class="text-slate-400 text-sm pt-2 pb-2">Nástroj pro kontrolu PDF dokumentace (PDF-A, podpisy, soulad s Portálem stavebníka). K dispozici jako desktopová aplikace a web.</p>
+    <section>
+        <div class="container">
+            <h2>Důvěřují nám</h2>
+            <div class="refs">
+                <div class="ref-box">Logo firmy A</div>
+                <div class="ref-box">Logo firmy B</div>
+                <span class="ref-note">Reálné reference klientů – placeholder</span>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2>Časté dotazy</h2>
+            <div class="faq-list">
+                <details class="faq-item">
+                    <summary>Co je DokuCheck?</summary>
+                    <p>Nástroj pro kontrolu PDF dokumentace (PDF-A, podpisy, soulad s Portálem stavebníka). K dispozici jako desktopová aplikace a web.</p>
                 </details>
-                <details class="faq-item p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <summary class="font-semibold text-white py-2">Jak vyzkoušet online?</summary>
-                    <p class="text-slate-400 text-sm pt-2 pb-2">V menu aplikace zvolte režim <strong class="text-slate-300">Lokální</strong> (místo Z Agenta / Gantt), nahrajte projekty a spusťte kontrolu.</p>
+                <details class="faq-item">
+                    <summary>Jak vyzkoušet online?</summary>
+                    <p>V menu aplikace zvolte režim <strong>Lokální</strong> (místo Z Agenta / Gantt), nahrajte projekty a spusťte kontrolu.</p>
                 </details>
-                <details class="faq-item p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <summary class="font-semibold text-white py-2">Jaké soubory mohu nahrát?</summary>
-                    <p class="text-slate-400 text-sm pt-2 pb-2">PDF projekty. Na webu může platit limit velikosti; v desktopové aplikaci bez tohoto omezení.</p>
+                <details class="faq-item">
+                    <summary>Jaké soubory mohu nahrát?</summary>
+                    <p>PDF projekty. Na webu může platit limit velikosti; v desktopové aplikaci bez tohoto omezení.</p>
                 </details>
-                <details class="faq-item p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-                    <summary class="font-semibold text-white py-2">Jak probíhá licencování?</summary>
-                    <p class="text-slate-400 text-sm pt-2 pb-2">Licence jsou měsíční (BASIC, STANDARD, PREMIUM). Po objednávce obdržíte fakturu e-mailem. Po zaplacení aktivujeme váš účet.</p>
+                <details class="faq-item">
+                    <summary>Jak probíhá licencování?</summary>
+                    <p>Licence jsou měsíční (BASIC, STANDARD, PREMIUM). Po objednávce obdržíte fakturu e-mailem. Po zaplacení aktivujeme váš účet.</p>
                 </details>
             </div>
         </div>
     </section>
 
-    <!-- Sekce Download -->
-    <section id="download" class="py-16 px-6 scroll-mt-20">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-2xl font-bold text-white text-center mb-6">Stažení aplikace</h2>
-            <p class="text-slate-400 text-center mb-8">Stáhněte si DokuCheck pro Windows nebo Mac. V aplikaci přepněte do režimu <strong class="text-slate-300">Lokální</strong>, abyste mohli nahrát projekty a spustit kontrolu. Výhody: soukromí, rychlost, neomezená velikost souborů.</p>
-            <div class="flex flex-wrap justify-center gap-6">
-                <a href="/download" class="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-white btn-primary shadow-lg">🪟 Windows (.exe)</a>
-                <a href="/download" class="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition">🍎 Mac (.dmg)</a>
+    <section id="download">
+        <div class="container">
+            <h2>Stažení aplikace</h2>
+            <p class="download-text">Stáhněte si DokuCheck pro Windows nebo Mac. V aplikaci přepněte do režimu <strong>Lokální</strong>, abyste mohli nahrát projekty a spustit kontrolu. Výhody: soukromí, rychlost, neomezená velikost souborů.</p>
+            <div class="download-buttons">
+                <a href="/download" class="btn btn-primary">🪟 Windows (.exe)</a>
+                <a href="/download" class="btn btn-secondary">🍎 Mac (.dmg)</a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer id="kontakt" class="border-t border-slate-800 py-12 px-6 mt-16">
-        <div class="max-w-6xl mx-auto">
-            <div class="grid md:grid-cols-3 gap-8 mb-8">
-                <div>
-                    <h3 class="font-semibold text-white mb-3">Kontakt</h3>
-                    <p class="text-slate-400 text-sm">E-mail: <a href="mailto:info@dokucheck.app" class="text-[#007ACC] hover:underline">info@dokucheck.app</a></p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white mb-3">Právní informace</h3>
-                    <p class="text-slate-400 text-sm">
-                        <a href="#" class="text-[#007ACC] hover:underline">Obchodní podmínky</a><br>
-                        <a href="#" class="text-[#007ACC] hover:underline">Ochrana soukromí</a>
-                    </p>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white mb-3">Sociální sítě</h3>
-                    <p class="text-slate-400 text-sm">LinkedIn · placeholder</p>
-                </div>
+    <footer class="footer" id="kontakt">
+        <div class="footer-grid">
+            <div>
+                <h3>Kontakt</h3>
+                <p>E-mail: <a href="mailto:info@dokucheck.app">info@dokucheck.app</a></p>
             </div>
-            <div class="border-t border-slate-700 pt-8 text-center text-slate-500 text-sm">
-                <p>© 2025 DokuCheck. Projektový Strážce pro Portál stavebníka.</p>
+            <div>
+                <h3>Právní informace</h3>
+                <p><a href="#">Obchodní podmínky</a><br><a href="#">Ochrana soukromí</a></p>
+            </div>
+            <div>
+                <h3>Sociální sítě</h3>
+                <p>LinkedIn · placeholder</p>
             </div>
         </div>
+        <div class="footer-bottom">© 2025 DokuCheck. Projektový Strážce pro Portál stavebníka.</div>
     </footer>
-
 </body>
 </html>
