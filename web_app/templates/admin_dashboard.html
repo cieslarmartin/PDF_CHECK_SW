@@ -236,29 +236,33 @@
         .badge-inactive { background: #e74c3c; color: white; border-radius: 12px; padding: 3px 10px; }
         .badge-expired { background: #f39c12; color: white; border-radius: 12px; padding: 3px 10px; }
 
-        /* Actions Column */
+        /* Actions Column – velká tlačítka */
         .actions-cell {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .action-btn {
-            padding: 6px 10px;
+            padding: 8px 14px;
             border: 1px solid #e5e7eb;
             background: white;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.8em;
-            color: #6b7280;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #374151;
         }
         .action-btn:hover {
             background: #f3f4f6;
-            color: #374151;
+            color: #1f2937;
         }
         .action-btn.danger:hover {
             background: #fee2e2;
             color: #dc2626;
             border-color: #fecaca;
         }
+        .action-btn.primary-btn { background: #3498DB; color: white; border-color: #3498DB; }
+        .action-btn.primary-btn:hover { background: #2980b9; color: white; }
 
         /* Modal */
         .modal-overlay {
@@ -369,7 +373,6 @@
             table { min-width: 600px; }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -414,40 +417,6 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <!-- KPI karty -->
-        <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:16px;margin-bottom:24px;">
-            <div class="stat-card" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <div class="stat-value" style="font-size:1.8em;font-weight:700;color:#3498DB;">{{ kpis.turnover | default(0) }} Kč</div>
-                <div class="stat-label" style="color:#6b7280;font-size:0.85em;margin-top:4px;">Celkový obrat</div>
-            </div>
-            <div class="stat-card" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <div class="stat-value" style="font-size:1.8em;font-weight:700;color:#3498DB;">{{ kpis.active_licenses | default(0) }}</div>
-                <div class="stat-label" style="color:#6b7280;font-size:0.85em;margin-top:4px;">Aktivní licence</div>
-                <div style="font-size:0.75em;color:#9ca3af;margin-top:4px;">Free: {{ kpis.free_licenses | default(0) }} / Placené: {{ kpis.paid_licenses | default(0) }}</div>
-            </div>
-            <div class="stat-card" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <div class="stat-value" style="font-size:1.8em;font-weight:700;color:#3498DB;">{{ kpis.error_rate_percent | default(0) }} %</div>
-                <div class="stat-label" style="color:#6b7280;font-size:0.85em;margin-top:4px;">Chybovost kontrol</div>
-                <div style="font-size:0.75em;color:#9ca3af;margin-top:4px;">Úspěšné: {{ kpis.success_checks | default(0) }} / Neúspěšné: {{ kpis.error_checks | default(0) }}</div>
-            </div>
-        </div>
-
-        <!-- Přepínatelné grafy -->
-        <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-bottom:24px;">
-            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                <button type="button" class="chart-tab btn btn-sm btn-outline-primary active" data-chart="kontrol">Počet kontrol</button>
-                <button type="button" class="chart-tab btn btn-sm btn-outline-primary" data-chart="aktivita">Aktivita uživatelů</button>
-                <button type="button" class="chart-tab btn btn-sm btn-outline-primary" data-chart="trial">Využití Trialu</button>
-            </div>
-            <div id="chartKontrol" class="chart-pane" style="min-height:200px;"><canvas id="chartActivity" height="160"></canvas></div>
-            <div id="chartAktivita" class="chart-pane" style="display:none;min-height:200px;"><canvas id="chartUserRanking" height="160"></canvas></div>
-            <div id="chartTrial" class="chart-pane" style="display:none;min-height:200px;"><canvas id="chartTrialUsage" height="160"></canvas></div>
-        </div>
-        <div style="flex:0 0 200px;background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-bottom:24px;max-width:280px;">
-            <div style="font-size:0.85em;font-weight:600;margin-bottom:8px;">Uživatelé podle tarifu</div>
-            <canvas id="chartTiers" height="120"></canvas>
-        </div>
 
         <div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
             <h2 style="font-size:1.1em;margin:0;">Uživatelé</h2>
@@ -509,16 +478,12 @@
                         <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
                         <td>
                             <div class="actions-cell">
-                                {% if license.email %}
-                                <a href="mailto:{{ license.email }}" class="action-btn" title="Kontaktovat">✉</a>
-                                {% endif %}
-                                <a href="#" class="action-btn" title="Podpora" onclick="window.open('/admin/settings','_blank'); return false;">🆘</a>
+                                <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit / Prodloužit licenci">PRODLOUŽIT</button>
+                                <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Deaktivovat licenci' if license.is_active else 'Aktivovat' }}">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
+                                <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat licenci">SMAZAT</button>
+                                <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Generovat uvítací balíček">INFO BALÍČEK</button>
                                 <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="Audit">Audit</a>
-                                <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit">Edit</button>
-                                <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Heslo">&#128274;</button>
-                                <button class="action-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Generovat uvítací balíček">Balíček</button>
-                                <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Blokovat' if license.is_active else 'Odblokovat' }}">{{ 'Blok' if license.is_active else 'Odblok' }}</button>
-                                <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat">Del</button>
+                                <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Heslo">Heslo</button>
                             </div>
                         </td>
                     </tr>
@@ -527,6 +492,34 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Log Online Dema (IP, čas, počet souborů) -->
+        <div style="margin-top:32px;">
+            <h2 style="font-size:1.2em;font-weight:600;margin-bottom:12px;">Log Online Dema</h2>
+            <p style="color:#6b7280;font-size:0.9em;margin-bottom:12px;">Poslední použití stránky Online Check (IP adresa, čas, počet souborů).</p>
+            <div class="table-container">
+                <table class="table-dense">
+                    <thead>
+                        <tr>
+                            <th>IP adresa</th>
+                            <th>Počet souborů</th>
+                            <th>Čas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in online_demo_log %}
+                        <tr>
+                            <td>{{ row.ip_address or '—' }}</td>
+                            <td>{{ row.file_count }}</td>
+                            <td><small>{{ (row.timestamp or '—')[:19] }}</small></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Zatím žádné záznamy.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
     </div>
@@ -994,62 +987,6 @@
             }
         });
 
-        document.querySelectorAll('.chart-tab').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var chart = this.getAttribute('data-chart');
-                document.querySelectorAll('.chart-tab').forEach(function(b) { b.classList.remove('active'); });
-                document.querySelector('.chart-tab[data-chart="' + chart + '"]').classList.add('active');
-                document.querySelectorAll('.chart-pane').forEach(function(p) { p.style.display = 'none'; });
-                var pane = chart === 'kontrol' ? 'chartKontrol' : (chart === 'aktivita' ? 'chartAktivita' : 'chartTrial');
-                document.getElementById(pane).style.display = 'block';
-            });
-        });
-
-        var activityData = {{ (activity_30 or []) | tojson }};
-        var tierData = {{ (by_tier_counts or {}) | tojson }};
-        var userRankingData = {{ (user_ranking or []) | tojson }};
-        var trialTopData = {{ (trial_stats.top if trial_stats else []) | tojson }};
-
-        if (typeof Chart !== 'undefined' && document.getElementById('chartActivity')) {
-            new Chart(document.getElementById('chartActivity'), {
-                type: 'line',
-                data: {
-                    labels: activityData.map(function(x) { return x.date; }),
-                    datasets: [{ label: 'Počet kontrol', data: activityData.map(function(x) { return x.files; }), borderColor: '#3498DB', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.3 }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
-        }
-        if (typeof Chart !== 'undefined' && document.getElementById('chartUserRanking')) {
-            new Chart(document.getElementById('chartUserRanking'), {
-                type: 'bar',
-                data: {
-                    labels: userRankingData.map(function(x) { return (x.email || x.user_id || '').substring(0, 18); }),
-                    datasets: [{ label: 'Soubory', data: userRankingData.map(function(x) { return x.total_files; }), backgroundColor: 'rgba(52,152,219,0.7)', borderColor: '#3498DB', borderWidth: 1 }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-            });
-        }
-        if (typeof Chart !== 'undefined' && document.getElementById('chartTrialUsage')) {
-            new Chart(document.getElementById('chartTrialUsage'), {
-                type: 'bar',
-                data: {
-                    labels: trialTopData.map(function(x) { return (x.machine_id || '').substring(0, 12) + '…'; }),
-                    datasets: [{ label: 'Soubory (Trial)', data: trialTopData.map(function(x) { return x.total_files; }), backgroundColor: 'rgba(245,158,11,0.7)', borderColor: '#f59e0b', borderWidth: 1 }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-            });
-        }
-        if (typeof Chart !== 'undefined' && document.getElementById('chartTiers')) {
-            var labels = Object.keys(tierData);
-            var values = Object.values(tierData);
-            var colors = ['#9ca3af', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981'];
-            new Chart(document.getElementById('chartTiers'), {
-                type: 'doughnut',
-                data: { labels: labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 1 }] },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
     </script>
 </body>
 </html>

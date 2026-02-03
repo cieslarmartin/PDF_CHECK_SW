@@ -280,6 +280,17 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_payment_logs_user ON payment_logs(user_id)')
 
+        # Log Online Dema (IP, čas, počet souborů) – pro admin statistiku
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS online_demo_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT,
+                file_count INTEGER NOT NULL DEFAULT 0,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_online_demo_log_timestamp ON online_demo_log(timestamp)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -999,6 +1010,34 @@ class Database:
                 'SELECT * FROM pending_orders ORDER BY created_at DESC LIMIT ?',
                 (limit,)
             )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def insert_online_demo_log(self, ip_address=None, file_count=0):
+        """Zapíše záznam o použití Online Dema (pro admin statistiku)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO online_demo_log (ip_address, file_count) VALUES (?, ?)',
+                (ip_address or '', file_count)
+            )
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    def get_online_demo_log(self, limit=200):
+        """Vrátí seznam záznamů Online Dema (IP, čas, počet souborů) pro admin."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, ip_address, file_count, timestamp FROM online_demo_log ORDER BY timestamp DESC LIMIT ?',
+            (limit,)
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
@@ -1843,6 +1882,33 @@ class Database:
         top = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return {'unique_machines': unique_machines, 'total_files': total_files, 'top': top}
+
+    # =========================================================================
+    # ONLINE DEMO LOG (pro admin statistiku)
+    # =========================================================================
+
+    def insert_online_demo_log(self, ip_address=None, file_count=1):
+        """Zapíše jeden záznam o použití Online Dema (IP, počet souborů)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO online_demo_log (ip_address, file_count) VALUES (?, ?)',
+            (ip_address or None, max(0, int(file_count)))
+        )
+        conn.commit()
+        conn.close()
+
+    def get_online_demo_log(self, limit=200):
+        """Vrátí poslední záznamy z online_demo_log pro admin (IP, čas, počet souborů)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, ip_address, file_count, timestamp FROM online_demo_log ORDER BY timestamp DESC LIMIT ?',
+            (limit,)
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
 
     def get_dashboard_kpis(self):
         """KPI: celkový obrat (simulovaný), aktivní licence Free vs Paid, chybovost (úspěšné vs neúspěšné)."""

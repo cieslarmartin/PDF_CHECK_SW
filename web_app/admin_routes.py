@@ -213,6 +213,7 @@ def dashboard():
     kpis = db.get_dashboard_kpis()
     user_ranking = db.get_user_activity_ranking(limit=10)
     trial_stats = db.get_trial_stats()
+    online_demo_log = db.get_online_demo_log(limit=200)
 
     return render_template('admin_dashboard.html',
                           licenses=licenses,
@@ -224,6 +225,7 @@ def dashboard():
                           kpis=kpis,
                           user_ranking=user_ranking or [],
                           trial_stats=trial_stats or {},
+                          online_demo_log=online_demo_log or [],
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,

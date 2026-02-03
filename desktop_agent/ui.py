@@ -139,7 +139,7 @@ class PDFCheckUI:
     # Primary button color (Modern Corporate)
     ACCENT_BTN = "#007ACC"
 
-    def __init__(self, root, on_check_callback, on_api_key_callback, api_url="",
+    def __init__(self, root, on_check_callback, on_api_key_callback=None, api_url="",
                  on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                  on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
                  on_send_batch_callback=None):
@@ -153,7 +153,9 @@ class PDFCheckUI:
         self.on_after_logout_callback = on_after_logout_callback
         self.on_get_web_login_url = on_get_web_login_url
         self.on_send_batch_callback = on_send_batch_callback
-        self.api_url = api_url or "https://cieslar.pythonanywhere.com"
+        self.api_url = api_url or ""
+        # Body A: lokální režim – žádné volání na server
+        self.server_mode = bool(on_send_batch_callback or on_login_password_callback or on_api_key_callback)
 
         # Tasks: list of {type: 'folder'|'file', path, name, file_paths: [str]}
         self.tasks = []
@@ -225,7 +227,11 @@ class PDFCheckUI:
         bottom_frame = tk.Frame(self.root, bg="#e2e8f0", height=40)
         bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         bottom_frame.pack_propagate(False)
-        self.license_status_label = tk.Label(bottom_frame, text="", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_DARK)
+        self.license_status_label = tk.Label(
+            bottom_frame,
+            text="Lokální režim" if not self.server_mode else "",
+            font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_DARK
+        )
         self.license_status_label.pack(side=tk.LEFT, padx=20, pady=8)
         version_label = tk.Label(bottom_frame, text="Build 42", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_MUTED)
         version_label.pack(side=tk.RIGHT, padx=20, pady=8)
@@ -244,7 +250,7 @@ class PDFCheckUI:
         )
         title_label.pack(side=tk.LEFT, padx=20, pady=12)
 
-        subtitle = tk.Label(header_frame, text="Kontrola PDF a odeslání na server",
+        subtitle = tk.Label(header_frame, text="Lokální kontrola PDF",
                             font=("Segoe UI", 9), bg=self.BG_HEADER, fg="#a0aec0")
         subtitle.pack(side=tk.LEFT, padx=(0, 20))
 
@@ -270,23 +276,9 @@ class PDFCheckUI:
             activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT
         )
         self.login_btn_header.pack(side=tk.RIGHT, padx=4, pady=10)
-
-        def _open_web():
-            url = None
-            if self.on_get_web_login_url:
-                try:
-                    url = self.on_get_web_login_url()
-                except Exception:
-                    pass
-            webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
-
-        web_btn = tk.Button(
-            header_frame, text="Otevřít web", font=("Segoe UI", 9),
-            bg=self.BG_HEADER_LIGHT, fg=self.BUTTON_TEXT, relief=tk.FLAT,
-            padx=12, pady=5, cursor="hand2", command=_open_web,
-            activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT
-        )
-        web_btn.pack(side=tk.RIGHT, padx=8, pady=10)
+        if not self.server_mode:
+            self.login_btn_header.pack_forget()
+            self.logout_btn_header.pack_forget()
 
         # 3) STATS BAR – pevný pod hlavičkou, horizontální pruh (Soubory | Složky | Odhad: Xs)
         stats_frame = tk.Frame(self.root, bg="#ffffff", height=36, highlightbackground="#cbd5e0", highlightthickness=1)
@@ -707,10 +699,11 @@ class PDFCheckUI:
         Vlákno pro kontrolu. Zpracuje pouze zaškrtnuté položky (cesty z checked_paths_qidx).
         checked_paths_qidx: list of (path, queue_display_index).
         Po zpracování: úspěšné odškrtne (☐), neúspěšné nechá zaškrtnuté (☑).
+        V lokálním režimu (Body A) se na server nic neposílá.
         """
         try:
             max_files = 99999
-            if self.on_get_max_files:
+            if self.server_mode and self.on_get_max_files:
                 try:
                     max_files = self.on_get_max_files()
                 except Exception:
@@ -742,7 +735,7 @@ class PDFCheckUI:
             response_data = None
             upload_error = None
             results_only = [r for _, r in all_results]
-            if self.on_send_batch_callback:
+            if self.server_mode and self.on_send_batch_callback:
                 try:
                     out = self.on_send_batch_callback(results_only, None)
                     if out and len(out) >= 2 and not out[0]:
@@ -789,8 +782,11 @@ class PDFCheckUI:
         if self.cancel_requested:
             self.progress_label.config(text="Zrušeno", fg=self.WARNING_ORANGE)
         else:
-            self.progress_label.config(text="Hotovo! Výsledky odeslány na server.", fg=self.SUCCESS_GREEN)
-            self.root.after(1000, self.open_web_after_check)
+            if self.server_mode:
+                self.progress_label.config(text="Hotovo! Výsledky odeslány na server.", fg=self.SUCCESS_GREEN)
+                self.root.after(1000, self.open_web_after_check)
+            else:
+                self.progress_label.config(text="Hotovo!", fg=self.SUCCESS_GREEN)
 
         self.cancel_btn.pack_forget()
         self.check_btn.config(state=tk.NORMAL, bg=self.SUCCESS_GREEN)
@@ -923,7 +919,9 @@ class PDFCheckUI:
             self.on_logout_callback()
 
     def show_api_key_dialog(self):
-        """Dialog přihlášení: Vyzkoušet zdarma (Trial) nebo e-mail + heslo pro placené účty."""
+        """Dialog přihlášení: Vyzkoušet zdarma (Trial) nebo e-mail + heslo. V lokálním režimu nic neotevírá."""
+        if not self.server_mode:
+            return
         dialog = tk.Toplevel(self.root)
         dialog.title("Přihlášení")
         dialog.geometry("480x380")

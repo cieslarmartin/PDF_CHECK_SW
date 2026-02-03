@@ -23,10 +23,13 @@
     </nav>
     <main class="max-w-2xl mx-auto px-6 py-12">
         <h1 class="text-2xl font-bold text-white mb-2">ONLINE Check</h1>
-        <p class="text-slate-400 mb-8">Nahrajte až 5 PDF souborů (max. 500 KB každý). Kontrola proběhne na serveru bez uložení.</p>
+        <p class="text-slate-400 mb-4">Nahrajte až 3 PDF soubory (max. 2 MB každý). Kontrola proběhne na serveru.</p>
+        <div class="mb-6 p-4 rounded-lg bg-amber-900/40 border border-amber-600/60 text-amber-200 text-sm">
+            <strong>Bezpečnost:</strong> Soubory jsou odesílány na náš server ke kontrole. Nepoužívejte pro důvěrné dokumenty. Pro lokální kontrolu bez odeslání doporučujeme Desktop aplikaci.
+        </div>
         <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-12 text-center bg-slate-800/50 hover:border-[#007ACC] transition cursor-pointer">
             <p class="text-slate-400 mb-2">Přetáhněte PDF sem nebo klikněte pro výběr</p>
-            <p class="text-slate-500 text-sm">Max. 5 souborů, max. 500 KB na soubor, pouze PDF</p>
+            <p class="text-slate-500 text-sm">Max. 3 soubory, max. 2 MB na soubor, pouze PDF</p>
             <input type="file" id="file-input" accept=".pdf,application/pdf" multiple class="hidden">
         </div>
         <ul id="file-list" class="mt-6 space-y-2 text-slate-300"></ul>
@@ -41,8 +44,8 @@
         </div>
     </main>
     <script>
-        const MAX_FILES = 5;
-        const MAX_FILE_SIZE = 500 * 1024; // 500 KB
+        const MAX_FILES = 3;
+        const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
@@ -61,7 +64,7 @@
                 const li = document.createElement('li');
                 li.className = 'flex items-center justify-between py-2 border-b border-slate-700';
                 const sizeOk = f.size <= MAX_FILE_SIZE;
-                li.innerHTML = '<span>' + f.name + ' <span class="text-slate-500">(' + formatSize(f.size) + ')</span>' + (sizeOk ? '' : ' <span class="text-[#e53e3e]">přes limit 500 KB</span>') + '</span><button type="button" class="text-[#e53e3e] hover:text-red-300 text-sm">Odebrat</button>';
+                li.innerHTML = '<span>' + f.name + ' <span class="text-slate-500">(' + formatSize(f.size) + ')</span>' + (sizeOk ? '' : ' <span class="text-[#e53e3e]">přes limit 2 MB</span>') + '</span><button type="button" class="text-[#e53e3e] hover:text-red-300 text-sm">Odebrat</button>';
                 li.querySelector('button').onclick = () => { selectedFiles.splice(i, 1); updateList(); };
                 fileList.appendChild(li);
             });
@@ -90,7 +93,7 @@
             if (over.length) {
                 result.classList.remove('hidden');
                 result.className = 'mt-6 p-4 rounded-lg bg-slate-800 text-[#e53e3e]';
-                result.textContent = 'Každý soubor může mít max. 500 KB. Odeberte větší soubory.';
+                result.textContent = 'Každý soubor může mít max. 2 MB. Odeberte větší soubory.';
                 return;
             }
             result.classList.remove('hidden');
@@ -105,7 +108,7 @@
                     const r = await fetch('/analyze', { method: 'POST', body: fd });
                     const data = await r.json().catch(() => ({}));
                     if (r.ok && !data.error) ok++;
-                    else if (data.error && data.error.includes('500')) errMsg = ' Některé soubory přesahují 500 KB.';
+                    else if (data.error && data.error.includes('2 MB')) errMsg = ' Některé soubory přesahují 2 MB.';
                 }
                 result.innerHTML = 'Kontrola dokončena. Zkontrolováno souborů: <strong>' + ok + '</strong> z ' + selectedFiles.length + '. (Výsledky se neukládají – demo režim.)' + (errMsg ? '<span class="text-[#e53e3e]">' + errMsg + '</span>' : '');
             } catch (e) {
