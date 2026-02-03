@@ -275,7 +275,7 @@ class PDFCheckUI:
         )
         self.stats_label.pack(side=tk.LEFT, padx=16, pady=10)
         self.check_btn = tk.Button(
-            action_bar, text="▶  Spustit kontrolu", font=("Segoe UI", 10, "bold"),
+            action_bar, text="▶  Kontrola", font=("Segoe UI", 10, "bold"),
             bg=self.ACCENT_BTN, fg=self.BUTTON_TEXT, relief=tk.FLAT,
             padx=24, pady=8, cursor="hand2", command=self.on_check_clicked,
             activebackground="#2980b9", activeforeground=self.BUTTON_TEXT
@@ -295,8 +295,8 @@ class PDFCheckUI:
         self.cancel_btn.pack_forget()
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Blue.Horizontal.TProgressbar", troughcolor=self.BG_LIGHT, background=self.ACCENT_BTN, thickness=6)
-        self.progress = ttk.Progressbar(progress_row, style="Blue.Horizontal.TProgressbar", mode='determinate', length=240)
+        style.configure("Blue.Horizontal.TProgressbar", troughcolor=self.BG_LIGHT, background=self.ACCENT_BTN, thickness=10)
+        self.progress = ttk.Progressbar(progress_row, style="Blue.Horizontal.TProgressbar", mode='determinate', length=280)
         self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
         progress_row.pack_forget()  # zobrazí show_progress()
 
@@ -725,25 +725,12 @@ class PDFCheckUI:
                 self.root.after(0, self.finish_progress)
                 return
 
-            response_data = None
-            upload_error = None
-            results_only = [r for _, r in all_results]
-            if self.on_send_batch_callback:
-                try:
-                    out = self.on_send_batch_callback(results_only, None)
-                    if out and len(out) >= 2 and not out[0]:
-                        upload_error = out[1] or "Chyba odeslání na server"
-                    if out and len(out) >= 4 and out[3]:
-                        response_data = out[3]
-                except Exception as e:
-                    upload_error = str(e)
-
             summary = {
                 'results_with_qidx': all_results,
-                'response_data': response_data,
+                'response_data': None,
                 'truncated': truncated,
                 'max_files': max_files,
-                'upload_error': upload_error,
+                'upload_error': None,
             }
             self.root.after(0, lambda: self.display_results(summary))
 
@@ -777,7 +764,7 @@ class PDFCheckUI:
         if self.cancel_requested:
             self.progress_label.config(text="Zrušeno", fg=self.WARNING_ORANGE)
         else:
-            self.progress_label.config(text="Hotovo! Výsledky odeslány na server.", fg=self.SUCCESS_GREEN)
+            self.progress_label.config(text="Hotovo! Otevřete web pro zobrazení výsledků.", fg=self.SUCCESS_GREEN)
             self.root.after(1000, self.open_web_after_check)
 
         self.cancel_btn.pack_forget()
@@ -875,6 +862,38 @@ class PDFCheckUI:
                 messagebox.showwarning("Zkušební limit", upload_error)
                 self.license_status_label.config(text=upload_error[:60] + ("…" if len(upload_error) > 60 else ""), fg=self.ERROR_RED)
         self.results_text.config(state=tk.DISABLED)
+
+        # Dialog: chcete poslat na server k vyhodnocení?
+        if self.on_send_batch_callback and results_with_qidx:
+            n = len(results_with_qidx)
+            msg = "Načetlo data z {} souborů. Chcete poslat na server k vyhodnocení?".format(n)
+            if messagebox.askyesno("Odeslat na server", msg, default=messagebox.YES):
+                try:
+                    results_only = [r for _, r in results_with_qidx]
+                    out = self.on_send_batch_callback(results_only, None)
+                    if out and len(out) >= 2 and not out[0]:
+                        upload_error = out[1] or "Chyba odeslání na server"
+                        self.results_text.config(state=tk.NORMAL)
+                        self.results_text.insert(tk.END, "\n⚠ Odeslání na server: " + upload_error + "\n")
+                        self.results_text.config(state=tk.DISABLED)
+                        if "Zkušební limit" in upload_error or "vyčerpán" in upload_error:
+                            messagebox.showwarning("Zkušební limit", upload_error)
+                            self.license_status_label.config(text=upload_error[:60] + ("…" if len(upload_error) > 60 else ""), fg=self.ERROR_RED)
+                    if out and len(out) >= 4 and out[3]:
+                        response_data = out[3]
+                        if response_data and response_data.get('status') == 'partial':
+                            processed_count = response_data.get('processed_count', len(results_with_qidx))
+                            for i in range(processed_count, len(results_with_qidx)):
+                                qidx = results_with_qidx[i][0]
+                                if 0 <= qidx < len(self.queue_display):
+                                    self.queue_display[qidx]['status'] = 'skipped'
+                                    self.queue_display[qidx]['checked'] = True
+                                    self.queue_display[qidx]['result'] = None
+                            self.update_queue_display()
+                except Exception as e:
+                    self.results_text.config(state=tk.NORMAL)
+                    self.results_text.insert(tk.END, "\n⚠ Odeslání na server: " + str(e) + "\n")
+                    self.results_text.config(state=tk.DISABLED)
 
     def display_error(self, error_msg):
         """Zobrazí chybovou hlášku"""

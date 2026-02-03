@@ -291,6 +291,23 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_online_demo_log_timestamp ON online_demo_log(timestamp)')
 
+        # Historie kontrol (pouze PRO uživatelé) – pro kartu „Historie“ na portálu
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS check_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                status TEXT DEFAULT 'ok',
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                results_json TEXT,
+                batch_id TEXT,
+                source TEXT,
+                FOREIGN KEY (user_id) REFERENCES api_keys(api_key)
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_check_history_user_id ON check_history(user_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_check_history_timestamp ON check_history(timestamp)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -630,6 +647,80 @@ class Database:
             'success_count': total - errors_count,
             'signed_count': signed_count
         }
+
+    # =========================================================================
+    # CHECK HISTORY (pouze PRO – pro kartu „Historie“ na portálu)
+    # results_json: stejná struktura jako v check_results (celý result_data)
+    # =========================================================================
+
+    def save_check(self, user_id, data, batch_id=None, source=None):
+        """
+        Uloží záznam do check_history POUZE pro uživatele s tierem Pro.
+        user_id = api_key. data = stejný dict jako pro save_result (file_name, results, success, ...).
+        Vrací (True, row_id) nebo (False, reason).
+        """
+        if not user_id or not data:
+            return False, "missing_user_or_data"
+        license_info = self.get_user_license(user_id)
+        if not license_info:
+            return False, "invalid_user"
+        tier_name = (license_info.get('tier_name') or '').strip()
+        if tier_name != 'Pro':
+            return False, "history_only_pro"
+
+        filename = data.get('file_name') or data.get('file_path') or 'unknown'
+        status = 'ok' if data.get('success', True) else 'error'
+        processed_at = data.get('processed_at') or datetime.now().isoformat()
+        results_json = json.dumps(data, ensure_ascii=False)
+
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO check_history (user_id, filename, status, timestamp, results_json, batch_id, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, filename, status, processed_at, results_json, batch_id, source))
+            conn.commit()
+            return True, cursor.lastrowid
+        except Exception as e:
+            return False, str(e)
+        finally:
+            conn.close()
+
+    def get_check_history(self, user_id, limit=100, offset=0):
+        """Vrátí seznam záznamů z check_history pro daného uživatele (pro portál)."""
+        if not user_id:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, user_id, filename, status, timestamp, results_json, batch_id, source
+            FROM check_history
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ? OFFSET ?
+        ''', (user_id, limit, offset))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        for row in rows:
+            if row.get('results_json'):
+                try:
+                    row['parsed_results'] = json.loads(row['results_json'])
+                except Exception:
+                    row['parsed_results'] = None
+        return rows
+
+    def delete_check_history_record(self, record_id, user_id):
+        """Smaže jeden záznam z check_history (pouze pokud patří user_id). Vrací True pokud byl smazán."""
+        if not record_id or not user_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM check_history WHERE id = ? AND user_id = ?', (record_id, user_id))
+        n = cursor.rowcount
+        conn.commit()
+        conn.close()
+        return n > 0
 
     def get_all_api_keys(self):
         """Vrátí všechny API klíče (pro admin)"""

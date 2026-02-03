@@ -27,3 +27,8 @@ alwaysApply: true
 ## 4. Efektivita
 
 - Související změny provádět v rámci jednoho „Editu“, šetřit Fast Requests.
+
+## 5. Změny v kódu (závazné)
+
+- **Měnit pouze to, co uživatel výslovně požaduje.** Funkcionality, které uživatel nemění, se nemají měnit.
+- Pokud by bylo třeba změnit i něco dalšího (kvůli konzistenci, závislosti), **nejdřív se zeptat** – nic takového neměnit sám od sebe.

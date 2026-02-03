@@ -1,6 +1,66 @@
 # Historie kontrol podle tieru (návrh)
 
-## Cíl
+## Tabulka check_history (PRO historie)
+
+Používá se pro kartu „Historie“ na portálu. Záznamy se ukládají **pouze pro uživatele s tiery Pro** (vedoucí projektant).
+
+### SQL tabulka
+
+```sql
+CREATE TABLE IF NOT EXISTS check_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,           -- api_key
+    filename TEXT NOT NULL,
+    status TEXT DEFAULT 'ok',        -- 'ok' | 'error'
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    results_json TEXT,               -- celý payload kontroly (viz níže)
+    batch_id TEXT,                   -- volitelně, pokud šlo o dávku
+    source TEXT,                     -- volitelně: 'agent' | 'web'
+    FOREIGN KEY (user_id) REFERENCES api_keys(api_key)
+);
+```
+
+### Struktura results_json
+
+Stejná jako u `check_results.results_json` (celý objekt `result_data`), aby šlo v UI zobrazit stejný detail bez dvou různých parserů.
+
+```json
+{
+  "file_name": "dokument.pdf",
+  "file_path": "slozka/dokument.pdf",
+  "relative_path": "slozka/dokument.pdf",
+  "folder": "slozka",
+  "file_hash": "...",
+  "file_size": 12345,
+  "processed_at": "2025-02-02T12:00:00",
+  "success": true,
+  "results": {
+    "pdf_format": {
+      "is_pdf_a3": true,
+      "exact_version": "PDF/A-3b"
+    },
+    "signatures": [
+      { "valid": true, ... }
+    ]
+  }
+}
+```
+
+### API v database.py
+
+- **save_check(user_id, data, batch_id=None, source=None)**  
+  Uloží jeden záznam do `check_history` pouze pokud má uživatel tier **Pro**.  
+  Vrací `(True, row_id)` nebo `(False, reason)`.
+
+- **get_check_history(user_id, limit=100, offset=0)**  
+  Vrátí seznam záznamů pro portál (včetně `parsed_results` z JSON).
+
+- **delete_check_history_record(record_id, user_id)**  
+  Smaže záznam jen pokud patří danému `user_id`.
+
+---
+
+## Cíl (původní návrh)
 - **Free / Free trial**: Po přihlášení se zobrazí prázdné – žádná historie (nebo jen poslední běh).
 - **Basic, Pro, Enterprise**: Na webu zůstane historie kontrol – uživatel vidí své minulé dávky po „Načíst výsledky“.
 

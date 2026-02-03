@@ -53,6 +53,13 @@ def kill_port(port=5000):
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
+
+@app.context_processor
+def inject_web_build():
+    """Číslo buildu dostupné ve všech šablonách – malým šedým písmem na každé stránce."""
+    return {'web_build': getattr(WEB_BUILD, '__call__', lambda: WEB_BUILD)() if callable(getattr(WEB_BUILD, '__call__', None)) else WEB_BUILD}
+
+
 # NOVÉ: Secret key pro sessions (admin panel)
 import os
 app.secret_key = os.environ.get('SECRET_KEY', 'pdfcheck_secret_key_2025_change_in_production')
@@ -2024,14 +2031,23 @@ async function loadAgentResults() {
         // NOVÉ v40: API vrací data.batches (seskupené podle batch_id)
         if (data.batches && data.batches.length > 0) {
             batches = data.batches.map((batch, i) => {
-                // Převeď výsledky z batche do formátu pro renderování
+                // Název dávky = název kontrolované složky (source_folder), ne generický „PDF Check“
+                const sourceFolder = batch.source_folder || '';
+                const folderNameForTitle = sourceFolder ? sourceFolder.replace(/\\\\/g, '/').split('/').filter(Boolean).pop() : '';
+                const batchDisplayName = folderNameForTitle || batch.batch_name || ('Kontrola ' + (batch.created_at || ''));
+
+                // Převeď výsledky z batche do formátu pro renderování (se stromovou strukturou)
                 const files = (batch.results || []).map(r => {
                     const parsed = r.parsed_results || {};
                     const pdfFormat = parsed.results?.pdf_format || {};
                     const signatures = parsed.results?.signatures || [];
 
-                    // Cesta - použij folder_path + file_name pro správnou stromovou strukturu
-                    const folderPath = r.folder_path || '.';
+                    // Cesta pro strom: folder_path + file_name; pokud chybí složka, použij source_folder jako kořen
+                    let folderPath = (r.folder_path || '').trim().replace(/\\\\/g, '/') || '.';
+                    if (folderPath === '.' && sourceFolder) {
+                        const sf = sourceFolder.replace(/\\\\/g, '/').trim();
+                        folderPath = sf.split('/').filter(Boolean).pop() || '.';
+                    }
                     const filePath = (folderPath && folderPath !== '.') ? (folderPath + '/' + r.file_name) : r.file_name;
 
                     return {
@@ -2054,18 +2070,16 @@ async function loadAgentResults() {
                     };
                 });
 
-                // Název batche
-                const batchName = batch.batch_name || ('Kontrola - ' + (batch.created_at || 'Neznámé'));
                 const timestamp = batch.created_at ? batch.created_at.split(' ')[0] : '';
 
                 return {
                     id: i + 1,
-                    batch_id: batch.batch_id,  // Pro export
-                    name: batchName,
+                    batch_id: batch.batch_id,
+                    name: batchDisplayName,
                     timestamp: timestamp,
                     source_folder: batch.source_folder,
                     files: files,
-                    collapsed: i > 0  // Rozbalený jen první batch
+                    collapsed: i > 0
                 };
             });
 
@@ -2347,6 +2361,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var user = getStoredUser();
         if (user) {
             setMode('agent');
+            loadAgentResults();
         } else {
             setMode('local');
         }
@@ -2358,6 +2373,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+{% if bootstrap_user %}
+<script>
+(function(){
+  var u = {{ bootstrap_user | tojson }};
+  if (u && u.api_key) {
+    setStoredUser({ api_key: u.api_key, email: u.email || '', user_name: u.user_name || '', tier_name: u.tier_name || 'Free', tier: (u.tier !== undefined ? u.tier : 0) });
+    setMode('agent');
+    loadAgentResults();
+  }
+})();
+</script>
+{% endif %}
 </body>
 </html>
 '''
@@ -2728,6 +2755,7 @@ def auth_from_agent_token():
         'email': license_info.get('email'),
         'user_name': license_info.get('user_name'),
         'tier_name': license_info.get('tier_name'),
+        'tier': license_info.get('license_tier', 0),
     }
     session.permanent = True
     return redirect(url_for('app_main'))
@@ -2735,8 +2763,9 @@ def auth_from_agent_token():
 
 @app.route('/app')
 def app_main():
-    """Hlavní aplikace – kontrola PDF (původní UI)."""
-    return render_template_string(HTML_TEMPLATE)
+    """Hlavní aplikace – kontrola PDF (původní UI). Po přihlášení z agenta (token) se předá bootstrap_user pro auto-load."""
+    bootstrap_user = session.get('portal_user')
+    return render_template_string(HTML_TEMPLATE, bootstrap_user=bootstrap_user)
 
 
 @app.route('/download')
