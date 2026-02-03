@@ -130,6 +130,7 @@ def login():
 
         db = get_db()
         success, result = db.verify_admin_login(email, password)
+        user_exists = db.get_admin_by_email(email) is not None
 
         if success:
             session['admin_user'] = result
@@ -137,6 +138,8 @@ def login():
             flash(f'Vítejte, {result.get("display_name", email)}!', 'success')
             return redirect(url_for('admin.dashboard'))
         else:
+            print("LOGIN ATTEMPT: Email [{}], Password length [{}]".format(email, len(password)))
+            print("DB STATUS: Existuje uživatel? [{}], Výsledek verify_admin_login: [{}]".format(user_exists, success))
             flash(result, 'error')
 
     return render_template('admin_login.html')
