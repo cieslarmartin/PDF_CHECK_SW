@@ -226,6 +226,21 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_trial_usage_last_seen ON trial_usage(last_seen)')
 
+        # Čekající objednávky (fakturační formulář – Čeká na platbu)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pending_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                jmeno_firma TEXT NOT NULL,
+                ico TEXT,
+                email TEXT NOT NULL,
+                tarif TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_orders_status ON pending_orders(status)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_orders_created ON pending_orders(created_at)')
+
         # Historie fakturace (pro uživatele)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS billing_history (
@@ -950,6 +965,40 @@ class Database:
         cursor.execute(
             'SELECT machine_id, total_files, last_seen FROM trial_usage ORDER BY last_seen DESC'
         )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending'):
+        """Vloží čekající objednávku (fakturační formulář). Vrátí id nebo None."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status))
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    def get_pending_orders(self, status=None, limit=200):
+        """Vrátí seznam čekajících objednávek (pro Admin – Čeká na platbu)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        if status:
+            cursor.execute(
+                'SELECT * FROM pending_orders WHERE status = ? ORDER BY created_at DESC LIMIT ?',
+                (status, limit)
+            )
+        else:
+            cursor.execute(
+                'SELECT * FROM pending_orders ORDER BY created_at DESC LIMIT ?',
+                (limit,)
+            )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows

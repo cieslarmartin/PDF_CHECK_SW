@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fakturační údaje – DokuCheck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <nav class="border-b border-slate-700/50 bg-slate-900/95">
+        <div class="max-w-4xl mx-auto px-6 py-4">
+            <a href="/" class="text-xl font-bold text-white">DokuCheck</a>
+        </div>
+    </nav>
+    <main class="max-w-lg mx-auto px-6 py-12">
+        <h1 class="text-2xl font-bold text-white mb-6">Fakturační údaje</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <p class="mb-4 p-3 rounded-lg {% if category == 'error' %}bg-red-900/50 text-red-300{% else %}bg-slate-800 text-slate-300{% endif %}">{{ msg }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <p class="text-slate-400 mb-6">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
+        <form method="post" action="/checkout" class="space-y-4">
+            <input type="hidden" name="tarif" value="{{ tarif or 'standard' }}">
+            <div>
+                <label class="block text-slate-300 text-sm mb-1">Jméno / Firma *</label>
+                <input type="text" name="jmeno_firma" required class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="Jan Novák nebo Firma s.r.o.">
+            </div>
+            <div>
+                <label class="block text-slate-300 text-sm mb-1">IČ</label>
+                <input type="text" name="ico" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="12345678">
+            </div>
+            <div>
+                <label class="block text-slate-300 text-sm mb-1">E-mail *</label>
+                <input type="email" name="email" required class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="vas@email.cz">
+            </div>
+            <div>
+                <label class="block text-slate-300 text-sm mb-1">Vybraný tarif</label>
+                <input type="text" readonly class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-slate-300" value="{{ tarif_label or 'STANDARD' }}">
+            </div>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Odeslat a vystavit fakturu</button>
+        </form>
+        <p class="mt-6 text-slate-500 text-sm"><a href="/#cenik" class="text-blue-400 hover:underline">Zpět na ceník</a></p>
+    </main>
+</body>
+</html>

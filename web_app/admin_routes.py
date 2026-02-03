@@ -213,6 +213,15 @@ def tiers():
     return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=session.get('admin_user'))
 
 
+@admin_bp.route('/admin/pending-orders')
+@admin_required
+def pending_orders():
+    """Čekající objednávky (fakturační formulář – Čeká na platbu)."""
+    db = get_db()
+    orders = db.get_pending_orders(status=None, limit=200)
+    return render_template('admin_pending_orders.html', orders=orders or [], user=session.get('admin_user'))
+
+
 @admin_bp.route('/admin/trial')
 @admin_required
 def trial():
@@ -561,6 +570,49 @@ def api_update_license():
     )
 
     return jsonify({'success': True, 'message': 'Licence aktualizována'})
+
+
+@admin_bp.route('/admin/api/license/welcome-package', methods=['POST'])
+@admin_required
+def api_welcome_package():
+    """Vygeneruje náhodné heslo, nastaví ho v DB a vrátí text e-mailu pro uvítací balíček."""
+    import secrets
+    import string
+    db = get_db()
+    api_key = (request.form.get('api_key') or '').strip()
+    if not api_key and request.is_json:
+        api_key = (request.get_json(silent=True) or {}).get('api_key', '')
+    api_key = (api_key or '').strip()
+    if not api_key:
+        return jsonify({'success': False, 'error': 'Chybí api_key'}), 400
+    lic = db.get_user_license(api_key)
+    if not lic:
+        return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
+    email = lic.get('email') or ''
+    tier_name = lic.get('tier_name') or 'Standard'
+    # Generovat náhodné heslo (8 znaků: písmena + číslice)
+    alphabet = string.ascii_letters + string.digits
+    new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
+    db.admin_set_license_password(api_key, new_password)
+    # Odkaz na stažení – z requestu nebo výchozí
+    base_url = request.host_url.rstrip('/') if request else ''
+    download_url = base_url + '/download' if base_url else 'https://dokucheck.app/download'
+    email_body = (
+        f"Váš účet: {email}\n"
+        f"Heslo: {new_password}\n"
+        f"Licence: {tier_name}\n"
+        f"API Klíč: {api_key}\n"
+        f"Odkaz na stažení: {download_url}\n"
+    )
+    return jsonify({
+        'success': True,
+        'password': new_password,
+        'email_body': email_body,
+        'email': email,
+        'tier_name': tier_name,
+        'api_key': api_key,
+        'download_url': download_url,
+    })
 
 
 @admin_bp.route('/admin/api/license/set-password', methods=['POST'])

@@ -380,6 +380,7 @@
         <ul class="sidebar-nav">
             <li><a href="{{ url_for('admin.dashboard') }}" class="active"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Nástěnka</a></li>
             <li><a href="{{ url_for('admin.tiers') }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Tier definice</a></li>
+            <li><a href="{{ url_for('admin.pending_orders') }}"><span style="width:1.4rem;display:inline-block;text-align:center;">💰</span> Čeká na platbu</a></li>
             <li><a href="{{ url_for('admin.trial') }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>
             <li><a href="{{ url_for('admin.logs') }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📜</span> Logy</a></li>
             <li><a href="{{ url_for('admin.settings') }}"><span style="width:1.4rem;display:inline-block;text-align:center;">⚙️</span> Nastavení</a></li>
@@ -515,6 +516,7 @@
                                 <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="Audit">Audit</a>
                                 <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit">Edit</button>
                                 <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Heslo">&#128274;</button>
+                                <button class="action-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Generovat uvítací balíček">Balíček</button>
                                 <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Blokovat' if license.is_active else 'Odblokovat' }}">{{ 'Blok' if license.is_active else 'Odblok' }}</button>
                                 <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat">Del</button>
                             </div>
@@ -667,6 +669,22 @@
         </div>
     </div>
 
+    <!-- Uvítací balíček Modal -->
+    <div class="modal-overlay" id="welcomePackageModal">
+        <div class="modal" style="max-width:560px;">
+            <div class="modal-header">
+                <h3>Generovat uvítací balíček</h3>
+                <button class="modal-close" onclick="closeModal('welcomePackageModal')">&times;</button>
+            </div>
+            <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Vygeneruje náhodné heslo a připraví text e-mailu. Heslo se propíše do účtu.</p>
+            <div id="welcomePackageContent" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:0.85em;white-space:pre-wrap;word-break:break-all;max-height:280px;overflow-y:auto;"></div>
+            <div class="modal-actions" style="margin-top:16px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('welcomePackageModal')">Zavřít</button>
+                <button type="button" class="btn btn-primary" id="welcomePackageCopyBtn" style="display:none;" onclick="copyWelcomePackageText()">Kopírovat text</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Result Modal -->
     <div class="modal-overlay" id="resultModal">
         <div class="modal">
@@ -747,6 +765,31 @@
                 if (res.success) { loadBillingHistory(apiKey); alert('Záznam přidán'); }
                 else alert(res.error || 'Chyba');
             }).catch(function(e) { alert('Chyba: ' + e.message); });
+        }
+
+        var lastWelcomePackageText = '';
+        function openWelcomePackageModal(btn) {
+            var apiKey = btn.getAttribute('data-api-key');
+            document.getElementById('welcomePackageContent').textContent = 'Načítám…';
+            document.getElementById('welcomePackageCopyBtn').style.display = 'none';
+            openModal('welcomePackageModal');
+            var fd = new FormData();
+            fd.append('api_key', apiKey);
+            fetch('/admin/api/license/welcome-package', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    lastWelcomePackageText = data.email_body || '';
+                    document.getElementById('welcomePackageContent').textContent = lastWelcomePackageText || (data.error || 'Chyba');
+                    document.getElementById('welcomePackageCopyBtn').style.display = lastWelcomePackageText ? 'inline-block' : 'none';
+                })
+                .catch(function(e) {
+                    document.getElementById('welcomePackageContent').textContent = 'Chyba: ' + e.message;
+                });
+        }
+        function copyWelcomePackageText() {
+            if (lastWelcomePackageText && navigator.clipboard) {
+                navigator.clipboard.writeText(lastWelcomePackageText).then(function() { alert('Text zkopírován do schránky.'); });
+            }
         }
 
         function openChangePasswordModal(btn) {

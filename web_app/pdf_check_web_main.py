@@ -7,7 +7,7 @@
 #
 # Spuštění: python pdf_check_web_main.py
 
-from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for
+from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for, session, flash
 import io
 import re
 import os
@@ -2718,6 +2718,116 @@ def app_main():
 def download():
     """Stránka stažení desktop agenta – propojení na budoucí odkaz ke stažení."""
     return redirect(url_for('app_main'))
+
+
+@app.route('/online-check')
+def online_check():
+    """ONLINE Check – Drag&Drop až 5 PDF, kontrola bez uložení."""
+    return render_template('online_check.html')
+
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    """Fakturační formulář. POST ukládá do pending_orders a zobrazí poděkování."""
+    TARIF_LABELS = {'basic': 'BASIC', 'standard': 'STANDARD', 'premium': 'PREMIUM'}
+    if request.method == 'POST':
+        jmeno_firma = (request.form.get('jmeno_firma') or '').strip()
+        ico = (request.form.get('ico') or '').strip()
+        email = (request.form.get('email') or '').strip()
+        tarif = (request.form.get('tarif') or 'standard').strip().lower()
+        if not jmeno_firma or not email:
+            flash('Vyplňte jméno/firmu a e-mail', 'error')
+            return redirect(url_for('checkout', tarif=tarif))
+        db = Database()
+        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='pending')
+        if order_id:
+            return render_template('checkout_thanks.html')
+        flash('Chyba při odeslání. Zkuste to znovu.', 'error')
+        return redirect(request.url)
+    tarif = (request.args.get('tarif') or 'standard').strip().lower()
+    if tarif not in TARIF_LABELS:
+        tarif = 'standard'
+    return render_template('checkout.html', tarif=tarif, tarif_label=TARIF_LABELS.get(tarif, 'STANDARD'))
+
+
+@app.route('/portal', methods=['GET', 'POST'])
+def portal():
+    """Uživatelský portál: přihlášení e-mail + heslo (api_keys)."""
+    if request.method == 'POST':
+        email = (request.form.get('email') or '').strip()
+        password = request.form.get('password', '')
+        if not email or not password:
+            return render_template('portal_login.html', error='Vyplňte e-mail a heslo')
+        db = Database()
+        ok, data = db.verify_license_password(email, password)
+        if not ok:
+            return render_template('portal_login.html', error=data)
+        session['portal_user'] = {
+            'api_key': data['api_key'],
+            'email': data.get('email'),
+            'user_name': data.get('user_name'),
+            'tier_name': data.get('tier_name'),
+        }
+        session.permanent = True
+        return redirect(url_for('portal'))
+    if session.get('portal_user'):
+        db = Database()
+        lic = db.get_user_license(session['portal_user']['api_key'])
+        tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
+        exp = (lic or {}).get('license_expires')
+        license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
+        return render_template('portal_dashboard.html',
+                               tier_name=tier_name,
+                               license_expires_label=license_expires_label,
+                               pw_message=None, pw_error=False)
+    return render_template('portal_login.html')
+
+
+@app.route('/portal/logout')
+def portal_logout():
+    """Odhlášení z uživatelského portálu."""
+    session.pop('portal_user', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/portal/change-password', methods=['POST'])
+def portal_change_password():
+    """Změna hesla přihlášeného uživatele (portal)."""
+    if not session.get('portal_user'):
+        return redirect(url_for('portal'))
+    api_key = session['portal_user']['api_key']
+    current = request.form.get('current_password', '')
+    new_pass = request.form.get('new_password', '')
+    new_pass2 = request.form.get('new_password2', '')
+    if not current or not new_pass or not new_pass2:
+        return _portal_dashboard_with_message('Vyplňte všechna pole hesla', error=True)
+    if new_pass != new_pass2:
+        return _portal_dashboard_with_message('Nové heslo a potvrzení se neshodují', error=True)
+    if len(new_pass) < 6:
+        return _portal_dashboard_with_message('Heslo musí mít alespoň 6 znaků', error=True)
+    db = Database()
+    lic = db.get_license_by_email(session['portal_user'].get('email'))
+    if not lic or not db._verify_password(current, lic.get('password_hash') or ''):
+        return _portal_dashboard_with_message('Aktuální heslo není správné', error=True)
+    if db.admin_set_license_password(api_key, new_pass):
+        return _portal_dashboard_with_message('Heslo bylo změněno', error=False)
+    return _portal_dashboard_with_message('Nepodařilo se změnit heslo', error=True)
+
+
+def _portal_dashboard_with_message(message, error=True):
+    """Pomocná: vykreslí portal dashboard s hláškou."""
+    if not session.get('portal_user'):
+        return redirect(url_for('portal'))
+    db = Database()
+    lic = db.get_user_license(session['portal_user']['api_key'])
+    tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
+    exp = (lic or {}).get('license_expires')
+    license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
+    return render_template('portal_dashboard.html',
+                           tier_name=tier_name,
+                           license_expires_label=license_expires_label,
+                           pw_message=message, pw_error=error)
+
 
 @app.route('/analyze', methods=['POST'])
 def analyze():

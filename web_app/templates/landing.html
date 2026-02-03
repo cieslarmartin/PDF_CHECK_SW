@@ -42,7 +42,8 @@
             <a href="/" class="text-xl font-bold text-white">DokuCheck</a>
             <div class="flex items-center gap-6">
                 <a href="#cenik" class="text-slate-300 hover:text-white transition">Ceník</a>
-                <a href="/login" class="text-slate-300 hover:text-white transition">Přihlásit</a>
+                <a href="/portal" class="text-slate-300 hover:text-white transition">Můj účet</a>
+                <a href="/login" class="text-slate-300 hover:text-white transition">Přihlásit (admin)</a>
                 <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="DokuCheck" class="h-10 w-auto object-contain" onerror="this.style.display='none'">
             </div>
         </div>
@@ -60,12 +61,25 @@
             </p>
             <div class="flex flex-wrap justify-center gap-4">
                 <a href="/download" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition shadow-lg">
-                    Stáhnout zdarma
+                    Stáhnout aplikaci zdarma
                 </a>
-                <a href="/app" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition">
-                    Vyzkoušet Trial
+                <a href="/online-check" class="inline-flex items-center px-6 py-3 rounded-lg font-semibold bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 transition">
+                    Vyzkoušet ONLINE Check
                 </a>
             </div>
+        </div>
+    </section>
+
+    <!-- Návod k použití -->
+    <section class="px-6 py-16 bg-slate-800/30">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-8 text-center">Návod k použití</h2>
+            <ol class="space-y-4 text-slate-300">
+                <li class="flex gap-4"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span> <span><strong class="text-white">Stažení</strong> – Stáhněte si aplikaci DokuCheck (není nutná instalace).</span></li>
+                <li class="flex gap-4"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span> <span><strong class="text-white">Spuštění</strong> – Spusťte stažený soubor. Aplikace se spustí bez instalace.</span></li>
+                <li class="flex gap-4"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span> <span><strong class="text-white">Vložení složky s projektem</strong> – Přidejte složku s PDF dokumenty ke kontrole.</span></li>
+                <li class="flex gap-4"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span> <span><strong class="text-white">Kontrola výsledků</strong> – Spusťte kontrolu a prohlédněte si výsledky v aplikaci nebo na webu.</span></li>
+            </ol>
         </div>
     </section>
 
@@ -98,7 +112,7 @@
                         <li>Export výsledků</li>
                         <li>Podpora e‑mailem</li>
                     </ul>
-                    <a href="/app" class="block w-full py-3 rounded-lg font-semibold bg-slate-700 text-white hover:bg-slate-600 transition">Vybrat</a>
+                    <a href="/checkout?tarif=basic" class="block w-full py-3 rounded-lg font-semibold bg-slate-700 text-white hover:bg-slate-600 transition">Zakoupit</a>
                 </div>
                 <!-- STANDARD -->
                 <div class="card-glow bg-slate-800/80 border-2 border-blue-500 rounded-xl p-6 text-center relative">
@@ -110,7 +124,7 @@
                         <li>Hromadná kontrola složek</li>
                         <li>Prioritní podpora</li>
                     </ul>
-                    <a href="/app" class="block w-full py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Vybrat</a>
+                    <a href="/checkout?tarif=standard" class="block w-full py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Zakoupit</a>
                 </div>
                 <!-- PREMIUM -->
                 <div class="card-glow bg-slate-800/80 border border-slate-700 rounded-xl p-6 text-center opacity-90">
