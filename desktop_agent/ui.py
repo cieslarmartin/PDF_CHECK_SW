@@ -939,12 +939,7 @@ class PDFCheckUI:
         title = tk.Label(dialog, text="Přihlášení k účtu", font=("Segoe UI", 12, "bold"),
                          bg=self.BG_WHITE, fg=self.TEXT_DARK)
         title.pack(pady=(16, 8))
-
-        server_frame = tk.Frame(dialog, bg=self.BG_WHITE)
-        server_frame.pack(fill=tk.X, padx=20, pady=4)
-        tk.Label(server_frame, text="Server:", font=("Segoe UI", 9), bg=self.BG_WHITE, fg=self.TEXT_MUTED).pack(side=tk.LEFT)
-        tk.Label(server_frame, text=self.api_url, font=("Consolas", 9),
-                 bg=self.BG_LIGHT, fg=self.TEXT_DARK, padx=8, pady=4).pack(side=tk.LEFT, padx=8)
+        # Adresa serveru (self.api_url) zůstává v kódu, v UI se nezobrazuje.
 
         status_label = tk.Label(dialog, text="", font=("Segoe UI", 9), bg=self.BG_WHITE)
         status_label.pack(pady=8)

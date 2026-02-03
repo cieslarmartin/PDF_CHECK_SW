@@ -85,12 +85,14 @@ def get_default_admin_credentials():
 def ensure_default_admin():
     """
     Zajistí, že v DB existuje admin účet admin@admin.cz s heslem 'admin'.
+    NATVRDO: vždy nastaví zahashované heslo 'admin' (PBKDF2-HMAC-SHA256 dle database.py).
     Volá se při načtení přihlašovací stránky – po přihlášení máte přístup k dashboardu
-    (/admin, /admin/dashboard) a všem admin funkcím (licence, tiery, objednávky, logy, atd.).
+    (/admin, /admin/dashboard) a všem admin funkcím.
     """
     db = get_db()
     user = db.get_admin_by_email(DEFAULT_ADMIN_EMAIL)
     if user:
+        db.update_admin_user(user['id'], password=DEFAULT_ADMIN_PASSWORD)
         return True
     success, _ = db.create_admin_user(
         email=DEFAULT_ADMIN_EMAIL,
