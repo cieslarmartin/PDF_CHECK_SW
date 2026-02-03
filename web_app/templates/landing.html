@@ -204,6 +204,39 @@
         .faq-item p { font-size: 0.9em; color: #6b7280; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f4f6; }
         .faq-item strong { color: #374151; }
 
+        /* Připravujeme / Roadmap – karty s odlišným designem */
+        #roadmap { background: linear-gradient(180deg, #f0f9ff 0%, #f9fafb 100%); border-top: 1px solid #e5e7eb; }
+        .roadmap-intro { color: #6b7280; margin-bottom: 24px; font-size: 0.95em; max-width: 640px; }
+        .roadmap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .roadmap-card {
+            background: rgba(255,255,255,0.85);
+            border: 1px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .roadmap-card .badge-coming {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            background: #fef3c7;
+            color: #b45309;
+            border-radius: 6px;
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .roadmap-card h3 { font-size: 1.1em; color: #1e5a8a; margin-bottom: 6px; padding-right: 90px; }
+        .roadmap-card .subtitle { font-size: 0.8em; color: #64748b; margin-bottom: 14px; }
+        .roadmap-card ul { list-style: none; font-size: 0.9em; color: #475569; line-height: 1.6; }
+        .roadmap-card ul li { padding-left: 1.2em; position: relative; margin-bottom: 6px; }
+        .roadmap-card ul li::before { content: "•"; position: absolute; left: 0; color: #1e5a8a; font-weight: bold; }
+        .roadmap-card .benefit { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 0.85em; color: #1e5a8a; font-weight: 600; }
+        .roadmap-card .badge-agent { display: inline-block; margin-top: 10px; padding: 4px 8px; background: #dbeafe; color: #1e5a8a; border-radius: 4px; font-size: 0.75em; font-weight: 600; }
+
         /* Download */
         #download { background: #f9fafb; border-top: 1px solid #e5e7eb; }
         .download-text { color: #6b7280; margin-bottom: 16px; font-size: 0.95em; }
@@ -233,6 +266,7 @@
         <nav class="header-nav">
             <a href="#proc">Proč DokuCheck</a>
             <a href="#jak">Jak to funguje</a>
+            <a href="#roadmap">Připravujeme</a>
             <a href="#cenik">Ceník</a>
             <a href="#vyzkouset">Vyzkoušet</a>
             <a href="#download">Stažení</a>
@@ -295,6 +329,39 @@
                 <div class="step">
                     <div class="step-num">3. Exportuj výsledky</div>
                     <p>Prohlížejte reporty v aplikaci nebo exportujte výsledky pro další použití.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="roadmap">
+        <div class="container">
+            <h2>Naše produkty &amp; vize</h2>
+            <p class="roadmap-intro">Připravujeme rozšíření Agenta, která řeší reálné bolesti projektantů: nevyhovující PDF/A a problémy s délkou cest ve Windows.</p>
+            <div class="roadmap-grid">
+                <div class="roadmap-card">
+                    <span class="badge-coming">COMING SOON</span>
+                    <h3>Advanced PDF Manager (Upgrade Agenta)</h3>
+                    <p class="subtitle">Úprava a oprava PDF přímo v Agentu</p>
+                    <ul>
+                        <li>Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a.</li>
+                        <li>Nové podepsání autorizačním razítkem v jednom kroku.</li>
+                        <li>Snadná oprava nevyhovujících PDF pro Portál stavebníka.</li>
+                    </ul>
+                    <p class="benefit">→ Méně vrácení dokumentace, rychlejší odeslání na portál.</p>
+                    <span class="badge-agent">100 % režim Z AGENTA – data neopouštějí vaše PC</span>
+                </div>
+                <div class="roadmap-card">
+                    <span class="badge-coming">COMING SOON</span>
+                    <h3>Path &amp; Name Analyzer (Nástavba Agenta)</h3>
+                    <p class="subtitle">Diagnostika cest a názvů souborů</p>
+                    <ul>
+                        <li>Lokální kontrola délky názvů a cest (Path Length) – prevence pádů na OneDrive/SharePoint.</li>
+                        <li>Blesková kontrola tisíců souborů najednou.</li>
+                        <li>Export problematických souborů do Excelu pro rychlou opravu.</li>
+                    </ul>
+                    <p class="benefit">→ Žádné neočekávané pády u velkých zakázek.</p>
+                    <span class="badge-agent">100 % režim Z AGENTA – vše běží na vašem PC</span>
                 </div>
             </div>
         </div>

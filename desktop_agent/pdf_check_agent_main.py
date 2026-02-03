@@ -329,27 +329,29 @@ class PDFCheckAgent:
         return False
 
     def run(self):
-        """Spustí agenta. Body A: striktně lokální režim – žádné přihlášení, licence ani odesílání na server."""
-        logger.info("Spouštím GUI (lokální režim)...")
+        """Spustí agenta"""
+        logger.info("Spouštím GUI...")
 
-        # Body A: pouze lokální kontrola – žádné serverové callbacky
+        # Vytvoř GUI (api_url, přihlášení, odhlášení, limit souborů, odeslání batch s vrácením response)
         self.root, self.app = create_app(
             on_check_callback=self.check_pdf,
-            on_api_key_callback=None,
-            api_url="",
-            on_login_password_callback=None,
-            on_logout_callback=None,
-            on_get_max_files=None,
-            on_after_login_callback=None,
-            on_after_logout_callback=None,
-            on_get_web_login_url=None,
-            on_send_batch_callback=None,
+            on_api_key_callback=self.verify_api_key,
+            api_url=self.license_manager.api_url,
+            on_login_password_callback=self.login_with_password,
+            on_logout_callback=self.logout,
+            on_get_max_files=self.get_max_files_for_batch,
+            on_after_login_callback=self._clear_view,
+            on_after_logout_callback=self._clear_view,
+            on_get_web_login_url=lambda: self._get_web_login_url(),
+            on_send_batch_callback=lambda results, src=None: self.send_batch_results_to_api(results, src),
         )
 
-        # V lokálním režimu nevoláme check_first_run ani _refresh_license_display
+        # Zkontroluj první spuštění a zobraz stav licence
+        self.check_first_run()
+        self._refresh_license_display()
 
         # Spusť hlavní smyčku
-        logger.info("Agent běží (lokálně)")
+        logger.info("Agent běží")
         self.root.mainloop()
 
         logger.info("Agent ukončen")
