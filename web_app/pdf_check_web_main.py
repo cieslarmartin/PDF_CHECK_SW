@@ -2829,14 +2829,20 @@ def _portal_dashboard_with_message(message, error=True):
                            pw_message=message, pw_error=error)
 
 
+# Max. velikost souboru pro ONLINE Check (500 KB)
+ONLINE_CHECK_MAX_FILE_SIZE = 500 * 1024
+
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Kontrola jednoho PDF – bez přihlášení (Free trial). Nepotřebuje licenci."""
+    """Kontrola jednoho PDF – bez přihlášení (Free trial). Pro ONLINE Check max. 500 KB."""
     if 'file' not in request.files:
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
     try:
         content = file.read()
+        if len(content) > ONLINE_CHECK_MAX_FILE_SIZE:
+            return jsonify({'error': 'Soubor je větší než 500 KB. Pro větší soubory použijte Desktop aplikaci.'}), 400
         return jsonify(analyze_pdf(content))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
