@@ -124,41 +124,57 @@
             font-size: 0.9em;
         }
 
-        /* Ceník – tabulka jako v aplikaci */
-        .pricing-table {
-            width: 100%;
+        /* Ceník – dvě hlavní karty (Basic / Pro) */
+        #cenik { background: #f9fafb; }
+        .tier-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; align-items: stretch; max-width: 720px; margin: 0 auto; }
+        .tier-card {
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            border-collapse: collapse;
-            overflow: hidden;
+            border-radius: 12px;
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
-        .pricing-table th {
-            background: #f9fafb;
-            text-align: left;
-            padding: 12px 16px;
-            font-weight: 600;
-            color: #374151;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.85em;
+        .tier-card.pro-tier {
+            border: 2px solid #1e5a8a;
+            background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 24%);
+            box-shadow: 0 4px 16px rgba(30, 90, 138, 0.15);
         }
-        .pricing-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
-            color: #374151;
-            font-size: 0.9em;
-        }
-        .pricing-table tr:last-child td { border-bottom: none; }
-        .pricing-table .tarif { font-weight: 600; color: #1f2937; }
-        .pricing-table .btn-small { padding: 6px 12px; font-size: 0.8em; }
-        .pricing-table .badge-soon {
-            display: inline-block;
+        .tier-card .tier-badge {
+            position: absolute;
+            top: -1px;
+            right: 16px;
+            background: #1e5a8a;
+            color: white;
             padding: 6px 12px;
-            background: #f3f4f6;
-            color: #9ca3af;
-            border-radius: 6px;
-            font-size: 0.8em;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 0.03em;
         }
+        .tier-card h3 { font-size: 1.35em; color: #1f2937; margin-bottom: 4px; }
+        .tier-card .tier-name { font-size: 0.85em; color: #6b7280; margin-bottom: 12px; }
+        .tier-card .tier-price { font-size: 1.6em; font-weight: 700; color: #1e5a8a; margin-bottom: 4px; }
+        .tier-card .tier-price-note { font-size: 0.8em; color: #9ca3af; margin-bottom: 16px; }
+        .tier-card .tier-desc { font-size: 0.9em; color: #4b5563; line-height: 1.5; margin-bottom: 16px; }
+        .tier-card .tier-features { list-style: none; margin-bottom: 20px; flex: 1; }
+        .tier-card .tier-features li { padding: 6px 0 6px 1.4em; position: relative; font-size: 0.9em; color: #374151; }
+        .tier-card .tier-features li::before { content: "✓"; position: absolute; left: 0; color: #059669; font-weight: bold; }
+        .tier-card .tier-features li.highlight { color: #1e5a8a; font-weight: 600; }
+        .tier-card .tier-security {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.8em; color: #059669;
+            font-weight: 600;
+        }
+        .tier-card .btn-tier { width: 100%; text-align: center; padding: 12px 20px; margin-top: 8px; }
+        .tier-card.pro-tier .btn-tier { background: #1e5a8a; color: white; font-weight: 600; }
+        .tier-card.pro-tier .btn-tier:hover { background: #174a6e; color: white; }
+        .pricing-volume { margin-top: 24px; padding: 14px 20px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 0.9em; color: #1e3a5f; text-align: center; }
+        .pricing-volume strong { color: #1e5a8a; }
         .pricing-hint { font-size: 0.8em; color: #9ca3af; margin-top: 12px; text-align: center; }
         .pricing-hint a { color: #1e5a8a; text-decoration: none; }
         .pricing-hint a:hover { text-decoration: underline; }
@@ -378,37 +394,40 @@
     <section id="cenik">
         <div class="container">
             <h2>Ceník</h2>
-            <table class="pricing-table">
-                <thead>
-                    <tr>
-                        <th>Tarif</th>
-                        <th>Cena</th>
-                        <th>Co obsahuje</th>
-                        <th>CTA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="tarif">BASIC</td>
-                        <td>250 Kč/měs</td>
-                        <td>Základní kontrola</td>
-                        <td><a href="/checkout?tarif=basic" class="btn btn-primary btn-small">Zakoupit</a></td>
-                    </tr>
-                    <tr>
-                        <td class="tarif">STANDARD</td>
-                        <td>500 Kč/měs</td>
-                        <td>Hromadná kontrola, podpora</td>
-                        <td><a href="/checkout?tarif=standard" class="btn btn-primary btn-small">Zakoupit</a></td>
-                    </tr>
-                    <tr>
-                        <td class="tarif">PREMIUM</td>
-                        <td>750 Kč/měs</td>
-                        <td>API + integrace</td>
-                        <td><span class="badge-soon">Coming Soon</span></td>
-                    </tr>
-                </tbody>
-            </table>
-            <p class="pricing-hint">CTA vedou do Checkout nebo do <a href="#kontakt">Kontakt</a> formuláře.</p>
+            <div class="tier-cards">
+                <div class="tier-card">
+                    <h3>PROJEKTANT</h3>
+                    <p class="tier-name">Basic</p>
+                    <p class="tier-price">1 290 Kč</p>
+                    <p class="tier-price-note">/ rok</p>
+                    <p class="tier-desc">Ideální pro samostatné projektanty a kontrolu vlastních expedicí před odesláním objednateli.</p>
+                    <ul class="tier-features">
+                        <li>Lokální kontrola (režim Z Agenta)</li>
+                        <li>Kontrola metadat a podpisů</li>
+                        <li>Standardní UI</li>
+                    </ul>
+                    <p class="tier-security">🔒 Režim Z Agenta – data zůstávají u vás, ochrana duševního vlastnictví.</p>
+                    <a href="/checkout?tarif=basic" class="btn btn-secondary btn-tier">Zakoupit Basic</a>
+                </div>
+                <div class="tier-card pro-tier">
+                    <span class="tier-badge">DOPORUČUJEME PRO ATELIÉRY</span>
+                    <h3>VEDOUCÍ PROJEKTANT</h3>
+                    <p class="tier-name">Pro</p>
+                    <p class="tier-price">1 990 Kč</p>
+                    <p class="tier-price-note">/ rok</p>
+                    <p class="tier-desc">Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.</p>
+                    <ul class="tier-features">
+                        <li>Vše v Basic +</li>
+                        <li class="highlight">Hromadný export do Excelu (XLS)</li>
+                        <li class="highlight">Sofistikované filtry chyb</li>
+                        <li>Prioritní podpora</li>
+                    </ul>
+                    <p class="tier-security">🔒 Režim Z Agenta – data zůstávají u vás, ochrana duševního vlastnictví.</p>
+                    <a href="/checkout?tarif=standard" class="btn btn-tier">Zakoupit Pro</a>
+                </div>
+            </div>
+            <p class="pricing-volume">Při odběru <strong>10+ licencí</strong> sleva <strong>10 %</strong> pro vaši firmu.</p>
+            <p class="pricing-hint">Objednávka vede do Checkout; po zaplacení aktivujeme licenci. <a href="#kontakt">Kontakt</a> pro firemní nabídky.</p>
         </div>
     </section>
 
