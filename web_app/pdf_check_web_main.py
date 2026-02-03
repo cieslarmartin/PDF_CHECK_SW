@@ -891,7 +891,7 @@ HTML_TEMPLATE = '''
         <footer id="footer">
             <strong>⚠️</strong> Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.
             <span style="margin:0 8px;">|</span>
-            v42 | Verze z prosince 2025 | © Ing. Martin Cieślar
+            Build {{ web_build }} | © Ing. Martin Cieślar
         </footer>
     </div>
 
@@ -943,7 +943,7 @@ HTML_TEMPLATE = '''
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:12px 0;">
                         <p style="font-size:1.1em;font-weight:bold;color:#374151;">Ing. Martin Cieślar</p>
                     </div>
-                    <p style="font-size:0.8em;color:#9ca3af;margin-top:16px;">v42 | Verze z prosince 2025</p>
+                    <p style="font-size:0.8em;color:#9ca3af;margin-top:16px;">Build {{ web_build }}</p>
                 </div>
             </div>
             <div class="modal-footer">
