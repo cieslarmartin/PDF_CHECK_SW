@@ -17,11 +17,12 @@ import threading
 import webbrowser
 
 # NOVÉ IMPORTY PRO API:
-from api_endpoint import register_api_routes
+from api_endpoint import register_api_routes, consume_one_time_token
 from database import Database
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp
+from version import WEB_BUILD
 
 # =============================================================================
 # AUTOMATICKÉ UVOLNĚNÍ PORTU
@@ -2708,6 +2709,28 @@ def index():
     return render_template('landing.html')
 
 
+@app.route('/auth/from-agent-token')
+def auth_from_agent_token():
+    """
+    Přihlášení z Agenta: jednorázový token z URL přihlásí uživatele (session)
+    a přesměruje rovnou na /app (kontroly), ne na landing.
+    """
+    token = request.args.get('login_token', '').strip()
+    if not token:
+        return redirect(url_for('app_main'))
+    api_key, license_info = consume_one_time_token(token)
+    if not api_key or not license_info:
+        return redirect(url_for('app_main'))
+    session['portal_user'] = {
+        'api_key': api_key,
+        'email': license_info.get('email'),
+        'user_name': license_info.get('user_name'),
+        'tier_name': license_info.get('tier_name'),
+    }
+    session.permanent = True
+    return redirect(url_for('app_main'))
+
+
 @app.route('/app')
 def app_main():
     """Hlavní aplikace – kontrola PDF (původní UI)."""
@@ -2928,6 +2951,14 @@ def scan_folder():
     return jsonify({'results': results, 'total': len(results)})
 
 # =============================================================================
+# BUILD PRO ŠABLONY (jedno místo – version.py; při změně zvyš WEB_BUILD)
+# =============================================================================
+@app.context_processor
+def inject_web_build():
+    """Do všech šablon přidá web_build (např. 44) pro zobrazení verze na webu."""
+    return {'web_build': WEB_BUILD}
+
+# =============================================================================
 # REGISTRACE ADMIN BLUEPRINTU
 # =============================================================================
 # Zaregistruj admin routes pro správu licencí
@@ -2947,7 +2978,7 @@ if __name__ == '__main__':
     print("")
     print("=" * 60)
     print("  PDF DokuCheck PRO")
-    print("  Build 41 | © Ing. Martin Cieślar")
+    print("  Web build", WEB_BUILD, "| © Ing. Martin Cieślar")
     print("  API endpointy: AKTIVNI")
     print("  Admin panel: AKTIVNI")
     print("=" * 60)

@@ -1,0 +1,41 @@
+================================================================================
+KDE SE UKLÁDAJÍ ZMĚNY A JAK ČÍSLOVAT BUILD
+================================================================================
+
+1. UMÍSTĚNÍ PROJEKTU
+   Všechny změny (šablony, Python, databáze) se ukládají do složky:
+
+   C:\Claude\PDF_CHECK_SW\
+
+   Důležité cesty:
+   - Web aplikace:     C:\Claude\PDF_CHECK_SW\web_app\
+   - Šablony (HTML):   C:\Claude\PDF_CHECK_SW\web_app\templates\
+   - Landing page:     C:\Claude\PDF_CHECK_SW\web_app\templates\landing.html
+   - Admin dashboard:  C:\Claude\PDF_CHECK_SW\web_app\templates\admin_dashboard.html
+   - Desktop Agent:   C:\Claude\PDF_CHECK_SW\desktop_agent\
+
+   Pokud máte v editoru otevřenou jinou složku (např. PDF_DOCU_CHECK), změny
+   tam neuvidíte – otevřete složku PDF_CHECK_SW.
+
+2. ČÍSLO BUILDU NA WEBU
+   Jediné místo pro číslo buildu webu:
+
+   C:\Claude\PDF_CHECK_SW\web_app\version.py
+
+   V souboru je proměnná WEB_BUILD = 44 (nebo aktuální číslo).
+   Při každé nasazené změně zvyš toto číslo (45, 46, …).
+
+   Kde se build zobrazí:
+   - Admin dashboard: v hlavičce vedle badge "ADMIN" (build 44).
+   - Landing page: v patičce stránky "Web build 44".
+   - Konzole při spuštění serveru: "Web build 44".
+
+   Šablony používají {{ web_build }} – hodnota se bere z version.py přes
+   context_processor v pdf_check_web_main.py.
+
+3. HISTORIE ZMĚN (volitelně v version.py)
+   V komentářích v version.py můžeš přidávat řádek u každého čísla, např.:
+   # 45 – Modal na Online Check, terminologie Z Agenta
+   # 44 – Redesign ceníku, číslování buildu
+
+================================================================================

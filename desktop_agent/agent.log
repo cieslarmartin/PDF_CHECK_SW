@@ -1122,3 +1122,10 @@ _tkinter.TclError: unknown option "-selectbackground"
 2026-02-03 20:25:52,955 - INFO - Analýza dokončena: 230208_D1.1-12 Severovýchodní a severozápadní pohled.pdf
 2026-02-03 20:25:52,955 - INFO - Odesílám 5 výsledků na server (jeden request)...
 2026-02-03 20:25:53,648 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.
+2026-02-03 22:24:54,569 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-03 22:24:54,569 - INFO - Spouštím GUI (lokální režim)...
+2026-02-03 22:24:54,892 - INFO - Agent běží (lokálně)
+2026-02-03 22:25:11,334 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR/17-044-3_B_STZ_r07_2020.pdf
+2026-02-03 22:25:11,372 - INFO - Analýza dokončena: 17-044-3_B_STZ_r07_2020.pdf
+2026-02-03 22:25:26,086 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR/230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf
+2026-02-03 22:25:26,101 - INFO - Analýza dokončena: 230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf

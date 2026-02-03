@@ -28,6 +28,33 @@ _one_time_login_tokens = {}
 _TOKEN_EXPIRY_SEC = 120
 
 
+def consume_one_time_token(token):
+    """
+    Pro web: vymění jednorázový token za api_key a licence info. Token se po použití smaže.
+    Vrací (api_key, license_info_dict) nebo (None, None) při neplatném/vypršeném tokenu.
+    """
+    global _one_time_login_tokens
+    import time
+    token = (token or '').strip()
+    if not token:
+        return None, None
+    now = time.time()
+    for t in list(_one_time_login_tokens.keys()):
+        if _one_time_login_tokens[t]['expires'] <= now:
+            del _one_time_login_tokens[t]
+    if token not in _one_time_login_tokens:
+        return None, None
+    data = _one_time_login_tokens.pop(token)
+    if data['expires'] <= now:
+        return None, None
+    api_key = data['api_key']
+    _db = Database()
+    license_info = _db.get_user_license(api_key) if api_key else None
+    if not license_info:
+        return None, None
+    return api_key, license_info
+
+
 def _request_client_info(request):
     """Vrátí (ip_address, machine_id, machine_name) z requestu (headers + remote)."""
     ip = request.headers.get('X-Forwarded-For', request.remote_addr) or ''
@@ -484,7 +511,8 @@ def register_api_routes(app):
                 base_url = f"https://{host}".rstrip('/')
             else:
                 base_url = request.url_root.rstrip('/')
-            login_url = f"{base_url}/?login_token={token}"
+            # Přímý vstup do kontroly (/app) s přihlášením – ne na landing
+            login_url = f"{base_url}/auth/from-agent-token?login_token={token}"
             return jsonify({'success': True, 'login_url': login_url}), 200
         except Exception as e:
             logger.exception(f"Chyba one-time-login-token: {e}")
