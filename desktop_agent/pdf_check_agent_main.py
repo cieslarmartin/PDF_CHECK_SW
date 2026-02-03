@@ -301,6 +301,8 @@ class PDFCheckAgent:
     def _refresh_license_display(self):
         """Načte údaje o licenci a zobrazí je (Přihlášen: email (Tier) nebo Trial verze – Limit X souborů)."""
         if not self.app or not self.license_manager.has_valid_key():
+            if self.app and hasattr(self.app, 'set_export_xls_enabled'):
+                self.app.set_export_xls_enabled(False)
             return
         ok, info = self.license_manager.get_license_info()
         if ok and info:
@@ -311,8 +313,13 @@ class PDFCheckAgent:
                 email = info.get("email") or info.get("user_name") or "—"
                 tier = info.get("tier_name") or "—"
                 self.app.set_license_display(f"{email} ({tier})")
+            allow_excel = info.get("allow_excel_export") or (tier_name.lower() == "pro")
+            if hasattr(self.app, 'set_export_xls_enabled'):
+                self.app.set_export_xls_enabled(bool(allow_excel))
         else:
             self.app.set_license_display("")
+            if hasattr(self.app, 'set_export_xls_enabled'):
+                self.app.set_export_xls_enabled(False)
 
     def check_first_run(self):
         """Zkontroluje, zda je nastaven platný klíč; pokud ne, zobrazí dialog Aktivace licence."""

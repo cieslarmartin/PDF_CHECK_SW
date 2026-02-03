@@ -2745,7 +2745,7 @@ def download():
 
 @app.route('/online-check')
 def online_check():
-    """ONLINE Check – Drag&Drop až 5 PDF, kontrola bez uložení."""
+    """ONLINE Check – Drag&Drop max. 3 PDF, max. 2 MB na soubor, kontrola na serveru (cloud)."""
     return render_template('online_check.html')
 
 

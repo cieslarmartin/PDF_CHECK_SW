@@ -690,6 +690,7 @@ def register_api_routes(app):
         """
         Exportuje dávku do Excel (XLSX) – jen vlastní dávku přihlášeného uživatele.
         Vyžaduje Authorization: Bearer api_key. Batch musí patřit tomuto api_key.
+        PRO verze: allow_excel_export musí být True (Basic/Trial nemají přístup).
         """
         try:
             auth_header = request.headers.get('Authorization')
@@ -698,6 +699,10 @@ def register_api_routes(app):
             api_key = auth_header.replace('Bearer ', '').strip()
             if not db.verify_api_key(api_key):
                 return jsonify({'error': 'Neplatný klíč'}), 401
+
+            lic = db.get_user_license(api_key)
+            if not lic or not lic.get('allow_excel_export'):
+                return jsonify({'error': 'Export do Excelu je dostupný pouze v PRO verzi.'}), 403
 
             owner_key = db.get_batch_api_key(batch_id)
             if not owner_key or owner_key != api_key:
@@ -834,7 +839,7 @@ def register_api_routes(app):
     def export_all_excel():
         """
         Exportuje do Excel jen data přihlášeného uživatele.
-        Vyžaduje Authorization: Bearer api_key.
+        Vyžaduje Authorization: Bearer api_key. PRO verze: allow_excel_export musí být True.
         """
         try:
             auth_header = request.headers.get('Authorization')
@@ -843,6 +848,10 @@ def register_api_routes(app):
             api_key = auth_header.replace('Bearer ', '').strip()
             if not db.verify_api_key(api_key):
                 return jsonify({'error': 'Neplatný klíč'}), 401
+
+            lic = db.get_user_license(api_key)
+            if not lic or not lic.get('allow_excel_export'):
+                return jsonify({'error': 'Export do Excelu je dostupný pouze v PRO verzi.'}), 403
 
             all_batches = db.get_agent_results_grouped(limit=100, api_key=api_key)
             all_results = []

@@ -1,0 +1,16 @@
+---
+description: Striktní omezení – veškerá práce pouze v této složce projektu
+alwaysApply: true
+---
+
+# PRAVIDLO: Pouze složka PDF_CHECK_SW
+
+## Závazné omezení
+
+- **Všechny operace se soubory** (čtení, zápis, úpravy, vyhledávání, terminál v pracovním adresáři) smí probíhat **pouze uvnitř složky tohoto projektu** – tedy `PDF_CHECK_SW` (kořen workspace / projektová složka).
+- **Nesmíš** číst, zapisovat ani jinak měnit soubory v jiných složkách (např. `PDF_DOKU_Final`, `pdf-dokucheck-web`, `v42` mimo tento projekt, `C:\Claude\*` mimo `PDF_CHECK_SW`).
+- Při úkolech vždy ověř, že cesty vedou do `PDF_CHECK_SW` (nebo jeho podadresářů). Pokud uživatel zmíní jinou složku, upozorni, že pracuješ jen v `PDF_CHECK_SW`, a případné změny ať provede v této složce nebo ti je popíše sem.
+
+## Důvod
+
+- Nasazení (Git, PythonAnywhere) vychází z této jediné složky. Úpravy jinde vedou k tomu, že na webu a v repozitáři chybí změny (cenová politika, limity 2 MB, texty, terminologie).

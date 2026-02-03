@@ -2,6 +2,10 @@
 KDE SE UKLÁDAJÍ ZMĚNY A JAK ČÍSLOVAT BUILD
 ================================================================================
 
+DŮLEŽITÉ: Pracujte VŽDY pouze ve složce PDF_CHECK_SW. Git push a nasazení na
+PythonAnywhere vycházejí z této složky. Úpravy v jiných složkách (PDF_DOKU_Final,
+pdf-dokucheck-web, v42 mimo tento projekt) se na web neprojeví.
+
 1. UMÍSTĚNÍ PROJEKTU
    Všechny změny (šablony, Python, databáze) se ukládají do složky:
 
@@ -22,7 +26,7 @@ KDE SE UKLÁDAJÍ ZMĚNY A JAK ČÍSLOVAT BUILD
 
    C:\Claude\PDF_CHECK_SW\web_app\version.py
 
-   V souboru je proměnná WEB_BUILD = 44 (nebo aktuální číslo).
+   V souboru je proměnná WEB_BUILD = 45 (nebo aktuální číslo).
    Při každé nasazené změně zvyš toto číslo (45, 46, …).
 
    Kde se build zobrazí:

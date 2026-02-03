@@ -1129,3 +1129,145 @@ _tkinter.TclError: unknown option "-selectbackground"
 2026-02-03 22:25:11,372 - INFO - Analýza dokončena: 17-044-3_B_STZ_r07_2020.pdf
 2026-02-03 22:25:26,086 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/17-044 BD FM/04_DSP/02_Expedice/Zmena_DUR/230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf
 2026-02-03 22:25:26,101 - INFO - Analýza dokončena: 230208_D1.1-13 Jihozápadní a jihovýchodní pohled.pdf
+2026-02-03 23:01:34,204 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-03 23:01:34,204 - INFO - Spouštím GUI...
+2026-02-03 23:01:34,421 - INFO - Ověřuji licenci se serverem...
+2026-02-03 23:01:35,812 - INFO - Agent běží
+2026-02-03 23:02:21,204 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_1_240723_r01.pdf
+2026-02-03 23:02:21,218 - INFO - Analýza dokončena: 24-027-4_Zapis_z_KD_1_240723_r01.pdf
+2026-02-03 23:02:21,218 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_9_241203\24-027-2_E0_ETAPIZACE_SCHEMA_SITUACE_r01.pdf
+2026-02-03 23:02:21,246 - INFO - Analýza dokončena: 24-027-2_E0_ETAPIZACE_SCHEMA_SITUACE_r01.pdf
+2026-02-03 23:02:21,247 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_9_241203\24-027-2_E4_3.NP_schema_etapizace_r01.pdf
+2026-02-03 23:02:21,270 - INFO - Analýza dokončena: 24-027-2_E4_3.NP_schema_etapizace_r01.pdf
+2026-02-03 23:02:21,272 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\01_FM_kulturni_centrum_VZT_prvni_nacrt_1PP.pdf
+2026-02-03 23:02:21,291 - INFO - Analýza dokončena: 01_FM_kulturni_centrum_VZT_prvni_nacrt_1PP.pdf
+2026-02-03 23:02:21,292 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\02_FM_kulturni_centrum_VZT_prvni_nacrt_1NP.pdf
+2026-02-03 23:02:21,333 - INFO - Analýza dokončena: 02_FM_kulturni_centrum_VZT_prvni_nacrt_1NP.pdf
+2026-02-03 23:02:21,333 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\03_FM_kulturni_centrum_VZT_prvni_nacrt_2NP.pdf
+2026-02-03 23:02:21,371 - INFO - Analýza dokončena: 03_FM_kulturni_centrum_VZT_prvni_nacrt_2NP.pdf
+2026-02-03 23:02:21,371 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\04_FM_kulturni_centrum_VZT_prvni_nacrt_3NP.pdf
+2026-02-03 23:02:21,387 - INFO - Analýza dokončena: 04_FM_kulturni_centrum_VZT_prvni_nacrt_3NP.pdf
+2026-02-03 23:02:21,388 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\05_FM_kulturni_centrum_VZT_prvni_nacrt_4NP.pdf
+2026-02-03 23:02:21,399 - INFO - Analýza dokončena: 05_FM_kulturni_centrum_VZT_prvni_nacrt_4NP.pdf
+2026-02-03 23:02:21,400 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\06_FM_kulturni_centrum_VZT_prvni_nacrt_5NP.pdf
+2026-02-03 23:02:21,408 - INFO - Analýza dokončena: 06_FM_kulturni_centrum_VZT_prvni_nacrt_5NP.pdf
+2026-02-03 23:02:21,408 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\Dotazy VZT - Nove kulturni centrum F-M.pdf
+2026-02-03 23:02:21,413 - INFO - Analýza dokončena: Dotazy VZT - Nove kulturni centrum F-M.pdf
+2026-02-03 23:02:21,413 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\03_Zapisy_z_jednani\prezenční listina.pdf
+2026-02-03 23:02:21,431 - INFO - Analýza dokončena: prezenční listina.pdf
+2026-02-03 23:02:21,431 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-2_C3-ND - Terminy.pdf
+2026-02-03 23:02:21,436 - INFO - Analýza dokončena: 24-027-2_C3-ND - Terminy.pdf
+2026-02-03 23:02:21,436 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-4 - MZ_Terminy_r02.pdf
+2026-02-03 23:02:21,442 - INFO - Analýza dokončena: 24-027-4 - MZ_Terminy_r02.pdf
+2026-02-03 23:02:21,442 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-4_C1_CELKOVE - Terminy_r02.pdf
+2026-02-03 23:02:21,447 - INFO - Analýza dokončena: 24-027-4_C1_CELKOVE - Terminy_r02.pdf
+2026-02-03 23:02:21,447 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\mz termíny\24-027-4 - MZ_aktualizace_Terminy-5.pdf
+2026-02-03 23:02:21,452 - INFO - Analýza dokončena: 24-027-4 - MZ_aktualizace_Terminy-5.pdf
+2026-02-03 23:02:21,453 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027 - MZ_Terminy.pdf
+2026-02-03 23:02:21,458 - INFO - Analýza dokončena: 24-027 - MZ_Terminy.pdf
+2026-02-03 23:02:21,460 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027-2_C1_CELKOVE - Terminy.pdf
+2026-02-03 23:02:21,467 - INFO - Analýza dokončena: 24-027-2_C1_CELKOVE - Terminy.pdf
+2026-02-03 23:02:21,468 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027-2_C2_MZ - Terminy.pdf
+2026-02-03 23:02:21,474 - INFO - Analýza dokončena: 24-027-2_C2_MZ - Terminy.pdf
+2026-02-03 23:02:21,477 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\Studie\24-027 - Terminy-5.pdf
+2026-02-03 23:02:21,484 - INFO - Analýza dokončena: 24-027 - Terminy-5.pdf
+2026-02-03 23:02:21,484 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\Studie\24-027 - Terminy-6.pdf
+2026-02-03 23:02:21,489 - INFO - Analýza dokončena: 24-027 - Terminy-6.pdf
+2026-02-03 23:02:21,489 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\pocty osob v mistnostech\01.3.30-01_TZ .pdf
+2026-02-03 23:02:21,538 - INFO - Analýza dokončena: 01.3.30-01_TZ .pdf
+2026-02-03 23:02:21,538 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\pocty osob v mistnostech\D-02.1.3.30-01_TZ.pdf
+2026-02-03 23:02:21,584 - INFO - Analýza dokončena: D-02.1.3.30-01_TZ.pdf
+2026-02-03 23:02:21,584 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\2-12 Nástěnná rampa RN07-DN2_2vyd.pdf
+2026-02-03 23:02:21,636 - INFO - Analýza dokončena: 2-12 Nástěnná rampa RN07-DN2_2vyd.pdf
+2026-02-03 23:02:21,636 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\balance_tutor.pdf
+2026-02-03 23:02:21,640 - INFO - Analýza dokončena: balance_tutor.pdf
+2026-02-03 23:02:21,640 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\navrh2.10_balance_tutor_ergo_schvaleny_20190121.pdf
+2026-02-03 23:02:21,646 - INFO - Analýza dokončena: navrh2.10_balance_tutor_ergo_schvaleny_20190121.pdf
+2026-02-03 23:02:21,646 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\ou_simcentrum_gynporod_linka.pdf
+2026-02-03 23:02:21,671 - INFO - Analýza dokončena: ou_simcentrum_gynporod_linka.pdf
+2026-02-03 23:02:21,671 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\podrobna_spec_linet_vseob.pdf
+2026-02-03 23:02:21,708 - INFO - Analýza dokončena: podrobna_spec_linet_vseob.pdf
+2026-02-03 23:02:21,709 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\pudorys_sim_centra_v2.pdf
+2026-02-03 23:02:21,728 - INFO - Analýza dokončena: pudorys_sim_centra_v2.pdf
+2026-02-03 23:02:21,728 - INFO - Odesílám 28 výsledků na server (jeden request)...
+2026-02-03 23:02:22,560 - ERROR - Chyba při odesílání batch: Zkušební limit vyčerpán. Zakupte si prosím licenci.
+2026-02-03 23:02:48,411 - INFO - Přihlášení e-mailem a heslem...
+2026-02-03 23:02:49,374 - INFO - Přihlášeno.
+2026-02-03 23:03:03,905 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_1_240723_r01.pdf
+2026-02-03 23:03:03,912 - INFO - Analýza dokončena: 24-027-4_Zapis_z_KD_1_240723_r01.pdf
+2026-02-03 23:03:03,914 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_9_241203\24-027-2_E0_ETAPIZACE_SCHEMA_SITUACE_r01.pdf
+2026-02-03 23:03:03,934 - INFO - Analýza dokončena: 24-027-2_E0_ETAPIZACE_SCHEMA_SITUACE_r01.pdf
+2026-02-03 23:03:03,934 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\1.Faze - ETAPIZACE\24-027-4_Zapis_z_KD_9_241203\24-027-2_E4_3.NP_schema_etapizace_r01.pdf
+2026-02-03 23:03:03,953 - INFO - Analýza dokončena: 24-027-2_E4_3.NP_schema_etapizace_r01.pdf
+2026-02-03 23:03:03,955 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\01_FM_kulturni_centrum_VZT_prvni_nacrt_1PP.pdf
+2026-02-03 23:03:03,968 - INFO - Analýza dokončena: 01_FM_kulturni_centrum_VZT_prvni_nacrt_1PP.pdf
+2026-02-03 23:03:03,969 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\02_FM_kulturni_centrum_VZT_prvni_nacrt_1NP.pdf
+2026-02-03 23:03:04,006 - INFO - Analýza dokončena: 02_FM_kulturni_centrum_VZT_prvni_nacrt_1NP.pdf
+2026-02-03 23:03:04,007 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\03_FM_kulturni_centrum_VZT_prvni_nacrt_2NP.pdf
+2026-02-03 23:03:04,039 - INFO - Analýza dokončena: 03_FM_kulturni_centrum_VZT_prvni_nacrt_2NP.pdf
+2026-02-03 23:03:04,040 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\04_FM_kulturni_centrum_VZT_prvni_nacrt_3NP.pdf
+2026-02-03 23:03:04,054 - INFO - Analýza dokončena: 04_FM_kulturni_centrum_VZT_prvni_nacrt_3NP.pdf
+2026-02-03 23:03:04,055 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\05_FM_kulturni_centrum_VZT_prvni_nacrt_4NP.pdf
+2026-02-03 23:03:04,062 - INFO - Analýza dokončena: 05_FM_kulturni_centrum_VZT_prvni_nacrt_4NP.pdf
+2026-02-03 23:03:04,063 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\06_FM_kulturni_centrum_VZT_prvni_nacrt_5NP.pdf
+2026-02-03 23:03:04,070 - INFO - Analýza dokončena: 06_FM_kulturni_centrum_VZT_prvni_nacrt_5NP.pdf
+2026-02-03 23:03:04,070 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\02_KD\2.Faze - DSP\KD_02_podklady_VZT\Dotazy VZT - Nove kulturni centrum F-M.pdf
+2026-02-03 23:03:04,073 - INFO - Analýza dokončena: Dotazy VZT - Nove kulturni centrum F-M.pdf
+2026-02-03 23:03:04,073 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\03_Zapisy_z_jednani\prezenční listina.pdf
+2026-02-03 23:03:04,087 - INFO - Analýza dokončena: prezenční listina.pdf
+2026-02-03 23:03:04,088 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-2_C3-ND - Terminy.pdf
+2026-02-03 23:03:04,091 - INFO - Analýza dokončena: 24-027-2_C3-ND - Terminy.pdf
+2026-02-03 23:03:04,091 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-4 - MZ_Terminy_r02.pdf
+2026-02-03 23:03:04,094 - INFO - Analýza dokončena: 24-027-4 - MZ_Terminy_r02.pdf
+2026-02-03 23:03:04,095 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\24-027-4_C1_CELKOVE - Terminy_r02.pdf
+2026-02-03 23:03:04,097 - INFO - Analýza dokončena: 24-027-4_C1_CELKOVE - Terminy_r02.pdf
+2026-02-03 23:03:04,098 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\mz termíny\24-027-4 - MZ_aktualizace_Terminy-5.pdf
+2026-02-03 23:03:04,109 - INFO - Analýza dokončena: 24-027-4 - MZ_aktualizace_Terminy-5.pdf
+2026-02-03 23:03:04,109 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027 - MZ_Terminy.pdf
+2026-02-03 23:03:04,113 - INFO - Analýza dokončena: 24-027 - MZ_Terminy.pdf
+2026-02-03 23:03:04,113 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027-2_C1_CELKOVE - Terminy.pdf
+2026-02-03 23:03:04,117 - INFO - Analýza dokončena: 24-027-2_C1_CELKOVE - Terminy.pdf
+2026-02-03 23:03:04,117 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\neplatne\24-027-2_C2_MZ - Terminy.pdf
+2026-02-03 23:03:04,121 - INFO - Analýza dokončena: 24-027-2_C2_MZ - Terminy.pdf
+2026-02-03 23:03:04,121 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\Studie\24-027 - Terminy-5.pdf
+2026-02-03 23:03:04,124 - INFO - Analýza dokončena: 24-027 - Terminy-5.pdf
+2026-02-03 23:03:04,125 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\05_HGM\Studie\24-027 - Terminy-6.pdf
+2026-02-03 23:03:04,128 - INFO - Analýza dokončena: 24-027 - Terminy-6.pdf
+2026-02-03 23:03:04,128 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\pocty osob v mistnostech\01.3.30-01_TZ .pdf
+2026-02-03 23:03:04,160 - INFO - Analýza dokončena: 01.3.30-01_TZ .pdf
+2026-02-03 23:03:04,161 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\pocty osob v mistnostech\D-02.1.3.30-01_TZ.pdf
+2026-02-03 23:03:04,199 - INFO - Analýza dokončena: D-02.1.3.30-01_TZ.pdf
+2026-02-03 23:03:04,199 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\2-12 Nástěnná rampa RN07-DN2_2vyd.pdf
+2026-02-03 23:03:04,245 - INFO - Analýza dokončena: 2-12 Nástěnná rampa RN07-DN2_2vyd.pdf
+2026-02-03 23:03:04,246 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\balance_tutor.pdf
+2026-02-03 23:03:04,249 - INFO - Analýza dokončena: balance_tutor.pdf
+2026-02-03 23:03:04,250 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\navrh2.10_balance_tutor_ergo_schvaleny_20190121.pdf
+2026-02-03 23:03:04,253 - INFO - Analýza dokončena: navrh2.10_balance_tutor_ergo_schvaleny_20190121.pdf
+2026-02-03 23:03:04,254 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\ou_simcentrum_gynporod_linka.pdf
+2026-02-03 23:03:04,274 - INFO - Analýza dokončena: ou_simcentrum_gynporod_linka.pdf
+2026-02-03 23:03:04,274 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\podrobna_spec_linet_vseob.pdf
+2026-02-03 23:03:04,310 - INFO - Analýza dokončena: podrobna_spec_linet_vseob.pdf
+2026-02-03 23:03:04,310 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\pudorys_sim_centra_v2.pdf
+2026-02-03 23:03:04,329 - INFO - Analýza dokončena: pudorys_sim_centra_v2.pdf
+2026-02-03 23:03:04,330 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\redcord.pdf
+2026-02-03 23:03:04,346 - INFO - Analýza dokončena: redcord.pdf
+2026-02-03 23:03:04,347 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\simcentrum_vseob_linka.pdf
+2026-02-03 23:03:04,351 - INFO - Analýza dokončena: simcentrum_vseob_linka.pdf
+2026-02-03 23:03:04,351 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\vypo_konstrukce_zaves.pdf
+2026-02-03 23:03:04,366 - INFO - Analýza dokončena: vypo_konstrukce_zaves.pdf
+2026-02-03 23:03:04,366 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\ou_pudorysy_laboratore\lab0.15-TYP_L_20190122_acad.pdf
+2026-02-03 23:03:04,370 - INFO - Analýza dokončena: lab0.15-TYP_L_20190122_acad.pdf
+2026-02-03 23:03:04,370 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\VYPO_ram_kistler_desky\MYSCAN_20110530_0004.PDF
+2026-02-03 23:03:04,378 - INFO - Analýza dokončena: MYSCAN_20110530_0004.PDF
+2026-02-03 23:03:04,378 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\VYPO_ram_kistler_desky\MYSCAN_20110530_0005.PDF
+2026-02-03 23:03:04,401 - INFO - Analýza dokončena: MYSCAN_20110530_0005.PDF
+2026-02-03 23:03:04,401 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\08_Kniha_mistnosti\vzory\_UJEP_kniha_mistnosti_v13\03_interiery_vzory_zadani\VYPO_ram_kistler_desky\MYSCAN_20110530_0006.PDF
+2026-02-03 23:03:04,415 - INFO - Analýza dokončena: MYSCAN_20110530_0006.PDF
+2026-02-03 23:03:04,415 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\09_SOD\plna_moc\24-027_NKCM_plna_moc_IC.pdf
+2026-02-03 23:03:04,439 - INFO - Analýza dokončena: 24-027_NKCM_plna_moc_IC.pdf
+2026-02-03 23:03:04,439 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/00__VP\11_LOG_Frame\vzor\B_H.1.5_Priloha_c5_Harmonogram_online.pdf
+2026-02-03 23:03:04,444 - INFO - Analýza dokončena: B_H.1.5_Priloha_c5_Harmonogram_online.pdf
+2026-02-03 23:03:04,444 - INFO - Odesílám 37 výsledků na server (jeden request)...
+2026-02-03 23:03:06,563 - INFO - Batch úspěšně odeslán: batch_20260203_220253_0205cf78 - Uloženo 37 souborů
+2026-02-03 23:10:44,958 - INFO - Agent ukončen
+2026-02-03 23:11:12,906 - INFO - Agent ukončen

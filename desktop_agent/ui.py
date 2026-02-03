@@ -200,160 +200,170 @@ class PDFCheckUI:
                 pass
         webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
 
+    def _on_export_xls_click(self):
+        """Otevře web (kde je export do Excelu). Tlačítko je aktivní jen u PRO verze."""
+        if self.on_get_web_login_url:
+            try:
+                url = self.on_get_web_login_url()
+                if url:
+                    webbrowser.open(url)
+                    return
+            except Exception:
+                pass
+        webbrowser.open(self.api_url or "https://cieslar.pythonanywhere.com")
+
+    def set_export_xls_enabled(self, enabled):
+        """Aktivuje nebo deaktivuje tlačítko Export do XLS (PRO = aktivní, Basic/Trial = disabled)."""
+        if getattr(self, 'export_xls_btn', None) is None:
+            return
+        if enabled:
+            self.export_xls_btn.config(state=tk.NORMAL, bg=self.ACCENT_BTN, fg=self.BUTTON_TEXT, text="Export do XLS")
+        else:
+            self.export_xls_btn.config(state=tk.DISABLED, bg=self.BG_LIGHT, fg=self.TEXT_MUTED, text="Export do XLS (jen PRO)")
+
     def create_widgets(self):
-        """Vytvoří všechny GUI elementy. FIXED LAYOUT: Footer a Header jsou pevné, scrolluje jen střed (Treeview)."""
-        # --- Treeview styl HNED na začátku (aby se nepřepsal výchozím theme) ---
+        """Pevný layout: Header, Toolbar s akcemi, obsah (strom + detail), Action bar (Spustit vždy vidět), Footer."""
+        # --- Treeview styl ---
         _tree_style = ttk.Style()
         _tree_style.theme_use("clam")
         _tree_style.configure(
             "Treeview",
-            rowheight=35,
-            font=("Segoe UI", 10),
+            rowheight=32,
+            font=("Segoe UI", 9),
             background="#ffffff",
             fieldbackground="#ffffff",
             foreground="#1a202c",
         )
         _tree_style.configure(
             "Treeview.Heading",
-            font=("Segoe UI", 10, "bold"),
-            background="#f7fafc",
-            foreground="#2d3748",
+            font=("Segoe UI", 9, "bold"),
+            background="#f1f5f9",
+            foreground="#334155",
         )
         _tree_style.map("Treeview", background=[("selected", self.ACCENT_BTN)], foreground=[("selected", "#ffffff")])
 
-        # 1) FOOTER FIRST – rezervuje spodek okna (nikdy nescrolluje)
-        bottom_frame = tk.Frame(self.root, bg="#e2e8f0", height=40)
+        # 1) FOOTER – vždy dole
+        bottom_frame = tk.Frame(self.root, bg="#e2e8f0", height=36)
         bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         bottom_frame.pack_propagate(False)
         self.license_status_label = tk.Label(bottom_frame, text="", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_DARK)
-        self.license_status_label.pack(side=tk.LEFT, padx=20, pady=8)
+        self.license_status_label.pack(side=tk.LEFT, padx=16, pady=6)
         version_label = tk.Label(bottom_frame, text="Build 42", font=("Segoe UI", 9), bg="#e2e8f0", fg=self.TEXT_MUTED)
-        version_label.pack(side=tk.RIGHT, padx=20, pady=8)
+        version_label.pack(side=tk.RIGHT, padx=16, pady=6)
 
-        # 2) HEADER – pevný nahoře (nikdy nescrolluje)
-        header_frame = tk.Frame(self.root, bg=self.BG_HEADER, height=56)
+        # 2) ACTION BAR – vždy viditelné nad footerem: Přidat / Vyprazdnit / Stats / SPUSTIT KONTROLU (+ řádek progress při běhu)
+        action_bar = tk.Frame(self.root, bg="#ffffff", height=88, highlightbackground="#cbd5e0", highlightthickness=1)
+        action_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        action_bar.pack_propagate(False)
+        btn_style = {"font": ("Segoe UI", 9), "bg": self.ACCENT_BTN, "fg": self.BUTTON_TEXT, "relief": tk.FLAT,
+                     "padx": 12, "pady": 6, "cursor": "hand2", "highlightthickness": 0}
+        tk.Button(action_bar, text="Přidat soubory", command=self.add_files, **btn_style).pack(side=tk.LEFT, padx=(12, 6), pady=10)
+        tk.Button(action_bar, text="+ Složka", command=self.add_folder, **btn_style).pack(side=tk.LEFT, padx=6, pady=10)
+        tk.Button(action_bar, text="Vyprazdnit", command=self.clear_queue,
+                  font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
+                  padx=10, pady=6, cursor="hand2").pack(side=tk.LEFT, padx=6, pady=10)
+        self.export_xls_btn = tk.Button(
+            action_bar, text="Export do XLS",
+            font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
+            padx=10, pady=6, cursor="hand2", state=tk.DISABLED,
+            command=self._on_export_xls_click
+        )
+        self.export_xls_btn.pack(side=tk.LEFT, padx=6, pady=10)
+        self.stats_label = tk.Label(
+            action_bar, text="Soubory: 0 | Složky: 0 | Odhad: 0s",
+            font=("Segoe UI", 9), bg="#ffffff", fg=self.TEXT_MUTED
+        )
+        self.stats_label.pack(side=tk.LEFT, padx=16, pady=10)
+        self.check_btn = tk.Button(
+            action_bar, text="▶  Spustit kontrolu", font=("Segoe UI", 10, "bold"),
+            bg=self.ACCENT_BTN, fg=self.BUTTON_TEXT, relief=tk.FLAT,
+            padx=24, pady=8, cursor="hand2", command=self.on_check_clicked,
+            activebackground="#2980b9", activeforeground=self.BUTTON_TEXT
+        )
+        self.check_btn.pack(side=tk.RIGHT, padx=12, pady=10)
+        # Progress řádek v action bar (zobrazí se při běhu)
+        progress_row = tk.Frame(action_bar, bg="#ffffff")
+        progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 4))
+        self.progress_label = tk.Label(progress_row, text="Připraveno", font=("Segoe UI", 9),
+                                       bg="#ffffff", fg=self.TEXT_MUTED, anchor="w")
+        self.progress_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.cancel_btn = tk.Button(progress_row, text="Zrušit", font=("Segoe UI", 9),
+                                    bg=self.ERROR_RED, fg=self.BUTTON_TEXT, relief=tk.FLAT,
+                                    padx=10, pady=4, cursor="hand2", command=self.cancel_check,
+                                    activebackground="#c53030", activeforeground=self.BUTTON_TEXT)
+        self.cancel_btn.pack(side=tk.RIGHT, padx=4)
+        self.cancel_btn.pack_forget()
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Blue.Horizontal.TProgressbar", troughcolor=self.BG_LIGHT, background=self.ACCENT_BTN, thickness=6)
+        self.progress = ttk.Progressbar(progress_row, style="Blue.Horizontal.TProgressbar", mode='determinate', length=240)
+        self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
+        progress_row.pack_forget()  # zobrazí show_progress()
+
+        # 3) HEADER
+        header_frame = tk.Frame(self.root, bg=self.BG_HEADER, height=52)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
-
-        title_label = tk.Label(
-            header_frame,
-            text="PDF DokuCheck Agent",
-            font=("Segoe UI", 15, "bold"),
-            bg=self.BG_HEADER,
-            fg=self.BUTTON_TEXT
-        )
-        title_label.pack(side=tk.LEFT, padx=20, pady=12)
-
-        subtitle = tk.Label(header_frame, text="Kontrola PDF a odeslání na server",
-                            font=("Segoe UI", 9), bg=self.BG_HEADER, fg="#a0aec0")
-        subtitle.pack(side=tk.LEFT, padx=(0, 20))
-
-        self.header_status = tk.Label(
-            header_frame, text="", font=("Segoe UI", 9),
-            bg=self.BG_HEADER, fg="#a0aec0"
-        )
-        self.header_status.pack(side=tk.RIGHT, padx=(0, 6), pady=12)
-
-        self.logout_btn_header = tk.Button(
-            header_frame, text="Odhlásit", font=("Segoe UI", 9),
-            bg="#c53030", fg=self.BUTTON_TEXT, relief=tk.FLAT,
-            padx=12, pady=5, cursor="hand2", command=self._do_logout,
-            activebackground="#9b2c2c", activeforeground=self.BUTTON_TEXT
-        )
-        self.logout_btn_header.pack(side=tk.RIGHT, padx=4, pady=10)
+        title_label = tk.Label(header_frame, text="PDF DokuCheck Agent", font=("Segoe UI", 14, "bold"),
+                               bg=self.BG_HEADER, fg=self.BUTTON_TEXT)
+        title_label.pack(side=tk.LEFT, padx=16, pady=10)
+        subtitle = tk.Label(header_frame, text="Kontrola PDF a odeslání na server", font=("Segoe UI", 9),
+                            bg=self.BG_HEADER, fg="#a0aec0")
+        subtitle.pack(side=tk.LEFT, padx=(0, 16))
+        self.header_status = tk.Label(header_frame, text="", font=("Segoe UI", 9), bg=self.BG_HEADER, fg="#a0aec0")
+        self.header_status.pack(side=tk.RIGHT, padx=6, pady=10)
+        self.logout_btn_header = tk.Button(header_frame, text="Odhlásit", font=("Segoe UI", 9),
+            bg="#c53030", fg=self.BUTTON_TEXT, relief=tk.FLAT, padx=10, pady=4, cursor="hand2", command=self._do_logout,
+            activebackground="#9b2c2c", activeforeground=self.BUTTON_TEXT)
+        self.logout_btn_header.pack(side=tk.RIGHT, padx=4, pady=8)
         self.logout_btn_header.pack_forget()
-
-        self.login_btn_header = tk.Button(
-            header_frame, text="Přihlásit", font=("Segoe UI", 9),
-            bg=self.BG_HEADER_LIGHT, fg=self.BUTTON_TEXT, relief=tk.FLAT,
-            padx=12, pady=5, cursor="hand2", command=self.show_api_key_dialog,
-            activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT
-        )
-        self.login_btn_header.pack(side=tk.RIGHT, padx=4, pady=10)
-
+        self.login_btn_header = tk.Button(header_frame, text="Přihlásit", font=("Segoe UI", 9),
+            bg=self.BG_HEADER_LIGHT, fg=self.BUTTON_TEXT, relief=tk.FLAT, padx=10, pady=4, cursor="hand2",
+            command=self.show_api_key_dialog, activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT)
+        self.login_btn_header.pack(side=tk.RIGHT, padx=4, pady=8)
         def _open_web():
             url = None
             if self.on_get_web_login_url:
-                try:
-                    url = self.on_get_web_login_url()
-                except Exception:
-                    pass
+                try: url = self.on_get_web_login_url()
+                except Exception: pass
             webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
+        web_btn = tk.Button(header_frame, text="Otevřít web", font=("Segoe UI", 9),
+            bg=self.BG_HEADER_LIGHT, fg=self.BUTTON_TEXT, relief=tk.FLAT, padx=10, pady=4, cursor="hand2",
+            command=_open_web, activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT)
+        web_btn.pack(side=tk.RIGHT, padx=6, pady=8)
 
-        web_btn = tk.Button(
-            header_frame, text="Otevřít web", font=("Segoe UI", 9),
-            bg=self.BG_HEADER_LIGHT, fg=self.BUTTON_TEXT, relief=tk.FLAT,
-            padx=12, pady=5, cursor="hand2", command=_open_web,
-            activebackground=self.ACCENT, activeforeground=self.BUTTON_TEXT
-        )
-        web_btn.pack(side=tk.RIGHT, padx=8, pady=10)
+        # 4) OBSAH – paned (levý: drop + strom, pravý: detail)
+        paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=self.BG_APP, sashwidth=5)
+        paned.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
 
-        # 3) STATS BAR – pevný pod hlavičkou, horizontální pruh (Soubory | Složky | Odhad: Xs)
-        stats_frame = tk.Frame(self.root, bg="#ffffff", height=36, highlightbackground="#cbd5e0", highlightthickness=1)
-        stats_frame.pack(fill=tk.X)
-        stats_frame.pack_propagate(False)
-        self.stats_label = tk.Label(
-            stats_frame, text="Soubory: 0 | Složky: 0 | Odhad: 0s",
-            font=("Segoe UI", 10, "bold"), bg="#ffffff", fg="#2d3748"
-        )
-        self.stats_label.pack(side=tk.LEFT, padx=20, pady=8)
+        left_panel = tk.Frame(paned, bg=self.BG_WHITE, padx=10, pady=10)
+        right_panel = tk.Frame(paned, bg="#F4F7F9", padx=10, pady=10)
+        paned.add(left_panel, minsize=260)
+        paned.add(right_panel, minsize=320)
 
-        # 4) MIDDLE – JEDINÁ ROLLOVATELNÁ OBLAST (paned + treeview)
-        paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=self.BG_APP, sashwidth=6)
-        paned.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
-
-        left_panel = tk.Frame(paned, bg=self.BG_WHITE, padx=12, pady=12)
-        right_panel = tk.Frame(paned, bg="#F4F7F9", padx=12, pady=12)
-        paned.add(left_panel, minsize=280)
-        paned.add(right_panel, minsize=360)
-
-        # --- Left: Drop zone ---
-        tk.Label(left_panel, text="Přidat ke kontrole", font=("Segoe UI", 10, "bold"),
+        # Levý panel: jen drop zóna + strom (žádné tlačítko dole)
+        tk.Label(left_panel, text="Přidat ke kontrole", font=("Segoe UI", 9, "bold"),
                  bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W)
         self.create_drop_zone(left_panel)
-
-        # --- Left: Buttons ---
-        add_frame = tk.Frame(left_panel, bg=self.BG_WHITE)
-        add_frame.pack(fill=tk.X, pady=(0, 8))
-        btn_style = {"font": ("Segoe UI", 9), "bg": self.ACCENT_BTN, "fg": self.BUTTON_TEXT, "relief": tk.FLAT,
-                     "padx": 14, "pady": 8, "cursor": "hand2", "highlightthickness": 0}
-        tk.Button(add_frame, text="Přidat soubory", command=self.add_files, **btn_style).pack(side=tk.LEFT, padx=(0, 8))
-        tk.Button(add_frame, text="+ Složka", command=self.add_folder, **btn_style).pack(side=tk.LEFT, padx=(0, 8))
-        tk.Button(add_frame, text="Vyprazdnit", command=self.clear_queue,
-                  font=("Segoe UI", 9), bg=self.BG_LIGHT, fg=self.TEXT_DARK, relief=tk.FLAT,
-                  padx=10, pady=8, cursor="hand2").pack(side=tk.RIGHT)
-
-        # --- Left: Treeview (styl už nastaven výše: rowheight 35, Segoe UI 10, bílé pozadí) ---
-        tk.Label(left_panel, text="Fronta úkolů", font=("Segoe UI", 10, "bold"),
-                 bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, pady=(4, 4))
+        tk.Label(left_panel, text="Fronta úkolů (zaškrtněte položky)", font=("Segoe UI", 9, "bold"),
+                 bg=self.BG_WHITE, fg=self.TEXT_DARK).pack(anchor=tk.W, pady=(8, 4))
         tree_frame = tk.Frame(left_panel, bg=self.BG_WHITE)
         tree_frame.pack(fill=tk.BOTH, expand=True)
         tree_scroll = ttk.Scrollbar(tree_frame)
-        self.queue_tree = ttk.Treeview(tree_frame, columns=("name",), show="tree headings", height=12,
+        self.queue_tree = ttk.Treeview(tree_frame, columns=("name",), show="tree headings", height=14,
                                        yscrollcommand=tree_scroll.set, selectmode="browse")
         tree_scroll.config(command=self.queue_tree.yview)
         self.queue_tree.heading("#0", text=" ")
         self.queue_tree.heading("name", text="Úkol / Soubor")
-        self.queue_tree.column("#0", width=32)
-        self.queue_tree.column("name", width=220)
+        self.queue_tree.column("#0", width=28)
+        self.queue_tree.column("name", width=200)
         self.queue_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_queue_select)
         self.queue_tree.bind("<Button-1>", self._on_tree_click)
 
-        # --- Left: Spustit kontrolu ---
-        self.check_btn = tk.Button(
-            left_panel, text="Spustit kontrolu", font=("Segoe UI", 11, "bold"),
-            bg=self.ACCENT_BTN, fg=self.BUTTON_TEXT, relief=tk.FLAT,
-            padx=32, pady=12, cursor="hand2", command=self.on_check_clicked,
-            activebackground="#2980b9", activeforeground=self.BUTTON_TEXT
-        )
-        self.check_btn.pack(pady=12)
-        tk.Label(left_panel, text="Zpracují se pouze zaškrtnuté položky (☑).", font=("Segoe UI", 8),
-                 bg=self.BG_WHITE, fg=self.TEXT_MUTED).pack(pady=(0, 4))
-
-        # --- Right: Detail / Souhrn (nikdy raw JSON) ---
-        tk.Label(right_panel, text="Souhrn / výsledek vybraného souboru", font=("Segoe UI", 10, "bold"),
+        # Pravý panel: souhrn / výsledek
+        tk.Label(right_panel, text="Souhrn / výsledek vybraného souboru", font=("Segoe UI", 9, "bold"),
                  bg="#F4F7F9", fg=self.TEXT_DARK).pack(anchor=tk.W)
         self.detail_text = scrolledtext.ScrolledText(
             right_panel, font=("Segoe UI", 9), bg="#ffffff", fg=self.TEXT_DARK,
@@ -362,33 +372,9 @@ class PDFCheckUI:
         self.detail_text.pack(fill=tk.BOTH, expand=True)
         self._show_session_summary()
 
-        main_frame = left_panel
-
-        # Sekce: Průběh (v levém panelu)
-        progress_card = tk.Frame(left_panel, bg=self.BG_WHITE, highlightbackground=self.BORDER, highlightthickness=1)
-        progress_card.pack(fill=tk.X, pady=(0, 8))
-        progress_inner = tk.Frame(progress_card, bg=self.BG_WHITE, padx=12, pady=10)
-        progress_inner.pack(fill=tk.X)
-        progress_top = tk.Frame(progress_inner, bg=self.BG_WHITE)
-        progress_top.pack(fill=tk.X)
-        self.progress_label = tk.Label(progress_top, text="Připraveno", font=("Segoe UI", 9),
-                                       bg=self.BG_WHITE, fg=self.TEXT_MUTED, anchor="w")
-        self.progress_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.cancel_btn = tk.Button(progress_top, text="Zrušit", font=("Segoe UI", 9),
-                                    bg=self.ERROR_RED, fg=self.BUTTON_TEXT, relief=tk.FLAT,
-                                    padx=10, pady=4, cursor="hand2", command=self.cancel_check,
-                                    activebackground="#c53030", activeforeground=self.BUTTON_TEXT)
-        self.cancel_btn.pack_forget()
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("Blue.Horizontal.TProgressbar", troughcolor=self.BG_LIGHT, background=self.ACCENT_BTN, thickness=8)
-        self.progress = ttk.Progressbar(progress_inner, style="Blue.Horizontal.TProgressbar", mode='determinate', length=280)
-        self.progress.pack(fill=tk.X, pady=(4, 0))
-
         self.results_text = self.detail_text
-
-        # Pro zpětnou kompatibilitu (set_license_display používá logout_btn)
         self.logout_btn = self.logout_btn_header
+        self._progress_row = progress_row  # pro show_progress / finish_progress
 
     def create_drop_zone(self, parent):
         """Vytvoří drag & drop zónu"""
@@ -772,17 +758,19 @@ class PDFCheckUI:
         self.progress_label.config(text="Ruším…", fg=self.WARNING_ORANGE)
 
     def show_progress(self):
-        """Inicializuje progress bar"""
+        """Zobrazí řádek s progress barem v action bar a zakáže Spustit."""
         import time
         self.start_time = time.time()
         self.processed_files = 0
         self.progress['value'] = 0
         self.progress_label.config(text="Zahajuji zpracování…", fg=self.ACCENT)
+        if getattr(self, '_progress_row', None):
+            self._progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 6))
         self.cancel_btn.pack(side=tk.RIGHT)
-        self.check_btn.config(state=tk.DISABLED, bg="#ccc")
+        self.check_btn.config(state=tk.DISABLED, bg="#9ca3af")
 
     def finish_progress(self):
-        """Dokončí progress bar"""
+        """Skryje progress řádek a znovu povolí Spustit."""
         self.is_running = False
         self.progress['value'] = 100
 
@@ -793,8 +781,11 @@ class PDFCheckUI:
             self.root.after(1000, self.open_web_after_check)
 
         self.cancel_btn.pack_forget()
-        self.check_btn.config(state=tk.NORMAL, bg=self.SUCCESS_GREEN)
-        # Nepromazávat frontu – ikony se aktualizují v display_results
+        self.check_btn.config(state=tk.NORMAL, bg=self.ACCENT_BTN)
+        def _hide_progress_row():
+            if getattr(self, '_progress_row', None):
+                self._progress_row.pack_forget()
+        self.root.after(2500, _hide_progress_row)
 
     def update_progress(self, current, total, filename):
         """Aktualizuje progress bar s ETA"""
@@ -914,6 +905,7 @@ class PDFCheckUI:
             self.license_status_label.config(text="", fg=self.TEXT_DARK)
             self.logout_btn_header.pack_forget()
             self.login_btn_header.pack(side=tk.RIGHT, padx=2, pady=10)
+            self.set_export_xls_enabled(False)
 
     def _do_logout(self):
         """Odhlášení – vymaže zobrazení, pak klíč a zobrazí dialog přihlášení."""
