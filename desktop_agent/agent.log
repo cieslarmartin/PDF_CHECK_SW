@@ -3332,3 +3332,62 @@ ValueError: ['padx', 'pady'] are not supported arguments. Look at the documentat
 2026-02-04 23:52:49,417 - INFO - Odesílám 89 výsledků na server (jeden request)...
 2026-02-04 23:52:53,357 - INFO - Batch úspěšně odeslán: batch_20260204_225239_0e44f889 - Uloženo 89 souborů
 2026-02-05 00:48:58,157 - INFO - Agent ukončen
+2026-02-05 00:50:51,437 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 00:50:51,437 - INFO - Spouštím GUI...
+2026-02-05 00:50:51,539 - ERROR - Kritická chyba: 'Style' object has no attribute 'tag_configure'
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 401, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 347, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 1117, in create_app
+    app = PDFCheckUI(
+          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 208, in __init__
+    self.create_widgets()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 254, in create_widgets
+    _tree_style.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Style' object has no attribute 'tag_configure'. Did you mean: 'configure'?
+2026-02-05 00:50:55,553 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 00:50:55,554 - INFO - Spouštím GUI...
+2026-02-05 00:50:55,640 - ERROR - Kritická chyba: 'Style' object has no attribute 'tag_configure'
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 401, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 347, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 1117, in create_app
+    app = PDFCheckUI(
+          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 208, in __init__
+    self.create_widgets()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 254, in create_widgets
+    _tree_style.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Style' object has no attribute 'tag_configure'. Did you mean: 'configure'?
+2026-02-05 00:51:24,353 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 00:51:24,353 - INFO - Spouštím GUI...
+2026-02-05 00:51:24,449 - ERROR - Kritická chyba: 'Style' object has no attribute 'tag_configure'
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 401, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 347, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 1117, in create_app
+    app = PDFCheckUI(
+          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 208, in __init__
+    self.create_widgets()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui.py", line 254, in create_widgets
+    _tree_style.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Style' object has no attribute 'tag_configure'. Did you mean: 'configure'?
+2026-02-05 00:51:47,273 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 00:51:47,274 - INFO - Spouštím GUI...
+2026-02-05 00:51:48,190 - INFO - Ověřuji licenci se serverem...
+2026-02-05 00:51:49,693 - INFO - Agent běží
+2026-02-05 00:52:48,075 - INFO - Agent ukončen

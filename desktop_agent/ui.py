@@ -250,9 +250,7 @@ class PDFCheckUI:
             foreground=self.TEXT_DARK,
         )
         _tree_style.map("Treeview", background=[("selected", self.ACCENT)], foreground=[("selected", self.BUTTON_TEXT)])
-        # Řádky úkolů (složka/soubor) – mírně odlišené pozadí
-        _tree_style.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
-        _tree_style.map("task_row", background=[("selected", self.ACCENT)], foreground=[("selected", self.BUTTON_TEXT)])
+        # tag_configure pro řádky úkolů se volá na Treeview widgetu až po jeho vytvoření (viz níže)
 
         # 1) HEADER
         header_frame = ctk.CTkFrame(self.root, fg_color=self.BG_HEADER, height=56, corner_radius=0)
@@ -330,6 +328,8 @@ class PDFCheckUI:
         tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_queue_select)
         self.queue_tree.bind("<Button-1>", self._on_tree_click)
+        # Řádky úkolů (složka/soubor) – mírně odlišené pozadí (tag_configure patří na widget Treeview, ne na Style)
+        self.queue_tree.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
 
         # 3) ACTION BAR – pořadí shora dolů: 1) Hlavní tlačítko, 2) Progress, 3) Info blok, 4) Licence, 5) Bezpečnost (v bottom_frame)
         action_bar = ctk.CTkFrame(self.root, fg_color=self.BG_CARD, height=140, corner_radius=10)
