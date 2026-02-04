@@ -1,2 +1,34 @@
 # Database – mění se na serveru, způsobuje konflikty při git pull
 web_app/pdfcheck_results.db
+
+# Virtuální prostředí (lokální i na PA)
+venv/
+web_app/venv/
+.venv/
+env/
+
+# Konfigurace s citlivými údaji (necommitujte)
+.env
+.env.local
+*.env
+!*.env.example
+!deploy_config.example.env
+!deploy_on_pa.env.example
+web_app/deploy_config.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Logy a dočasné soubory
+*.log
+desktop_agent/agent.log
+web_app/*_result.txt
+*.bak

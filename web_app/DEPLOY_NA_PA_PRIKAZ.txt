@@ -61,7 +61,38 @@ Spusťte z adresáře aplikace  /home/cieslar/web_app/web_app:
   touch wsgi_pythonanywhere.py
 
 --------------------------------------------------------------------------------
-5) CHYBY A ŘEŠENÍ
+5) KDYŽ MERGE SELŽE (Your local changes would be overwritten by merge)
+--------------------------------------------------------------------------------
+Git pull/merge nesmí přepsat lokální databázi. Použijte reset a zálohu DB.
+
+Kde máte .git? (V Bash:  ls -la /home/cieslar/web_app/.git   nebo  ls -la /home/cieslar/web_app/web_app/.git)
+
+A) Kořen repozitáře je  /home/cieslar/web_app  (složka  web_app  s  .git  uvnitř):
+
+  cd /home/cieslar/web_app
+  [ -f web_app/pdfcheck_results.db ] && cp web_app/pdfcheck_results.db /tmp/pdfcheck_results.db.bak
+  git fetch origin main
+  git reset --hard origin/main
+  [ -f /tmp/pdfcheck_results.db.bak ] && cp /tmp/pdfcheck_results.db.bak web_app/pdfcheck_results.db
+  source /home/cieslar/web_app-virtualenv/bin/activate
+  pip install -q -r web_app/requirements.txt
+  touch web_app/wsgi_pythonanywhere.py
+
+B) Kořen repozitáře je  /home/cieslar/web_app/web_app  (.git  je přímo v  web_app/web_app):
+
+  cd /home/cieslar/web_app/web_app
+  [ -f pdfcheck_results.db ] && cp pdfcheck_results.db /tmp/pdfcheck_results.db.bak
+  git fetch origin main
+  git reset --hard origin/main
+  [ -f /tmp/pdfcheck_results.db.bak ] && cp /tmp/pdfcheck_results.db.bak pdfcheck_results.db
+  source /home/cieslar/web_app-virtualenv/bin/activate
+  pip install -q -r requirements.txt
+  touch wsgi_pythonanywhere.py
+
+Po tom by měl být kód z GitHubu aktuální a databáze zachovaná. V záložce Web klikněte Reload.
+
+--------------------------------------------------------------------------------
+6) CHYBY A ŘEŠENÍ
 --------------------------------------------------------------------------------
 • "cannot stat '/tmp/pdfcheck_results.db.bak'" – záloha nebyla vytvořena (db neexistovala
   nebo REPO_ROOT byl špatně). Obnovení se přeskočí; není chyba. DB se vytvoří při běhu appky.
