@@ -45,6 +45,7 @@
                 <th>Tarif</th>
                 <th>Zařízení</th>
                 <th>Poslední aktivita</th>
+                <th>Poslední IP</th>
                 <th>Soubory</th>
                 <th>Platba</th>
                 <th>Akce</th>
@@ -58,13 +59,15 @@
                     {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
                 </td>
                 <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
-                <td>{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}</td>
+                <td title="{% if license.device_names %}Stanice: {{ license.device_names|e }}{% else %}Počet aktivních zařízení{% endif %}">{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}{% if license.device_names %} <small style="color:#6b7280;" title="Stanice: {{ license.device_names|e }}">({{ license.device_names|truncate(30, True) }})</small>{% endif %}</td>
                 <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
+                <td><small style="font-family:monospace;font-size:0.85em;" title="Poslední přihlášení z IP">{{ license.last_ip or '—' }}</small></td>
                 <td>{{ license.total_checks }}</td>
                 <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
                 <td>
                     <div class="actions-cell">
-                        <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit / Prodloužit licenci">PRODLOUŽIT</button>
+                        <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit uživatele (jméno, e-mail, tier, expirace, heslo)">Upravit</button>
+                        <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Prodloužit licenci">PRODLOUŽIT</button>
                         <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Deaktivovat licenci' if license.is_active else 'Aktivovat' }}">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
                         <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat licenci">SMAZAT</button>
                         <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Generovat uvítací balíček">INFO BALÍČEK</button>
@@ -74,7 +77,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence“.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence“.</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -189,7 +192,8 @@
             </div>
             <div class="form-group">
                 <label for="edit_new_password">Nové heslo (nevyplňovat = beze změny)</label>
-                <input type="password" id="edit_new_password" name="new_password" class="form-control" placeholder="Min. 6 znaků">
+                <input type="text" id="edit_new_password" name="new_password" class="form-control" placeholder="Min. 6 znaků" autocomplete="off">
+                <small style="color:#6b7280;">Pro admina: heslo je při zadávání viditelné.</small>
             </div>
             <div class="form-group">
                 <label for="edit_payment_method">Způsob platby</label>
@@ -223,16 +227,16 @@
             <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
         </div>
         <p style="margin-bottom:16px;color:#6b7280;">Uzivatel: <strong id="changePasswordUserDisplay"></strong></p>
-        <p style="font-size:0.85em;color:#9ca3af;margin-bottom:16px;">Heslo slouzi pro prihlaseni v agentovi (e-mail + heslo). Aktualni heslo nelze zobrazit.</p>
+        <p style="font-size:0.85em;color:#9ca3af;margin-bottom:16px;">Heslo slouží pro přihlášení v agentovi (e-mail + heslo). Aktuální heslo nelze zobrazit. <strong>Pro admina: heslo je při zadávání viditelné.</strong></p>
         <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
             <input type="hidden" id="changePasswordApiKey" name="api_key">
             <div class="form-group">
-                <label for="changePasswordNew">Nove heslo</label>
-                <input type="password" id="changePasswordNew" name="new_password" required minlength="6" placeholder="Min. 6 znaku">
+                <label for="changePasswordNew">Nové heslo</label>
+                <input type="text" id="changePasswordNew" name="new_password" required minlength="6" placeholder="Min. 6 znaků" autocomplete="off">
             </div>
             <div class="form-group">
-                <label for="changePasswordNew2">Nove heslo znovu</label>
-                <input type="password" id="changePasswordNew2" name="new_password2" required minlength="6">
+                <label for="changePasswordNew2">Nové heslo znovu</label>
+                <input type="text" id="changePasswordNew2" name="new_password2" required minlength="6" autocomplete="off">
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Zrusit</button>

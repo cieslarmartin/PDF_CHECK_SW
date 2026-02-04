@@ -116,6 +116,25 @@ def _format_result_summary(filename, status, result):
     return "\n".join(lines)
 
 
+def _count_errors_from_result(result):
+    """Z výsledku kontroly vrátí počet chyb (0 = OK). Stejná logika jako v _format_result_summary."""
+    if not result or not isinstance(result, dict):
+        return 0
+    if result.get('skipped'):
+        return 0
+    errors = 0
+    if not result.get('success') and result.get('error'):
+        errors += 1
+    results_inner = result.get('results') or {}
+    pdf_format = results_inner.get('pdf_format') or {}
+    if pdf_format.get('exact_version') and 'ne PDF/A' in str(pdf_format.get('exact_version', '')):
+        errors += 1
+    for s in (results_inner.get('signatures') or []):
+        if not s.get('valid'):
+            errors += 1
+    return errors
+
+
 def _session_summary_text(tasks, queue_display, session_files_checked):
     """Text pro pravý panel když nic není vybráno (souhrn relace)."""
     n_tasks = len(tasks)
@@ -213,12 +232,12 @@ class PDFCheckUI:
 
     def create_widgets(self):
         """Layout: grid. Levý sloupec (25–30 %): výsledky analýzy. Pravý (70–75 %): nahrávací zóna + fronta úkolů."""
-        # Treeview styl – font +2
+        # Treeview styl – stejná grafika jako okolí (font 14, vyšší řádky)
         _tree_style = ttk.Style()
         _tree_style.theme_use("clam")
         _tree_style.configure(
             "Treeview",
-            rowheight=36,
+            rowheight=40,
             font=(FONT_FAMILY, FONT_SIZE),
             background=self.BG_CARD,
             fieldbackground=self.BG_CARD,
@@ -231,6 +250,9 @@ class PDFCheckUI:
             foreground=self.TEXT_DARK,
         )
         _tree_style.map("Treeview", background=[("selected", self.ACCENT)], foreground=[("selected", self.BUTTON_TEXT)])
+        # Řádky úkolů (složka/soubor) – mírně odlišené pozadí
+        _tree_style.tag_configure("task_row", background="#252525", foreground=self.TEXT_DARK)
+        _tree_style.map("task_row", background=[("selected", self.ACCENT)], foreground=[("selected", self.BUTTON_TEXT)])
 
         # 1) HEADER
         header_frame = ctk.CTkFrame(self.root, fg_color=self.BG_HEADER, height=56, corner_radius=0)
@@ -292,16 +314,18 @@ class PDFCheckUI:
         tree_frame.grid(row=3, column=0, sticky="nsew", padx=12, pady=(0, 12))
         right_panel.grid_rowconfigure(3, weight=1)
         tree_scroll = ttk.Scrollbar(tree_frame)
-        self.queue_tree = ttk.Treeview(tree_frame, columns=("name", "status", "action"), show="tree headings", height=14, yscrollcommand=tree_scroll.set, selectmode="browse")
+        self.queue_tree = ttk.Treeview(tree_frame, columns=("name", "status", "errors", "action"), show="tree headings", height=14, yscrollcommand=tree_scroll.set, selectmode="browse")
         tree_scroll.config(command=self.queue_tree.yview)
         self.queue_tree.heading("#0", text=" ")
         self.queue_tree.heading("name", text="Úkol / Soubor")
         self.queue_tree.heading("status", text="Stav")
-        self.queue_tree.heading("action", text=" ")
-        self.queue_tree.column("#0", width=32)
-        self.queue_tree.column("name", width=220)
-        self.queue_tree.column("status", width=72)
-        self.queue_tree.column("action", width=48)
+        self.queue_tree.heading("errors", text="Chyby")
+        self.queue_tree.heading("action", text="Smazat")
+        self.queue_tree.column("#0", width=36)
+        self.queue_tree.column("name", width=260)
+        self.queue_tree.column("status", width=80)
+        self.queue_tree.column("errors", width=90)
+        self.queue_tree.column("action", width=90)
         self.queue_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_queue_select)
@@ -554,7 +578,7 @@ class PDFCheckUI:
             self._show_session_summary()
 
     def _on_tree_click(self, event):
-        """Klik: checkbox (#0) = přepnutí výběru; sloupec action (#3) u tasku = smazat úkol."""
+        """Klik: checkbox (#0) = přepnutí výběru; sloupec Smazat (#4) u tasku = smazat úkol."""
         region = self.queue_tree.identify_region(event.x, event.y)
         if region != "cell":
             return
@@ -563,7 +587,7 @@ class PDFCheckUI:
         if not iid:
             return
         # Klik na "Smazat" (sloupec action) u tasku = odstranit úkol
-        if col == "#3" and iid.startswith("task_") and "_file_" not in iid:
+        if col == "#4" and iid.startswith("task_") and "_file_" not in iid:
             try:
                 task_ix = int(iid.replace("task_", ""))
                 if 0 <= task_ix < len(self.tasks):
@@ -607,8 +631,35 @@ class PDFCheckUI:
                 return "Odesláno"
         return "Nový"
 
+    def _file_error_summary(self, item):
+        """Pro položku fronty vrátí text chyb: OK, 1 chyba, 2 chyby, 5 chyb … (jako na webu)."""
+        n = _count_errors_from_result(item.get('result'))
+        if n == 0:
+            return "OK"
+        if n == 1:
+            return "1 chyba"
+        if 2 <= n <= 4:
+            return f"{n} chyby"
+        return f"{n} chyb"
+
+    def _task_error_summary(self, task_ix):
+        """Pro úkol (složka/soubor) vrátí souhrn chyb potomků: — nebo např. 3 chyby."""
+        start = sum(len(self.tasks[i].get('file_paths', [])) for i in range(task_ix))
+        count = len(self.tasks[task_ix].get('file_paths', []))
+        total = 0
+        for j in range(count):
+            if start + j < len(self.queue_display):
+                total += _count_errors_from_result(self.queue_display[start + j].get('result'))
+        if total == 0:
+            return "—"
+        if total == 1:
+            return "1 chyba"
+        if 2 <= total <= 4:
+            return f"{total} chyby"
+        return f"{total} chyb"
+
     def update_queue_display(self):
-        """Aktualizuje Treeview: úkoly s checkboxem, stavem (Nový/Odesláno) a tlačítkem Smazat."""
+        """Aktualizuje Treeview: úkoly s checkboxem, stavem, chybami a výrazným tlačítkem Smazat."""
         for row in self.queue_tree.get_children():
             self.queue_tree.delete(row)
         self._iid_to_qidx.clear()
@@ -622,18 +673,20 @@ class PDFCheckUI:
             kind = "Dir" if task.get('type') == 'folder' else "File"
             name = task.get('name', '')
             task_status = self._task_status(task_ix)
+            task_errors = self._task_error_summary(task_ix)
             iid_task = f"task_{task_ix}"
-            tag = "odd" if task_ix % 2 == 0 else "even"
-            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{kind}  {name}", task_status, "Smazat"), text=root_check, tags=(tag,))
+            tag = "task_row"  # výraznější řádek pro úkol (Smazat je v tomto řádku)
+            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{kind}  {name}", task_status, task_errors, "🗑 Smazat"), text=root_check, tags=(tag,))
             for j, _ in enumerate(file_paths):
                 if qidx >= len(self.queue_display):
                     break
                 item = self.queue_display[qidx]
                 chk = "[x]" if item.get('checked', True) else "[ ]"
                 st = status_labels.get(item.get('status', 'pending'), '...')
+                err_text = self._file_error_summary(item)
                 iid_file = f"task_{task_ix}_file_{j}"
                 child_tag = "odd" if (task_ix + j) % 2 == 0 else "even"
-                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  [{st}] {item.get('filename', '')}", "", ""), text=chk, tags=(child_tag,))
+                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  [{st}] {item.get('filename', '')}", "", err_text, ""), text=chk, tags=(child_tag,))
                 self._iid_to_qidx[iid_file] = qidx
                 qidx += 1
             self.queue_tree.item(iid_task, open=True)

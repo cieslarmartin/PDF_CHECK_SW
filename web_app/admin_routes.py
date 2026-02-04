@@ -331,6 +331,15 @@ def logs():
         category=category, user_id=user_id, date_from=date_from, date_to=date_to,
         level=level, limit=per_page, offset=offset
     )
+    # Pro platební a systémové logy doplnit zobrazené jméno (user_display) z api_keys
+    if category in ('payment', 'system') and logs_list:
+        user_ids = {log.get('user_id') for log in logs_list if log.get('user_id')}
+        display_map = {}
+        for uid in user_ids:
+            lic = db.get_user_license(uid) if uid else None
+            display_map[uid] = (lic.get('user_name') or lic.get('email') or uid) if lic else uid
+        for log in logs_list:
+            log['user_display'] = display_map.get(log.get('user_id'), log.get('user_id'))
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
@@ -445,6 +454,7 @@ def api_update_tier():
     allow_signatures = request.form.get('allow_signatures') == '1'
     allow_timestamp = request.form.get('allow_timestamp') == '1'
     allow_excel_export = request.form.get('allow_excel_export') == '1'
+    allow_advanced_filters = request.form.get('allow_advanced_filters') == '1'
     max_devices_raw = request.form.get('max_devices', '').strip()
     try:
         max_devices = int(max_devices_raw) if max_devices_raw else None
@@ -461,6 +471,7 @@ def api_update_tier():
         allow_signatures=allow_signatures,
         allow_timestamp=allow_timestamp,
         allow_excel_export=allow_excel_export,
+        allow_advanced_filters=allow_advanced_filters,
         max_devices=max_devices,
     )
     if ok:

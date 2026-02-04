@@ -203,6 +203,7 @@ class Database:
                 allow_signatures BOOLEAN DEFAULT 0,
                 allow_timestamp BOOLEAN DEFAULT 0,
                 allow_excel_export BOOLEAN DEFAULT 0,
+                allow_advanced_filters BOOLEAN DEFAULT 0,
                 max_devices INTEGER NOT NULL DEFAULT 1
             )
         ''')
@@ -1806,7 +1807,7 @@ class Database:
 
     def update_tier(self, tier_id: int, name=None, max_files_limit=None,
                     allow_signatures=None, allow_timestamp=None, allow_excel_export=None,
-                    max_devices=None) -> bool:
+                    allow_advanced_filters=None, max_devices=None) -> bool:
         """Aktualizuje globální tier."""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -1826,6 +1827,9 @@ class Database:
         if allow_excel_export is not None:
             updates.append('allow_excel_export = ?')
             values.append(1 if allow_excel_export else 0)
+        if allow_advanced_filters is not None:
+            updates.append('allow_advanced_filters = ?')
+            values.append(1 if allow_advanced_filters else 0)
         if max_devices is not None:
             updates.append('max_devices = ?')
             values.append(max_devices)
@@ -1888,29 +1892,35 @@ class Database:
             sql_extra.append('DATE(timestamp) <= ?')
             params_extra.append(date_to)
         where_extra = (' AND ' + ' AND '.join(sql_extra)) if sql_extra else ''
+        where_extra_ul = where_extra.replace('DATE(timestamp)', 'DATE(ul.timestamp)') if where_extra else ''
+        join_select = '''
+            SELECT ul.*, COALESCE(ak.user_name, ak.email, ul.user_id) AS user_display
+            FROM user_logs ul
+            LEFT JOIN api_keys ak ON ul.user_id = ak.api_key
+        '''
         if user_id:
             if search:
-                cursor.execute('''
-                    SELECT * FROM user_logs
-                    WHERE user_id = ? AND (action_type LIKE ? OR status LIKE ? OR ip_address LIKE ?)''' + where_extra + '''
-                    ORDER BY timestamp DESC LIMIT ? OFFSET ?
+                cursor.execute(
+                    join_select + '''
+                    WHERE ul.user_id = ? AND (ul.action_type LIKE ? OR ul.status LIKE ? OR ul.ip_address LIKE ?)''' + where_extra_ul + '''
+                    ORDER BY ul.timestamp DESC LIMIT ? OFFSET ?
                 ''', (user_id, f'%{search}%', f'%{search}%', f'%{search}%', *params_extra, limit, offset))
             else:
-                cursor.execute('''
-                    SELECT * FROM user_logs WHERE user_id = ?''' + where_extra + '''
-                    ORDER BY timestamp DESC LIMIT ? OFFSET ?
+                cursor.execute(
+                    join_select + ''' WHERE ul.user_id = ?''' + where_extra_ul + '''
+                    ORDER BY ul.timestamp DESC LIMIT ? OFFSET ?
                 ''', (user_id, *params_extra, limit, offset))
         else:
             if search:
-                cursor.execute('''
-                    SELECT * FROM user_logs
-                    WHERE (action_type LIKE ? OR user_id LIKE ? OR status LIKE ? OR ip_address LIKE ?)''' + where_extra + '''
-                    ORDER BY timestamp DESC LIMIT ? OFFSET ?
+                cursor.execute(
+                    join_select + '''
+                    WHERE (ul.action_type LIKE ? OR ul.user_id LIKE ? OR ul.status LIKE ? OR ul.ip_address LIKE ?)''' + where_extra_ul + '''
+                    ORDER BY ul.timestamp DESC LIMIT ? OFFSET ?
                 ''', (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%', *params_extra, limit, offset))
             else:
-                cursor.execute('''
-                    SELECT * FROM user_logs WHERE 1=1''' + where_extra + '''
-                    ORDER BY timestamp DESC LIMIT ? OFFSET ?
+                cursor.execute(
+                    join_select + ''' WHERE 1=1''' + where_extra_ul + '''
+                    ORDER BY ul.timestamp DESC LIMIT ? OFFSET ?
                 ''', (*params_extra, limit, offset))
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
@@ -2223,9 +2233,12 @@ class Database:
                     lt.name AS tier_name_override,
                     (SELECT COUNT(*) FROM device_activations da
                      WHERE da.api_key = ak.api_key AND da.is_active = 1) as active_devices,
+                    (SELECT GROUP_CONCAT(COALESCE(device_name, hwid), ', ') FROM device_activations da
+                     WHERE da.api_key = ak.api_key AND da.is_active = 1) as device_names,
                     (SELECT COUNT(*) FROM check_results cr
                      WHERE cr.api_key = ak.api_key) as total_checks,
-                    (SELECT MAX(timestamp) FROM user_logs ul WHERE ul.user_id = ak.api_key) as last_active
+                    (SELECT MAX(timestamp) FROM user_logs ul WHERE ul.user_id = ak.api_key) as last_active,
+                    (SELECT ip_address FROM user_logs WHERE user_id = ak.api_key ORDER BY timestamp DESC LIMIT 1) as last_ip
                 FROM api_keys ak
                 LEFT JOIN license_tiers lt ON ak.tier_id = lt.id
                 ORDER BY ak.created_at DESC
@@ -2238,10 +2251,12 @@ class Database:
                    'ak.max_devices', 'ak.rate_limit_hour', 'ak.created_at', 'ak.is_active', 'ak.max_batch_size',
                    'ak.allow_signatures', 'ak.allow_timestamp', 'ak.allow_excel_export',
                    '(SELECT COUNT(*) FROM device_activations da WHERE da.api_key = ak.api_key AND da.is_active = 1) as active_devices',
+                   '(SELECT GROUP_CONCAT(COALESCE(device_name, hwid), ", ") FROM device_activations da WHERE da.api_key = ak.api_key AND da.is_active = 1) as device_names',
                    '(SELECT COUNT(*) FROM check_results cr WHERE cr.api_key = ak.api_key) as total_checks']
             if 'tier_id' in cols:
                 sel.append('ak.tier_id')
                 sel.append('(SELECT MAX(timestamp) FROM user_logs ul WHERE ul.user_id = ak.api_key) as last_active')
+                sel.append('(SELECT ip_address FROM user_logs WHERE user_id = ak.api_key ORDER BY timestamp DESC LIMIT 1) as last_ip')
             cursor.execute('SELECT ' + ', '.join(sel) + ' FROM api_keys ak ORDER BY ak.created_at DESC')
 
         licenses = []

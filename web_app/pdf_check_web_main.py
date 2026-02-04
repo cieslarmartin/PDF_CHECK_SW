@@ -137,21 +137,37 @@ HTML_TEMPLATE = '''
         .license-badge.enterprise { background: #fef3c7; color: #b45309; }
         .license-badge-icon { font-size: 1.1em; }
 
-        /* Feature Lock */
+        /* Feature Lock – výrazný zámeček, motivuje k upgradu */
         .feature-locked {
             position: relative;
-            opacity: 0.6;
+            opacity: 0.85;
             pointer-events: none;
         }
+        /* Řádek filtrů v hlavičce: zůstane klikací, aby při kliknutí vyskočila hláška o Pro licenci */
+        #table-header-filters.feature-locked { pointer-events: auto; }
+        #table-header-filters.feature-locked .table-header-btn {
+            position: relative;
+            opacity: 0.9;
+        }
+        #table-header-filters.feature-locked .table-header-btn::before {
+            content: '🔒 ';
+            font-size: 1.1em;
+            margin-right: 2px;
+        }
         .feature-locked::after {
-            content: '🔒';
+            content: '🔒 Pro';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.2em;
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #7c3aed;
+            text-shadow: 0 0 10px rgba(255,255,255,0.6);
+            white-space: nowrap;
         }
-        .lock-icon { color: #9ca3af; margin-left: 4px; }
+        #table-header-filters.feature-locked::after { display: none; }
+        .lock-icon { font-size: 1.35em; color: #7c3aed; margin-left: 6px; font-weight: 700; }
         .upgrade-hint {
             font-size: 0.7em;
             color: #7c3aed;
@@ -833,7 +849,7 @@ HTML_TEMPLATE = '''
 
                 <div id="only-your-checks-label" style="display:none;padding:6px 12px;background:#eff6ff;border-radius:6px;font-size:0.85em;color:#1e5a8a;margin-bottom:8px;">✓ Zobrazeny pouze vaše kontroly a historie (pod vaším přihlašovacím jménem)</div>
 
-                <div class="table-header">
+                <div class="table-header" id="table-header-filters">
                     <div class="table-header-cell">Název souboru</div>
                     <div class="table-header-cell">
                         <button class="table-header-btn" onclick="toggleDropdown('pdfa',event)">PDF/A <span class="arrow">▼</span></button>
@@ -891,7 +907,13 @@ HTML_TEMPLATE = '''
         </div>
 
         <footer id="footer">
-            <strong>⚠️</strong> Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.
+            <strong>⚠️</strong> <span class="footer-disclaimer">Výsledky mají informativní charakter a nenahrazují Portál stavebníka.</span> Autor neručí za správnost.
+            <span style="margin:0 8px;">|</span>
+            <a href="/vop" style="color:#6b7280;text-decoration:none;">VOP</a>
+            <span style="margin:0 6px;">·</span>
+            <a href="/gdpr" style="color:#6b7280;text-decoration:none;">GDPR</a>
+            <span style="margin:0 6px;">·</span>
+            <a href="/#kontakt" style="color:#6b7280;text-decoration:none;">Kontakt</a>
             <span style="margin:0 8px;">|</span>
             Build {{ web_build }} | © Ing. Martin Cieślar
         </footer>
@@ -1439,6 +1461,10 @@ document.querySelectorAll('.filter-buttons').forEach(container => {
 // ===== HEADER FILTERS =====
 function toggleDropdown(col, event) {
     event.stopPropagation();
+    if (!hasFeature('advanced_filters')) {
+        checkFeatureAccess('advanced_filters');
+        return;
+    }
     const dropdown = document.getElementById('dropdown-' + col);
     const wasVisible = dropdown.classList.contains('visible');
     document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('visible'));
@@ -2329,6 +2355,11 @@ function updateFeatureLocks() {
         if (isBasic) el.classList.add('feature-locked');
         else el.classList.remove('feature-locked');
     });
+    const tableHeaderFilters = document.getElementById('table-header-filters');
+    if (tableHeaderFilters) {
+        if (isBasic) tableHeaderFilters.classList.add('feature-locked');
+        else tableHeaderFilters.classList.remove('feature-locked');
+    }
 }
 
 // Excel export – jen vlastní dávka (vyžaduje přihlášení)
@@ -2418,6 +2449,12 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 {% endif %}
+    <div id="cookie-bar-app" class="cookie-bar-app" style="display:none;">
+        <p>Používáme pouze technické cookies. <a href="/gdpr" style="color:#93c5fd;">Více v GDPR</a>.</p>
+        <button type="button" id="cookie-bar-app-btn" style="flex-shrink:0;padding:6px 14px;border-radius:6px;border:none;background:#1e5a8a;color:white;cursor:pointer;font-size:0.9em;">Rozumím</button>
+    </div>
+    <style>.cookie-bar-app{position:fixed;bottom:0;left:0;right:0;background:#1f2937;color:#e5e7eb;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;z-index:9999;font-size:0.8em;box-shadow:0 -2px 8px rgba(0,0,0,0.2);}.cookie-bar-app a{color:#93c5fd;}</style>
+    <script>(function(){if(localStorage.getItem("cookie_consent")==="1")return;var b=document.getElementById("cookie-bar-app");if(b)b.style.display="flex";var btn=document.getElementById("cookie-bar-app-btn");if(btn)btn.onclick=function(){localStorage.setItem("cookie_consent","1");b.style.display="none";};})();</script>
 </body>
 </html>
 '''
@@ -2771,6 +2808,18 @@ def index():
     return render_template('landing.html')
 
 
+@app.route('/vop')
+def vop():
+    """Všeobecné obchodní podmínky."""
+    return render_template('vop.html')
+
+
+@app.route('/gdpr')
+def gdpr():
+    """Ochrana osobních údajů (GDPR)."""
+    return render_template('gdpr.html')
+
+
 @app.route('/auth/from-agent-token')
 def auth_from_agent_token():
     """
@@ -2822,8 +2871,12 @@ def checkout():
         ico = (request.form.get('ico') or '').strip()
         email = (request.form.get('email') or '').strip()
         tarif = (request.form.get('tarif') or 'standard').strip().lower()
+        souhlas = request.form.get('souhlas_vop_gdpr')
         if not jmeno_firma or not email:
             flash('Vyplňte jméno/firmu a e-mail', 'error')
+            return redirect(url_for('checkout', tarif=tarif))
+        if not souhlas:
+            flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
         db = Database()
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='pending')
@@ -2863,9 +2916,11 @@ def portal():
         tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
         exp = (lic or {}).get('license_expires')
         license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
+        upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL', 'info@dokucheck.app')
         return render_template('portal_dashboard.html',
                                tier_name=tier_name,
                                license_expires_label=license_expires_label,
+                               upgrade_request_email=upgrade_email,
                                pw_message=None, pw_error=False)
     return render_template('portal_login.html')
 
@@ -2910,9 +2965,11 @@ def _portal_dashboard_with_message(message, error=True):
     tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
     exp = (lic or {}).get('license_expires')
     license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
+    upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL', 'info@dokucheck.app')
     return render_template('portal_dashboard.html',
                            tier_name=tier_name,
                            license_expires_label=license_expires_label,
+                           upgrade_request_email=upgrade_email,
                            pw_message=message, pw_error=error)
 
 

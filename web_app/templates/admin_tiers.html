@@ -11,24 +11,26 @@
                 <th>Max souborů</th>
                 <th>Max zařízení</th>
                 <th>Podpisy</th>
-                <th>Časová razítka</th>
+                <th>Čas. razítka</th>
                 <th>Excel export</th>
+                <th>Pokročilé filtry</th>
                 <th>Akce</th>
             </tr>
         </thead>
         <tbody>
             {% for t in tiers_list %}
-            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}">
+            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}">
                 <td><span class="badge badge-{{ t.name|lower }}">{{ t.name }}</span></td>
                 <td>{{ t.max_files_limit }}</td>
                 <td>{{ t.max_devices }}</td>
                 <td>{{ 'Ano' if t.allow_signatures else 'Ne' }}</td>
                 <td>{{ 'Ano' if t.allow_timestamp else 'Ne' }}</td>
                 <td>{{ 'Ano' if t.allow_excel_export else 'Ne' }}</td>
+                <td>{{ 'Ano' if (t.allow_advanced_filters|default(0)) else 'Ne' }}</td>
                 <td><button type="button" class="action-btn primary-btn btn-edit-tier">Upravit</button></td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Spusťte migraci: <code>python migrate_tiers.py</code></td></tr>
+            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Spusťte migraci: <code>python migrate_tiers.py</code></td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -66,6 +68,10 @@
                 <input type="checkbox" id="edit_allow_excel" class="form-control" style="width:auto;">
                 <label class="small" for="edit_allow_excel">Excel export</label>
             </div>
+            <div class="form-check">
+                <input type="checkbox" id="edit_allow_filters" class="form-control" style="width:auto;">
+                <label class="small" for="edit_allow_filters">Pokročilé filtry (sloupce, PDF/A, podpis, razítko)</label>
+            </div>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="document.getElementById('tierEditModal').classList.remove('active')">Zrušit</button>
@@ -86,6 +92,7 @@ document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
         document.getElementById('edit_allow_sig').checked = tr.getAttribute('data-allow-sig') === '1';
         document.getElementById('edit_allow_ts').checked = tr.getAttribute('data-allow-ts') === '1';
         document.getElementById('edit_allow_excel').checked = tr.getAttribute('data-allow-excel') === '1';
+        document.getElementById('edit_allow_filters').checked = tr.getAttribute('data-allow-filters') === '1';
         document.getElementById('tierEditModal').classList.add('active');
     });
 });
@@ -98,10 +105,20 @@ document.getElementById('btnTierSave').onclick = function() {
     fd.append('allow_signatures', document.getElementById('edit_allow_sig').checked ? '1' : '0');
     fd.append('allow_timestamp', document.getElementById('edit_allow_ts').checked ? '1' : '0');
     fd.append('allow_excel_export', document.getElementById('edit_allow_excel').checked ? '1' : '0');
-    fetch('{{ url_for("admin.api_update_tier") }}', { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.success) { document.getElementById('tierEditModal').classList.remove('active'); location.reload(); }
-        else { alert(d.error || 'Chyba'); }
-    });
+    fd.append('allow_advanced_filters', document.getElementById('edit_allow_filters').checked ? '1' : '0');
+    var url = '{{ url_for("admin.api_update_tier") }}';
+    fetch(url, { method: 'POST', body: fd })
+        .then(function(r) {
+            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + (t && t.slice(0, 200))); });
+            return r.json();
+        })
+        .then(function(d) {
+            if (d.success) { document.getElementById('tierEditModal').classList.remove('active'); location.reload(); }
+            else { alert(d.error || 'Chyba'); }
+        })
+        .catch(function(err) {
+            alert('Chyba při ukládání: ' + err.message);
+        });
 };
 document.getElementById('tierEditModal').addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('active');

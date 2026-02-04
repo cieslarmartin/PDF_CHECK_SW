@@ -13,14 +13,29 @@
             <a href="/portal/logout" class="text-slate-400 hover:text-white text-sm">Odhlásit se</a>
         </div>
     </nav>
-    <main class="max-w-lg mx-auto px-6 py-12">
-        <h1 class="text-2xl font-bold text-white mb-8">Můj účet</h1>
+    <main class="max-w-2xl mx-auto px-6 py-12">
+        <h1 class="text-2xl font-bold text-white mb-8">Nastavení</h1>
 
         <section class="mb-8 p-4 rounded-xl bg-slate-800/80 border border-slate-700">
-            <h2 class="text-lg font-semibold text-white mb-4">Licence</h2>
+            <h2 class="text-lg font-semibold text-white mb-4">Vaše licence</h2>
             <p class="text-slate-400"><span class="text-slate-300">Tarif:</span> {{ tier_name or '—' }}</p>
             <p class="text-slate-400 mt-2"><span class="text-slate-300">Platnost do:</span> {{ license_expires_label or 'Neomezeno' }}</p>
-            <a href="/checkout?tarif=standard&upgrade=1" class="inline-block mt-4 px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Upgradovat licenci</a>
+        </section>
+
+        <section class="mb-8 p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+            <h2 class="text-lg font-semibold text-white mb-4">Upgrade licence</h2>
+            <p class="text-slate-400 text-sm mb-4">Vyberte vyšší tarif. Po kliknutí na „Požádat o upgrade“ se otevře e-mail s předvyplněným textem.</p>
+            <div class="grid gap-4 sm:grid-cols-2 mb-4">
+                <div class="p-4 rounded-lg bg-slate-700/50 border border-slate-600">
+                    <h3 class="font-semibold text-white">Basic</h3>
+                    <p class="text-slate-400 text-sm mt-1">1 290 Kč/rok – kontrola PDF, podpisy, bez pokročilých filtrů a exportu Excel.</p>
+                </div>
+                <div class="p-4 rounded-lg bg-slate-700/50 border border-slate-600">
+                    <h3 class="font-semibold text-white">Pro</h3>
+                    <p class="text-slate-400 text-sm mt-1">1 990 Kč/rok – vše z Basic + filtry, export do Excelu/CSV, vyšší limity.</p>
+                </div>
+            </div>
+            <a id="upgrade-mailto" href="mailto:{{ upgrade_request_email }}?subject=Žádost o upgrade licence DokuCheck&body=Jméno nebo firma: %0D%0AE-mail: %0D%0ASoučasný tarif: {{ tier_name or '—' }}%0D%0AO jaký tarif mám zájem (Basic / Pro): " class="inline-block px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Požádat o upgrade</a>
         </section>
 
         <section class="mb-8 p-4 rounded-xl bg-slate-800/80 border border-slate-700">

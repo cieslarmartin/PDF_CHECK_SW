@@ -515,14 +515,34 @@
             </div>
             <div>
                 <h3>Právní informace</h3>
-                <p><a href="#">Obchodní podmínky</a><br><a href="#">Ochrana soukromí</a></p>
+                <p><a href="/vop">Všeobecné obchodní podmínky</a><br><a href="/gdpr">Ochrana osobních údajů</a><br><a href="#kontakt">Kontakt</a></p>
             </div>
             <div>
                 <h3>Sociální sítě</h3>
                 <p>LinkedIn · placeholder</p>
             </div>
         </div>
+        <p class="footer-legal" style="font-size:0.75em;color:#9ca3af;margin:8px auto 0;max-width:720px;">Výsledky mají informativní charakter a nenahrazují Portál stavebníka.</p>
         <div class="footer-bottom">© 2025 DokuCheck. Projektový Strážce pro Portál stavebníka. <span style="color:#9ca3af;">Web build {{ web_build }}</span></div>
     </footer>
+
+    <div id="cookie-bar" class="cookie-bar" style="display:none;">
+        <p>Používáme pouze technické cookies nezbytné pro fungování webu. <a href="/gdpr" style="color:#1e5a8a;">Více v GDPR</a>.</p>
+        <button type="button" id="cookie-bar-btn" class="btn btn-primary" style="flex-shrink:0;">Rozumím</button>
+    </div>
+    <style>
+        .cookie-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: #e5e7eb; padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; z-index: 9999; font-size: 0.9em; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); }
+        .cookie-bar a { color: #93c5fd; text-decoration: underline; }
+        .cookie-bar .btn { padding: 6px 16px; font-size: 0.9em; }
+    </style>
+    <script>
+        (function() {
+            if (localStorage.getItem('cookie_consent') === '1') return;
+            var bar = document.getElementById('cookie-bar');
+            if (bar) { bar.style.display = 'flex'; }
+            var btn = document.getElementById('cookie-bar-btn');
+            if (btn) btn.addEventListener('click', function() { localStorage.setItem('cookie_consent', '1'); bar.style.display = 'none'; });
+        })();
+    </script>
 </body>
 </html>

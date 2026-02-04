@@ -40,6 +40,10 @@
                 <label class="block text-slate-300 text-sm mb-1">Vybraný tarif</label>
                 <input type="text" readonly class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-slate-300" value="{{ tarif_label or 'STANDARD' }}">
             </div>
+            <div class="flex items-start gap-2">
+                <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500">
+                <label for="souhlas_vop_gdpr" class="text-slate-300 text-sm">Souhlasím s <a href="/vop" target="_blank" class="text-blue-400 hover:underline">obchodními podmínkami</a> a <a href="/gdpr" target="_blank" class="text-blue-400 hover:underline">zásadami ochrany osobních údajů (GDPR)</a>. *</label>
+            </div>
             <button type="submit" class="w-full py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Odeslat a vystavit fakturu</button>
         </form>
         <p class="mt-6 text-slate-500 text-sm"><a href="/#cenik" class="text-blue-400 hover:underline">Zpět na ceník</a></p>

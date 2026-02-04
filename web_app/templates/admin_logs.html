@@ -44,15 +44,15 @@
                 <td>{{ log.timestamp[:19] if log.timestamp else '-' }}</td>
                 <td><span class="badge {% if log.level == 'INFO' %}badge-basic{% elif log.level == 'WARNING' %}badge-enterprise{% else %}badge-free{% endif %}" {% if log.level == 'ERROR' %}style="background:#dc2626;color:white;"{% endif %}>{{ log.level }}</span></td>
                 <td>{{ log.message or '-' }}</td>
-                <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;font-family:monospace;font-size:0.8em;" title="{{ log.user_id or '' }}">{{ (log.user_id or '-')[:20] }}{% if log.user_id and log.user_id|length > 20 %}…{% endif %}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="{{ log.user_id or '' }}">{{ log.user_display or log.user_id or '-' }}</td>
                 {% elif category == 'payment' %}
                 <td>{{ log.timestamp[:19] if log.timestamp else '-' }}</td>
-                <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;font-family:monospace;font-size:0.8em;" title="{{ log.user_id }}">{{ log.user_id[:20] }}…</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="{{ log.user_id }}">{{ log.user_display or log.user_id }}</td>
                 <td>{{ log.action }}</td>
                 <td>{{ log.details or '-' }}</td>
                 {% else %}
                 <td>{{ log.timestamp[:19] if log.timestamp else '-' }}</td>
-                <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;font-family:monospace;font-size:0.8em;" title="{{ log.user_id }}">{{ log.user_id[:16] }}…</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="{{ log.user_id }}">{{ log.user_display or log.user_id }}</td>
                 <td>{{ log.action_type }}</td>
                 <td>{{ log.status }} {% if log.file_count %}({{ log.file_count }} soub.){% endif %}</td>
                 <td>{{ log.ip_address or '-' }} {% if log.machine_id %}<br><small class="text-muted">{{ log.machine_id[:12] }}…</small>{% endif %}</td>

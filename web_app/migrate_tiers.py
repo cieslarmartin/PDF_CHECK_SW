@@ -33,7 +33,7 @@ def run():
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # 1) Tabulka license_tiers (id, name, max_files_limit, max_devices, allow_signatures, allow_timestamp, allow_excel_export)
+    # 1) Tabulka license_tiers (+ allow_advanced_filters pro omezení filtrů u Basic)
     cur.execute('''
         CREATE TABLE IF NOT EXISTS license_tiers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,35 +42,39 @@ def run():
             allow_signatures BOOLEAN DEFAULT 0,
             allow_timestamp BOOLEAN DEFAULT 0,
             allow_excel_export BOOLEAN DEFAULT 0,
+            allow_advanced_filters BOOLEAN DEFAULT 0,
             max_devices INTEGER NOT NULL DEFAULT 1
         )
     ''')
+    cur.execute("PRAGMA table_info(license_tiers)")
+    tier_cols = {r[1] for r in cur.fetchall()}
+    if 'allow_advanced_filters' not in tier_cols:
+        cur.execute("ALTER TABLE license_tiers ADD COLUMN allow_advanced_filters BOOLEAN DEFAULT 0")
+        print("Přidán sloupec license_tiers.allow_advanced_filters.")
     cur.execute("SELECT COUNT(*) FROM license_tiers")
     count = cur.fetchone()[0]
-    # Definice: Trial (vše jako Pro, max 100 kontrol, 7 dní), Basic (bez filtrů a Excel/CSV), Pro (vše), Unlimited (God/admin)
+    # (id, name, max_files, allow_sig, allow_ts, allow_excel, allow_filters, max_dev)
     default_tiers = [
-        (1, 'Trial', 100, 1, 1, 1, 1),       # Vše otevřené, max 100 kontrol, 7 dní (license_expires u uživatele)
-        (2, 'Basic', 500, 1, 1, 0, 1),      # Filtry a export Excel/CSV blokované
-        (3, 'Pro', 99999, 1, 1, 1, 3),      # Vše otevřené
-        (4, 'Unlimited', 99999, 1, 1, 1, 10),  # God / admin
+        (1, 'Trial', 100, 1, 1, 1, 1, 1),
+        (2, 'Basic', 500, 1, 1, 0, 0, 1),   # Filtry i export blokované
+        (3, 'Pro', 99999, 1, 1, 1, 1, 3),
+        (4, 'Unlimited', 99999, 1, 1, 1, 1, 10),
     ]
     if count == 0:
         cur.executemany(
-            '''INSERT INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, allow_advanced_filters, max_devices)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             default_tiers
         )
-        print("Vloženy výchozí tier definice: Trial (100, vše), Basic (500, bez Excel), Pro (99999, vše), Unlimited (God).")
+        print("Vloženy výchozí tier definice včetně allow_advanced_filters.")
     else:
-        # Synchronizace: nastav správné hodnoty pro id 1–4, přidej Unlimited pokud chybí
-        for tier_id, name, max_files, allow_sig, allow_ts, allow_excel, max_dev in default_tiers:
-            cur.execute(
-                '''INSERT OR REPLACE INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                (tier_id, name, max_files, allow_sig, allow_ts, allow_excel, max_dev)
-            )
+        for tier_id, name, max_files, allow_sig, allow_ts, allow_excel, allow_filters, max_dev in default_tiers:
+            cur.execute('''
+                UPDATE license_tiers SET name=?, max_files_limit=?, allow_signatures=?, allow_timestamp=?, allow_excel_export=?, allow_advanced_filters=?, max_devices=?
+                WHERE id=?
+            ''', (name, max_files, allow_sig, allow_ts, allow_excel, allow_filters, max_dev, tier_id))
         cur.execute("DELETE FROM license_tiers WHERE id > 4")
-        print("Tier definice synchronizovány: Trial, Basic, Pro, Unlimited.")
+        print("Tier definice synchronizovány (včetně allow_advanced_filters).")
 
     cur.execute("CREATE INDEX IF NOT EXISTS idx_license_tiers_name ON license_tiers(name)")
 

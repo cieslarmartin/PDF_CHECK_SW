@@ -1231,9 +1231,11 @@ def register_api_routes(app):
             if license_info.get('tier_id'):
                 tier_row = db.get_tier_by_id(license_info['tier_id'])
                 features = ['pdf_check', 'signature_check', 'batch_upload', 'detailed_view', 'history_30_days']
-                if tier_row and tier_row.get('allow_excel_export'):
-                    # Trial, Pro, Unlimited: filtry a export; Basic má allow_excel_export=0
-                    features.extend(['export_excel', 'export_csv', 'export_all', 'advanced_filters', 'tsa_filter', 'tree_structure'])
+                if tier_row:
+                    if tier_row.get('allow_excel_export'):
+                        features.extend(['export_excel', 'export_csv', 'export_all'])
+                    if tier_row.get('allow_advanced_filters'):
+                        features.extend(['advanced_filters', 'tsa_filter', 'tree_structure'])
                 license_info['features'] = features
                 license_info['limits'] = {
                     'max_files_per_batch': license_info.get('max_batch_size'),
