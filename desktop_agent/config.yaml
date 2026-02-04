@@ -2,5 +2,5 @@ agent:
   auto_send: true
   show_results_window: true
 api:
-  key: sk_trial_888dbc0253c406b1ab529f875150d9de
+  key: sk_tier_81ba56817998f49c58cda5dfcba8eba8
   url: https://cieslar.pythonanywhere.com

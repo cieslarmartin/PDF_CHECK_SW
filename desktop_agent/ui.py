@@ -1,6 +1,6 @@
 # ui.py
-# GUI pro PDF DokuCheck Agent – CustomTkinter, Dark Mode (2025)
-# Logika: Treeview hierarchy, checkboxes, odeslání až po kliknutí OK v dialogu.
+# PDF DokuCheck Agent – Modern Dark UI, fronta úkolů (task queue), grid layout.
+# Levý sloupec: výsledky analýzy. Pravý: nahrávací zóna + seznam úkolů (Nový/Odesláno, checkbox, smazat).
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -10,9 +10,15 @@ import os
 
 import customtkinter as ctk
 
-# Téma a vzhled
+# Téma
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+# Globální font: +2 body (základ 12 → 14 pro běžný text)
+FONT_FAMILY = "Segoe UI"
+FONT_SIZE = 12
+FONT_SIZE_TITLE = 14
+FONT_SIZE_HEADER = 16
 
 # Zkus importovat TkinterDnD (s CTk root může být nefunkční – drop zóna pak jen klik)
 try:
@@ -121,24 +127,25 @@ def _session_summary_text(tasks, queue_display, session_files_checked):
 
 
 class PDFCheckUI:
-    """Hlavní GUI aplikace – Dark Mode, CustomTkinter (2025)"""
+    """Hlavní GUI – Modern Dark UI, fronta úkolů."""
 
-    # Dark theme
-    BG_APP = "#1A1A1A"
-    BG_CARD = "#242424"
+    # Barevné schéma (požadavek: #121212, #1e1e1e, akcent světle modrá/tyrkys)
+    BG_APP = "#121212"
+    BG_CARD = "#1e1e1e"
     BG_HEADER = "#1a1a2e"
     BG_HEADER_LIGHT = "#16213e"
     TEXT_DARK = "#e5e7eb"
     TEXT_MUTED = "#9ca3af"
-    ACCENT = "#3b82f6"
-    ACCENT_HOVER = "#2563eb"
+    ACCENT = "#14b8a6"           # tyrkys
+    ACCENT_BLUE = "#38bdf8"      # světle modrá
     SUCCESS_GREEN = "#22c55e"
     ERROR_RED = "#ef4444"
     WARNING_ORANGE = "#f97316"
-    BORDER = "#374151"
-    DROP_HOVER = "#374151"
+    BORDER = "#2d2d2d"
+    DROP_HOVER = "#2d2d2d"
     BUTTON_TEXT = "#ffffff"
-    ACCENT_BTN = "#2563eb"
+    ACCENT_BTN = "#14b8a6"
+    SECONDS_PER_FILE_ETA = 0.4   # odhad času na 1 soubor (s)
 
     def __init__(self, root, on_check_callback, on_api_key_callback, api_url="",
                  on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
@@ -205,78 +212,40 @@ class PDFCheckUI:
         pass
 
     def create_widgets(self):
-        """Layout: Header, Action bar + progress, obsah (strom + detail), Footer. Dark theme, zaoblení 10."""
-        # Treeview – tmavý styl (bez 3D okrajů)
+        """Layout: grid. Levý sloupec (25–30 %): výsledky analýzy. Pravý (70–75 %): nahrávací zóna + fronta úkolů."""
+        # Treeview styl – font +2
         _tree_style = ttk.Style()
         _tree_style.theme_use("clam")
         _tree_style.configure(
             "Treeview",
-            rowheight=32,
-            font=("Segoe UI", 9),
+            rowheight=34,
+            font=(FONT_FAMILY, FONT_SIZE - 1),
             background=self.BG_CARD,
             fieldbackground=self.BG_CARD,
             foreground=self.TEXT_DARK,
         )
         _tree_style.configure(
             "Treeview.Heading",
-            font=("Segoe UI", 9, "bold"),
+            font=(FONT_FAMILY, FONT_SIZE, "bold"),
             background=self.BORDER,
             foreground=self.TEXT_DARK,
         )
         _tree_style.map("Treeview", background=[("selected", self.ACCENT)], foreground=[("selected", self.BUTTON_TEXT)])
 
-        # 1) FOOTER
-        bottom_frame = ctk.CTkFrame(self.root, fg_color=self.BORDER, height=36, corner_radius=0)
-        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
-        bottom_frame.pack_propagate(False)
-        self.license_status_label = ctk.CTkLabel(bottom_frame, text="", font=("Segoe UI", 9), text_color=self.TEXT_DARK)
-        self.license_status_label.pack(side=tk.LEFT, padx=16, pady=6)
-        ctk.CTkLabel(bottom_frame, text="Build 45", font=("Segoe UI", 9), text_color=self.TEXT_MUTED).pack(side=tk.RIGHT, padx=16, pady=6)
-
-        # 2) ACTION BAR + progress řádek
-        action_bar = ctk.CTkFrame(self.root, fg_color=self.BG_CARD, height=88, corner_radius=10)
-        action_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 6))
-        action_bar.pack_propagate(False)
-        ctk.CTkButton(action_bar, text="Přidat soubory", command=self.add_files, corner_radius=10,
-                      fg_color=self.ACCENT, width=120).pack(side=tk.LEFT, padx=(12, 6), pady=10)
-        ctk.CTkButton(action_bar, text="+ Složka", command=self.add_folder, corner_radius=10,
-                      fg_color=self.ACCENT, width=90).pack(side=tk.LEFT, padx=6, pady=10)
-        ctk.CTkButton(action_bar, text="Vyprazdnit", command=self.clear_queue, corner_radius=10,
-                      fg_color=self.BORDER, width=90).pack(side=tk.LEFT, padx=6, pady=10)
-        self.stats_label = ctk.CTkLabel(action_bar, text="Soubory: 0 | Složky: 0 | Odhad: 0s", text_color=self.TEXT_MUTED)
-        self.stats_label.pack(side=tk.LEFT, padx=16, pady=10)
-        self.check_btn = ctk.CTkButton(
-            action_bar, text="Kontrola", font=("Segoe UI", 11, "bold"),
-            corner_radius=10, fg_color=self.ACCENT_BTN, width=140, height=36,
-            command=self.on_check_clicked
-        )
-        self.check_btn.pack(side=tk.RIGHT, padx=12, pady=10)
-        progress_row = ctk.CTkFrame(action_bar, fg_color="transparent")
-        progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 4))
-        self.progress_label = ctk.CTkLabel(progress_row, text="Připraveno", text_color=self.TEXT_MUTED, anchor="w")
-        self.progress_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.cancel_btn = ctk.CTkButton(progress_row, text="Zrušit", command=self.cancel_check, corner_radius=8,
-                                        fg_color=self.ERROR_RED, width=70)
-        self.cancel_btn.pack(side=tk.RIGHT, padx=4)
-        self.cancel_btn.pack_forget()
-        self.progress = ctk.CTkProgressBar(progress_row, width=280, height=12, corner_radius=6, progress_color=self.ACCENT)
-        self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
-        self.progress.set(0)
-        progress_row.pack_forget()
-        self._progress_row = progress_row
-
-        # 3) HEADER
-        header_frame = ctk.CTkFrame(self.root, fg_color=self.BG_HEADER, height=52, corner_radius=0)
-        header_frame.pack(fill=tk.X)
-        header_frame.pack_propagate(False)
-        ctk.CTkLabel(header_frame, text="PDF DokuCheck Agent", font=("Segoe UI", 14, "bold"), text_color=self.BUTTON_TEXT).pack(side=tk.LEFT, padx=16, pady=10)
-        ctk.CTkLabel(header_frame, text="Kontrola PDF a odeslání na server", font=("Segoe UI", 9), text_color=self.TEXT_MUTED).pack(side=tk.LEFT, padx=(0, 16))
-        self.header_status = ctk.CTkLabel(header_frame, text="", text_color=self.TEXT_MUTED)
+        # 1) HEADER
+        header_frame = ctk.CTkFrame(self.root, fg_color=self.BG_HEADER, height=56, corner_radius=0)
+        header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+        header_frame.grid_propagate(False)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(header_frame, text="PDF DokuCheck Agent", font=(FONT_FAMILY, FONT_SIZE_HEADER, "bold"), text_color=self.BUTTON_TEXT).pack(side=tk.LEFT, padx=16, pady=12)
+        ctk.CTkLabel(header_frame, text="Kontrola PDF a odeslání na server", font=(FONT_FAMILY, FONT_SIZE), text_color=self.TEXT_MUTED).pack(side=tk.LEFT, padx=(0, 16))
+        self.header_status = ctk.CTkLabel(header_frame, text="", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE))
         self.header_status.pack(side=tk.RIGHT, padx=6, pady=10)
-        self.logout_btn_header = ctk.CTkButton(header_frame, text="Odhlásit", command=self._do_logout, corner_radius=8, fg_color=self.ERROR_RED, width=80)
+        self.logout_btn_header = ctk.CTkButton(header_frame, text="Odhlásit", command=self._do_logout, corner_radius=8, fg_color=self.ERROR_RED, width=80, font=(FONT_FAMILY, FONT_SIZE))
         self.logout_btn_header.pack(side=tk.RIGHT, padx=4, pady=8)
         self.logout_btn_header.pack_forget()
-        self.login_btn_header = ctk.CTkButton(header_frame, text="Přihlásit", command=self.show_api_key_dialog, corner_radius=8, fg_color=self.BG_HEADER_LIGHT, width=80)
+        self.login_btn_header = ctk.CTkButton(header_frame, text="Přihlásit", command=self.show_api_key_dialog, corner_radius=8, fg_color=self.BG_HEADER_LIGHT, width=80, font=(FONT_FAMILY, FONT_SIZE))
         self.login_btn_header.pack(side=tk.RIGHT, padx=4, pady=8)
         def _open_web():
             try:
@@ -284,53 +253,108 @@ class PDFCheckUI:
             except Exception:
                 url = None
             webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
-        ctk.CTkButton(header_frame, text="Otevřít web", command=_open_web, corner_radius=8, fg_color=self.BG_HEADER_LIGHT, width=90).pack(side=tk.RIGHT, padx=6, pady=8)
+        ctk.CTkButton(header_frame, text="Otevřít web", command=_open_web, corner_radius=8, fg_color=self.BG_HEADER_LIGHT, width=90, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.RIGHT, padx=6, pady=8)
 
-        # 4) OBSAH – paned
-        paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=self.BG_APP, sashwidth=6)
-        paned.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
-        left_panel = ctk.CTkFrame(paned, fg_color=self.BG_CARD, corner_radius=10, padx=10, pady=10)
-        right_panel = ctk.CTkFrame(paned, fg_color=self.BG_CARD, corner_radius=10, padx=10, pady=10)
-        paned.add(left_panel, minsize=260)
-        paned.add(right_panel, minsize=320)
+        # 2) HLAVNÍ OBSAH – grid: levý = výsledky (25 %), pravý = fronta (75 %)
+        content = ctk.CTkFrame(self.root, fg_color="transparent")
+        content.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=6)
+        self.root.grid_rowconfigure(1, weight=1)
+        content.grid_columnconfigure(0, weight=1, minsize=240)   # levý ~25 %
+        content.grid_columnconfigure(1, weight=3, minsize=400)    # pravý ~75 %
 
-        ctk.CTkLabel(left_panel, text="Přidat ke kontrole", font=("Segoe UI", 10, "bold"), text_color=self.TEXT_DARK).pack(anchor=tk.W)
-        self.create_drop_zone(left_panel)
-        ctk.CTkLabel(left_panel, text="Fronta úkolů (zaškrtněte položky)", font=("Segoe UI", 10, "bold"), text_color=self.TEXT_DARK).pack(anchor=tk.W, pady=(8, 4))
-        tree_frame = tk.Frame(left_panel, bg=self.BG_CARD)
-        tree_frame.pack(fill=tk.BOTH, expand=True)
+        # LEVÝ SLOUPEC – výsledky analýzy (minoritní okno)
+        left_panel = ctk.CTkFrame(content, fg_color=self.BG_CARD, corner_radius=10)
+        left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        left_panel.grid_rowconfigure(1, weight=1)
+        left_panel.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(left_panel, text="Výsledky analýzy", font=(FONT_FAMILY, FONT_SIZE_TITLE, "bold"), text_color=self.TEXT_DARK).grid(row=0, column=0, sticky="w", padx=12, pady=(12, 6))
+        self.detail_text = ctk.CTkTextbox(left_panel, font=(FONT_FAMILY, FONT_SIZE), fg_color=self.BG_APP, text_color=self.TEXT_DARK, corner_radius=8, wrap="word")
+        self.detail_text.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        self.results_text = self.detail_text
+        self._show_session_summary()
+
+        # PRAVÝ SLOUPEC – nahrávací zóna + fronta úkolů (hlavní pracovní plocha)
+        right_panel = ctk.CTkFrame(content, fg_color=self.BG_CARD, corner_radius=10)
+        right_panel.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+        right_panel.grid_rowconfigure(2, weight=1)
+        right_panel.grid_columnconfigure(0, weight=1)
+        drop_container = ctk.CTkFrame(right_panel, fg_color="transparent")
+        drop_container.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 8))
+        right_panel.grid_columnconfigure(0, weight=1)
+        self.create_drop_zone(drop_container)
+        ctk.CTkLabel(right_panel, text="Fronta úkolů (zaškrtněte k odeslání ke kontrole)", font=(FONT_FAMILY, FONT_SIZE_TITLE, "bold"), text_color=self.TEXT_DARK).grid(row=1, column=0, sticky="w", padx=12, pady=(12, 4))
+        tree_frame = tk.Frame(right_panel, bg=self.BG_CARD)
+        tree_frame.grid(row=2, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        right_panel.grid_rowconfigure(2, weight=1)
         tree_scroll = ttk.Scrollbar(tree_frame)
-        self.queue_tree = ttk.Treeview(tree_frame, columns=("name",), show="tree headings", height=14, yscrollcommand=tree_scroll.set, selectmode="browse")
+        self.queue_tree = ttk.Treeview(tree_frame, columns=("name", "status", "action"), show="tree headings", height=14, yscrollcommand=tree_scroll.set, selectmode="browse")
         tree_scroll.config(command=self.queue_tree.yview)
         self.queue_tree.heading("#0", text=" ")
         self.queue_tree.heading("name", text="Úkol / Soubor")
-        self.queue_tree.column("#0", width=28)
-        self.queue_tree.column("name", width=200)
+        self.queue_tree.heading("status", text="Stav")
+        self.queue_tree.heading("action", text=" ")
+        self.queue_tree.column("#0", width=32)
+        self.queue_tree.column("name", width=220)
+        self.queue_tree.column("status", width=72)
+        self.queue_tree.column("action", width=48)
         self.queue_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_queue_select)
         self.queue_tree.bind("<Button-1>", self._on_tree_click)
 
-        ctk.CTkLabel(right_panel, text="Souhrn / výsledek vybraného souboru", font=("Segoe UI", 10, "bold"), text_color=self.TEXT_DARK).pack(anchor=tk.W)
-        self.detail_text = ctk.CTkTextbox(right_panel, font=("Segoe UI", 9), fg_color=self.BG_APP, text_color=self.TEXT_DARK, corner_radius=8, wrap="word")
-        self.detail_text.pack(fill=tk.BOTH, expand=True)
-        self._show_session_summary()
+        # 3) ACTION BAR + progress
+        action_bar = ctk.CTkFrame(self.root, fg_color=self.BG_CARD, height=90, corner_radius=10)
+        action_bar.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 6))
+        action_bar.grid_propagate(False)
+        self.root.grid_columnconfigure(1, weight=1)
+        ctk.CTkButton(action_bar, text="Přidat soubory", command=self.add_files, corner_radius=10, fg_color=self.ACCENT, width=130, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=(12, 6), pady=10)
+        ctk.CTkButton(action_bar, text="+ Složka", command=self.add_folder, corner_radius=10, fg_color=self.ACCENT, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6, pady=10)
+        ctk.CTkButton(action_bar, text="Vyprazdnit", command=self.clear_queue, corner_radius=10, fg_color=self.BORDER, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6, pady=10)
+        self.stats_label = ctk.CTkLabel(action_bar, text="Načteno: 0 souborů v 0 složkách", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE))
+        self.stats_label.pack(side=tk.LEFT, padx=16, pady=10)
+        self.check_btn = ctk.CTkButton(action_bar, text="Kontrola", font=(FONT_FAMILY, FONT_SIZE + 1, "bold"), corner_radius=10, fg_color=self.ACCENT_BTN, width=140, height=38, command=self.on_check_clicked)
+        self.check_btn.pack(side=tk.RIGHT, padx=12, pady=10)
+        progress_row = ctk.CTkFrame(action_bar, fg_color="transparent")
+        progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 4))
+        self.progress_label = ctk.CTkLabel(progress_row, text="Připraveno", text_color=self.TEXT_MUTED, anchor="w", font=(FONT_FAMILY, FONT_SIZE))
+        self.progress_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.cancel_btn = ctk.CTkButton(progress_row, text="Zrušit", command=self.cancel_check, corner_radius=8, fg_color=self.ERROR_RED, width=70, font=(FONT_FAMILY, FONT_SIZE))
+        self.cancel_btn.pack(side=tk.RIGHT, padx=4)
+        self.cancel_btn.pack_forget()
+        self.progress = ctk.CTkProgressBar(progress_row, width=280, height=14, corner_radius=6, progress_color=self.ACCENT)
+        self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
+        self.progress.set(0)
+        progress_row.pack_forget()
+        self._progress_row = progress_row
 
-        self.results_text = self.detail_text
+        # 4) FOOTER – status bar včetně bezpečnostního upozornění
+        bottom_frame = ctk.CTkFrame(self.root, fg_color=self.BORDER, height=52, corner_radius=0)
+        bottom_frame.grid(row=3, column=0, columnspan=2, sticky="ew")
+        bottom_frame.grid_propagate(False)
+        security_text = "Bezpečnostní informace: Systém načítá pouze metadata PDF. Samotné dokumenty zůstávají na vašem lokálním disku a nikam se neposílají."
+        ctk.CTkLabel(bottom_frame, text="[Bezpečnost] " + security_text, font=(FONT_FAMILY, FONT_SIZE - 2), text_color=self.TEXT_MUTED, wraplength=700).pack(side=tk.LEFT, padx=12, pady=6)
+        self.license_status_label = ctk.CTkLabel(bottom_frame, text="", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.TEXT_DARK)
+        self.license_status_label.pack(side=tk.LEFT, padx=16, pady=6)
+        ctk.CTkLabel(bottom_frame, text="Build 45", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.TEXT_MUTED).pack(side=tk.RIGHT, padx=16, pady=6)
+
         self.logout_btn = self.logout_btn_header
 
     def create_drop_zone(self, parent):
-        """Drop zóna – kliknutí = výběr složky (Dark theme, zaoblení)."""
-        self.drop_frame = ctk.CTkFrame(parent, fg_color=self.BORDER, corner_radius=10, height=70, border_width=2, border_color=self.DROP_HOVER)
-        self.drop_frame.pack(fill=tk.X, pady=8)
+        """Nahrávací zóna: přerušovaný okraj (akcent), ikona cloudu/souboru, text – klik = výběr."""
+        # Rám s akcentní barvou (simulace dashed: silný border v akcentu)
+        self.drop_frame = ctk.CTkFrame(parent, fg_color=self.BG_APP, corner_radius=12, height=88, border_width=2, border_color=self.ACCENT)
+        self.drop_frame.pack(fill=tk.X)
         self.drop_frame.pack_propagate(False)
-        self.drop_label = ctk.CTkLabel(self.drop_frame, text="Přetáhněte složky nebo PDF sem", font=("Segoe UI", 11), text_color=self.TEXT_MUTED)
-        self.drop_label.pack(expand=True, pady=(12, 2))
-        self.drop_hint = ctk.CTkLabel(self.drop_frame, text="nebo klikněte pro výběr složky", font=("Segoe UI", 9), text_color=self.TEXT_MUTED)
-        self.drop_hint.pack(pady=(0, 12))
+        # Ikona (Unicode cloud / upload) + jeden řádek textu
+        self.drop_label = ctk.CTkLabel(
+            self.drop_frame,
+            text="\u2601  Přetáhněte soubory sem nebo klikněte pro výběr",
+            font=(FONT_FAMILY, FONT_SIZE),
+            text_color=self.ACCENT_BLUE,
+        )
+        self.drop_label.pack(expand=True)
         self.drop_frame.bind("<Button-1>", lambda e: self.add_folder())
         self.drop_label.bind("<Button-1>", lambda e: self.add_folder())
-        self.drop_hint.bind("<Button-1>", lambda e: self.add_folder())
         if TKINTERDND_AVAILABLE:
             try:
                 self.drop_frame.drop_target_register(DND_FILES)
@@ -394,8 +418,7 @@ class PDFCheckUI:
             return
         n_files = sum(len(t.get('file_paths', [])) for t in self.tasks)
         n_folders = sum(1 for t in self.tasks if t.get('type') == 'folder')
-        est_s = str(max(0, n_files * 5)) if n_files else "0"
-        self.stats_label.configure(text=f"Soubory: {n_files} | Složky: {n_folders} | Odhad: {est_s}s")
+        self.stats_label.configure(text=f"Načteno: {n_files} souborů v {n_folders} složkách")
 
     def _show_session_summary(self):
         """Zobrazí v pravém panelu souhrn relace (když nic není vybráno)."""
@@ -519,25 +542,32 @@ class PDFCheckUI:
             self._show_session_summary()
 
     def _on_tree_click(self, event):
-        """Při kliknutí na sloupec checkbox (☐/☑) přepne výběr položky."""
+        """Klik: checkbox (#0) = přepnutí výběru; sloupec action (#3) u tasku = smazat úkol."""
         region = self.queue_tree.identify_region(event.x, event.y)
         if region != "cell":
             return
         col = self.queue_tree.identify_column(event.x)
-        if col != "#0":
-            return
         iid = self.queue_tree.identify_row(event.y)
         if not iid:
             return
+        # Klik na "Smazat" (sloupec action) u tasku = odstranit úkol
+        if col == "#3" and iid.startswith("task_") and "_file_" not in iid:
+            try:
+                task_ix = int(iid.replace("task_", ""))
+                if 0 <= task_ix < len(self.tasks):
+                    self.remove_from_queue(task_ix)
+            except (ValueError, IndexError):
+                pass
+            return
+        if col != "#0":
+            return
         qidx = self._iid_to_qidx.get(iid)
         if qidx is not None:
-            # File node: toggle this file
             if 0 <= qidx < len(self.queue_display):
                 self.queue_display[qidx]['checked'] = not self.queue_display[qidx].get('checked', True)
                 self.update_queue_display()
                 self.queue_tree.selection_set(iid)
             return
-        # Root node (task): toggle all children (if all checked -> uncheck all; else check all)
         if iid.startswith("task_") and "_file_" not in iid:
             try:
                 task_ix = int(iid.replace("task_", ""))
@@ -556,8 +586,17 @@ class PDFCheckUI:
             except (ValueError, IndexError):
                 pass
 
+    def _task_status(self, task_ix):
+        """Vrátí 'Odesláno' pokud byl úkol alespoň jednou zpracován, jinak 'Nový'."""
+        start = sum(len(self.tasks[i].get('file_paths', [])) for i in range(task_ix))
+        count = len(self.tasks[task_ix].get('file_paths', []))
+        for j in range(count):
+            if start + j < len(self.queue_display) and self.queue_display[start + j].get('status') not in ('pending', None):
+                return "Odesláno"
+        return "Nový"
+
     def update_queue_display(self):
-        """Aktualizuje hierarchický Treeview: úkoly (složka/soubor) a děti (soubory), se sloupcem checkbox. Auto-expand složek."""
+        """Aktualizuje Treeview: úkoly s checkboxem, stavem (Nový/Odesláno) a tlačítkem Smazat."""
         for row in self.queue_tree.get_children():
             self.queue_tree.delete(row)
         self._iid_to_qidx.clear()
@@ -570,9 +609,10 @@ class PDFCheckUI:
             root_check = "[x]" if all_checked else "[ ]"
             kind = "Dir" if task.get('type') == 'folder' else "File"
             name = task.get('name', '')
+            task_status = self._task_status(task_ix)
             iid_task = f"task_{task_ix}"
             tag = "odd" if task_ix % 2 == 0 else "even"
-            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{kind}  {name}",), text=root_check, tags=(tag,))
+            self.queue_tree.insert("", tk.END, iid=iid_task, values=(f"{kind}  {name}", task_status, "Smazat"), text=root_check, tags=(tag,))
             for j, _ in enumerate(file_paths):
                 if qidx >= len(self.queue_display):
                     break
@@ -581,11 +621,10 @@ class PDFCheckUI:
                 st = status_labels.get(item.get('status', 'pending'), '...')
                 iid_file = f"task_{task_ix}_file_{j}"
                 child_tag = "odd" if (task_ix + j) % 2 == 0 else "even"
-                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  [{st}] {item.get('filename', '')}",), text=chk, tags=(child_tag,))
+                self.queue_tree.insert(iid_task, tk.END, iid=iid_file, values=(f"  [{st}] {item.get('filename', '')}", "", ""), text=chk, tags=(child_tag,))
                 self._iid_to_qidx[iid_file] = qidx
                 qidx += 1
             self.queue_tree.item(iid_task, open=True)
-        # Auto-expand ALL nodes (každý uzel s dětmi rozbalen)
         def _open_all(parent=""):
             for iid in self.queue_tree.get_children(parent):
                 self.queue_tree.item(iid, open=True)
@@ -665,7 +704,7 @@ class PDFCheckUI:
     def cancel_check(self):
         """Zruší probíhající kontrolu"""
         self.cancel_requested = True
-        self.progress_label.config(text="Ruším…", fg=self.WARNING_ORANGE)
+        self.progress_label.configure(text="Ruším…", text_color=self.WARNING_ORANGE)
 
     def show_progress(self):
         """Zobrazí řádek s progress barem v action bar a zakáže Kontrola."""
@@ -697,7 +736,7 @@ class PDFCheckUI:
         self.root.after(2500, _hide_progress_row)
 
     def update_progress(self, current, total, filename):
-        """Aktualizuje progress bar s ETA"""
+        """Progress: Zpracovávání: [X]/[Total] | Odhadovaný čas: [MM:SS]. ETA cca 0.4 s/soubor na začátku."""
         import time
 
         if self.cancel_requested:
@@ -706,19 +745,18 @@ class PDFCheckUI:
         if total > 0:
             self.processed_files = current
             self.total_files = total
-            percent = (current / total) * 100
             self.progress.set(current / total)
-
             remaining = total - current
             if current > 0 and self.start_time:
                 elapsed = time.time() - self.start_time
                 avg_time = elapsed / current
                 eta_seconds = avg_time * remaining
-                eta_str = f"{int(eta_seconds)}s" if eta_seconds < 60 else f"{int(eta_seconds / 60)}m {int(eta_seconds % 60)}s"
-                short_name = filename if len(filename) < 35 else "..." + filename[-32:]
-                text = f"{current}/{total} ({int(percent)}%) | ETA: {eta_str} | {short_name}"
             else:
-                text = f"{current}/{total} ({int(percent)}%)"
+                eta_seconds = remaining * self.SECONDS_PER_FILE_ETA
+            mm = int(eta_seconds // 60)
+            ss = int(eta_seconds % 60)
+            eta_str = f"{mm:02d}:{ss:02d}" if mm > 0 else f"00:{ss:02d}"
+            text = f"Zpracovávání: {current}/{total} | Odhadovaný čas: {eta_str}"
             self.progress_label.configure(text=text, text_color=self.ACCENT)
             self.root.update_idletasks()
 
