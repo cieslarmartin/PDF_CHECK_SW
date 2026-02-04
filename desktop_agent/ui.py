@@ -994,10 +994,10 @@ class PDFCheckUI:
             dialog.update()
             try:
                 from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
-                email = DEMO_TRIAL_EMAIL or "demo_trial@dokucheck.app"
-                password = DEMO_TRIAL_PASSWORD or "demo123"
+                email = DEMO_TRIAL_EMAIL or "free@trial.app"
+                password = DEMO_TRIAL_PASSWORD or "free"
             except ImportError:
-                email, password = "demo_trial@dokucheck.app", "demo123"
+                email, password = "free@trial.app", "free"
             if self.on_login_password_callback:
                 result = self.on_login_password_callback(email, password)
                 success = result[0] if result else False

@@ -3253,3 +3253,24 @@ ValueError: ['padx', 'pady'] are not supported arguments. Look at the documentat
 2026-02-04 02:37:24,743 - INFO - Přihlášení e-mailem a heslem...
 2026-02-04 02:37:25,409 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
 2026-02-04 02:37:29,460 - INFO - Agent ukončen
+2026-02-04 02:51:04,194 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-04 02:51:04,194 - INFO - Spouštím GUI...
+2026-02-04 02:51:04,606 - INFO - První spuštění – licence není aktivována
+2026-02-04 02:51:04,606 - INFO - Agent běží
+2026-02-04 02:51:06,134 - INFO - Přihlášení e-mailem a heslem...
+2026-02-04 02:51:06,833 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-04 02:51:16,010 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/testpvaci_pdf na prevod pdf/Nová složka/4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-02-04 02:51:16,029 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-02-04 02:51:18,079 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-04 02:51:26,646 - INFO - Přihlášení e-mailem a heslem...
+2026-02-04 02:51:27,333 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-04 02:51:36,430 - INFO - Přihlášení e-mailem a heslem...
+2026-02-04 02:51:37,519 - INFO - Přihlášeno.
+2026-02-04 02:51:45,324 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/testpvaci_pdf na prevod pdf/Nová složka/4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-02-04 02:51:45,342 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-02-04 02:51:45,350 - INFO - Kontrola složky: C:/Claude/testovaci PDF/testpvaci_pdf na prevod pdf/Nová složka/33333
+2026-02-04 02:51:50,971 - INFO - Odesílám 13 výsledků na server (jeden request)...
+2026-02-04 02:51:52,246 - INFO - Batch úspěšně odeslán: batch_20260204_015139_e39f5b69 - Uloženo 13 souborů
+2026-02-04 02:52:07,268 - INFO - Kontrola složky: C:/Claude/testovaci PDF
+2026-02-04 02:52:11,316 - INFO - Odesílám 100 výsledků na server (jeden request)...
+2026-02-04 02:52:15,905 - INFO - Batch úspěšně odeslán: batch_20260204_015200_f632eef9 - Uloženo 100 souborů

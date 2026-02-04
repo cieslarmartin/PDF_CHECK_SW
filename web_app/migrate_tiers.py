@@ -13,8 +13,8 @@ import secrets
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'pdfcheck_results.db')
 
-DEMO_TRIAL_EMAIL = 'demo_trial@dokucheck.app'
-DEMO_TRIAL_PASSWORD = 'demo123'  # pro tlačítko "Vyzkoušet zdarma" v agentovi (CRITICAL: musí odpovídat license.py)
+DEMO_TRIAL_EMAIL = 'free@trial.app'
+DEMO_TRIAL_PASSWORD = 'free'  # pro tlačítko "Vyzkoušet zdarma" v agentovi (CRITICAL: musí odpovídat license.py)
 
 
 def _hash_password(password: str) -> str:

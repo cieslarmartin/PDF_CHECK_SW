@@ -8,8 +8,8 @@ import os
 from pathlib import Path
 
 # Demo Trial účet pro tlačítko "Vyzkoušet zdarma" (heslo musí odpovídat migrate_tiers.py)
-DEMO_TRIAL_EMAIL = 'demo_trial@dokucheck.app'
-DEMO_TRIAL_PASSWORD = 'demo123'
+DEMO_TRIAL_EMAIL = 'free@trial.app'
+DEMO_TRIAL_PASSWORD = 'free'
 
 try:
     from machine_id import get_machine_id, get_hostname
