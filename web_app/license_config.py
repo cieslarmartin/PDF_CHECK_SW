@@ -105,8 +105,9 @@ FEATURE_TIERS: Dict[str, List[LicenseTier]] = {
 
 # =============================================================================
 # LIMITY – podle cenové politiky (Basic 1290 Kč, Pro 1990 Kč)
-# Free: 5 souborů, 1 zařízení. Basic: 100 souborů, 1 zařízení, bez Excel.
-# Pro: neomezeno / vysoké limity, 3 zařízení, export Excel.
+# Denní kvóta: BASIC 500 souborů/den, PRO 1000 souborů/den, GOD (Admin) neomezeno (-1).
+# Free: 5 souborů, 1 zařízení. Basic: 100 souborů/dávka, 500/den, bez Excel.
+# Pro: neomezeno dávka, 1000/den, 3 zařízení, export Excel.
 # =============================================================================
 
 TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
@@ -118,6 +119,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'max_devices': 1,
         'rate_limit_per_hour': 3,
         'can_use_agent': False,
+        'daily_files_limit': 10,
     },
     LicenseTier.BASIC: {
         'max_files_per_batch': 100,
@@ -127,6 +129,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'max_devices': 1,
         'rate_limit_per_hour': 100,
         'can_use_agent': True,
+        'daily_files_limit': 500,
     },
     LicenseTier.PRO: {
         'max_files_per_batch': -1,
@@ -136,6 +139,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'max_devices': 3,
         'rate_limit_per_hour': 1000,
         'can_use_agent': True,
+        'daily_files_limit': 1000,
     },
     # Enterprise = stejné jako Pro (zpětná kompatibilita)
     LicenseTier.ENTERPRISE: {
@@ -146,6 +150,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'max_devices': 3,
         'rate_limit_per_hour': 1000,
         'can_use_agent': True,
+        'daily_files_limit': 1000,
     },
 }
 

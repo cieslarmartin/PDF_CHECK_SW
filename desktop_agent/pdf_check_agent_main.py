@@ -316,6 +316,10 @@ class PDFCheckAgent:
             allow_excel = info.get("allow_excel_export") or (tier_name.lower() == "pro")
             if hasattr(self.app, 'set_export_xls_enabled'):
                 self.app.set_export_xls_enabled(bool(allow_excel))
+            used = info.get("daily_files_used", 0)
+            limit = (info.get("limits") or {}).get("daily_files_limit") or info.get("daily_files_limit")
+            if hasattr(self.app, 'set_daily_limit_display'):
+                self.app.set_daily_limit_display(used, limit)
         else:
             self.app.set_license_display("")
             if hasattr(self.app, 'set_export_xls_enabled'):

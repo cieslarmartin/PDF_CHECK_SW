@@ -582,6 +582,21 @@ class Database:
         finally:
             conn.close()
 
+    def get_daily_files_checked(self, api_key):
+        """Počet souborů zkontrolovaných dnes (kalendářní den) pro daný api_key. Pro denní kvótu."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            today = datetime.now().strftime('%Y-%m-%d')
+            cursor.execute('''
+                SELECT COUNT(*) AS cnt FROM check_results
+                WHERE api_key = ? AND date(created_at) = ?
+            ''', (api_key, today))
+            row = cursor.fetchone()
+            return (row['cnt'] or 0) if row else 0
+        finally:
+            conn.close()
+
     def get_results_by_api_key(self, api_key, limit=100, offset=0):
         """Vrátí výsledky pro daný API klíč"""
         conn = self.get_connection()

@@ -14,11 +14,11 @@ import customtkinter as ctk
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-# Globální font: +2 body (základ 12 → 14 pro běžný text)
+# Globální font: 14–15 pro čitelnost (popisky, tlačítka, výpis souborů)
 FONT_FAMILY = "Segoe UI"
-FONT_SIZE = 12
-FONT_SIZE_TITLE = 14
-FONT_SIZE_HEADER = 16
+FONT_SIZE = 14
+FONT_SIZE_TITLE = 15
+FONT_SIZE_HEADER = 17
 
 # Zkus importovat TkinterDnD (s CTk root může být nefunkční – drop zóna pak jen klik)
 try:
@@ -129,22 +129,22 @@ def _session_summary_text(tasks, queue_display, session_files_checked):
 class PDFCheckUI:
     """Hlavní GUI – Modern Dark UI, fronta úkolů."""
 
-    # Barevné schéma (požadavek: #121212, #1e1e1e, akcent světle modrá/tyrkys)
+    # Barevné schéma sjednocené s webem: tmavé pozadí, akcent modrá/tyrkys z pdf_check_web_main
     BG_APP = "#121212"
     BG_CARD = "#1e1e1e"
     BG_HEADER = "#1a1a2e"
     BG_HEADER_LIGHT = "#16213e"
     TEXT_DARK = "#e5e7eb"
     TEXT_MUTED = "#9ca3af"
-    ACCENT = "#14b8a6"           # tyrkys
-    ACCENT_BLUE = "#38bdf8"      # světle modrá
+    ACCENT = "#0891b2"           # tyrkys/cyan jako na webu (btn-cyan)
+    ACCENT_BLUE = "#1e5a8a"      # modrá jako header na webu
     SUCCESS_GREEN = "#22c55e"
     ERROR_RED = "#ef4444"
     WARNING_ORANGE = "#f97316"
     BORDER = "#2d2d2d"
     DROP_HOVER = "#2d2d2d"
     BUTTON_TEXT = "#ffffff"
-    ACCENT_BTN = "#14b8a6"
+    ACCENT_BTN = "#0891b2"
     SECONDS_PER_FILE_ETA = 0.4   # odhad času na 1 soubor (s)
 
     def __init__(self, root, on_check_callback, on_api_key_callback, api_url="",
@@ -218,8 +218,8 @@ class PDFCheckUI:
         _tree_style.theme_use("clam")
         _tree_style.configure(
             "Treeview",
-            rowheight=34,
-            font=(FONT_FAMILY, FONT_SIZE - 1),
+            rowheight=36,
+            font=(FONT_FAMILY, FONT_SIZE),
             background=self.BG_CARD,
             fieldbackground=self.BG_CARD,
             foreground=self.TEXT_DARK,
@@ -283,9 +283,14 @@ class PDFCheckUI:
         right_panel.grid_columnconfigure(0, weight=1)
         self.create_drop_zone(drop_container)
         ctk.CTkLabel(right_panel, text="Fronta úkolů (zaškrtněte k odeslání ke kontrole)", font=(FONT_FAMILY, FONT_SIZE_TITLE, "bold"), text_color=self.TEXT_DARK).grid(row=1, column=0, sticky="w", padx=12, pady=(12, 4))
+        btn_row = ctk.CTkFrame(right_panel, fg_color="transparent")
+        btn_row.grid(row=2, column=0, sticky="w", padx=12, pady=(0, 4))
+        ctk.CTkButton(btn_row, text="Přidat soubory", command=self.add_files, corner_radius=10, fg_color=self.ACCENT, width=130, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=(0, 6))
+        ctk.CTkButton(btn_row, text="+ Složka", command=self.add_folder, corner_radius=10, fg_color=self.ACCENT, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6)
+        ctk.CTkButton(btn_row, text="Vyprazdnit", command=self.clear_queue, corner_radius=10, fg_color=self.BORDER, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6)
         tree_frame = tk.Frame(right_panel, bg=self.BG_CARD)
-        tree_frame.grid(row=2, column=0, sticky="nsew", padx=12, pady=(0, 12))
-        right_panel.grid_rowconfigure(2, weight=1)
+        tree_frame.grid(row=3, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        right_panel.grid_rowconfigure(3, weight=1)
         tree_scroll = ttk.Scrollbar(tree_frame)
         self.queue_tree = ttk.Treeview(tree_frame, columns=("name", "status", "action"), show="tree headings", height=14, yscrollcommand=tree_scroll.set, selectmode="browse")
         tree_scroll.config(command=self.queue_tree.yview)
@@ -302,20 +307,17 @@ class PDFCheckUI:
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_queue_select)
         self.queue_tree.bind("<Button-1>", self._on_tree_click)
 
-        # 3) ACTION BAR + progress
-        action_bar = ctk.CTkFrame(self.root, fg_color=self.BG_CARD, height=90, corner_radius=10)
+        # 3) ACTION BAR – pořadí shora dolů: 1) Hlavní tlačítko, 2) Progress, 3) Info blok, 4) Licence, 5) Bezpečnost (v bottom_frame)
+        action_bar = ctk.CTkFrame(self.root, fg_color=self.BG_CARD, height=140, corner_radius=10)
         action_bar.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 6))
         action_bar.grid_propagate(False)
         self.root.grid_columnconfigure(1, weight=1)
-        ctk.CTkButton(action_bar, text="Přidat soubory", command=self.add_files, corner_radius=10, fg_color=self.ACCENT, width=130, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=(12, 6), pady=10)
-        ctk.CTkButton(action_bar, text="+ Složka", command=self.add_folder, corner_radius=10, fg_color=self.ACCENT, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6, pady=10)
-        ctk.CTkButton(action_bar, text="Vyprazdnit", command=self.clear_queue, corner_radius=10, fg_color=self.BORDER, width=100, font=(FONT_FAMILY, FONT_SIZE)).pack(side=tk.LEFT, padx=6, pady=10)
-        self.stats_label = ctk.CTkLabel(action_bar, text="Načteno: 0 souborů v 0 složkách", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE))
-        self.stats_label.pack(side=tk.LEFT, padx=16, pady=10)
-        self.check_btn = ctk.CTkButton(action_bar, text="Kontrola", font=(FONT_FAMILY, FONT_SIZE + 1, "bold"), corner_radius=10, fg_color=self.ACCENT_BTN, width=140, height=38, command=self.on_check_clicked)
-        self.check_btn.pack(side=tk.RIGHT, padx=12, pady=10)
+        # 1) Hlavní akční tlačítko
+        self.check_btn = ctk.CTkButton(action_bar, text="ODESLAT KE KONTROLE", font=(FONT_FAMILY, FONT_SIZE + 1, "bold"), corner_radius=10, fg_color=self.ACCENT_BTN, height=40, command=self.on_check_clicked)
+        self.check_btn.pack(pady=(12, 8))
+        # 2) Progress bar (skrytý až do startu)
         progress_row = ctk.CTkFrame(action_bar, fg_color="transparent")
-        progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 4))
+        progress_row.pack(fill=tk.X, padx=12, pady=(0, 4))
         self.progress_label = ctk.CTkLabel(progress_row, text="Připraveno", text_color=self.TEXT_MUTED, anchor="w", font=(FONT_FAMILY, FONT_SIZE))
         self.progress_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.cancel_btn = ctk.CTkButton(progress_row, text="Zrušit", command=self.cancel_check, corner_radius=8, fg_color=self.ERROR_RED, width=70, font=(FONT_FAMILY, FONT_SIZE))
@@ -326,16 +328,26 @@ class PDFCheckUI:
         self.progress.set(0)
         progress_row.pack_forget()
         self._progress_row = progress_row
+        # 3) Informační blok: vlevo Načteno, vpravo Odhadovaný čas
+        info_row = ctk.CTkFrame(action_bar, fg_color="transparent")
+        info_row.pack(fill=tk.X, padx=12, pady=2)
+        self.stats_label = ctk.CTkLabel(info_row, text="Načteno: 0 souborů v 0 složkách", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE))
+        self.stats_label.pack(side=tk.LEFT)
+        self.eta_label = ctk.CTkLabel(info_row, text="Odhadovaný čas: —", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE))
+        self.eta_label.pack(side=tk.RIGHT)
+        # 4) Licenční info – denní limit
+        self.daily_limit_label = ctk.CTkLabel(action_bar, text="Váš denní limit: — / — souborů (Reset o půlnoci).", text_color=self.TEXT_MUTED, font=(FONT_FAMILY, FONT_SIZE - 1))
+        self.daily_limit_label.pack(pady=(2, 8))
+        self.license_status_label = ctk.CTkLabel(action_bar, text="", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.ERROR_RED)
+        self.license_status_label.pack(pady=(0, 4))
 
-        # 4) FOOTER – status bar včetně bezpečnostního upozornění
-        bottom_frame = ctk.CTkFrame(self.root, fg_color=self.BORDER, height=52, corner_radius=0)
+        # 4) FOOTER – pouze bezpečnostní patička (malé písmo)
+        bottom_frame = ctk.CTkFrame(self.root, fg_color=self.BORDER, height=40, corner_radius=0)
         bottom_frame.grid(row=3, column=0, columnspan=2, sticky="ew")
         bottom_frame.grid_propagate(False)
-        security_text = "Bezpečnostní informace: Systém načítá pouze metadata PDF. Samotné dokumenty zůstávají na vašem lokálním disku a nikam se neposílají."
-        ctk.CTkLabel(bottom_frame, text="[Bezpečnost] " + security_text, font=(FONT_FAMILY, FONT_SIZE - 2), text_color=self.TEXT_MUTED, wraplength=700).pack(side=tk.LEFT, padx=12, pady=6)
-        self.license_status_label = ctk.CTkLabel(bottom_frame, text="", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.TEXT_DARK)
-        self.license_status_label.pack(side=tk.LEFT, padx=16, pady=6)
-        ctk.CTkLabel(bottom_frame, text="Build 45", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.TEXT_MUTED).pack(side=tk.RIGHT, padx=16, pady=6)
+        security_text = "🔒 Systém načítá pouze metadata, dokumenty zůstávají na vašem lokálním disku."
+        ctk.CTkLabel(bottom_frame, text=security_text, font=(FONT_FAMILY, FONT_SIZE - 2), text_color=self.TEXT_MUTED, wraplength=700).pack(side=tk.LEFT, padx=12, pady=4)
+        ctk.CTkLabel(bottom_frame, text="Build 45", font=(FONT_FAMILY, FONT_SIZE - 2), text_color=self.TEXT_MUTED).pack(side=tk.RIGHT, padx=16, pady=4)
 
         self.logout_btn = self.logout_btn_header
 
@@ -648,9 +660,10 @@ class PDFCheckUI:
 
     def _check_thread(self, checked_paths_qidx):
         """
-        Vlákno pro kontrolu. Zpracuje pouze zaškrtnuté položky (cesty z checked_paths_qidx).
+        Vlákno pro kontrolu. Seskupuje zaškrtnuté položky podle úkolu (task):
+        - úkol typu složka: jedno volání mode='folder' (zachová folder/relative_path pro strom na webu),
+        - úkol typu soubor: volání mode='single'.
         checked_paths_qidx: list of (path, queue_display_index).
-        Po zpracování: úspěšné odškrtne (☐), neúspěšné nechá zaškrtnuté (☑).
         """
         try:
             max_files = 99999
@@ -662,25 +675,80 @@ class PDFCheckUI:
             if max_files < 0:
                 max_files = 99999
 
-            # Omezit na max_files (první N zaškrtnutých)
-            to_process = checked_paths_qidx[:max_files]
-            truncated = len(checked_paths_qidx) > max_files
+            # Seskupit (path, qidx) podle tasku: pro každý task mít seznam (path, qidx) zaškrtnutých
+            task_checked = []  # [(task_ix, task, [(path, qidx), ...]), ...]
+            qidx_used = set()
+            for path, qidx in checked_paths_qidx:
+                if qidx in qidx_used:
+                    continue
+                for task_ix, task in enumerate(self.tasks):
+                    file_paths = task.get('file_paths', [])
+                    if not file_paths:
+                        continue
+                    # qidx pro tento task začíná na sum předchozích
+                    qidx_start = sum(len(self.tasks[i].get('file_paths', [])) for i in range(task_ix))
+                    if qidx_start <= qidx < qidx_start + len(file_paths):
+                        # Najít nebo vytvořit záznam pro tento task
+                        found = False
+                        for tc in task_checked:
+                            if tc[0] == task_ix:
+                                tc[2].append((path, qidx))
+                                found = True
+                                break
+                        if not found:
+                            task_checked.append((task_ix, task, [(path, qidx)]))
+                        qidx_used.add(qidx)
+                        break
+
+            all_results = []
+            source_folder_for_batch = None
+            total_files_to_process = sum(len(items) for _, _, items in task_checked)
+            total_files_to_process = min(total_files_to_process, max_files)
+            truncated = sum(len(items) for _, _, items in task_checked) > max_files
             if truncated:
                 self.root.after(0, lambda: messagebox.showinfo(
                     "Limit",
                     f"Kontrola bude provedena jen u {max_files} souborů. Zbytek byl vynechán."
                 ))
 
-            total = len(to_process)
-            all_results = []
-            for i, (path, qidx) in enumerate(to_process):
+            processed = 0
+            for task_ix, task, items in task_checked:
                 if self.cancel_requested:
                     break
-                # Progress bar: zobrazit aktuální soubor (viditelné u více souborů)
-                cur, fn = i + 1, os.path.basename(path)
-                self.root.after(0, lambda c=cur, t=total, f=fn: self.update_progress(c, t, f))
-                result = self.on_check_callback(path, mode='single', auto_send=False)
-                all_results.append((qidx, result))
+                remaining = max_files - processed
+                if remaining <= 0:
+                    break
+                is_folder = task.get('type') == 'folder'
+                task_path = task.get('path', '')
+                if is_folder and task_path:
+                    # Jedno volání pro celou složku – výsledky mají folder/relative_path pro strom na webu
+                    self.root.after(0, lambda p=processed, t=total_files_to_process: self.update_progress(p, t, os.path.basename(task_path)))
+                    folder_result = self.on_check_callback(task_path, mode='folder', auto_send=False)
+                    results_list = folder_result.get('results', []) if isinstance(folder_result, dict) else []
+                    qidx_start = sum(len(self.tasks[i].get('file_paths', [])) for i in range(task_ix))
+                    checked_qidx_in_task = {q for _, q in items}
+                    for j, res in enumerate(results_list):
+                        if processed >= max_files:
+                            break
+                        qidx = qidx_start + j
+                        if qidx not in checked_qidx_in_task:
+                            continue
+                        all_results.append((qidx, res))
+                        processed += 1
+                        if processed % 5 == 0 or processed == total_files_to_process:
+                            self.root.after(0, lambda cur=processed, tot=total_files_to_process: self.update_progress(cur, tot, os.path.basename(task_path)))
+                    if len(all_results) > 0 and source_folder_for_batch is None:
+                        source_folder_for_batch = task_path
+                else:
+                    # Jednotlivé soubory (task typu file nebo fallback)
+                    for path, qidx in items:
+                        if self.cancel_requested or processed >= max_files:
+                            break
+                        processed += 1
+                        fn = os.path.basename(path)
+                        self.root.after(0, lambda c=processed, t=total_files_to_process, f=fn: self.update_progress(c, t, f))
+                        result = self.on_check_callback(path, mode='single', auto_send=False)
+                        all_results.append((qidx, result))
 
             if not all_results:
                 self.root.after(0, lambda: self.display_error("Žádné PDF soubory ke kontrole."))
@@ -693,6 +761,7 @@ class PDFCheckUI:
                 'truncated': truncated,
                 'max_files': max_files,
                 'upload_error': None,
+                'source_folder_for_batch': source_folder_for_batch,
             }
             self.root.after(0, lambda: self.display_results(summary))
 
@@ -713,20 +782,24 @@ class PDFCheckUI:
         self.processed_files = 0
         self.progress.set(0)
         self.progress_label.configure(text="Zahajuji zpracování…", text_color=self.ACCENT)
+        if getattr(self, 'eta_label', None):
+            self.eta_label.configure(text="Odhadovaný čas: —")
         if getattr(self, '_progress_row', None):
-            self._progress_row.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 6))
+            self._progress_row.pack(fill=tk.X, padx=12, pady=(0, 4))
         self.cancel_btn.pack(side=tk.RIGHT)
         self.check_btn.configure(state="disabled")
 
     def finish_progress(self):
-        """Skryje progress řádek a znovu povolí Kontrola. Web se neotevírá automaticky – až po kliknutí na OK v dialogu (Odeslat na server?)."""
+        """Skryje progress řádek a znovu povolí Kontrola."""
         self.is_running = False
         self.progress.set(1)
 
         if self.cancel_requested:
             self.progress_label.configure(text="Zrušeno", text_color=self.WARNING_ORANGE)
         else:
-            self.progress_label.configure(text="Hotovo! Po kliknutí na OK v dialogu můžete poslat na server.", text_color=self.SUCCESS_GREEN)
+            self.progress_label.configure(text="Hotovo.", text_color=self.SUCCESS_GREEN)
+        if getattr(self, 'eta_label', None):
+            self.eta_label.configure(text="Odhadovaný čas: —")
 
         self.cancel_btn.pack_forget()
         self.check_btn.configure(state="normal")
@@ -736,7 +809,7 @@ class PDFCheckUI:
         self.root.after(2500, _hide_progress_row)
 
     def update_progress(self, current, total, filename):
-        """Progress: Zpracovávání: [X]/[Total] | Odhadovaný čas: [MM:SS]. ETA cca 0.4 s/soubor na začátku."""
+        """Progress: progress_label a eta_label (Odhadovaný čas: MM:SS)."""
         import time
 
         if self.cancel_requested:
@@ -756,8 +829,9 @@ class PDFCheckUI:
             mm = int(eta_seconds // 60)
             ss = int(eta_seconds % 60)
             eta_str = f"{mm:02d}:{ss:02d}" if mm > 0 else f"00:{ss:02d}"
-            text = f"Zpracovávání: {current}/{total} | Odhadovaný čas: {eta_str}"
-            self.progress_label.configure(text=text, text_color=self.ACCENT)
+            self.progress_label.configure(text=f"Zpracovávání: {current}/{total}", text_color=self.ACCENT)
+            if getattr(self, 'eta_label', None):
+                self.eta_label.configure(text=f"Odhadovaný čas: {eta_str}")
             self.root.update_idletasks()
 
     def display_results(self, result):
@@ -820,7 +894,8 @@ class PDFCheckUI:
             if messagebox.askyesno("Odeslat na server", msg, default=messagebox.YES):
                 try:
                     results_only = [r for _, r in results_with_qidx]
-                    out = self.on_send_batch_callback(results_only, None)
+                    source_folder = result.get('source_folder_for_batch') if isinstance(result, dict) else None
+                    out = self.on_send_batch_callback(results_only, source_folder)
                     if out and len(out) >= 2 and not out[0]:
                         upload_error = out[1] or "Chyba odeslání na server"
                         self.results_text.configure(state="normal")
@@ -863,8 +938,19 @@ class PDFCheckUI:
         self.update_queue_display()
         self._show_session_summary()
 
+    def set_daily_limit_display(self, used, limit):
+        """Aktualizuje text denního limitu v action bar. limit None nebo -1 = neomezeno."""
+        if not getattr(self, 'daily_limit_label', None):
+            return
+        if limit is None or (isinstance(limit, int) and limit < 0):
+            self.daily_limit_label.configure(text="Váš denní limit: neomezeno (Reset o půlnoci).")
+        else:
+            self.daily_limit_label.configure(text=f"Váš denní limit: {used or 0} / {limit} souborů (Reset o půlnoci).")
+
     def set_license_display(self, text):
         """Aktualizuje zobrazení stavu licence – v hlavičce Přihlásit/Odhlásit."""
+        if not text and getattr(self, 'daily_limit_label', None):
+            self.daily_limit_label.configure(text="Váš denní limit: — / — souborů (Reset o půlnoci).")
         if text:
             short = (text[:28] + "…") if len(text) > 28 else text
             self.header_status.configure(text=short)

@@ -222,6 +222,19 @@ def register_api_routes(app):
                 if len(results) > remaining:
                     results = results[:remaining]
 
+            # Denní kvóta (BASIC 500/den, PRO 1000/den; -1 = neomezeno)
+            limits = license_info.get('limits') or {}
+            daily_limit = limits.get('daily_files_limit')
+            if daily_limit is None:
+                tier = LicenseTier(license_info.get('license_tier', 0))
+                daily_limit = get_tier_limits(tier).get('daily_files_limit', -1)
+            if not is_trial and daily_limit is not None and daily_limit >= 0:
+                daily_used = db.get_daily_files_checked(api_key)
+                if daily_used + len(results) > daily_limit:
+                    return jsonify({
+                        'error': 'Denní kvóta vyčerpána. Limit bude obnoven do půlnoci.'
+                    }), 403
+
             # Vytvoř batch
             batch_id = db.create_batch(api_key, batch_name, source_folder)
             if not batch_id:
@@ -669,6 +682,15 @@ def register_api_routes(app):
                 'tier': lic.get('license_tier', 0),
                 'tier_name': lic.get('tier_name', 'Free')
             } if lic else {'tier': 0, 'tier_name': 'Free'}
+            if lic:
+                limits = lic.get('limits') or {}
+                if limits.get('daily_files_limit') is None:
+                    tier = LicenseTier(lic.get('license_tier', 0))
+                    limits['daily_files_limit'] = get_tier_limits(tier).get('daily_files_limit', -1)
+                license_info['daily_files_used'] = db.get_daily_files_checked(api_key)
+                daily_limit = limits.get('daily_files_limit')
+                license_info['daily_files_remaining'] = max(0, daily_limit - license_info['daily_files_used']) if daily_limit is not None and daily_limit >= 0 else None
+                license_info['daily_files_limit'] = daily_limit
 
             return jsonify({
                 'success': True,
@@ -1218,6 +1240,15 @@ def register_api_routes(app):
                 license_info['limits'] = get_tier_limits(tier)
             if license_info.get('limits', {}).get('max_files_per_batch') is None:
                 license_info.setdefault('limits', {})['max_files_per_batch'] = license_info.get('max_batch_size')
+            # Denní kvóta – vždy doplnit z get_tier_limits (BASIC 500, PRO 1000)
+            limits = license_info.get('limits', {})
+            if limits.get('daily_files_limit') is None:
+                tier = LicenseTier(license_info.get('license_tier', 0))
+                limits['daily_files_limit'] = get_tier_limits(tier).get('daily_files_limit', -1)
+            daily_used = db.get_daily_files_checked(api_key)
+            license_info['daily_files_used'] = daily_used
+            daily_limit = limits.get('daily_files_limit')
+            license_info['daily_files_remaining'] = max(0, daily_limit - daily_used) if daily_limit is not None and daily_limit >= 0 else None
 
             return jsonify({
                 'success': True,

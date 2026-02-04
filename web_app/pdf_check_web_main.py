@@ -664,6 +664,7 @@ HTML_TEMPLATE = '''
                     <span class="license-badge-icon">🆓</span>
                     <span id="license-tier-name">Free</span>
                 </span>
+                <span id="daily-quota-display" style="font-size:0.75em;color:#6b7280;margin-left:8px;display:none;"></span>
                 <div class="header-divider"></div>
                 <button class="header-btn" onclick="showHelpModal()">❓ Nápověda</button>
                 <div class="header-divider"></div>
@@ -679,6 +680,7 @@ HTML_TEMPLATE = '''
                         <button class="mode-btn active" id="mode-agent" onclick="setMode('agent')">🌐 Z Agenta</button>
                         <button class="mode-btn" id="mode-local" onclick="setMode('local')">💻 Na server, nebo na cloud</button>
                     </div>
+                    <div style="font-size:0.75em;color:#6b7280;margin-bottom:10px;padding:8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;">🔒 Systém načítá pouze metadata, PDF dokumenty zůstávají na vašem lokálním disku.</div>
                     <div style="font-size:0.7em;color:#6b7280;margin-bottom:10px;padding:0 4px;"><strong>Z Agenta</strong> = soubory zůstaly na disku, na server šla jen metadata. <strong>Na server, nebo na cloud</strong> = nahrání PDF zde – celé soubory jdou na server (cloud).</div>
 
                     <!-- AGENT MODE - načítání dat z API -->
@@ -1621,7 +1623,7 @@ function buildFolderTree(files) {
 }
 
 // Rekurzivně renderuje stromovou strukturu složek
-const TREE_INDENT_PX = 3;
+const TREE_INDENT_PX = 20;
 function renderFolderTree(node, batchId, level = 0) {
     let html = '';
     const indent = level * TREE_INDENT_PX;
@@ -1682,9 +1684,9 @@ function renderFileRow(file, batchId, indent = 0) {
     const hasMultipleSigs = sigCount > 1;
     const fileId = 'file-' + batchId + '-' + Math.random().toString(36).substr(2, 9);
 
-    let html = '<div class="file-row-wrapper" style="margin-left:' + indent + 'px">';
+    let html = '<div class="file-row-wrapper">';
     html += '<div class="file-row' + (hasMultipleSigs ? ' has-sigs' : '') + '" ' + (hasMultipleSigs ? 'onclick="toggleSignatures(\\'' + fileId + '\\')"' : '') + '>';
-    html += '<div class="file-name" title="' + file.path + '">' + file.name + '</div>';
+    html += '<div class="file-name" style="padding-left:' + indent + 'px" title="' + file.path + '">' + file.name + '</div>';
     html += '<div class="file-cell">' + getPdfaBadge(file) + '</div>';
     html += '<div class="file-cell">' + getSigBadge(file) + '</div>';
 
@@ -2018,7 +2020,11 @@ async function loadAgentResults() {
         if (data.license) {
             licenseState.tier = data.license.tier !== undefined ? data.license.tier : 0;
             licenseState.tierName = data.license.tier_name || 'Free';
+            licenseState.daily_files_used = data.license.daily_files_used || 0;
+            licenseState.daily_files_limit = data.license.daily_files_limit != null ? data.license.daily_files_limit : null;
+            licenseState.daily_files_remaining = data.license.daily_files_remaining != null ? data.license.daily_files_remaining : null;
             updateLicenseBadge();
+            updateDailyQuotaDisplay();
             updateFeatureLocks();
         }
 
@@ -2220,6 +2226,9 @@ let licenseState = {
     tierName: 'Free',
     features: ['pdf_check', 'signature_check'],
     limits: { max_files_per_batch: 5, rate_limit_per_hour: 3 },
+    daily_files_used: 0,
+    daily_files_limit: null,
+    daily_files_remaining: null,
     isValid: true
 };
 
@@ -2253,6 +2262,23 @@ function updateLicenseBadge() {
     // Aktualizuj obsah
     badge.querySelector('.license-badge-icon').textContent = config.icon;
     tierName.textContent = config.name;
+}
+
+function updateDailyQuotaDisplay() {
+    const el = document.getElementById('daily-quota-display');
+    if (!el) return;
+    const limit = licenseState.daily_files_limit;
+    const used = licenseState.daily_files_used || 0;
+    if (limit == null) {
+        el.style.display = 'none';
+    } else if (limit < 0) {
+        el.textContent = 'Denní kvóta: neomezeno';
+        el.style.display = '';
+    } else {
+        el.textContent = 'Dnes: ' + used + ' / ' + limit + ' souborů';
+        el.style.display = '';
+        el.title = (limit - used <= 0) ? 'Denní kvóta vyčerpána. Limit bude obnoven do půlnoci.' : '';
+    }
 }
 
 function hasFeature(featureName) {
@@ -2296,6 +2322,13 @@ function updateFeatureLocks() {
         if (!hasFeature('export_all')) exportAllBtn.classList.add('feature-locked');
         else exportAllBtn.classList.remove('feature-locked');
     }
+    // BASIC: filtry viditelné, ale zamčené (Pro = plně dostupné)
+    const filterSections = document.querySelectorAll('.filter-section');
+    const isBasic = licenseState.tier === 1;
+    filterSections.forEach(el => {
+        if (isBasic) el.classList.add('feature-locked');
+        else el.classList.remove('feature-locked');
+    });
 }
 
 // Excel export – jen vlastní dávka (vyžaduje přihlášení)
