@@ -22,11 +22,12 @@ Rozbalení ZIPu přes webové tlačítko "Unzip" na PA často nefunguje – rozb
 cd /home/cieslar
 rm -rf web_app
 unzip -o web_app_deploy.zip
-ls -la web_app
+# Cílová složka s aplikací (kde je requirements.txt, database.py):  /home/cieslar/web_app/web_app
+# Pokud unzip vytvořil  /home/cieslar/web_app/  s obsahem přímo v něm, pak je to  /home/cieslar/web_app/.
+# Pokud máte repo přes git, aplikace je v  /home/cieslar/web_app/web_app/.
+ls -la web_app/web_app || ls -la web_app
 
-• Tím vznikne složka  /home/cieslar/web_app/  se všemi soubory.
-
-Výsledek: v  /home/cieslar/web_app/  máš soubory:
+Výsledek: v  /home/cieslar/web_app/web_app/  (nebo  /home/cieslar/web_app/) máš soubory:
   pdf_check_web_main.py, database.py, api_endpoint.py, admin_routes.py,
   wsgi_pythonanywhere.py, requirements.txt, license_config.py, feature_manager.py,
   složka  templates/  s .html soubory, atd.
@@ -36,7 +37,7 @@ Výsledek: v  /home/cieslar/web_app/  máš soubory:
 --------------------------------------------------------------------------------
 • Máš‑li na PC soubor  pdfcheck_results.db  (s uživateli a hesly), nahraj ho na PA:
   – V záložce Files jdi do STEJNÉ složky, kde leží  database.py.
-  – To je:  /home/cieslar/web_app/
+  – To je:  /home/cieslar/web_app/web_app/
   – Upload a file → vyber  pdfcheck_results.db  a nahraj.
 • Důležité:  pdfcheck_results.db  musí být ve STEJNÉ složce jako  database.py.
   (Aplikace teď používá absolutní cestu od umístění database.py – tak to má zůstat.)
@@ -60,7 +61,7 @@ Instalace balíčků do virtualenvu:
 
   source /home/cieslar/web_app-virtualenv/bin/activate
   pip install --upgrade pip
-  pip install -r /home/cieslar/web_app/requirements.txt
+  pip install -r /home/cieslar/web_app/web_app/requirements.txt
 • Po dokončení můžeš konzoli zavřít.
 
 --------------------------------------------------------------------------------
@@ -69,13 +70,13 @@ Instalace balíčků do virtualenvu:
 V záložce  Web  nastav:
 
 • Source code:
-    /home/cieslar/web_app
+    /home/cieslar/web_app/web_app
 
 • WSGI configuration file:
-    /home/cieslar/web_app/wsgi_pythonanywhere.py
+    /home/cieslar/web_app/web_app/wsgi_pythonanywhere.py
 
 • Working directory:
-    /home/cieslar/web_app
+    /home/cieslar/web_app/web_app
 
 • Virtualenv:
     /home/cieslar/web_app-virtualenv
@@ -111,18 +112,18 @@ V záložce  Web  klikni zelené tlačítko  Reload  (u tvé domény).
 • Přihlášení:  https://cieslar.pythonanywhere.com/login
 • Pokud se stále nepřihlásíš:
   – Zkontroluj, že  pdfcheck_results.db  je ve stejné složce jako  database.py.
-  – V Consoles → Bash zkus:  ls -la /home/cieslar/web_app/pdfcheck_results.db
+  – V Consoles → Bash zkus:  ls -la /home/cieslar/web_app/web_app/pdfcheck_results.db
   – V záložce Web se podívej do Error log – tam uvidíš chyby Pythonu.
 
 ================================================================================
   SHRNUTÍ – KAM CO
 ================================================================================
 • ZIP (web_app_deploy.zip)        → nahát do  /home/cieslar/  a rozbalit v Bash (unzip)
-• pdfcheck_results.db            → do  /home/cieslar/web_app/  (vedle database.py)
-• Source code                    → /home/cieslar/web_app
-• Working directory              → /home/cieslar/web_app
-• WSGI configuration file        → /home/cieslar/web_app/wsgi_pythonanywhere.py
+• pdfcheck_results.db            → do  /home/cieslar/web_app/web_app/  (vedle database.py)
+• Source code                    → /home/cieslar/web_app/web_app
+• Working directory              → /home/cieslar/web_app/web_app
+• WSGI configuration file        → /home/cieslar/web_app/web_app/wsgi_pythonanywhere.py
 • Virtualenv                     → /home/cieslar/web_app-virtualenv
-• requirements.txt               → v Bash:  pip install -r /home/cieslar/web_app/requirements.txt
+• requirements.txt               → v Bash:  pip install -r /home/cieslar/web_app/web_app/requirements.txt
 
 ================================================================================

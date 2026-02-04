@@ -1,0 +1,76 @@
+================================================================================
+  DEPLOY NA PYTHONANYWHERE – příkaz a řešení chyb
+================================================================================
+
+PRÁVĚ TEĎ NA PA (zkopíruj a vlož do Bash; uprav cesty, pokud máš jiné):
+--------------------------------------------------------------------------------
+  export REPO_ROOT=$HOME/web_app/web_app
+  export VENV=$HOME/web_app-virtualenv
+  bash $REPO_ROOT/deploy.sh
+
+(Pokud deploy.sh nemáš v repozitáři, nejdřív udělej git pull ze správného adresáře
+ – viz ruční příkazy níže – pak tam bude deploy.sh.)
+
+--------------------------------------------------------------------------------
+
+Když spouštíte  ~/deploy.sh  z domovského adresáře, skript musí vědět, KDE JE
+kořen repozitáře a KDE JE virtuální prostředí (venv).
+
+--------------------------------------------------------------------------------
+1) NASTAVENÍ NA PA (jednou, nebo do ~/.bashrc)
+--------------------------------------------------------------------------------
+U vás je aplikace v:  /home/cieslar/web_app/web_app  (tam je  requirements.txt  a  .git).
+
+V Bash před spuštěním deploy nastavte:
+
+  export REPO_ROOT=/home/cieslar/web_app/web_app
+  export VENV=/home/cieslar/web_app-virtualenv
+  bash $REPO_ROOT/deploy.sh
+
+--------------------------------------------------------------------------------
+2) KDE MÁTE VENV
+--------------------------------------------------------------------------------
+Virtualenv na PA je často:
+  /home/VASE_JMENO/web_app-virtualenv
+nebo
+  /home/VASE_JMENO/venv
+
+Ověřte:  ls /home/cieslar/web_app-virtualenv/bin/activate
+Pokud neexistuje, vytvořte venv v záložce Web → Virtualenv a pak nastavte VENV.
+
+--------------------------------------------------------------------------------
+3) SPUŠTĚNÍ DEPLOY Z ADRESÁŘE APLIKACE
+--------------------------------------------------------------------------------
+  cd /home/cieslar/web_app/web_app
+  bash deploy.sh
+
+--------------------------------------------------------------------------------
+4) RUČNÍ PŘÍKAZY (když skript nechcete používat)
+--------------------------------------------------------------------------------
+Spusťte z adresáře aplikace  /home/cieslar/web_app/web_app:
+
+  cd /home/cieslar/web_app/web_app
+
+  [ -f pdfcheck_results.db ] && cp pdfcheck_results.db /tmp/pdfcheck_results.db.bak
+  git fetch origin main
+  git reset --hard origin/main
+  [ -f /tmp/pdfcheck_results.db.bak ] && cp /tmp/pdfcheck_results.db.bak pdfcheck_results.db
+
+  source /home/cieslar/web_app-virtualenv/bin/activate
+  pip install -q -r requirements.txt
+  touch wsgi_pythonanywhere.py
+
+--------------------------------------------------------------------------------
+5) CHYBY A ŘEŠENÍ
+--------------------------------------------------------------------------------
+• "cannot stat '/tmp/pdfcheck_results.db.bak'" – záloha nebyla vytvořena (db neexistovala
+  nebo REPO_ROOT byl špatně). Obnovení se přeskočí; není chyba. DB se vytvoří při běhu appky.
+
+• "Could not open requirements file" – REPO_ROOT je špatně. Má být:  /home/cieslar/web_app/web_app
+  (adresář, kde leží  requirements.txt  a  wsgi_pythonanywhere.py).
+
+• "No such file or directory .../activate" – VENV je špatně. Nastavte export VENV=...
+  na cestu k vašemu virtualenvu (např. ~/web_app-virtualenv).
+
+• "deploy.sh: No such file or directory" – skript není v aktuálním adresáři. Použijte
+  buď  bash ~/deploy.sh  s nastavením REPO_ROOT a VENV, nebo  cd do repozitáře a  bash deploy.sh.

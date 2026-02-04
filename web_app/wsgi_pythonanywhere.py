@@ -1,5 +1,5 @@
 # WSGI pro PythonAnywhere – PDF DokuCheck Web (cieslar)
-# Cesta: /home/cieslar/web_app/wsgi_pythonanywhere.py
+# Cesta: /home/cieslar/web_app/web_app/wsgi_pythonanywhere.py
 
 import sys
 import os

@@ -27,7 +27,7 @@ unzip -o web_app_deploy.zip
 virtualenv web_app-virtualenv --python=python3.10
 source web_app-virtualenv/bin/activate
 pip install --upgrade pip
-pip install -r web_app/requirements.txt
+pip install -r web_app/web_app/requirements.txt
 deactivate
 echo "Hotovo. Teď nastav Web a WSGI."
 ------ END BASH – kopíruj až sem ------
@@ -47,9 +47,9 @@ KROK 3 – NA PA: ZÁLOŽKA WEB (nastavení)
 --------------------------------------------------------------------------------
 Záložka  Web.
 
-• Source code:   /home/cieslar/web_app
-• Working directory:   /home/cieslar/web_app
-• WSGI configuration file:   /home/cieslar/web_app/wsgi_pythonanywhere.py
+• Source code:   /home/cieslar/web_app/web_app
+• Working directory:   /home/cieslar/web_app/web_app
+• WSGI configuration file:   /home/cieslar/web_app/web_app/wsgi_pythonanywhere.py
 • Virtualenv:   /home/cieslar/web_app-virtualenv
 
 Klikni  Save.
@@ -78,7 +78,7 @@ Ulož (Save).
 KROK 5 – DATABÁZE (přihlášení)
 --------------------------------------------------------------------------------
 Máš‑li soubor  pdfcheck_results.db  (s uživateli):
-• Záložka Files → otevři  /home/cieslar/web_app/
+• Záložka Files → otevři  /home/cieslar/web_app/web_app/
 • Upload a file → vyber  pdfcheck_results.db
 Soubor musí být ve složce  web_app  vedle  database.py.
 
@@ -98,10 +98,10 @@ OVĚŘENÍ
 ================================================================================
 • web_app_deploy.zip     → nahát do  /home/cieslar/
 • Bash                   → rozbalit (unzip), vytvořit virtualenv, pip install
-• Source code            → /home/cieslar/web_app
-• Working directory       → /home/cieslar/web_app
-• WSGI configuration file → /home/cieslar/web_app/wsgi_pythonanywhere.py
+• Source code            → /home/cieslar/web_app/web_app
+• Working directory       → /home/cieslar/web_app/web_app
+• WSGI configuration file → /home/cieslar/web_app/web_app/wsgi_pythonanywhere.py
 • WSGI obsah              → viz KROK 4 (import z pdf_check_web_main)
 • Virtualenv              → /home/cieslar/web_app-virtualenv
-• pdfcheck_results.db     → do  /home/cieslar/web_app/
+• pdfcheck_results.db     → do  /home/cieslar/web_app/web_app/
 ================================================================================
