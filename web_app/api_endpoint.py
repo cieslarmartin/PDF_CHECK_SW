@@ -683,6 +683,18 @@ def register_api_routes(app):
                 'tier_name': lic.get('tier_name', 'Free')
             } if lic else {'tier': 0, 'tier_name': 'Free'}
             if lic:
+                # Sestav features pro frontend (zamčení filtrů/exportu u Basic)
+                if lic.get('tier_id'):
+                    tier_row = db.get_tier_by_id(lic['tier_id'])
+                    features = ['pdf_check', 'signature_check', 'batch_upload', 'detailed_view', 'history_30_days']
+                    if tier_row:
+                        if tier_row.get('allow_excel_export'):
+                            features.extend(['export_excel', 'export_all'])
+                        if tier_row.get('allow_advanced_filters'):
+                            features.extend(['advanced_filters', 'tsa_filter', 'tree_structure'])
+                    license_info['features'] = features
+                else:
+                    license_info['features'] = get_tier_features(LicenseTier(lic.get('license_tier', 0)))
                 limits = lic.get('limits') or {}
                 if limits.get('daily_files_limit') is None:
                     tier = LicenseTier(lic.get('license_tier', 0))
@@ -1233,7 +1245,7 @@ def register_api_routes(app):
                 features = ['pdf_check', 'signature_check', 'batch_upload', 'detailed_view', 'history_30_days']
                 if tier_row:
                     if tier_row.get('allow_excel_export'):
-                        features.extend(['export_excel', 'export_csv', 'export_all'])
+                        features.extend(['export_excel', 'export_all'])
                     if tier_row.get('allow_advanced_filters'):
                         features.extend(['advanced_filters', 'tsa_filter', 'tree_structure'])
                 license_info['features'] = features

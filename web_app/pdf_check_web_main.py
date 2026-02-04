@@ -261,6 +261,7 @@ HTML_TEMPLATE = '''
 
         /* Filters */
         .filter-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+        .filter-section.filter-section-locked .filter-title::before { content: '🔒 '; font-size: 0.9em; opacity: 0.9; }
         .filter-title { font-size: 0.7em; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
         .filter-buttons { display: flex; gap: 4px; }
         .filter-btn {
@@ -590,6 +591,17 @@ HTML_TEMPLATE = '''
         .modal-content .info-box.yellow { background: #fef9c3; border: 1px solid #fef08a; color: #854d0e; }
         .modal-footer { padding: 12px 20px; background: #fffbeb; border-top: 1px solid #fef08a; font-size: 0.75em; color: #92400e; }
 
+        /* Help modal – širší, čitelnější */
+        #help-modal .modal { max-width: 800px; width: 100%; }
+        #help-modal .modal-content { padding: 28px 36px 32px; max-height: 70vh; line-height: 1.75; }
+        #help-modal .modal-content h4 { font-size: 1.05em; color: #1e5a8a; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+        #help-modal .modal-content h4:first-child { margin-top: 0; }
+        #help-modal .modal-content p { margin-bottom: 14px; color: #4b5563; }
+        #help-modal .modal-content ul { margin: 8px 0 14px 20px; }
+        #help-modal .modal-content li { margin-bottom: 6px; }
+        #help-modal .modal-content .help-pro { background: #ede9fe; color: #5b21b6; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 600; }
+        #help-modal .modal-content .help-legal { margin-top: 24px; padding: 16px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; font-size: 0.9em; color: #92400e; }
+
         .hidden { display: none !important; }
 
         /* Preview file list */
@@ -814,7 +826,6 @@ HTML_TEMPLATE = '''
                 </div>
 
                 <div class="sidebar-footer">
-                    <button class="btn btn-orange" id="btn-export-csv" onclick="exportCSV()" title="Export CSV (Pro)">📊 Export CSV <span id="csv-lock" class="lock-icon" style="display:none;">🔒</span></button>
                     <button class="btn btn-green" id="btn-export-excel" onclick="exportExcel()" title="Export do Excelu (Pro)">
                         📑 Export Excel <span id="excel-lock" class="lock-icon" style="display:none;">🔒</span>
                     </button>
@@ -1055,49 +1066,39 @@ HTML_TEMPLATE = '''
 
     <!-- ===== HELP MODAL ===== -->
     <div class="modal-overlay" id="help-modal">
-        <div class="modal" style="max-width:600px;">
+        <div class="modal">
             <div class="modal-header" style="background:linear-gradient(135deg,#059669,#047857);">
                 <h3>❓ Návod na používání</h3>
                 <button class="modal-close" onclick="hideHelpModal()">×</button>
             </div>
-            <div class="modal-content" style="padding:24px;font-size:0.9em;line-height:1.7;">
-                <h4 style="color:#1e5a8a;margin:0 0 12px 0;">1. NAHRÁNÍ SOUBORŮ</h4>
-                <p style="margin:0 0 16px 0;color:#4b5563;">
-                    • Přetáhněte PDF soubory nebo složku do šedé zóny<br>
-                    • Nebo klikněte na <strong>„Vybrat soubory"</strong> / <strong>„Vybrat složku"</strong><br>
-                    • Zobrazí se náhled s počtem souborů - potvrďte tlačítkem <strong>„Spustit analýzu"</strong>
-                </p>
+            <div class="modal-content">
+                <h4>1. REŽIMY: Z Agenta vs. Lokální kontrola</h4>
+                <p><strong>Z Agenta (soukromý mód):</strong> Výsledky pocházejí z Desktop aplikace. PDF soubory zůstávají na vašem disku; na server odcházejí pouze metadata (výsledky kontroly). Maximální ochrana dat a vhodné pro běžnou práci.</p>
+                <p><strong>Lokální kontrola / Server demo:</strong> PDF nahrajete přímo na web (přetažením nebo výběrem složky). Soubory se zpracují na serveru. Vhodné pro rychlou ukázku; počet a velikost souborů mohou být omezeny.</p>
 
-                <h4 style="color:#1e5a8a;margin:0 0 12px 0;">2. CO SE KONTROLUJE</h4>
-                <p style="margin:0 0 16px 0;color:#4b5563;">
-                    • <strong>PDF/A-3</strong> – formát vyžadovaný Portálem stavebníka<br>
-                    • <strong>Elektronický podpis</strong> – přítomnost a platnost<br>
-                    • <strong>ČKAIT/ČKA</strong> – číslo autorizace v certifikátu<br>
-                    • <strong>Časové razítko</strong> – VČR (vložené) správně, LOK (z PC) nebo bez razítka špatně
-                </p>
+                <h4>2. NAHRÁNÍ SOUBORŮ</h4>
+                <p>Přetáhněte PDF nebo složku do šedé zóny, nebo použijte <strong>„Vybrat soubory"</strong> / <strong>„Vybrat složku"</strong>. Po náhledu potvrďte <strong>„Spustit analýzu"</strong>.</p>
 
-                <h4 style="color:#1e5a8a;margin:0 0 12px 0;">3. VÝSLEDKY</h4>
-                <p style="margin:0 0 16px 0;color:#4b5563;">
-                    • <span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-weight:600;">Zelené</span> = vše v pořádku<br>
-                    • <span style="background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:4px;font-weight:600;">Žluté</span> = varování (starší verze, lokální razítko)<br>
-                    • <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-weight:600;">Červené</span> = problém (chybí podpis, není PDF/A)
-                </p>
+                <h4>3. CO SE KONTROLUJE</h4>
+                <ul>
+                    <li><strong>PDF/A-3</strong> – formát vyžadovaný Portálem stavebníka. Rozlišujeme verze <strong>PDF/A-3a</strong>, <strong>3b</strong>, <strong>3u</strong>, <strong>3y</strong> (úroveň shody); 3b je běžná a akceptovaná.</li>
+                    <li><strong>Elektronický podpis</strong> – přítomnost, platnost certifikátu a integrita dokumentu.</li>
+                    <li><strong>ČKAIT/ČKA certifikáty</strong> – číslo autorizace (7místné ČKAIT nebo 5místné ČKA) v poli OU certifikátu. Kontrola ověřuje, že podpis patří autorizované osobě.</li>
+                    <li><strong>Časové razítko:</strong> <strong>VČR</strong> (vložené časové razítko, TSA) = doporučené; <strong>LOK</strong> (z hodin PC) nebo bez razítka = nedostatečné pro oficiální podání.</li>
+                </ul>
 
-                <h4 style="color:#1e5a8a;margin:0 0 12px 0;">4. VÍCE PODPISŮ</h4>
-                <p style="margin:0 0 16px 0;color:#4b5563;">
-                    • Pokud má dokument více podpisů, zobrazí se <strong>„▶ X podpisy"</strong><br>
-                    • Kliknutím rozbalíte detail všech podpisů
-                </p>
+                <h4>4. STROMOVÁ STRUKTURA (Tree View) A VÍCE PODPISŮ</h4>
+                <p>Výsledky lze zobrazit ve stromové struktuře (složky a soubory). U každého souboru s více podpisy se zobrazí <strong>„▶ X podpisy"</strong>. Kliknutím řádek rozbalíte a uvidíte detail každého podpisu (jméno, ČKAIT, razítko). Rozbalování funguje i u více souborů najednou.</p>
 
-                <h4 style="color:#1e5a8a;margin:0 0 12px 0;">5. EXPORT</h4>
-                <p style="margin:0 0 8px 0;color:#4b5563;">
-                    • Tlačítko <strong>„Exportovat CSV"</strong> uloží výsledky do tabulky<br>
-                    • Lze otevřít v Excelu nebo jiném tabulkovém procesoru
-                </p>
+                <h4>5. VÝSLEDKY A BARVY</h4>
+                <p><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-weight:600;">Zelené</span> = v pořádku · <span style="background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:4px;font-weight:600;">Žluté</span> = varování (starší PDF/A, LOK razítko) · <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-weight:600;">Červené</span> = problém (chybí podpis, není PDF/A).</p>
 
-                <div style="margin-top:20px;padding:12px;background:#fef3c7;border-radius:8px;border:1px solid #fcd34d;">
-                    <strong style="color:#92400e;">⚠️ Upozornění:</strong>
-                    <span style="color:#92400e;"> Výsledky mají informativní charakter a nenahrazují oficiální validaci na Portálu stavebníka.</span>
+                <h4>6. EXPORT A HISTORIE</h4>
+                <p>Export do CSV je dostupný v základním režimu. <span class="help-pro">PRO</span> <strong>Export do Excelu</strong> – jedna dávka nebo všechny vaše kontroly. <span class="help-pro">PRO</span> <strong>Historie</strong> – zobrazení a načtení dříve nahraných dávek z vašeho účtu.</p>
+
+                <div class="help-legal">
+                    <strong>PRÁVNÍ OCHRANA</strong><br>
+                    Aplikace je pomocný validátor. Konečná odpovědnost za podání na Portál stavebníka leží na autorizované osobě. Výsledky mají informativní charakter a nenahrazují oficiální validaci.
                 </div>
             </div>
         </div>
@@ -1442,10 +1443,14 @@ function scanDiskFolder() {
     };
 }
 
-// ===== SIDEBAR FILTERS =====
+// ===== SIDEBAR FILTERS ===== (u Basic: tlačítka klikací, při kliku nejdřív checkFeatureAccess → hláška)
 document.querySelectorAll('.filter-buttons').forEach(container => {
     container.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
+            if (!hasFeature('advanced_filters')) {
+                checkFeatureAccess('advanced_filters');
+                return;
+            }
             container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             let type = 'pdfa';
@@ -1540,11 +1545,11 @@ function renderResults() {
         html += '</div>';
         html += '<div class="batch-header-right"><span class="batch-stat">A-3: ' + stats.pdfaOk + '✓</span>';
         html += '<span class="batch-stat">Podpis: ' + stats.sigOk + '✓</span><span class="batch-count">(' + batch.files.length + ')</span>';
-        // Export - použij server API pokud máme batch_id
+        // Export – server = Excel (Pro), lokální = CSV z paměti
         if (batch.batch_id) {
-            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchFromServer(\\'' + batch.batch_id + '\\')">CSV</button>';
+            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchFromServer(\\'' + batch.batch_id + '\\')">Excel</button>';
         } else {
-            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">CSV</button>';
+            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">Stáhnout</button>';
         }
         html += '<button class="batch-btn delete" onclick="event.stopPropagation();deleteBatch(' + batch.id + ')">✕</button></div></div>';
         html += '<div class="batch-content' + (batch.collapsed ? '' : ' visible') + '" id="batch-content-' + batch.id + '">';
@@ -1972,13 +1977,9 @@ async function fetchWithAuthAndDownload(url, defaultFilename) {
     setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 100);
 }
 
-// ===== EXCEL / CSV EXPORT (Pro+ má oba, Basic nemá žádný) =====
-function exportCSV() {
-    if (!checkFeatureAccess('export_csv')) return;
-    fetchWithAuthAndDownload('/api/agent/export-all', 'export_vse.xlsx');
-}
+// ===== EXCEL EXPORT (Pro+) =====
 function exportBatchCSV(id) {
-    // Fallback pro lokální batch (bez batch_id)
+    // Lokální batch (bez batch_id) – stažení jako CSV z paměti
     const b = batches.find(b => b.id === id);
     if (b) downloadLocalCSV(b.files, b.name + '.csv');
 }
@@ -2042,10 +2043,11 @@ async function loadAgentResults() {
             return;
         }
 
-        // Aktualizuj licenci podle odpovědi serveru (tier z api_key, pod kterým jsou data)
+        // Aktualizuj licenci podle odpovědi serveru (tier a features z API)
         if (data.license) {
             licenseState.tier = data.license.tier !== undefined ? data.license.tier : 0;
             licenseState.tierName = data.license.tier_name || 'Free';
+            if (Array.isArray(data.license.features)) licenseState.features = data.license.features;
             licenseState.daily_files_used = data.license.daily_files_used || 0;
             licenseState.daily_files_limit = data.license.daily_files_limit != null ? data.license.daily_files_limit : null;
             licenseState.daily_files_remaining = data.license.daily_files_remaining != null ? data.license.daily_files_remaining : null;
@@ -2135,14 +2137,15 @@ async function loadAgentResults() {
     }
 }
 
-// Export batch ze serveru (vyžaduje přihlášení – jen vlastní dávka)
+// Export batch ze serveru (Excel) – vyžaduje přihlášení a Pro
 async function exportBatchFromServer(batchId) {
+    if (!checkFeatureAccess('export_excel')) return;
     if (!batchId || batchId.startsWith('legacy_')) {
         const batch = batches.find(b => b.batch_id === batchId || b.id === parseInt(batchId));
         if (batch) exportBatchCSV(batch.id);
         return;
     }
-    await fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=csv', 'batch_export.xlsx');
+    await fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=xlsx', 'batch.xlsx');
 }
 
 // =============================================================================
@@ -2269,7 +2272,6 @@ const TIER_CONFIG = {
 // Feature requirements: Free 5 | Basic 100 bez exportu | Pro vše
 const FEATURE_REQUIREMENTS = {
     'export_excel': 2,      // jen Pro+
-    'export_csv': 2,        // jen Pro+
     'batch_upload': 1,      // Basic+
     'tree_structure': 2,    // Pro+
     'tsa_filter': 2,       // Pro+
@@ -2333,31 +2335,23 @@ function checkFeatureAccess(featureName) {
 
 function updateFeatureLocks() {
     const hasExcel = hasFeature('export_excel');
-    const hasCsv = hasFeature('export_csv');
     const excelLock = document.getElementById('excel-lock');
     if (excelLock) excelLock.style.display = hasExcel ? 'none' : 'inline';
-    const csvLock = document.getElementById('csv-lock');
-    if (csvLock) csvLock.style.display = hasCsv ? 'none' : 'inline';
-    const btnExportCsv = document.getElementById('btn-export-csv');
-    if (btnExportCsv) {
-        if (!hasCsv) btnExportCsv.classList.add('feature-locked');
-        else btnExportCsv.classList.remove('feature-locked');
-    }
     const exportAllBtn = document.getElementById('btn-export-all');
     if (exportAllBtn) {
         if (!hasFeature('export_all')) exportAllBtn.classList.add('feature-locked');
         else exportAllBtn.classList.remove('feature-locked');
     }
-    // BASIC: filtry viditelné, ale zamčené (Pro = plně dostupné)
+    // BASIC: u sidebar filtrů jen vizuální zámeček (filter-section-locked), tlačítka zůstávají klikací → při kliku hláška
     const filterSections = document.querySelectorAll('.filter-section');
-    const isBasic = licenseState.tier === 1;
+    const hasFilters = hasFeature('advanced_filters');
     filterSections.forEach(el => {
-        if (isBasic) el.classList.add('feature-locked');
-        else el.classList.remove('feature-locked');
+        el.classList.remove('feature-locked', 'filter-section-locked');
+        if (!hasFilters) el.classList.add('filter-section-locked');
     });
     const tableHeaderFilters = document.getElementById('table-header-filters');
     if (tableHeaderFilters) {
-        if (isBasic) tableHeaderFilters.classList.add('feature-locked');
+        if (!hasFilters) tableHeaderFilters.classList.add('feature-locked');
         else tableHeaderFilters.classList.remove('feature-locked');
     }
 }

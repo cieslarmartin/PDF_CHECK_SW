@@ -948,15 +948,17 @@ class Database:
             return False, "Pro tento účet není nastaveno heslo – použijte licenční klíč v agentovi"
         if not self._verify_password(password, ph):
             return False, "Neplatný e-mail nebo heslo"
-        # Vrátit údaje včetně tier_name a max_batch_size z get_user_license (DB tier, ne hardcoded)
+        # Vrátit údaje včetně tier_name, max_batch_size a normalizovaného license_tier z get_user_license (tier_id → 0/1/2/3)
         license_info = self.get_user_license(row['api_key'])
         tier_name = (license_info or {}).get('tier_name') or tier_to_string(LicenseTier(row.get('license_tier', 0)))
         max_batch_size = (license_info or {}).get('max_batch_size')
+        # Důležité: použít license_tier z get_user_license (normalizuje tier_id: Basic=1, Pro=2), ne surový row
+        license_tier = (license_info or {}).get('license_tier', row.get('license_tier', 0))
         out = {
             'api_key': row['api_key'],
             'user_name': row.get('user_name'),
             'email': row.get('email'),
-            'license_tier': row.get('license_tier', 0),
+            'license_tier': license_tier,
             'tier_name': tier_name,
             'max_batch_size': max_batch_size,
         }
