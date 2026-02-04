@@ -2232,12 +2232,12 @@ let licenseState = {
     isValid: true
 };
 
-// Tier konfigurace pro UI
+// Tier konfigurace pro UI (Trial/Free, Basic, Pro, Unlimited/God)
 const TIER_CONFIG = {
-    0: { name: 'Free', icon: '🆓', class: 'free' },
+    0: { name: 'Trial', icon: '🆓', class: 'free' },
     1: { name: 'Basic', icon: '⭐', class: 'basic' },
     2: { name: 'Pro', icon: '💎', class: 'pro' },
-    3: { name: 'Enterprise', icon: '🏢', class: 'enterprise' }
+    3: { name: 'Unlimited', icon: '🏢', class: 'enterprise' }
 };
 
 // Feature requirements: Free 5 | Basic 100 bez exportu | Pro vše
@@ -2259,9 +2259,9 @@ function updateLicenseBadge() {
     // Odstraň staré třídy
     badge.className = 'license-badge ' + config.class;
 
-    // Aktualizuj obsah
+    // Aktualizuj obsah (název ze serveru má přednost)
     badge.querySelector('.license-badge-icon').textContent = config.icon;
-    tierName.textContent = config.name;
+    tierName.textContent = licenseState.tierName || config.name;
 }
 
 function updateDailyQuotaDisplay() {

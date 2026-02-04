@@ -204,7 +204,7 @@ def dashboard():
     activity_30 = db.get_activity_last_30_days()
     tiers_list = db.get_all_license_tiers()
     # Pro nové licence nabízíme pouze Free, Basic, Pro, Trial (bez Enterprise)
-    product_tiers = [t for t in tiers_list if (t.get('name') or '').strip() in ('Free', 'Basic', 'Pro', 'Trial')]
+    product_tiers = [t for t in tiers_list if (t.get('name') or '').strip() in ('Trial', 'Basic', 'Pro', 'Unlimited')]
     if not product_tiers:
         product_tiers = tiers_list
     by_tier_counts = {}
@@ -559,6 +559,9 @@ def api_create_license():
         }), 400
 
     if tier_id is not None:
+        tier_row = db.get_tier_by_id(tier_id)
+        if tier_row and (tier_row.get('name') or '').strip() == 'Trial' and request.form.get('days') in (None, '', '365'):
+            days = 7  # Trial: výchozí 7 dní
         api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=days, password=password)
     else:
         api_key = db.admin_generate_license_key(user_name, email, tier, days, password=password)

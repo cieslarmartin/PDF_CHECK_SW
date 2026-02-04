@@ -977,6 +977,7 @@ class Database:
         result = dict(row)
 
         # Přednost: globální tier (tier_id) před legacy license_tier (0–3)
+        # Frontend očekává license_tier: 0=Trial/Free, 1=Basic (blokované filtry+export), 2=Pro, 3=Unlimited/God
         tier_row = self.get_tier_by_id(result.get('tier_id')) if result.get('tier_id') else None
         if tier_row:
             result['max_batch_size'] = result.get('max_batch_size') if result.get('max_batch_size') is not None else tier_row.get('max_files_limit', 10)
@@ -985,6 +986,8 @@ class Database:
             result['allow_excel_export'] = bool(tier_row.get('allow_excel_export', 0))
             result['max_devices'] = tier_row.get('max_devices', 1)
             result['tier_name'] = tier_row.get('name', 'Unknown')
+            name = (tier_row.get('name') or '').strip().lower()
+            result['license_tier'] = 0 if name in ('trial', 'free') else (1 if name == 'basic' else (2 if name == 'pro' else 3))
         else:
             try:
                 from license_config import get_tier_limits

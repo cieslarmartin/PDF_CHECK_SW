@@ -27,10 +27,10 @@ class LicenseTier(IntEnum):
 
 # Názvy tierů pro zobrazení (v aplikaci a adminu)
 TIER_NAMES = {
-    LicenseTier.FREE: "Free",
+    LicenseTier.FREE: "Trial",
     LicenseTier.BASIC: "Basic",
     LicenseTier.PRO: "Pro",
-    LicenseTier.ENTERPRISE: "Pro",  # Zobrazit jako Pro
+    LicenseTier.ENTERPRISE: "Unlimited",
 }
 
 # Barvy tierů pro UI
@@ -196,14 +196,17 @@ def get_limit(tier: LicenseTier, limit_name: str) -> Any:
 
 
 def tier_from_string(tier_str: str) -> LicenseTier:
-    """Převede string na LicenseTier"""
+    """Převede string na LicenseTier (Trial/Free=0, Basic=1, Pro=2, Unlimited/God=3)."""
     tier_map = {
         'free': LicenseTier.FREE,
+        'trial': LicenseTier.FREE,
         'basic': LicenseTier.BASIC,
         'pro': LicenseTier.PRO,
-        'enterprise': LicenseTier.ENTERPRISE,
+        'enterprise': LicenseTier.PRO,
+        'unlimited': LicenseTier.ENTERPRISE,
+        'god': LicenseTier.ENTERPRISE,
     }
-    return tier_map.get(tier_str.lower(), LicenseTier.FREE)
+    return tier_map.get((tier_str or '').lower().strip(), LicenseTier.FREE)
 
 
 def tier_to_string(tier: LicenseTier) -> str:

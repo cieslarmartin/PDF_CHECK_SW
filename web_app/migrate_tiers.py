@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # migrate_tiers.py
 # DATABASE UPGRADE: Tier-Based License System
-# Cenová politika: Basic (PROJEKTANT) 1290 Kč/rok, Pro (VEDOUCÍ PROJEKTANT) 1990 Kč/rok.
-# Výchozí tiery: Free, Basic, Pro, Trial (bez Enterprise – zredukováno na 4 licence).
+# Tiery: Trial (7 dní, max 100 kontrol, vše otevřené), Basic (blokované filtry + Excel/CSV), Pro (vše), Unlimited/God (vše, admin).
 # Spusť: cd ~/web_app && python migrate_tiers.py
 # © 2025 Ing. Martin Cieślar
 
@@ -47,30 +46,31 @@ def run():
         )
     ''')
     cur.execute("SELECT COUNT(*) FROM license_tiers")
-    if cur.fetchone()[0] == 0:
-        # Pouze 4 tiery podle cenové politiky: Free, Basic (PROJEKTANT), Pro (VEDOUCÍ PROJEKTANT), Trial
+    count = cur.fetchone()[0]
+    # Definice: Trial (vše jako Pro, max 100 kontrol, 7 dní), Basic (bez filtrů a Excel/CSV), Pro (vše), Unlimited (God/admin)
+    default_tiers = [
+        (1, 'Trial', 100, 1, 1, 1, 1),       # Vše otevřené, max 100 kontrol, 7 dní (license_expires u uživatele)
+        (2, 'Basic', 500, 1, 1, 0, 1),      # Filtry a export Excel/CSV blokované
+        (3, 'Pro', 99999, 1, 1, 1, 3),      # Vše otevřené
+        (4, 'Unlimited', 99999, 1, 1, 1, 10),  # God / admin
+    ]
+    if count == 0:
         cur.executemany(
             '''INSERT INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
                VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            [
-                (1, 'Free', 5, 0, 0, 0, 1),
-                (2, 'Basic', 100, 1, 1, 0, 1),   # PROJEKTANT – bez exportu Excel
-                (3, 'Pro', 99999, 1, 1, 1, 3),   # VEDOUCÍ PROJEKTANT – export Excel, 3 zařízení
-                (4, 'Trial', 5, 0, 0, 0, 1),     # Demo účet
-            ]
+            default_tiers
         )
-        print("Vloženy výchozí tier definice: Free (5/1), Basic (100/1, bez Excel), Pro (99999/3, s Excel), Trial (5/1).")
+        print("Vloženy výchozí tier definice: Trial (100, vše), Basic (500, bez Excel), Pro (99999, vše), Unlimited (God).")
     else:
-        print("Tabulka license_tiers již obsahuje data – neprovádí se změna.")
-    # Trial tier: vytvoř pokud chybí (upgrade ze staré migrace)
-    cur.execute("SELECT id FROM license_tiers WHERE name = 'Trial'")
-    if cur.fetchone() is None:
-        cur.execute(
-            '''INSERT INTO license_tiers (name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
-               VALUES (?, ?, ?, ?, ?, ?)''',
-            ('Trial', 5, 0, 0, 0, 1)
-        )
-        print("Přidán tier Trial.")
+        # Synchronizace: nastav správné hodnoty pro id 1–4, přidej Unlimited pokud chybí
+        for tier_id, name, max_files, allow_sig, allow_ts, allow_excel, max_dev in default_tiers:
+            cur.execute(
+                '''INSERT OR REPLACE INTO license_tiers (id, name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export, max_devices)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (tier_id, name, max_files, allow_sig, allow_ts, allow_excel, max_dev)
+            )
+        cur.execute("DELETE FROM license_tiers WHERE id > 4")
+        print("Tier definice synchronizovány: Trial, Basic, Pro, Unlimited.")
 
     cur.execute("CREATE INDEX IF NOT EXISTS idx_license_tiers_name ON license_tiers(name)")
 

@@ -1227,9 +1227,14 @@ def register_api_routes(app):
             if not license_info:
                 return jsonify({'error': 'Invalid API key'}), 401
 
-            # Když má uživatel tier_id (Trial, Free, Basic… z DB), použij limity z DB – ne hardcoded
+            # Když má uživatel tier_id (Trial, Basic, Pro, Unlimited z DB), sestav features z tier_row
             if license_info.get('tier_id'):
-                license_info['features'] = []
+                tier_row = db.get_tier_by_id(license_info['tier_id'])
+                features = ['pdf_check', 'signature_check', 'batch_upload', 'detailed_view', 'history_30_days']
+                if tier_row and tier_row.get('allow_excel_export'):
+                    # Trial, Pro, Unlimited: filtry a export; Basic má allow_excel_export=0
+                    features.extend(['export_excel', 'export_csv', 'export_all', 'advanced_filters', 'tsa_filter', 'tree_structure'])
+                license_info['features'] = features
                 license_info['limits'] = {
                     'max_files_per_batch': license_info.get('max_batch_size'),
                     'max_devices': license_info.get('max_devices'),
