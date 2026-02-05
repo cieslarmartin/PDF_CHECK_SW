@@ -109,15 +109,23 @@ HTML_TEMPLATE = '''
         .header-logo-title .pro { color: #9ca3af; font-weight: 400; }
         .header-logo-subtitle { color: #9ca3af; font-size: 0.7em; }
         .header-actions { display: flex; align-items: center; gap: 12px; }
+        .header-user-widget { display: flex; align-items: center; gap: 10px; margin-left: auto; }
         .header-btn {
-            padding: 6px 12px;
-            background: transparent;
-            border: none;
-            color: #6b7280;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
             font-size: 0.85em;
             cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #6b7280;
         }
         .header-btn:hover { color: #1e5a8a; }
+        .header-btn-primary { background: #1e5a8a; color: white !important; }
+        .header-btn-primary:hover { background: #174a6e; color: white !important; }
+        .header-btn-logout { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .header-btn-logout:hover { background: #fee2e2; color: #b91c1c; }
+        .header-logged-in-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-divider { width: 1px; height: 20px; background: #e5e7eb; }
         .header-build { font-size: 0.7em; color: #d1d5db; }
 
@@ -682,22 +690,22 @@ HTML_TEMPLATE = '''
                 </div>
             </div>
             <div class="header-actions">
-                <span id="logged-in-area" style="display:none;font-size:0.85em;color:#6b7280;">
-                    Přihlášen jako: <strong id="logged-in-display"></strong>
-                    <button type="button" class="header-btn" onclick="doLogout()" style="margin-left:8px;">Odhlásit</button>
-                </span>
-                <button type="button" id="header-login-btn" class="header-btn" onclick="focusLogin()" style="font-weight:600;color:#1e5a8a;">Přihlásit se</button>
-                <span id="script-ok-test" style="font-size:10px;color:#9ca3af;margin-right:8px;" title="Pokud se zde zobrazí Script OK, skript se načetl."></span>
-                <span id="license-badge" class="license-badge free">
-                    <span class="license-badge-icon">🆓</span>
-                    <span id="license-tier-name">Free</span>
-                </span>
-                <span id="daily-quota-display" style="font-size:0.75em;color:#6b7280;margin-left:8px;display:none;"></span>
-                <div class="header-divider"></div>
                 <button class="header-btn" onclick="showHelpModal()">❓ Nápověda</button>
                 <div class="header-divider"></div>
                 <button class="header-btn" onclick="showInfoModal()">📘 Info</button>
                 <span class="header-build">v42</span>
+                <div class="header-user-widget">
+                    <button type="button" id="header-login-btn" class="header-btn header-btn-primary" onclick="showLoginModal()">👤 PŘIHLÁSIT SE</button>
+                    <span id="logged-in-area" style="display:none;align-items:center;gap:10px;" class="header-logged-in-row">
+                        <span id="license-badge" class="license-badge free">
+                            <span class="license-badge-icon">🆓</span>
+                            <span id="license-tier-name">Free</span>
+                        </span>
+                        <span id="logged-in-display" style="font-weight:700;color:#374151;"></span>
+                        <span id="daily-quota-display" style="font-size:0.75em;color:#6b7280;display:none;"></span>
+                        <button type="button" class="header-btn header-btn-logout" onclick="doLogout()">Odhlásit</button>
+                    </span>
+                </div>
             </div>
         </header>
 
@@ -713,36 +721,32 @@ HTML_TEMPLATE = '''
 
                     <!-- AGENT MODE - načítání dat z API -->
                     <div id="agent-mode">
-                        <div id="login-block" style="padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:12px;border:1px solid #e5e7eb;">
-                            <div style="font-size:0.85em;font-weight:600;color:#374151;margin-bottom:8px;">Přihlášení (e-mail + heslo)</div>
-                            <input type="text" id="login-email" placeholder="E-mail" style="width:100%;padding:8px 10px;margin-bottom:6px;border:1px solid #e5e7eb;border-radius:6px;font-size:0.9em;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doLogin(); }">
-                            <input type="password" id="login-password" placeholder="Heslo" style="width:100%;padding:8px 10px;margin-bottom:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:0.9em;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doLogin(); }">
-                            <button type="button" class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:8px;">Přihlásit</button>
+                        <div id="agent-login-required-msg" style="display:none;padding:14px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:0.9em;color:#92400e;margin-bottom:12px;">
+                            Pro zobrazení historie z Agenta se přihlaste v horní liště.
                         </div>
-                        <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;margin-bottom:12px;">
-                            <div style="font-size:2em;margin-bottom:8px;">🌐</div>
-                            <div style="font-weight:600;color:#1e5a8a;">Z Agenta – výsledky z Desktop aplikace</div>
-                            <div style="font-size:0.8em;color:#6b7280;margin-top:4px;">Soubory zůstaly na disku, na server šla jen metadata (výsledky kontroly)</div>
-                        </div>
-                        <button class="btn btn-primary" onclick="loadAgentResults()">🔄 Načíst výsledky</button>
-                        <div id="agent-stats" style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;display:none;">
-                            <div style="font-size:0.75em;color:#6b7280;margin-bottom:8px;">STATISTIKY</div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                                <div style="text-align:center;padding:8px;background:white;border-radius:4px;">
-                                    <div style="font-size:1.5em;font-weight:700;color:#1e5a8a;" id="agent-total">0</div>
-                                    <div style="font-size:0.7em;color:#6b7280;">Celkem</div>
-                                </div>
-                                <div style="text-align:center;padding:8px;background:white;border-radius:4px;">
-                                    <div style="font-size:1.5em;font-weight:700;color:#16a34a;" id="agent-pdfa-ok">0</div>
-                                    <div style="font-size:0.7em;color:#6b7280;">PDF/A-3</div>
+                        <div id="agent-mode-content">
+                            <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;margin-bottom:12px;">
+                                <div style="font-size:2em;margin-bottom:8px;">🌐</div>
+                                <div style="font-weight:600;color:#1e5a8a;">Z Agenta – výsledky z Desktop aplikace</div>
+                                <div style="font-size:0.8em;color:#6b7280;margin-top:4px;">Soubory zůstaly na disku, na server šla jen metadata (výsledky kontroly)</div>
+                            </div>
+                            <button class="btn btn-primary" id="btn-load-agent-results" onclick="loadAgentResults()">🔄 Načíst výsledky</button>
+                            <div id="agent-stats" style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;display:none;">
+                                <div style="font-size:0.75em;color:#6b7280;margin-bottom:8px;">STATISTIKY</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <div style="text-align:center;padding:8px;background:white;border-radius:4px;">
+                                        <div style="font-size:1.5em;font-weight:700;color:#1e5a8a;" id="agent-total">0</div>
+                                        <div style="font-size:0.7em;color:#6b7280;">Celkem</div>
+                                    </div>
+                                    <div style="text-align:center;padding:8px;background:white;border-radius:4px;">
+                                        <div style="font-size:1.5em;font-weight:700;color:#16a34a;" id="agent-pdfa-ok">0</div>
+                                        <div style="font-size:0.7em;color:#6b7280;">PDF/A-3</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div id="free-trial-hint" style="margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:0.85em;">
-                            <strong>Bez přihlášení:</strong> Záložka <strong>Na server, nebo na cloud</strong> = nahrání PDF – celé soubory jdou na server. Pro soukromí: Desktop aplikace (<strong>Z Agenta</strong>) – soubory na disku, na server jen metadata.
-                        </div>
-                        <div class="disk-tip" style="margin-top:12px;">
-                            💡 <strong>Z Agenta:</strong> Soubory zůstávají na disku, na server odcházejí jen metadata (výsledky kontroly).
+                            <div class="disk-tip" style="margin-top:12px;">
+                                💡 <strong>Z Agenta:</strong> Soubory zůstávají na disku, na server odcházejí jen metadata (výsledky kontroly).
+                            </div>
                         </div>
                     </div>
 
@@ -1100,6 +1104,27 @@ HTML_TEMPLATE = '''
                     <strong>PRÁVNÍ OCHRANA</strong><br>
                     Aplikace je pomocný validátor. Konečná odpovědnost za podání na Portál stavebníka leží na autorizované osobě. Výsledky mají informativní charakter a nenahrazují oficiální validaci.
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LOGIN MODAL (přihlášení z hlavičky) ===== -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e5a8a,#174a6e);">
+                <h3>👤 Přihlášení</h3>
+                <button class="modal-close" onclick="hideLoginModal()">×</button>
+            </div>
+            <div class="modal-content" style="padding:20px;">
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:0.85em;font-weight:600;color:#374151;margin-bottom:4px;">E-mail</label>
+                    <input type="text" id="login-email" placeholder="E-mail" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:0.95em;box-sizing:border-box;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doLogin(); }">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:0.85em;font-weight:600;color:#374151;margin-bottom:4px;">Heslo</label>
+                    <input type="password" id="login-password" placeholder="Heslo" style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:0.95em;box-sizing:border-box;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doLogin(); }">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:10px;">Přihlásit</button>
             </div>
         </div>
     </div>
@@ -2164,36 +2189,39 @@ function getStoredUser() {
 function setStoredUser(obj) { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(obj)); }
 function clearStoredUser() { localStorage.removeItem(USER_STORAGE_KEY); }
 
-function focusLogin() {
-    setMode('agent');
+function showLoginModal() {
+    document.getElementById('login-modal').classList.add('visible');
     setTimeout(function() {
         const el = document.getElementById('login-email');
-        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        if (el) { el.focus(); }
     }, 100);
+}
+function hideLoginModal() {
+    document.getElementById('login-modal').classList.remove('visible');
 }
 
 function updateLoggedInUI() {
     const u = getStoredUser();
     const area = document.getElementById('logged-in-area');
-    const loginBlock = document.getElementById('login-block');
     const headerLoginBtn = document.getElementById('header-login-btn');
-    const freeTrialHint = document.getElementById('free-trial-hint');
+    const agentLoginMsg = document.getElementById('agent-login-required-msg');
+    const agentModeContent = document.getElementById('agent-mode-content');
     if (u) {
         if (area) {
-            area.style.display = '';
+            area.style.display = 'flex';
             const disp = document.getElementById('logged-in-display');
-            if (disp) disp.textContent = (u.email || u.user_name || 'Účet') + ' (' + (u.tier_name || 'Free') + ')';
+            if (disp) disp.textContent = (u.email || u.user_name || 'Účet');
         }
         if (headerLoginBtn) headerLoginBtn.style.display = 'none';
-        if (loginBlock) loginBlock.style.display = 'none';
-        if (freeTrialHint) freeTrialHint.style.display = 'none';
+        if (agentLoginMsg) agentLoginMsg.style.display = 'none';
+        if (agentModeContent) agentModeContent.style.display = 'block';
         licenseState.tier = u.tier !== undefined ? u.tier : 0;
         licenseState.tierName = u.tier_name || 'Free';
     } else {
         if (area) area.style.display = 'none';
-        if (headerLoginBtn) headerLoginBtn.style.display = 'inline';
-        if (loginBlock) loginBlock.style.display = 'block';
-        if (freeTrialHint) freeTrialHint.style.display = 'block';
+        if (headerLoginBtn) headerLoginBtn.style.display = 'inline-block';
+        if (agentLoginMsg) agentLoginMsg.style.display = 'block';
+        if (agentModeContent) agentModeContent.style.display = 'none';
         licenseState.tier = 0;
         licenseState.tierName = 'Free';
     }
@@ -2231,6 +2259,7 @@ async function doLogin() {
                 tier: data.tier !== undefined ? data.tier : 0,
                 tier_name: data.tier_name || 'Free'
             });
+            hideLoginModal();
             clearResultsView();
             updateLoggedInUI();
             if (passEl) passEl.value = '';
@@ -2384,6 +2413,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (im) im.addEventListener('click', function(e) { if (e.target === this) hideInfoModal(); });
         var hm = document.getElementById('help-modal');
         if (hm) hm.addEventListener('click', function(e) { if (e.target === this) hideHelpModal(); });
+        var lm = document.getElementById('login-modal');
+        if (lm) lm.addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
         updateLoggedInUI();
         // Jednorázový přihlašovací odkaz z agenta (?login_token=xxx) – automatické přihlášení
         var params = new URLSearchParams(window.location.search);
