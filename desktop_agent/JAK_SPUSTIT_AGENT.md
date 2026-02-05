@@ -1,5 +1,7 @@
 # Jak spustit PDF DokuCheck Agent
 
+Agent používá **grafiku V3 (Enterprise)** – strom složek, metriky, možnosti odebrání z fronty, spuštění z disku je stejné jako dříve.
+
 ## 1. Co je potřeba
 
 - **Python 3.8+** (s tkinter – bývá součástí instalace Pythonu)
@@ -30,7 +32,7 @@ Nainstaluje se: `requests`, `PyYAML`, `tkinterdnd2`, `customtkinter`.
 1. Otevřete složku **desktop_agent**:  
    `C:\Claude\PDF_CHECK_SW\desktop_agent`
 2. Dvojklik na **SPUSTIT_AGENT.bat**
-3. Mělo by se otevřít okno agenta (tmavé rozhraní).
+3. Mělo by se otevřít okno agenta (V3 Enterprise rozhraní).
 
 ### Varianta B – z příkazové řádky
 
@@ -68,3 +70,16 @@ Nainstaluje se: `requests`, `PyYAML`, `tkinterdnd2`, `customtkinter`.
 - **Chyba u importu (customtkinter, tkinterdnd2…)** – v složce `desktop_agent` znovu spusťte:  
   `pip install -r requirements.txt`
 - **Žádné okno se neotevře** – v terminálu by měla být chybová hláška; pošlete ji pro diagnostiku.
+
+---
+
+## Rychlé shrnutí – spuštění z disku
+
+| Způsob | Postup |
+|--------|--------|
+| **Dvojklik** | Složka `desktop_agent` → dvojklik na **SPUSTIT_AGENT.bat** |
+| **Příkazová řádka** | `cd C:\Claude\PDF_CHECK_SW\desktop_agent` → `python pdf_check_agent_main.py` |
+| **Z kořene projektu** | `python desktop_agent\pdf_check_agent_main.py` (z `C:\Claude\PDF_CHECK_SW`) |
+
+Před prvním spuštěním nainstalujte závislosti:  
+`pip install -r desktop_agent\requirements.txt`

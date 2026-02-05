@@ -2829,8 +2829,8 @@ def count_pdfs_in_folder(folder_path):
 
 @app.route('/')
 def index():
-    """Landing page DokuCheck."""
-    return render_template('landing.html')
+    """Landing page DokuCheck – verze V3 (světlé schéma, stejný obsah jako /lp/v3)."""
+    return render_template('landing_v3.html')
 
 
 @app.route('/vop')

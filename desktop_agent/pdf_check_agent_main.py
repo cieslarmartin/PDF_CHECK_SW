@@ -12,7 +12,8 @@ import requests
 # Importy lokálních modulů
 from pdf_checker import analyze_pdf_file, analyze_multiple_pdfs, analyze_folder
 from license import LicenseManager
-from ui import create_app
+# Grafika V3 (Enterprise) – strom složek, světlé rozlišení, bez detailu kontroly v okně
+from ui_2026_v3_enterprise import create_app_2026_v3 as create_app
 
 
 def _get_base_path():

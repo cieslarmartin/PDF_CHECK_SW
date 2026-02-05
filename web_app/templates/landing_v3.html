@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DokuCheck – Dokumentace bez chyb | Portál stavebníka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        /* Produkční header – bílé pozadí, modrý spodní okraj */
+        .landing-header { background: white; border-bottom: 2px solid #1e5a8a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .landing-header .logo-pdf { color: #1e5a8a; }
+        .landing-header .logo-doku { color: #374151; }
+        .landing-header .logo-pro { color: #9ca3af; font-weight: 400; }
+        .landing-header a { color: #6b7280; text-decoration: none; }
+        .landing-header a:hover { color: #1e5a8a; }
+        /* V3 panel a tlačítka – světlé schéma */
+        .lp-v3-panel { background: white; border: 1px solid #e5e7eb; }
+        .lp-v3-badge { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 9999px; }
+        .lp-v3-timeline { position: relative; }
+        .lp-v3-timeline::before { content: ''; position: absolute; left: 1rem; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #1e5a8a, #94a3b8); }
+        .lp-v3-btn-primary { background: #1e5a8a; color: white; }
+        .lp-v3-btn-primary:hover { background: #174a6e; }
+        .lp-v3-btn-secondary { background: white; color: #1e5a8a; border: 1px solid #1e5a8a; }
+        .lp-v3-btn-secondary:hover { background: #eff6ff; }
+        .lp-v3-link { color: #1e5a8a; }
+        .lp-v3-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body class="min-h-screen antialiased">
+    {# Produkční header – bez sandbox přepínače #}
+    <header class="landing-header">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <a href="/" class="text-xl font-bold">
+                <span class="logo-pdf">PDF</span><span class="logo-doku">Doku</span><span class="logo-pro">Check PRO</span>
+            </a>
+            <nav class="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium">
+                <a href="#jak">Jak to funguje</a>
+                <a href="#dva-rezimy">Dva režimy</a>
+                <a href="#cenik">Ceník</a>
+                <a href="#faq">Časté dotazy</a>
+                <a href="/app">Vyzkoušet ONLINE</a>
+                <a href="/download">Stáhnout</a>
+                <a href="/portal">Můj účet</a>
+                <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="DokuCheck" class="h-9 w-auto object-contain" onerror="this.style.display='none'">
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        {# 1) HERO #}
+        <section class="lp-v3-panel rounded-2xl p-8 md:p-12 mb-10 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center gap-10">
+                <div class="flex-1">
+                    <span class="lp-v3-badge mb-4 inline-block" style="background:#eff6ff;color:#1e5a8a;">ONLINE + Desktop</span>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-4 leading-tight" style="color:#1f2937;">
+                        DokuCheck – Dokumentace bez chyb pro Portál stavebníka
+                    </h1>
+                    <p class="text-lg mb-6 max-w-xl" style="color:#6b7280;">
+                        Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.
+                    </p>
+                    <p class="text-sm mb-6 flex items-center gap-2" style="color:#6b7280;">
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium" style="background:#f3f4f6;color:#374151;">⏱ Kontrola za 2–5 min</span>
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-v3-btn-primary transition">
+                            Vyzkoušet ONLINE Check
+                        </a>
+                        <a href="/download" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-v3-btn-secondary transition">
+                            Stáhnout aplikaci zdarma
+                        </a>
+                        <a href="/portal" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium lp-v3-link transition">Můj účet</a>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 w-full md:w-80">
+                    <div class="aspect-video rounded-xl flex items-center justify-center border" style="background:#f9fafb;border-color:#e5e7eb;">
+                        <div class="text-center" style="color:#9ca3af;">
+                            <span class="text-5xl block mb-2">▶</span>
+                            <span class="text-sm">Ukázka 40 s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# 2) Jak to funguje #}
+        <section id="jak" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Jak to funguje</h2>
+            <div class="lp-v3-panel rounded-2xl p-8 shadow-sm">
+                <div class="lp-v3-timeline space-y-0">
+                    <div class="relative pl-12 pb-8">
+                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">1</span>
+                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Nahraj / vyber složku</h3>
+                        <p class="text-sm" style="color:#6b7280;">Přetáhněte PDF nebo vyberte složku s dokumenty.</p>
+                    </div>
+                    <div class="relative pl-12 pb-8">
+                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">2</span>
+                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Proveď kontrolu</h3>
+                        <p class="text-sm" style="color:#6b7280;">Automatická kontrola PDF/A, podpisy a časových razítek.</p>
+                    </div>
+                    <div class="relative pl-12">
+                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">3</span>
+                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Exportuj výsledky</h3>
+                        <p class="text-sm" style="color:#6b7280;">Výstupy do CSV/Excel, přehled podle složek.</p>
+                    </div>
+                </div>
+                <div class="mt-8 rounded-xl h-32 flex items-center justify-center border" style="background:#f9fafb;border-color:#e5e7eb;">
+                    <span class="text-sm" style="color:#9ca3af;">Schéma placeholder (SVG / obrázek)</span>
+                </div>
+            </div>
+        </section>
+
+        {# 3) Dva režimy #}
+        <section id="dva-rezimy" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Dva režimy: Z Agenta vs Cloud</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
+                    <span class="text-2xl mb-2 block">🌐</span>
+                    <span class="lp-v3-badge mb-2 inline-block" style="background:#d1fae5;color:#047857;">Soukromí</span>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">Z Agenta</h3>
+                    <p class="text-sm" style="color:#6b7280;">Soubory na disku, na server jen metadata.</p>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
+                    <span class="text-2xl mb-2 block">☁️</span>
+                    <span class="lp-v3-badge mb-2 inline-block" style="background:#f3f4f6;color:#4b5563;">Demo</span>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">Cloud</h3>
+                    <p class="text-sm" style="color:#6b7280;">Celé PDF na server. Rychlé vyzkoušení.</p>
+                </div>
+            </div>
+        </section>
+
+        {# 4) Ceník #}
+        <section id="cenik" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Ceník</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Basic</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">Pro menší objemy.</p>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-medium transition" style="background:#e5e7eb;color:#374151;">Vybrat</a>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm relative border-2" style="border-color:#1e5a8a;">
+                    <span class="lp-v3-badge absolute top-4 right-4" style="background:#eff6ff;color:#1e5a8a;">DOPORUČUJEME PRO ATELIÉRY</span>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Pro</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">Plné funkce, export, historie.</p>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition">Vybrat</a>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Firemní</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">Na míru pro větší týmy.</p>
+                    <a href="mailto:info@dokucheck.app" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-secondary transition">Kontakt</a>
+                </div>
+            </div>
+        </section>
+
+        {# 5) Důvěřují nám #}
+        <section class="mb-14">
+            <h2 class="text-2xl font-bold mb-6" style="color:#1f2937;">Důvěřují nám</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {% for i in range(6) %}
+                <div class="h-16 lp-v3-panel rounded-lg flex items-center justify-center text-xs shadow-sm" style="color:#9ca3af;">Logo</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {# 6) FAQ #}
+        <section id="faq" class="mb-14">
+            <h2 class="text-2xl font-bold mb-6" style="color:#1f2937;">Časté dotazy</h2>
+            <div class="space-y-2">
+                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Co kontroluje DokuCheck? <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka.</p>
+                </details>
+                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Jaký je rozdíl mezi Z Agenta a Cloud? <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo).</p>
+                </details>
+                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Mohu zrušit předplatné? <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">Ano, předplatné se neobnoví po ukončení období.</p>
+                </details>
+                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Kde najdu Můj účet? <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;"><a href="/portal" class="lp-v3-link">Portál</a> – historie a nastavení.</p>
+                </details>
+            </div>
+        </section>
+
+        {# 7) Footer #}
+        <footer class="pt-6 border-t" style="border-color:#e5e7eb;">
+            <p class="text-sm" style="color:#6b7280;">Kontakt: <a href="mailto:info@dokucheck.app" class="lp-v3-link">info@dokucheck.app</a> · <a href="/vop" class="lp-v3-link">VOP</a> · <a href="/gdpr" class="lp-v3-link">GDPR</a></p>
+        </footer>
+    </main>
+</body>
+</html>

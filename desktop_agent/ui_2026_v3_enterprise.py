@@ -121,8 +121,8 @@ class PDFCheckUI_2026_V3:
         self.selected_qidx = None
 
         self.root.title("DokuCheck Agent – Preview V3 Enterprise (2026)")
-        self.root.minsize(1100, 700)
-        self.root.geometry("1440x900")
+        self.root.minsize(1200, 750)
+        self.root.geometry("1680x1000")
         try:
             self.root.configure(fg_color=BG_APP)
         except tk.TclError:
@@ -134,7 +134,7 @@ class PDFCheckUI_2026_V3:
 
     def _center(self):
         self.root.update_idletasks()
-        w, h = 1440, 900
+        w, h = 1680, 1000
         x = (self.root.winfo_screenwidth() // 2) - (w // 2)
         y = (self.root.winfo_screenheight() // 2) - (h // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
