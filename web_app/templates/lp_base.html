@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DokuCheck – Landing (test){% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {} } };
+    </script>
+    <style>
+        body.lp-light { background: #f3f4f6; color: #374151; }
+        .lp-nav { background: white; border-bottom: 2px solid #1e5a8a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .lp-nav a.active-tab { background: #1e5a8a; color: white; }
+        .lp-nav a:not(.active-tab) { color: #6b7280; }
+        .lp-nav a:not(.active-tab):hover { background: #eff6ff; color: #1e5a8a; }
+    </style>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="lp-light min-h-screen antialiased">
+    {# Fixní lišta – přepínač variant (světlé schéma jako landing.html) #}
+    <nav class="lp-nav fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
+            <span class="text-gray-500 text-sm font-medium">Sandbox designu:</span>
+            <div class="flex items-center gap-2">
+                <a href="/lp/v1" class="px-3 py-1.5 rounded text-sm font-medium {% if lp_version == 1 %}active-tab{% else %}bg-gray-100{% endif %}">V1</a>
+                <a href="/lp/v2" class="px-3 py-1.5 rounded text-sm font-medium {% if lp_version == 2 %}active-tab{% else %}bg-gray-100{% endif %}">V2</a>
+                <a href="/lp/v3" class="px-3 py-1.5 rounded text-sm font-medium {% if lp_version == 3 %}active-tab{% else %}bg-gray-100{% endif %}">V3</a>
+                <span class="text-gray-400 mx-1">|</span>
+                <a href="/" class="px-3 py-1.5 rounded text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Zpět na produkční /</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-14">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

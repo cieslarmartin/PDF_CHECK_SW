@@ -1,0 +1,140 @@
+{% extends "lp_base.html" %}
+{% block title %}DokuCheck – Landing V1 (minimal){% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-16">
+    {# 1) HERO #}
+    <section class="mb-24">
+        <div class="flex flex-col md:flex-row md:items-start md:gap-12 gap-8">
+            <div class="flex-1">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+                    DokuCheck – Dokumentace bez chyb pro Portál stavebníka
+                </h1>
+                <p class="text-slate-400 text-lg mb-8 max-w-xl">
+                    Rychlá kontrola PDF/PDF-A, podpisů a souladu dokumentů během minut.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold bg-cyan-600 text-white hover:bg-cyan-500 transition">
+                        Vyzkoušet ONLINE Check
+                    </a>
+                    <a href="/download" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold border border-slate-500 text-slate-200 hover:bg-slate-800 transition">
+                        Stáhnout aplikaci zdarma
+                    </a>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-full md:w-80">
+                <div class="aspect-video rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer hover:border-slate-600 transition">
+                    <div class="text-center">
+                        <span class="text-5xl block mb-2">▶</span>
+                        <span class="text-slate-400 text-sm">Ukázka 40 s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# 2) Jak to funguje – 3 karty #}
+    <section class="mb-24">
+        <h2 class="text-2xl font-bold text-white mb-8">Jak to funguje</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 transition">
+                <span class="text-2xl font-bold text-cyan-400">1</span>
+                <h3 class="text-lg font-semibold text-white mt-2 mb-1">Nahraj / vyber složku</h3>
+                <p class="text-slate-400 text-sm">Přetáhněte PDF nebo vyberte složku s dokumenty.</p>
+            </div>
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 transition">
+                <span class="text-2xl font-bold text-cyan-400">2</span>
+                <h3 class="text-lg font-semibold text-white mt-2 mb-1">Proveď kontrolu</h3>
+                <p class="text-slate-400 text-sm">Automatická kontrola PDF/A, podpisů a časových razítek.</p>
+            </div>
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 transition">
+                <span class="text-2xl font-bold text-cyan-400">3</span>
+                <h3 class="text-lg font-semibold text-white mt-2 mb-1">Exportuj výsledky</h3>
+                <p class="text-slate-400 text-sm">Výstupy do CSV/Excel, přehled podle složek.</p>
+            </div>
+        </div>
+        <div class="rounded-xl bg-slate-800/50 border border-slate-700/50 aspect-[2/1] flex items-center justify-center">
+            <span class="text-slate-500 text-sm">Schéma / how-it-works placeholder (SVG nebo obrázek)</span>
+        </div>
+    </section>
+
+    {# 3) Dva režimy #}
+    <section class="mb-24">
+        <h2 class="text-2xl font-bold text-white mb-8">Dva režimy: Z Agenta vs Cloud</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <span class="text-2xl mb-2 block">🌐</span>
+                <h3 class="text-lg font-semibold text-white mb-2">Z Agenta</h3>
+                <p class="text-slate-400 text-sm">Soubory zůstávají na disku, na server jdou jen metadata. Maximální soukromí.</p>
+            </div>
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <span class="text-2xl mb-2 block">☁️</span>
+                <h3 class="text-lg font-semibold text-white mb-2">Cloud</h3>
+                <p class="text-slate-400 text-sm">Celé PDF jde na server. Vhodné pro rychlé vyzkoušení (Demo).</p>
+            </div>
+        </div>
+    </section>
+
+    {# 4) Ceník #}
+    <section class="mb-24">
+        <h2 class="text-2xl font-bold text-white mb-8">Ceník</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <h3 class="text-lg font-semibold text-white mb-1">Basic</h3>
+                <p class="text-slate-400 text-sm mb-4">Pro menší objemy.</p>
+                <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-medium bg-slate-700 text-white hover:bg-slate-600 transition">Vybrat</a>
+            </div>
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-cyan-500/50 relative">
+                <span class="absolute -top-2 right-4 px-2 py-0.5 rounded text-xs font-medium bg-cyan-600 text-white">DOPORUČUJEME PRO ATELIÉRY</span>
+                <h3 class="text-lg font-semibold text-white mb-1">Pro</h3>
+                <p class="text-slate-400 text-sm mb-4">Plné funkce, export, historie.</p>
+                <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium bg-cyan-600 text-white hover:bg-cyan-500 transition">Vybrat</a>
+            </div>
+            <div class="p-6 rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <h3 class="text-lg font-semibold text-white mb-1">Firemní</h3>
+                <p class="text-slate-400 text-sm mb-4">Na míru pro větší týmy.</p>
+                <a href="mailto:info@dokucheck.app" class="block w-full py-2.5 rounded-lg text-center font-medium border border-slate-500 text-slate-300 hover:bg-slate-700 transition">Kontakt</a>
+            </div>
+        </div>
+    </section>
+
+    {# 5) Trust #}
+    <section class="mb-24">
+        <h2 class="text-2xl font-bold text-white mb-8">Důvěřují nám</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for i in range(6) %}
+            <div class="h-20 rounded-lg bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-slate-500 text-sm">Logo</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# 6) FAQ #}
+    <section class="mb-24">
+        <h2 class="text-2xl font-bold text-white mb-8">Časté dotazy</h2>
+        <div class="space-y-2">
+            <details class="group rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Co kontroluje DokuCheck? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">PDF/A-3, elektronické podpisy, časová razítka a soulad s požadavky Portálu stavebníka.</p>
+            </details>
+            <details class="group rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Jaký je rozdíl mezi Z Agenta a Cloud? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF nahrajete na server (vhodné pro demo).</p>
+            </details>
+            <details class="group rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Mohu zrušit předplatné? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">Ano, předplatné se neobnoví po ukončení období.</p>
+            </details>
+            <details class="group rounded-xl bg-slate-800/80 border border-slate-700/50">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Kde najdu Můj účet? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm"><a href="/portal" class="text-cyan-400 hover:underline">Přihlášení do portálu</a> – historie kontrol a nastavení.</p>
+            </details>
+        </div>
+    </section>
+
+    {# 7) Footer #}
+    <footer class="pt-8 border-t border-slate-700/50">
+        <p class="text-slate-500 text-sm">Kontakt: <a href="mailto:info@dokucheck.app" class="text-cyan-400 hover:underline">info@dokucheck.app</a></p>
+        <p class="text-slate-500 text-sm mt-1"><a href="/vop" class="text-cyan-400 hover:underline">VOP</a> · <a href="/gdpr" class="text-cyan-400 hover:underline">GDPR</a></p>
+    </footer>
+</div>
+{% endblock %}

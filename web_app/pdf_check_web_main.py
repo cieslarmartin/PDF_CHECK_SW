@@ -2845,6 +2845,25 @@ def gdpr():
     return render_template('gdpr.html')
 
 
+# ========== TESTOVACÍ LANDING PAGE (sandbox designu – bez zásahu do produkce) ==========
+@app.route('/lp/v1')
+def lp_v1():
+    """Vizuální prototyp landing V1 – minimal clean."""
+    return render_template('lp_v1.html', lp_version=1)
+
+
+@app.route('/lp/v2')
+def lp_v2():
+    """Vizuální prototyp landing V2 – vizuálně bohatší."""
+    return render_template('lp_v2.html', lp_version=2)
+
+
+@app.route('/lp/v3')
+def lp_v3():
+    """Vizuální prototyp landing V3 – tech / dashboard style."""
+    return render_template('lp_v3.html', lp_version=3)
+
+
 @app.route('/auth/from-agent-token')
 def auth_from_agent_token():
     """

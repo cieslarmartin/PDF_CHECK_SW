@@ -1,0 +1,164 @@
+{% extends "lp_base.html" %}
+{% block title %}DokuCheck – Landing V2 (vizuálně bohatší){% endblock %}
+
+{% block head_extra %}
+<style>
+    .lp-v2-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+    .lp-v2-glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.1); }
+    .lp-v2-glow:hover { box-shadow: 0 0 24px rgba(34, 211, 238, 0.2); }
+    .lp-v2-fade { opacity: 0; transform: translateY(12px); }
+    .lp-v2-fade.visible { opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    {# 1) HERO – výrazný s gradientem #}
+    <section class="lp-v2-hero py-24 px-6 mb-20 relative overflow-hidden">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-12">
+            <div class="flex-1 lp-v2-fade">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                    DokuCheck – Dokumentace bez chyb pro Portál stavebníka
+                </h1>
+                <p class="text-slate-400 text-xl mb-8 max-w-xl">
+                    Rychlá kontrola PDF/PDF-A, podpisů a souladu dokumentů během minut.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="/app" class="inline-flex items-center justify-center px-8 py-4 rounded-xl font-semibold bg-cyan-500 text-slate-900 hover:bg-cyan-400 lp-v2-glow transition shadow-lg">
+                        Vyzkoušet ONLINE Check
+                    </a>
+                    <a href="/download" class="inline-flex items-center justify-center px-8 py-4 rounded-xl font-semibold lp-v2-glass text-slate-200 hover:bg-slate-700/50 transition">
+                        Stáhnout aplikaci zdarma
+                    </a>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-full md:w-96 lp-v2-fade">
+                <div class="aspect-video rounded-2xl lp-v2-glass flex items-center justify-center cursor-pointer lp-v2-glow transition">
+                    <div class="text-center">
+                        <span class="text-6xl block mb-2 opacity-90">▶</span>
+                        <span class="text-slate-400">Ukázka 40 s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# 2) Jak to funguje – glassmorphism karty #}
+    <section class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-3xl font-bold text-white mb-10 lp-v2-fade">Jak to funguje</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-glow lp-v2-fade hover:border-cyan-500/30 transition">
+                <span class="text-3xl font-bold text-cyan-400">1</span>
+                <h3 class="text-xl font-semibold text-white mt-3 mb-2">Nahraj / vyber složku</h3>
+                <p class="text-slate-400">Přetáhněte PDF nebo vyberte složku s dokumenty.</p>
+            </div>
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-glow lp-v2-fade hover:border-cyan-500/30 transition">
+                <span class="text-3xl font-bold text-cyan-400">2</span>
+                <h3 class="text-xl font-semibold text-white mt-3 mb-2">Proveď kontrolu</h3>
+                <p class="text-slate-400">Automatická kontrola PDF/A, podpisů a časových razítek.</p>
+            </div>
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-glow lp-v2-fade hover:border-cyan-500/30 transition">
+                <span class="text-3xl font-bold text-cyan-400">3</span>
+                <h3 class="text-xl font-semibold text-white mt-3 mb-2">Exportuj výsledky</h3>
+                <p class="text-slate-400">Výstupy do CSV/Excel, přehled podle složek.</p>
+            </div>
+        </div>
+        <div class="rounded-2xl lp-v2-glass aspect-[2/1] flex items-center justify-center lp-v2-fade">
+            <span class="text-slate-500">Schéma / how-it-works placeholder</span>
+        </div>
+    </section>
+
+    {# 3) Dva režimy #}
+    <section class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-3xl font-bold text-white mb-10 lp-v2-fade">Dva režimy: Z Agenta vs Cloud</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-glow lp-v2-fade border-cyan-500/20">
+                <span class="text-4xl mb-3 block">🌐</span>
+                <h3 class="text-xl font-semibold text-white mb-2">Z Agenta</h3>
+                <p class="text-slate-400">Soubory zůstávají na disku, na server jdou jen metadata. Maximální soukromí.</p>
+            </div>
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-glow lp-v2-fade">
+                <span class="text-4xl mb-3 block">☁️</span>
+                <h3 class="text-xl font-semibold text-white mb-2">Cloud</h3>
+                <p class="text-slate-400">Celé PDF jde na server. Vhodné pro rychlé vyzkoušení (Demo).</p>
+            </div>
+        </div>
+    </section>
+
+    {# 4) Ceník #}
+    <section class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-3xl font-bold text-white mb-10 lp-v2-fade">Ceník</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-fade">
+                <h3 class="text-xl font-semibold text-white mb-2">Basic</h3>
+                <p class="text-slate-400 text-sm mb-6">Pro menší objemy.</p>
+                <a href="/checkout?tarif=basic" class="block w-full py-3 rounded-xl text-center font-medium lp-v2-glass text-white hover:bg-slate-600/50 transition lp-v2-glow">Vybrat</a>
+            </div>
+            <div class="p-8 rounded-2xl lp-v2-glass border-2 border-cyan-500/50 relative lp-v2-fade">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium bg-cyan-500 text-slate-900">DOPORUČUJEME PRO ATELIÉRY</span>
+                <h3 class="text-xl font-semibold text-white mb-2 mt-4">Pro</h3>
+                <p class="text-slate-400 text-sm mb-6">Plné funkce, export, historie.</p>
+                <a href="/checkout?tarif=standard" class="block w-full py-3 rounded-xl text-center font-medium bg-cyan-500 text-slate-900 hover:bg-cyan-400 transition lp-v2-glow">Vybrat</a>
+            </div>
+            <div class="p-8 rounded-2xl lp-v2-glass lp-v2-fade">
+                <h3 class="text-xl font-semibold text-white mb-2">Firemní</h3>
+                <p class="text-slate-400 text-sm mb-6">Na míru pro větší týmy.</p>
+                <a href="mailto:info@dokucheck.app" class="block w-full py-3 rounded-xl text-center font-medium border border-slate-500 text-slate-300 hover:bg-slate-700/50 transition">Kontakt</a>
+            </div>
+        </div>
+    </section>
+
+    {# 5) Trust #}
+    <section class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-3xl font-bold text-white mb-10 lp-v2-fade">Důvěřují nám</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for i in range(6) %}
+            <div class="h-24 rounded-xl lp-v2-glass flex items-center justify-center text-slate-500 lp-v2-fade">Logo</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# 6) FAQ #}
+    <section class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-3xl font-bold text-white mb-10 lp-v2-fade">Časté dotazy</h2>
+        <div class="space-y-3">
+            <details class="group rounded-xl lp-v2-glass lp-v2-fade">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Co kontroluje DokuCheck? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">PDF/A-3, elektronické podpisy, časová razítka a soulad s požadavky Portálu stavebníka.</p>
+            </details>
+            <details class="group rounded-xl lp-v2-glass lp-v2-fade">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Jaký je rozdíl mezi Z Agenta a Cloud? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF nahrajete na server (vhodné pro demo).</p>
+            </details>
+            <details class="group rounded-xl lp-v2-glass lp-v2-fade">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Mohu zrušit předplatné? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm">Ano, předplatné se neobnoví po ukončení období.</p>
+            </details>
+            <details class="group rounded-xl lp-v2-glass lp-v2-fade">
+                <summary class="px-6 py-4 cursor-pointer list-none font-medium text-white flex justify-between items-center">Kde najdu Můj účet? <span class="group-open:rotate-180 transition">▼</span></summary>
+                <p class="px-6 pb-4 text-slate-400 text-sm"><a href="/portal" class="text-cyan-400 hover:underline">Přihlášení do portálu</a> – historie kontrol a nastavení.</p>
+            </details>
+        </div>
+    </section>
+
+    {# 7) Footer #}
+    <footer class="max-w-5xl mx-auto px-6 pt-8 border-t border-slate-700/50">
+        <p class="text-slate-500 text-sm">Kontakt: <a href="mailto:info@dokucheck.app" class="text-cyan-400 hover:underline">info@dokucheck.app</a></p>
+        <p class="text-slate-500 text-sm mt-1"><a href="/vop" class="text-cyan-400 hover:underline">VOP</a> · <a href="/gdpr" class="text-cyan-400 hover:underline">GDPR</a></p>
+    </footer>
+</div>
+
+<script>
+(function(){
+    var el = document.querySelectorAll('.lp-v2-fade');
+    function onScroll() {
+        el.forEach(function(e) {
+            var r = e.getBoundingClientRect();
+            if (r.top < window.innerHeight - 80) e.classList.add('visible');
+        });
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+})();
+</script>
+{% endblock %}
