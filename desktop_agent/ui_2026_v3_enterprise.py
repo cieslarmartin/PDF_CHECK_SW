@@ -19,15 +19,9 @@ ctk.set_default_color_theme("blue")
 
 def _setup_high_dpi_v3():
     """
-    Pro V3: nastaví DPI awareness (Windows) a škálování CTk podle šířky obrazovky,
-    aby UI bylo čitelné na 2K/4K bez rozmazání.
+    Pro V3: DPI awareness (Windows) kvůli ostrému vykreslení.
+    Škálování CTk ponecháme na 1.0, aby se okno a písmo po startu nejevily zmenšené.
     Volat PŘED vytvořením root okna.
-
-    Možnosti vylepšení UI / velké rozlišení (bez změny technologie):
-    - CustomTkinter: set_widget_scaling() / set_window_scaling() (použito zde),
-      automatická DPI awareness na Windows/macOS.
-    - Jiné technologie (vyžadují větší refaktor): PyQt6/PySide6 (vektorové, HiDPI),
-      web (Electron/Tauri nebo lokální server + prohlížeč), Kivy, Dear PyGui.
     """
     try:
         if sys.platform == "win32":
@@ -35,7 +29,6 @@ def _setup_high_dpi_v3():
                 ctypes = __import__("ctypes")
                 shcore = getattr(ctypes.windll, "shcore", None)
                 if shcore:
-                    # PROCESS_PER_MONITOR_DPI_AWARE = 2
                     shcore.SetProcessDpiAwareness(2)
             except Exception:
                 try:
@@ -45,19 +38,9 @@ def _setup_high_dpi_v3():
                     pass
     except Exception:
         pass
-    # Zjistit šířku obrazovky bez vytvoření CTk okna (pomocí čistého Tk)
-    try:
-        tmp = tk.Tk()
-        tmp.withdraw()
-        screen_w = tmp.winfo_screenwidth()
-        tmp.destroy()
-        # Základ 1920 → scale 1.0; 2560 → ~1.33; 3840 → 2.0 (max)
-        scale = min(2.0, max(1.0, screen_w / 1920.0))
-        ctk.set_widget_scaling(scale)
-        ctk.set_window_scaling(scale)
-    except Exception:
-        ctk.set_widget_scaling(1.0)
-        ctk.set_window_scaling(1.0)
+    # Bez automatického škálování – vždy 1:1, aby nebylo vše „zmenšené“
+    ctk.set_widget_scaling(1.0)
+    ctk.set_window_scaling(1.0)
 
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -85,9 +68,13 @@ WARNING = "#f97316"
 ERROR = "#ef4444"
 SECONDS_PER_FILE_ETA = 0.4
 SIDEBAR_W = 220
-ROW_HEIGHT_FOLDER = 22
-ROW_HEIGHT_FILE = 26
-# Text v pravém panelu – nezobrazujeme detail kontroly jednotlivých PDF (citlivá data)
+# Výška řádků cca -10 % oproti původním 22/26
+ROW_HEIGHT_FOLDER = 20
+ROW_HEIGHT_FILE = 23
+# Logo – vyměnitelné: nahraďte soubor v složce logo/ (logo.png nebo logo.ico)
+_AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
+LOGO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.png")
+LOGO_ICO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.ico")
 NO_DETAIL_MSG = "Výsledky kontroly jednotlivých PDF se v této aplikaci nezobrazují.\nStav uvidíte po odeslání na server."
 
 
@@ -130,6 +117,8 @@ class PDFCheckUI_2026_V3:
         self._center()
         self._build_layout()
         self._setup_dnd_overlay()
+        self._apply_dark_title_bar()
+        self._setup_logo()
         self._show_session_summary()
 
     def _center(self):
@@ -138,6 +127,29 @@ class PDFCheckUI_2026_V3:
         x = (self.root.winfo_screenwidth() // 2) - (w // 2)
         y = (self.root.winfo_screenheight() // 2) - (h // 2)
         self.root.geometry(f"{w}x{h}+{x}+{y}")
+
+    def _apply_dark_title_bar(self):
+        """Tmavý title bar na Windows 10/11 (DWM)."""
+        if sys.platform != "win32":
+            return
+        try:
+            ct = __import__("ctypes")
+            hwnd = ct.windll.user32.GetParent(self.root.winfo_id())
+            if not hwnd:
+                return
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            val = ct.c_int(1)
+            ct.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ct.byref(val), ct.sizeof(val))
+        except Exception:
+            pass
+
+    def _setup_logo(self):
+        """Ikona okna z logo/logo.ico (vyměnitelné)."""
+        try:
+            if os.path.isfile(LOGO_ICO_PATH):
+                self.root.iconbitmap(LOGO_ICO_PATH)
+        except Exception:
+            pass
 
     def _build_layout(self):
         self.root.grid_columnconfigure(0, weight=0, minsize=SIDEBAR_W)
@@ -148,19 +160,42 @@ class PDFCheckUI_2026_V3:
         sidebar = ctk.CTkFrame(self.root, fg_color=BG_HEADER, width=SIDEBAR_W, corner_radius=0)
         sidebar.grid(row=0, column=0, sticky="nswe")
         sidebar.grid_propagate(False)
-        ctk.CTkLabel(sidebar, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack(pady=(16, 0))
-        ctk.CTkLabel(sidebar, text="V3 Enterprise", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED).pack(pady=(0, 12))
-        ctk.CTkLabel(sidebar, text="Účet", font=(FONT_STACK[0], FS_12, "bold"), text_color=TEXT_MUTED).pack(anchor=tk.W, padx=12, pady=(4, 0))
-        self.sidebar_account = ctk.CTkLabel(sidebar, text="Nepřihlášen", font=(FONT_STACK[0], FS_12), text_color=TEXT, wraplength=SIDEBAR_W - 24)
+        # Logo (vyměnitelné – nahraďte soubor desktop_agent/logo/logo.png)
+        self._logo_container = ctk.CTkFrame(sidebar, fg_color="transparent")
+        self._logo_container.pack(pady=(16, 0))
+        if os.path.isfile(LOGO_PATH):
+            try:
+                logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(140, 36))
+                ctk.CTkLabel(self._logo_container, text="", image=logo_img).pack()
+            except Exception:
+                ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
+        else:
+            ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
+        ctk.CTkLabel(sidebar, text="V3 Enterprise", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED).pack(pady=(0, 8))
+        # Blok „Účet“ – zobrazen když přihlášen
+        self._account_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        self._account_frame.pack(fill=tk.X, pady=(0, 4))
+        ctk.CTkLabel(self._account_frame, text="Účet", font=(FONT_STACK[0], FS_12, "bold"), text_color=TEXT_MUTED).pack(anchor=tk.W, padx=12, pady=(0, 0))
+        self.sidebar_account = ctk.CTkLabel(self._account_frame, text="Nepřihlášen", font=(FONT_STACK[0], FS_12), text_color=TEXT, wraplength=SIDEBAR_W - 24)
         self.sidebar_account.pack(anchor=tk.W, padx=12, pady=(0, 2))
-        self.sidebar_daily_limit = ctk.CTkLabel(sidebar, text="Limit: —", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
-        self.sidebar_daily_limit.pack(anchor=tk.W, padx=12, pady=(0, 8))
+        self.sidebar_daily_limit = ctk.CTkLabel(self._account_frame, text="Limit: —", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
+        self.sidebar_daily_limit.pack(anchor=tk.W, padx=12, pady=(0, 6))
         ctk.CTkButton(sidebar, text="Web", command=self._open_web, font=(FONT_STACK[0], FS_12), width=160, fg_color=ACCENT).pack(pady=4, padx=12, fill=tk.X)
         self.logout_btn = ctk.CTkButton(sidebar, text="Odhlásit", command=self._do_logout, font=(FONT_STACK[0], FS_12), width=160, fg_color=ERROR)
         self.logout_btn.pack(pady=2, padx=12, fill=tk.X)
         self.logout_btn.pack_forget()
-        self.login_btn = ctk.CTkButton(sidebar, text="Přihlásit", command=self.show_api_key_dialog, font=(FONT_STACK[0], FS_12), width=160, fg_color=BORDER)
-        self.login_btn.pack(pady=2, padx=12, fill=tk.X)
+        # Přihlášení přímo v sidebaru (ne vyskakovací okno)
+        self._login_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        self._login_frame.pack(fill=tk.X, pady=(0, 4))
+        ctk.CTkLabel(self._login_frame, text="Přihlášení", font=(FONT_STACK[0], FS_12, "bold"), text_color=TEXT_MUTED).pack(anchor=tk.W, padx=12, pady=(4, 2))
+        self._login_status = ctk.CTkLabel(self._login_frame, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
+        self._login_status.pack(anchor=tk.W, padx=12, pady=(0, 2))
+        ctk.CTkButton(self._login_frame, text="Vyzkoušet zdarma", command=self._do_trial_login, font=(FONT_STACK[0], FS_12), width=160, fg_color=ACCENT).pack(pady=2, padx=12, fill=tk.X)
+        self._login_email = ctk.CTkEntry(self._login_frame, placeholder_text="E-mail", width=160, height=28, font=(FONT_STACK[0], FS_12))
+        self._login_email.pack(pady=2, padx=12, fill=tk.X)
+        self._login_pass = ctk.CTkEntry(self._login_frame, placeholder_text="Heslo", width=160, height=28, show="*", font=(FONT_STACK[0], FS_12))
+        self._login_pass.pack(pady=2, padx=12, fill=tk.X)
+        ctk.CTkButton(self._login_frame, text="Přihlásit se", command=self._do_email_login, font=(FONT_STACK[0], FS_12), width=160, fg_color=BORDER).pack(pady=2, padx=12, fill=tk.X)
         self.license_status_label = ctk.CTkLabel(sidebar, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
         self.license_status_label.pack(anchor=tk.W, padx=12, pady=(0, 6))
         self.daily_limit_label = self.sidebar_daily_limit
@@ -200,10 +235,10 @@ class PDFCheckUI_2026_V3:
         self.check_btn = ctk.CTkButton(bar, text="ODESLAT KE KONTROLE", command=self.on_check_clicked, font=(FONT_STACK[0], FS_14, "bold"), fg_color=ACCENT, height=32)
         self.check_btn.pack(side=tk.RIGHT, padx=10, pady=6)
 
-        # Content: queue + detail + "Jak to funguje"
+        # Content: queue širší + detail + "Jak to funguje"
         content = ctk.CTkFrame(main, fg_color="transparent")
         content.grid(row=2, column=0, sticky="nsew", padx=6, pady=4)
-        content.grid_columnconfigure(0, weight=2, minsize=340)
+        content.grid_columnconfigure(0, weight=3, minsize=440)
         content.grid_columnconfigure(1, weight=1, minsize=260)
         content.grid_columnconfigure(2, weight=0, minsize=180)
         content.grid_rowconfigure(0, weight=1)
@@ -261,7 +296,88 @@ class PDFCheckUI_2026_V3:
         self._progress_row.grid_remove()
         self.eta_label = ctk.CTkLabel(self._progress_row, text="", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED)
         self.eta_label.pack(side=tk.RIGHT)
+        # Panel zpráv v hlavním okně (bez vyskakovacích oken)
+        self._msg_row = ctk.CTkFrame(main, fg_color=BG_CARD, corner_radius=4, height=44)
+        self._msg_row.grid(row=4, column=0, sticky="ew", padx=8, pady=4)
+        self._msg_row.grid_propagate(False)
+        main.grid_rowconfigure(4, weight=0)
+        self._msg_label = ctk.CTkLabel(self._msg_row, text="—", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, anchor="w")
+        self._msg_label.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10, pady=8)
+        self._msg_btn_frame = ctk.CTkFrame(self._msg_row, fg_color="transparent")
+        self._msg_btn_frame.pack(side=tk.RIGHT, padx=8, pady=4)
+        self._msg_pending_callback = None  # pro Ano/Ne v panelu zpráv
         self.header_status = self.sidebar_account
+
+    def show_message(self, text, msg_type="info", buttons=None, callback=None):
+        """Zobrazí zprávu v panelu v hlavním okně. buttons: [(label, value), ...]; callback(value) po kliknutí."""
+        color = TEXT_MUTED
+        if msg_type == "warning":
+            color = WARNING
+        elif msg_type == "error":
+            color = ERROR
+        self._msg_label.configure(text=text, text_color=color)
+        for w in self._msg_btn_frame.winfo_children():
+            w.destroy()
+        self._msg_pending_callback = None
+        if buttons and callback:
+            self._msg_pending_callback = (buttons, callback)
+            for label, value in buttons:
+                btn = ctk.CTkButton(
+                    self._msg_btn_frame, text=label, width=70,
+                    command=lambda v=value: self._on_msg_button(v)
+                )
+                btn.pack(side=tk.LEFT, padx=4)
+
+    def _on_msg_button(self, value):
+        if self._msg_pending_callback:
+            _, callback = self._msg_pending_callback
+            self._msg_pending_callback = None
+            self.clear_message()
+            try:
+                callback(value)
+            except Exception:
+                pass
+
+    def clear_message(self):
+        """Smaže zprávu a tlačítka v panelu zpráv."""
+        self._msg_label.configure(text="—", text_color=TEXT_MUTED)
+        for w in self._msg_btn_frame.winfo_children():
+            w.destroy()
+        self._msg_pending_callback = None
+
+    def _do_trial_login(self):
+        self._login_status.configure(text="")
+        try:
+            from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
+            email = DEMO_TRIAL_EMAIL or "free@trial.app"
+            password = DEMO_TRIAL_PASSWORD or "free"
+        except ImportError:
+            email, password = "free@trial.app", "free"
+        if self.on_login_password_callback:
+            result = self.on_login_password_callback(email, password)
+            if result and result[0]:
+                self.set_license_display("Režim: Zkušební verze (Trial)")
+                if self.on_after_login_callback:
+                    self.on_after_login_callback()
+            else:
+                self._login_status.configure(text=result[1] if result and len(result) > 1 else "Chyba", text_color=ERROR)
+
+    def _do_email_login(self):
+        self._login_status.configure(text="")
+        email = self._login_email.get().strip()
+        password = self._login_pass.get()
+        if not email or not password:
+            self._login_status.configure(text="Zadejte e-mail a heslo.", text_color=ERROR)
+            return
+        if self.on_login_password_callback:
+            result = self.on_login_password_callback(email, password)
+            if result and result[0]:
+                display_text = result[2] if len(result) > 2 else None
+                self.set_license_display(display_text or ("Přihlášen: " + email))
+                if self.on_after_login_callback:
+                    self.on_after_login_callback()
+            else:
+                self._login_status.configure(text=result[1] if result and len(result) > 1 else "Chyba", text_color=ERROR)
 
     def _open_web(self):
         url = None
@@ -441,14 +557,14 @@ class PDFCheckUI_2026_V3:
             if item.get("checked", True):
                 to_remove.add(item.get("path"))
         if not to_remove:
-            messagebox.showinfo("Fronta", "Žádné zaškrtnuté položky k odebrání.")
+            self.show_message("Žádné zaškrtnuté položky k odebrání.")
             return
         self._remove_paths_from_queue(to_remove)
 
     def remove_selected_from_queue(self):
         """Odebere z fronty aktuálně vybranou položku."""
         if self.selected_qidx is None:
-            messagebox.showinfo("Fronta", "Nejdříve vyberte položku (klikněte na řádek).")
+            self.show_message("Nejdříve vyberte položku (klikněte na řádek).")
             return
         if 0 <= self.selected_qidx < len(self.queue_display):
             path = self.queue_display[self.selected_qidx].get("path")
@@ -468,7 +584,7 @@ class PDFCheckUI_2026_V3:
     def remove_folder_of_selected(self):
         """Odebere z fronty celou složku, do které patří vybraná položka."""
         if self.selected_qidx is None:
-            messagebox.showinfo("Fronta", "Nejdříve vyberte položku ve složce, kterou chcete odebrat.")
+            self.show_message("Nejdříve vyberte položku ve složce, kterou chcete odebrat.")
             return
         for task_ix, task in enumerate(self.tasks):
             file_paths = task.get("file_paths", [])
@@ -518,7 +634,7 @@ class PDFCheckUI_2026_V3:
     def on_check_clicked(self):
         checked = [(q["path"], i) for i, q in enumerate(self.queue_display) if q.get("checked")]
         if not checked:
-            messagebox.showwarning("Varování", "Přidejte a zaškrtněte položky ke kontrole.")
+            self.show_message("Přidejte a zaškrtněte položky ke kontrole.", msg_type="warning")
             return
         if self.is_running:
             return
@@ -663,17 +779,31 @@ class PDFCheckUI_2026_V3:
         upload_error = result.get("upload_error")
         if self.on_send_batch_callback and results_with_qidx:
             n = len(results_with_qidx)
-            if messagebox.askyesno("Odeslat na server", f"Poslat data z {n} souborů na server?", default=messagebox.YES):
-                try:
-                    results_only = [r for _, r in results_with_qidx]
-                    out = self.on_send_batch_callback(results_only, result.get("source_folder_for_batch"))
-                    if out and len(out) >= 2 and not out[0]:
-                        upload_error = out[1]
-                except Exception as e:
-                    upload_error = str(e)
-                self._open_web()
+            self.show_message(
+                f"Poslat data z {n} souborů na server?",
+                buttons=[("Ano", True), ("Ne", False)],
+                callback=lambda choice: self._on_send_confirm(choice, result)
+            )
+            return
         if upload_error and ("limit" in upload_error.lower() or "vyčerpán" in upload_error.lower()):
-            messagebox.showwarning("Limit", upload_error)
+            self.show_message(upload_error, msg_type="warning")
+
+    def _on_send_confirm(self, send_yes, result):
+        """Callback po kliknutí Ano/Ne u odeslání na server."""
+        self.clear_message()
+        results_with_qidx = result.get("results_with_qidx", [])
+        upload_error = result.get("upload_error")
+        if send_yes and results_with_qidx and self.on_send_batch_callback:
+            try:
+                results_only = [r for _, r in results_with_qidx]
+                out = self.on_send_batch_callback(results_only, result.get("source_folder_for_batch"))
+                if out and len(out) >= 2 and not out[0]:
+                    upload_error = out[1]
+            except Exception as e:
+                upload_error = str(e)
+            self._open_web()
+        if upload_error and ("limit" in upload_error.lower() or "vyčerpán" in upload_error.lower()):
+            self.show_message(upload_error, msg_type="warning")
 
     def display_error(self, msg):
         self.detail_text.configure(state="normal")
@@ -693,11 +823,13 @@ class PDFCheckUI_2026_V3:
     def set_license_display(self, text):
         self.sidebar_account.configure(text=text or "Nepřihlášen", text_color=TEXT if text else TEXT_MUTED)
         if text:
-            self.login_btn.pack_forget()
+            self._login_frame.pack_forget()
+            self._account_frame.pack(fill=tk.X, pady=(0, 4))
             self.logout_btn.pack(pady=2, padx=12, fill=tk.X)
         else:
+            self._account_frame.pack_forget()
+            self._login_frame.pack(fill=tk.X, pady=(0, 4))
             self.logout_btn.pack_forget()
-            self.login_btn.pack(pady=2, padx=12, fill=tk.X)
 
     def clear_results_and_queue(self):
         self.tasks = []

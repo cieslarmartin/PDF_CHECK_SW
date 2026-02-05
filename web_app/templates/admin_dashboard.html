@@ -110,6 +110,61 @@
     </div>
 </div>
 
+<section class="admin-stats-section" style="margin-top:32px;">
+    <h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Statistiky a grafy</h2>
+    <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Aktivita – soubory za den (30 dní)</h3>
+            <div style="height:220px;"><canvas id="chartActivity30"></canvas></div>
+        </div>
+        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Rozložení tarifů (počet licencí)</h3>
+            <div style="height:220px;"><canvas id="chartTiersPie"></canvas></div>
+        </div>
+    </div>
+    <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – úspěšné vs. chybné</h3>
+            <div style="height:220px;"><canvas id="chartChecksBar"></canvas></div>
+        </div>
+        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">KPI – přehled</h3>
+            <table class="table-dense" style="width:100%;">
+                <tbody>
+                    <tr><td>Aktivní licence</td><td><strong>{{ (kpis or {}).get('active_licenses', 0) }}</strong></td></tr>
+                    <tr><td>Free / Trial</td><td>{{ (kpis or {}).get('free_licenses', 0) }}</td></tr>
+                    <tr><td>Placené</td><td>{{ (kpis or {}).get('paid_licenses', 0) }}</td></tr>
+                    <tr><td>Celkem kontrol (souborů)</td><td><strong>{{ (kpis or {}).get('total_checks', 0) }}</strong></td></tr>
+                    <tr><td>Úspěšné</td><td style="color:#16a34a;">{{ (kpis or {}).get('success_checks', 0) }}</td></tr>
+                    <tr><td>Chybné</td><td style="color:#dc2626;">{{ (kpis or {}).get('error_checks', 0) }}</td></tr>
+                    <tr><td>Chybovost</td><td>{{ (kpis or {}).get('error_rate_percent', 0) }} %</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);max-width:520px;">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Žebříček uživatelů – aktivita (30 dní)</h3>
+        <div class="table-container">
+            <table class="table-dense">
+                <thead>
+                    <tr><th>#</th><th>Uživatel</th><th>Počet souborů</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in user_ranking %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ r.email or r.user_name or (r.user_id or '')[:20] }}</td>
+                        <td><strong>{{ r.total_files }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:12px;">Zatím žádná aktivita.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
 <div class="modal-overlay" id="createModal">
     <div class="modal">
         <div class="modal-header">
@@ -275,6 +330,13 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Data pro grafy (z backendu)
+var _activity30 = {{ (activity_30 or []) | tojson }};
+var _byTierCounts = {{ (by_tier_counts or {}) | tojson }};
+var _kpis = {{ (kpis or {}) | tojson }};
+</script>
 <script>
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
@@ -461,5 +523,53 @@ document.addEventListener('keydown', function(e) {
         document.querySelectorAll('.modal-overlay.active').forEach(function(modal) { modal.classList.remove('active'); });
     }
 });
+
+// Grafy (Chart.js) – inicializace po načtení stránky
+(function initCharts() {
+    if (typeof Chart === 'undefined') return;
+    var colors = { blue: 'rgb(52, 152, 219)', green: 'rgb(46, 204, 113)', red: 'rgb(231, 76, 60)', orange: 'rgb(230, 126, 34)', gray: 'rgb(149, 165, 166)', purple: 'rgb(155, 89, 182)' };
+    var tierColors = [colors.blue, colors.green, colors.orange, colors.purple, colors.gray];
+
+    // Sloupcový: aktivita 30 dní
+    var ctxActivity = document.getElementById('chartActivity30');
+    if (ctxActivity && _activity30 && _activity30.length) {
+        new Chart(ctxActivity, {
+            type: 'bar',
+            data: {
+                labels: _activity30.map(function(x) { return (x.date || '').toString().substring(5); }),
+                datasets: [{ label: 'Soubory', data: _activity30.map(function(x) { return x.files || 0; }), backgroundColor: colors.blue }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // Koláč: tarify
+    var ctxPie = document.getElementById('chartTiersPie');
+    if (ctxPie && _byTierCounts && typeof _byTierCounts === 'object') {
+        var tierLabels = Object.keys(_byTierCounts);
+        var tierData = tierLabels.map(function(k) { return _byTierCounts[k] || 0; });
+        if (tierData.some(function(v) { return v > 0; })) {
+            new Chart(ctxPie, {
+                type: 'pie',
+                data: { labels: tierLabels, datasets: [{ data: tierData, backgroundColor: tierColors.slice(0, tierLabels.length) }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    }
+
+    // Sloupcový: úspěšné vs chybné kontroly
+    var ctxChecks = document.getElementById('chartChecksBar');
+    if (ctxChecks && _kpis) {
+        var ok = _kpis.success_checks || 0, err = _kpis.error_checks || 0;
+        new Chart(ctxChecks, {
+            type: 'bar',
+            data: {
+                labels: ['Úspěšné', 'Chybné'],
+                datasets: [{ label: 'Počet', data: [ok, err], backgroundColor: [colors.green, colors.red] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+})();
 </script>
 {% endblock %}

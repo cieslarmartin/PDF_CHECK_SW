@@ -3459,3 +3459,73 @@ AttributeError: 'Style' object has no attribute 'tag_configure'. Did you mean: '
 2026-02-05 02:14:17,957 - INFO - Ověřuji licenci se serverem...
 2026-02-05 02:14:19,496 - INFO - Agent běží
 2026-02-05 02:14:22,775 - INFO - Agent ukončen
+2026-02-05 02:16:33,626 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 02:16:33,626 - INFO - Spouštím GUI...
+2026-02-05 02:16:34,330 - INFO - Ověřuji licenci se serverem...
+2026-02-05 02:16:35,933 - INFO - Agent běží
+2026-02-05 02:17:05,509 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 02:17:05,509 - INFO - Spouštím GUI...
+2026-02-05 02:17:05,793 - INFO - Ověřuji licenci se serverem...
+2026-02-05 02:17:07,286 - INFO - Agent běží
+2026-02-05 02:17:33,679 - INFO - Kontrola složky: C:/Zakazky
+2026-02-05 02:17:37,745 - INFO - Odesílám 115 výsledků na server (jeden request)...
+2026-02-05 02:17:42,804 - INFO - Batch úspěšně odeslán: batch_20260205_011727_63b6c3ef - Uloženo 115 souborů
+2026-02-05 02:18:22,471 - INFO - Kontrola složky: C:/Zakazky
+2026-02-05 02:18:26,542 - INFO - Odesílám 1 výsledků na server (jeden request)...
+2026-02-05 02:18:27,519 - INFO - Batch úspěšně odeslán: batch_20260205_011816_2896aa85 - Uloženo 1 souborů
+2026-02-05 02:27:14,085 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 02:27:14,087 - INFO - Spouštím GUI...
+2026-02-05 02:27:14,242 - ERROR - Kritická chyba: name 'FS_11' is not defined
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 402, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 348, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 920, in create_app_2026_v3
+    app = PDFCheckUI_2026_V3(
+          ^^^^^^^^^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 118, in __init__
+    self._build_layout()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 191, in _build_layout
+    self._login_status = ctk.CTkLabel(self._login_frame, text="", font=(FONT_STACK[0], FS_11), text_color=ERROR, wraplength=SIDEBAR_W - 24)
+                                                                                       ^^^^^
+NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
+2026-02-05 02:27:24,365 - INFO - Agent ukončen
+2026-02-05 02:27:26,515 - INFO - Agent ukončen
+2026-02-05 02:27:28,990 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 02:27:28,990 - INFO - Spouštím GUI...
+2026-02-05 02:27:29,123 - ERROR - Kritická chyba: name 'FS_11' is not defined
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 402, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 348, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 920, in create_app_2026_v3
+    app = PDFCheckUI_2026_V3(
+          ^^^^^^^^^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 118, in __init__
+    self._build_layout()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 191, in _build_layout
+    self._login_status = ctk.CTkLabel(self._login_frame, text="", font=(FONT_STACK[0], FS_11), text_color=ERROR, wraplength=SIDEBAR_W - 24)
+                                                                                       ^^^^^
+NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
+2026-02-05 02:27:31,460 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 02:27:31,460 - INFO - Spouštím GUI...
+2026-02-05 02:27:31,615 - ERROR - Kritická chyba: name 'FS_11' is not defined
+Traceback (most recent call last):
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 402, in main
+    agent.run()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\pdf_check_agent_main.py", line 348, in run
+    self.root, self.app = create_app(
+                          ^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 920, in create_app_2026_v3
+    app = PDFCheckUI_2026_V3(
+          ^^^^^^^^^^^^^^^^^^^
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 118, in __init__
+    self._build_layout()
+  File "C:\Claude\PDF_CHECK_SW\desktop_agent\ui_2026_v3_enterprise.py", line 191, in _build_layout
+    self._login_status = ctk.CTkLabel(self._login_frame, text="", font=(FONT_STACK[0], FS_11), text_color=ERROR, wraplength=SIDEBAR_W - 24)
+                                                                                       ^^^^^
+NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?

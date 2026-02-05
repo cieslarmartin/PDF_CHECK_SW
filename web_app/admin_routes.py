@@ -11,6 +11,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 import os
 import subprocess
+from datetime import datetime, timedelta
 
 # Import databáze
 try:
@@ -201,7 +202,14 @@ def dashboard():
     for tier in LicenseTier:
         stats['by_tier'][tier.name] = sum(1 for l in licenses if l.get('license_tier') == tier.value)
 
-    activity_30 = db.get_activity_last_30_days()
+    activity_30_raw = db.get_activity_last_30_days()
+    # Vyplnit všech 30 dní (0 kde chybí) pro sloupcový graf
+    today = datetime.utcnow().date()
+    day_map = {r['date']: r['files'] for r in (activity_30_raw or [])}
+    activity_30 = []
+    for i in range(29, -1, -1):
+        d = (today - timedelta(days=i)).isoformat()
+        activity_30.append({'date': d, 'files': day_map.get(d, 0)})
     tiers_list = db.get_all_license_tiers()
     # Pro nové licence nabízíme pouze Free, Basic, Pro, Trial (bez Enterprise)
     product_tiers = [t for t in tiers_list if (t.get('name') or '').strip() in ('Trial', 'Basic', 'Pro', 'Unlimited')]
