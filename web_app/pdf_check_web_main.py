@@ -2900,15 +2900,72 @@ def download():
     return redirect(url_for('app_main'))
 
 
+def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk):
+    """Odešle e-mail s potvrzením objednávky a instrukcemi k platbě (VS = order_id, částka). Placeholder: smtplib nebo konfigurovatelné."""
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        smtp_host = os.environ.get('SMTP_HOST', '')
+        smtp_port = int(os.environ.get('SMTP_PORT', '587') or '587')
+        smtp_user = os.environ.get('SMTP_USER', '')
+        smtp_pass = os.environ.get('SMTP_PASS', '')
+        if not smtp_host or not smtp_user:
+            return False
+        subject = f"DokuCheck – potvrzení objednávky č. {order_id}"
+        bank_account = os.environ.get('BANK_ACCOUNT', '')
+        bank_iban = os.environ.get('BANK_IBAN', '')
+        bank_note = ""
+        if bank_account or bank_iban:
+            bank_note = "\nPlatební údaje pro bankovní převod:\n"
+            if bank_account:
+                bank_note += f"  Číslo účtu: {bank_account}\n"
+            if bank_iban:
+                bank_note += f"  IBAN: {bank_iban}\n"
+            bank_note += f"  Variabilní symbol: {order_id}\n"
+            bank_note += f"  Částka: {amount_czk} Kč\n"
+        else:
+            bank_note = "\nPro platbu bankovním převodem použijte variabilní symbol uvedený výše. Číslo účtu vám zašleme v doplňující zprávě nebo doplňte dle dohody.\n"
+        body = (
+            f"Dobrý den,\n\n"
+            f"děkujeme za objednávku.\n\n"
+            f"Objednávka č.: {order_id}\n"
+            f"Variabilní symbol: {order_id}\n"
+            f"Částka k úhradě: {amount_czk} Kč\n"
+            f"Tarif: {tarif}\n"
+            f"{bank_note}\n"
+            f"S pozdravem,\nDokuCheck"
+        )
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg['From'] = smtp_user
+        msg['To'] = email
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            if smtp_pass:
+                server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [email], msg.as_string())
+        return True
+    except Exception as e:
+        if app and hasattr(app, 'logger'):
+            app.logger.warning("Odeslání potvrzovacího e-mailu se nezdařilo: %s", e)
+        return False
+
+
 @app.route('/online-check')
 def online_check():
     """ONLINE Check – Drag&Drop max. 3 PDF, max. 2 MB na soubor, kontrola na serveru (cloud)."""
     return render_template('online_check.html')
 
 
+# Částky dle tarifu (Kč) – pro e-mail a zobrazení
+TARIF_AMOUNTS = {'basic': 990, 'standard': 1990, 'premium': 4990}
+
+
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    """Fakturační formulář. POST ukládá do pending_orders a zobrazí poděkování."""
+    """Fakturační formulář. POST ukládá do pending_orders, odešle e-mail a přesměruje na order-success bez platebních údajů."""
     TARIF_LABELS = {'basic': 'BASIC', 'standard': 'STANDARD', 'premium': 'PREMIUM'}
     if request.method == 'POST':
         jmeno_firma = (request.form.get('jmeno_firma') or '').strip()
@@ -2925,13 +2982,23 @@ def checkout():
         db = Database()
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='pending')
         if order_id:
-            return render_template('checkout_thanks.html')
+            amount_czk = TARIF_AMOUNTS.get(tarif, TARIF_AMOUNTS.get('standard', 1990))
+            _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk)
+            session['last_order_id'] = order_id
+            return redirect(url_for('order_success'))
         flash('Chyba při odeslání. Zkuste to znovu.', 'error')
         return redirect(request.url)
     tarif = (request.args.get('tarif') or 'standard').strip().lower()
     if tarif not in TARIF_LABELS:
         tarif = 'standard'
     return render_template('checkout.html', tarif=tarif, tarif_label=TARIF_LABELS.get(tarif, 'STANDARD'))
+
+
+@app.route('/order-success')
+def order_success():
+    """Potvrzovací stránka po objednávce – bez platebních údajů (ty jsou v e-mailu)."""
+    order_id = session.pop('last_order_id', None)
+    return render_template('checkout_thanks.html', order_id=order_id)
 
 
 @app.route('/portal', methods=['GET', 'POST'])

@@ -4,6 +4,7 @@
 
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from tkinter import ttk
 import threading
 import webbrowser
 import os
@@ -68,9 +69,8 @@ WARNING = "#f97316"
 ERROR = "#ef4444"
 SECONDS_PER_FILE_ETA = 0.4
 SIDEBAR_W = 220
-# Výška řádků cca -10 % oproti původním 22/26
-ROW_HEIGHT_FOLDER = 20
-ROW_HEIGHT_FILE = 23
+# Strom – rowheight 38 px (vzdušnost)
+TREE_ROWHEIGHT = 38
 # Logo – vyměnitelné: nahraďte soubor v složce logo/ (logo.png nebo logo.ico)
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.png")
@@ -120,6 +120,19 @@ class PDFCheckUI_2026_V3:
         self._apply_dark_title_bar()
         self._setup_logo()
         self._show_session_summary()
+        self.root.after(50, self._maximize_window)
+
+    def _maximize_window(self):
+        """Maximalizace okna po startu – celá plocha."""
+        try:
+            if sys.platform == "win32":
+                self.root.state("zoomed")
+            elif sys.platform == "darwin":
+                self.root.attributes("-zoomed", True)
+            else:
+                self.root.state("zoomed")
+        except tk.TclError:
+            pass
 
     def _center(self):
         self.root.update_idletasks()
@@ -191,10 +204,12 @@ class PDFCheckUI_2026_V3:
         self._login_status = ctk.CTkLabel(self._login_frame, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
         self._login_status.pack(anchor=tk.W, padx=12, pady=(0, 2))
         ctk.CTkButton(self._login_frame, text="Vyzkoušet zdarma", command=self._do_trial_login, font=(FONT_STACK[0], FS_12), width=160, fg_color=ACCENT).pack(pady=2, padx=12, fill=tk.X)
-        self._login_email = ctk.CTkEntry(self._login_frame, placeholder_text="E-mail", width=160, height=28, font=(FONT_STACK[0], FS_12))
+        self._login_email = ctk.CTkEntry(self._login_frame, placeholder_text="jmeno@firma.cz", width=160, height=28, font=(FONT_STACK[0], FS_12))
         self._login_email.pack(pady=2, padx=12, fill=tk.X)
+        self._login_email.bind("<Return>", lambda e: self._do_email_login())
         self._login_pass = ctk.CTkEntry(self._login_frame, placeholder_text="Heslo", width=160, height=28, show="*", font=(FONT_STACK[0], FS_12))
         self._login_pass.pack(pady=2, padx=12, fill=tk.X)
+        self._login_pass.bind("<Return>", lambda e: self._do_email_login())
         ctk.CTkButton(self._login_frame, text="Přihlásit se", command=self._do_email_login, font=(FONT_STACK[0], FS_12), width=160, fg_color=BORDER).pack(pady=2, padx=12, fill=tk.X)
         self.license_status_label = ctk.CTkLabel(sidebar, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
         self.license_status_label.pack(anchor=tk.W, padx=12, pady=(0, 6))
@@ -244,16 +259,49 @@ class PDFCheckUI_2026_V3:
         content.grid_rowconfigure(0, weight=1)
         main.grid_rowconfigure(2, weight=1)
 
-        # Queue panel
+        # Queue panel – strom (Treeview) + toolbar
         left = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=6)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 4))
         left.grid_columnconfigure(0, weight=1)
-        left.grid_rowconfigure(1, weight=1)
+        left.grid_rowconfigure(2, weight=1)
         ctk.CTkLabel(left, text="Fronta (strom složek)", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT).grid(row=0, column=0, sticky="w", padx=10, pady=(10, 4))
-        self.queue_scroll = ctk.CTkScrollableFrame(left, fg_color="transparent")
-        self.queue_scroll.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 6))
-        left.grid_columnconfigure(0, weight=1)
-        left.grid_rowconfigure(1, weight=1)
+        # Toolbar nad stromem: filtr (Vše / Chyby / PDF/A-3 OK) + Rozbalit / Sbalit
+        self._queue_filter = "all"
+        toolbar = ctk.CTkFrame(left, fg_color="transparent")
+        toolbar.grid(row=1, column=0, sticky="ew", padx=6, pady=(0, 4))
+        toolbar.grid_columnconfigure(1, weight=1)
+        self._filter_btn = ctk.CTkSegmentedButton(toolbar, values=["Vše", "Chyby", "PDF/A-3 OK"], command=self._on_queue_filter)
+        self._filter_btn.grid(row=0, column=0, padx=(0, 8), pady=2)
+        self._filter_btn.set("Vše")
+        ctk.CTkButton(toolbar, text="Rozbalit vše", command=self._tree_expand_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=2, padx=4, pady=2)
+        ctk.CTkButton(toolbar, text="Sbalit vše", command=self._tree_collapse_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=3, padx=4, pady=2)
+        # Kontejner pro tk Treeview (ttk potřebuje tk rodiče)
+        self._tree_container = tk.Frame(left, bg=BG_CARD)
+        self._tree_container.grid(row=2, column=0, sticky="nsew", padx=6, pady=(0, 6))
+        self._tree_container.grid_columnconfigure(0, weight=1)
+        self._tree_container.grid_rowconfigure(0, weight=1)
+        self._queue_tree_style = ttk.Style()
+        self._queue_tree_style.configure("Queue.Treeview", rowheight=TREE_ROWHEIGHT, background=BG_CARD, foreground=TEXT, fieldbackground=BG_CARD)
+        self._queue_tree_style.configure("Queue.Treeview.Heading", background=BG_HEADER, foreground=TEXT)
+        self._queue_tree_style.map("Queue.Treeview", background=[("selected", BORDER)], foreground=[("selected", TEXT)])
+        self.queue_tree = ttk.Treeview(self._tree_container, columns=("status",), show="tree headings", height=18, style="Queue.Treeview", selectmode="browse")
+        self.queue_tree.heading("#0", text="Položka")
+        self.queue_tree.heading("status", text="Stav")
+        self.queue_tree.column("#0", minwidth=200, stretch=True)
+        self.queue_tree.column("status", width=52, minwidth=52)
+        self.queue_tree.tag_configure("ok", foreground=SUCCESS)
+        self.queue_tree.tag_configure("error", foreground=ERROR)
+        self.queue_tree.tag_configure("pending", foreground=TEXT_MUTED)
+        scroll = tk.Scrollbar(self._tree_container, command=self.queue_tree.yview)
+        self.queue_tree.configure(yscrollcommand=scroll.set)
+        self.queue_tree.grid(row=0, column=0, sticky="nsew")
+        scroll.grid(row=0, column=1, sticky="ns")
+        self.queue_tree.bind("<<TreeviewSelect>>", self._on_tree_select)
+        self.queue_tree.bind("<Button-1>", self._on_tree_click)
+        self._tree_iid_to_qidx = {}
+        self._tree_iid_to_task_ix = {}
+        self._qidx_to_tree_iid = {}
+        self.queue_scroll = None
 
         # Pravý panel – bez detailu kontroly jednotlivých PDF (citlivá data)
         right = ctk.CTkFrame(content, fg_color=BG_CARD, corner_radius=6)
@@ -279,9 +327,10 @@ class PDFCheckUI_2026_V3:
         ]
         for i, s in enumerate(steps):
             ctk.CTkLabel(timeline, text=s, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, anchor="w").grid(row=i + 1, column=0, sticky="w", padx=10, pady=2)
+        ctk.CTkButton(timeline, text="Nápověda", command=self._show_help_modal, font=(FONT_STACK[0], FS_12), fg_color="transparent", width=120).grid(row=len(steps) + 1, column=0, padx=10, pady=(12, 8))
         self.timeline_frame = timeline
 
-        # Progress row
+        # Progress row – Počet X/Y, ETA, Rychlost (při běhu); Připraveno: N souborů, M složek (v klidu)
         self._progress_row = ctk.CTkFrame(main, fg_color="transparent")
         self._progress_row.grid(row=3, column=0, sticky="ew", padx=8, pady=4)
         main.grid_rowconfigure(3, weight=0)
@@ -293,9 +342,11 @@ class PDFCheckUI_2026_V3:
         self.progress = ctk.CTkProgressBar(self._progress_row, height=6, progress_color=ACCENT)
         self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=6)
         self.progress.set(0)
-        self._progress_row.grid_remove()
+        self._progress_speed_label = ctk.CTkLabel(self._progress_row, text="", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED)
+        self._progress_speed_label.pack(side=tk.RIGHT, padx=(0, 8))
         self.eta_label = ctk.CTkLabel(self._progress_row, text="", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED)
         self.eta_label.pack(side=tk.RIGHT)
+        self._progress_row.grid_remove()
         # Panel zpráv v hlavním okně (bez vyskakovacích oken)
         self._msg_row = ctk.CTkFrame(main, fg_color=BG_CARD, corner_radius=4, height=44)
         self._msg_row.grid(row=4, column=0, sticky="ew", padx=8, pady=4)
@@ -418,6 +469,7 @@ class PDFCheckUI_2026_V3:
             if path and isinstance(path, str):
                 self.add_path_to_queue(path)
         self.update_queue_display()
+        self._update_progress_idle()
 
     @staticmethod
     def _normalize_path(item):
@@ -440,6 +492,26 @@ class PDFCheckUI_2026_V3:
         if isinstance(x, dict):
             return x.get("filename") or os.path.basename(x.get("path") or x.get("full_path") or "")
         return ""
+
+    def _get_queue_totals(self):
+        """Vrátí (počet PDF souborů, počet složek) – okamžitý předpočet z fronty."""
+        n_files = len(self.queue_display)
+        n_folders = sum(1 for t in self.tasks if t.get("type") == "folder")
+        return n_files, n_folders
+
+    def _update_progress_idle(self):
+        """Aktualizuje oblast progressu v klidu: Připraveno: N souborů, M složek."""
+        if self.is_running:
+            return
+        n_files, n_folders = self._get_queue_totals()
+        if n_files > 0:
+            self._progress_row.grid()
+            self.progress_label.configure(text=f"Připraveno: {n_files} souborů, {n_folders} složek", text_color=TEXT_MUTED)
+            self.eta_label.configure(text="")
+            self._progress_speed_label.configure(text="")
+            self.progress.set(0)
+        else:
+            self._progress_row.grid_remove()
 
     def add_path_to_queue(self, path):
         path = self._normalize_path(path)
@@ -469,12 +541,14 @@ class PDFCheckUI_2026_V3:
         for f in files:
             self.add_path_to_queue(f)
         self.update_queue_display()
+        self._update_progress_idle()
 
     def add_folder(self):
         folder = filedialog.askdirectory(title="Vyberte složku s PDF")
         if folder:
             self.add_path_to_queue(folder)
             self.update_queue_display()
+            self._update_progress_idle()
 
     def clear_queue(self):
         self.tasks = []
@@ -482,20 +556,102 @@ class PDFCheckUI_2026_V3:
         self.update_queue_display()
         self._update_stats()
         self._show_session_summary()
+        self._update_progress_idle()
 
     def _badge_text(self, item):
+        """Vrátí (text pro pilulku, barva). Pilulky: ✓ zelená / ✗ červená."""
         r = item.get("result")
         if not r or not isinstance(r, dict):
             return "…", TEXT_MUTED
         if r.get("skipped"):
-            return "Přeskočeno", TEXT_MUTED
+            return "…", TEXT_MUTED
         if r.get("success"):
-            return "OK", SUCCESS
-        return "Chyba", ERROR
+            return "✓", SUCCESS
+        return "✗", ERROR
+
+    def _item_passes_filter(self, item):
+        if self._queue_filter == "all":
+            return True
+        if self._queue_filter == "errors":
+            r = item.get("result")
+            return r and isinstance(r, dict) and not r.get("success") and not r.get("skipped")
+        if self._queue_filter == "pdfa_ok":
+            r = item.get("result")
+            if not r or not isinstance(r, dict):
+                return False
+            return (r.get("results") or {}).get("pdf_format", {}).get("is_pdf_a3") is True
+        return True
+
+    def _on_queue_filter(self, value):
+        if value == "Vše":
+            self._queue_filter = "all"
+        elif value == "Chyby":
+            self._queue_filter = "errors"
+        elif value == "PDF/A-3 OK":
+            self._queue_filter = "pdfa_ok"
+        self.update_queue_display()
+
+    def _tree_expand_all(self):
+        for iid in self.queue_tree.get_children(""):
+            self.queue_tree.item(iid, open=True)
+            for c in self.queue_tree.get_children(iid):
+                self.queue_tree.item(c, open=True)
+
+    def _tree_collapse_all(self):
+        for iid in self.queue_tree.get_children(""):
+            self.queue_tree.item(iid, open=False)
+
+    def _on_tree_select(self, event):
+        sel = self.queue_tree.selection()
+        if not sel:
+            return
+        iid = sel[0]
+        qidx = self._tree_iid_to_qidx.get(iid)
+        if qidx is not None:
+            self._select_item(qidx)
+
+    def _on_tree_click(self, event):
+        region = self.queue_tree.identify_region(event.x, event.y)
+        if region != "cell" and region != "tree":
+            return
+        iid = self.queue_tree.identify_row(event.y)
+        if not iid:
+            return
+        qidx = self._tree_iid_to_qidx.get(iid)
+        if qidx is not None:
+            self._toggle_checked(qidx)
+        else:
+            task_ix = self._tree_iid_to_task_ix.get(iid)
+            if task_ix is not None:
+                self._remove_folder_by_index(task_ix)
+
+    def _show_help_modal(self):
+        """Nápověda – terminologie: serverová / cloudová kontrola."""
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Nápověda")
+        dialog.geometry("420x280")
+        dialog.configure(fg_color=BG_CARD)
+        dialog.transient(self.root)
+        ctk.CTkLabel(dialog, text="Nápověda", font=(FONT_STACK[0], FS_16, "bold"), text_color=TEXT).pack(pady=(14, 8))
+        help_text = (
+            "Kontroly v tomto režimu jsou serverová / cloudová kontrola.\n\n"
+            "Data z vybraných PDF odcházejí na server DokuCheck, kde probíhá analýza. "
+            "Výsledky pak uvidíte v portálu po odeslání na server.\n\n"
+            "1. Přidejte PDF (soubory nebo složku)\n"
+            "2. Zaškrtněte položky ke kontrole\n"
+            "3. Klikněte na „Odeslat ke kontrole“\n"
+            "4. Po dokončení můžete odeslat výsledky na server"
+        )
+        lbl = ctk.CTkLabel(dialog, text=help_text, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, justify=tk.LEFT, wraplength=380)
+        lbl.pack(padx=20, pady=(0, 16), fill=tk.BOTH, expand=True)
+        ctk.CTkButton(dialog, text="Zavřít", command=dialog.destroy, font=(FONT_STACK[0], FS_12), width=100).pack(pady=(0, 14))
 
     def update_queue_display(self):
-        for w in self.queue_scroll.winfo_children():
-            w.destroy()
+        for iid in self.queue_tree.get_children(""):
+            self.queue_tree.delete(iid)
+        self._tree_iid_to_qidx.clear()
+        self._tree_iid_to_task_ix.clear()
+        self._qidx_to_tree_iid.clear()
         qidx_global = 0
         for task_ix, task in enumerate(self.tasks):
             file_paths = task.get("file_paths", [])
@@ -503,44 +659,58 @@ class PDFCheckUI_2026_V3:
                 continue
             is_folder = task.get("type") == "folder"
             name = task.get("name", "")
-            if is_folder:
-                # Řádek složky (strom)
-                row = ctk.CTkFrame(self.queue_scroll, fg_color=BG_HEADER, corner_radius=3, height=ROW_HEIGHT_FOLDER)
-                row.pack(fill=tk.X, pady=1)
-                row.pack_propagate(False)
-                lbl = ctk.CTkLabel(row, text=f"📁 {name}  ({len(file_paths)} souborů)", font=(FONT_STACK[0], FS_12, "bold"), text_color=TEXT, anchor="w")
-                lbl.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=8, pady=2)
-                lbl.bind("<Button-1>", lambda e, tix=task_ix: self._remove_folder_by_index(tix))
-                row.bind("<Button-1>", lambda e, tix=task_ix: self._remove_folder_by_index(tix))
-                btn = ctk.CTkButton(row, text="✕", width=24, height=18, font=(FONT_STACK[0], 10), fg_color=ERROR, command=lambda tix=task_ix: self._remove_folder_by_index(tix))
-                btn.pack(side=tk.RIGHT, padx=4, pady=2)
+            # Při filtru zjistit, zda má složka alespoň jeden zobrazený soubor
+            any_visible = self._queue_filter == "all" or any(
+                qidx_global + j < len(self.queue_display) and self._item_passes_filter(self.queue_display[qidx_global + j])
+                for j in range(len(file_paths))
+            )
+            folder_iid = f"folder-{task_ix}"
+            if is_folder and any_visible:
+                self.queue_tree.insert("", "end", iid=folder_iid, text=f"📁 {name}  ({len(file_paths)} souborů)", values=("",))
+                self._tree_iid_to_task_ix[folder_iid] = task_ix
+            elif is_folder and not any_visible:
+                qidx_global += len(file_paths)
+                continue
             for j in range(len(file_paths)):
                 if qidx_global >= len(self.queue_display):
                     break
                 item = self.queue_display[qidx_global]
                 qidx = qidx_global
                 qidx_global += 1
-                prefix = "    📄 " if is_folder else "📄 "
-                row = ctk.CTkFrame(self.queue_scroll, fg_color=BORDER, corner_radius=3, height=ROW_HEIGHT_FILE)
-                row.pack(fill=tk.X, pady=1)
-                row.pack_propagate(False)
+                if self._queue_filter != "all" and not self._item_passes_filter(item):
+                    continue
                 chk = "☑" if item.get("checked", True) else "☐"
-                badge_text, badge_color = self._badge_text(item)
-                cb = ctk.CTkLabel(row, text=chk, font=(FONT_STACK[0], FS_12), text_color=TEXT, width=18, cursor="hand2")
-                cb.pack(side=tk.LEFT, padx=4, pady=3)
-                cb.bind("<Button-1>", lambda e, i=qidx: self._toggle_checked(i))
-                lbl = ctk.CTkLabel(row, text=prefix + item.get("filename", ""), font=(FONT_STACK[0], FS_12), text_color=TEXT, anchor="w")
-                lbl.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2, pady=3)
-                lbl.bind("<Button-1>", lambda e, i=qidx: self._select_item(i))
-                pill = ctk.CTkLabel(row, text=badge_text, font=(FONT_STACK[0], FS_12), text_color=badge_color, width=44)
-                pill.pack(side=tk.RIGHT, padx=4, pady=3)
-                row.bind("<Button-1>", lambda e, i=qidx: self._select_item(i))
+                badge_text, _ = self._badge_text(item)
+                display_name = f"{chk}  📄 {item.get('filename', '')}"
+                parent = folder_iid if is_folder else ""
+                file_iid = f"file-{task_ix}-{qidx}"
+                self.queue_tree.insert(parent, "end", iid=file_iid, text=display_name, values=(badge_text,))
+                self._tree_iid_to_qidx[file_iid] = qidx
+                self._qidx_to_tree_iid[qidx] = file_iid
+                if badge_text == "✓":
+                    self.queue_tree.item(file_iid, tags=("ok",))
+                elif badge_text == "✗":
+                    self.queue_tree.item(file_iid, tags=("error",))
+                else:
+                    self.queue_tree.item(file_iid, tags=("pending",))
+            if is_folder:
+                self.queue_tree.item(folder_iid, open=True)
+        self._queue_tree_style.configure("Queue.Treeview", rowheight=TREE_ROWHEIGHT)
+        self._queue_tree_style.map("Queue.Treeview", foreground=[("selected", TEXT)], background=[("selected", BORDER)])
         self._update_stats()
+        if not self.is_running:
+            self._update_progress_idle()
 
     def _toggle_checked(self, qidx):
         if 0 <= qidx < len(self.queue_display):
             self.queue_display[qidx]["checked"] = not self.queue_display[qidx].get("checked", True)
-            self.update_queue_display()
+            iid = self._qidx_to_tree_iid.get(qidx)
+            if iid and self.queue_tree.exists(iid):
+                chk = "☑" if self.queue_display[qidx].get("checked", True) else "☐"
+                name = self.queue_display[qidx].get("filename", "")
+                self.queue_tree.item(iid, text=f"{chk}  📄 {name}")
+            else:
+                self.update_queue_display()
 
     def _select_item(self, qidx):
         if 0 <= qidx < len(self.queue_display):
@@ -729,7 +899,10 @@ class PDFCheckUI_2026_V3:
         import time
         self.start_time = time.time()
         self.progress.set(0)
-        self.progress_label.configure(text="Zahajuji…", text_color=ACCENT)
+        total = len([q for q in self.queue_display if q.get("checked")])
+        self.progress_label.configure(text=f"Počet: 0 / {total} souborů", text_color=ACCENT)
+        self.eta_label.configure(text="")
+        self._progress_speed_label.configure(text="")
         self._progress_row.grid()
         self.cancel_btn.pack(side=tk.RIGHT, padx=6)
         self.check_btn.configure(state="disabled")
@@ -738,9 +911,16 @@ class PDFCheckUI_2026_V3:
         self.is_running = False
         self.progress.set(1)
         self.progress_label.configure(text="Hotovo." if not self.cancel_requested else "Zrušeno", text_color=SUCCESS if not self.cancel_requested else WARNING)
+        self.eta_label.configure(text="")
+        self._progress_speed_label.configure(text="")
         self.cancel_btn.pack_forget()
         self.check_btn.configure(state="normal")
-        self.root.after(2500, lambda: self._progress_row.grid_remove())
+        def _hide_or_idle():
+            if self.tasks and not self.is_running:
+                self._update_progress_idle()
+            else:
+                self._progress_row.grid_remove()
+        self.root.after(2500, _hide_or_idle)
 
     def update_progress(self, current, total, filename):
         import time
@@ -748,13 +928,17 @@ class PDFCheckUI_2026_V3:
             return
         if total > 0:
             self.progress.set(current / total)
+            self.progress_label.configure(text=f"Počet: {current} / {total} souborů")
             remaining = total - current
             if current > 0 and self.start_time:
-                eta_seconds = (time.time() - self.start_time) / current * remaining
+                elapsed = time.time() - self.start_time
+                eta_seconds = elapsed / current * remaining
+                speed = current / elapsed if elapsed > 0 else 0
+                self._progress_speed_label.configure(text=f"Rychlost: {speed:.1f} souborů/s")
             else:
                 eta_seconds = remaining * SECONDS_PER_FILE_ETA
+                self._progress_speed_label.configure(text="")
             mm, ss = int(eta_seconds // 60), int(eta_seconds % 60)
-            self.progress_label.configure(text=f"{current}/{total}")
             self.eta_label.configure(text=f"ETA {mm:02d}:{ss:02d}")
         self.root.update_idletasks()
 
@@ -879,9 +1063,13 @@ class PDFCheckUI_2026_V3:
         email_var = ctk.StringVar()
         pass_var = ctk.StringVar()
         ctk.CTkLabel(dialog, text="E-mail:", text_color=TEXT).pack(anchor=tk.W, padx=16, pady=(4, 0))
-        ctk.CTkEntry(dialog, textvariable=email_var, width=300).pack(pady=2, padx=16, fill=tk.X)
+        email_entry = ctk.CTkEntry(dialog, textvariable=email_var, width=300, placeholder_text="jmeno@firma.cz")
+        email_entry.pack(pady=2, padx=16, fill=tk.X)
         ctk.CTkLabel(dialog, text="Heslo:", text_color=TEXT).pack(anchor=tk.W, padx=16, pady=(4, 0))
-        ctk.CTkEntry(dialog, textvariable=pass_var, show="*", width=300).pack(pady=2, padx=16, fill=tk.X)
+        pass_entry = ctk.CTkEntry(dialog, textvariable=pass_var, show="*", width=300)
+        pass_entry.pack(pady=2, padx=16, fill=tk.X)
+        email_entry.bind("<Return>", lambda e: do_login())
+        pass_entry.bind("<Return>", lambda e: do_login())
 
         def do_login():
             email = email_var.get().strip()

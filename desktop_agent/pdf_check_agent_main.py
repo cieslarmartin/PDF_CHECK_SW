@@ -280,13 +280,12 @@ class PDFCheckAgent:
             self.app.clear_results_and_queue()
 
     def logout(self):
-        """Odhlášení – vymaže zobrazení, klíč a zobrazí dialog přihlášení."""
+        """Odhlášení – vymaže zobrazení a klíč. Přihlášení jen ručně tlačítkem."""
         if self.app:
             self.app.clear_results_and_queue()
         self.license_manager.clear_api_key()
         if self.app:
             self.app.set_license_display("")
-            self.root.after(100, lambda: self.app.show_api_key_dialog())
 
     def get_max_files_for_batch(self):
         """Vrátí max. počet souborů v dávce dle licence (Free=5, Basic+=dle limitu, -1=neomezeno)."""
@@ -327,17 +326,15 @@ class PDFCheckAgent:
                 self.app.set_export_xls_enabled(False)
 
     def check_first_run(self):
-        """Zkontroluje, zda je nastaven platný klíč; pokud ne, zobrazí dialog Aktivace licence."""
+        """Zkontroluje, zda je nastaven platný klíč. Přihlášení se vyvolá pouze ručně tlačítkem."""
         if not self.license_manager.has_valid_key():
-            logger.info("První spuštění – licence není aktivována")
-            self.root.after(500, lambda: self.app.show_api_key_dialog())
+            logger.info("První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)")
             return True
         # Ověř klíč se serverem
         logger.info("Ověřuji licenci se serverem...")
         success, _ = self.license_manager.verify_api_key()
         if not success:
-            logger.warning("Licence není platná – zadejte klíč znovu")
-            self.root.after(500, lambda: self.app.show_api_key_dialog())
+            logger.warning("Licence není platná – přihlaste se znovu v sidebaru")
         return False
 
     def run(self):

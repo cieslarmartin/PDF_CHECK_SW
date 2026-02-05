@@ -9,8 +9,9 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center px-6">
     <div class="max-w-md w-full text-center">
         <div class="text-6xl mb-6">✅</div>
-        <h1 class="text-2xl font-bold text-white mb-4">Děkujeme!</h1>
-        <p class="text-slate-400 mb-6">Faktura vám přijde do e-mailu. Po zaplacení aktivujeme váš účet a ozveme se vám.</p>
+        <h1 class="text-2xl font-bold text-white mb-4">Děkujeme za vaši objednávku{% if order_id %} č. {{ order_id }}{% endif %}.</h1>
+        <p class="text-slate-300 mb-4">Potvrzení objednávky spolu s instrukcemi k platbě bankovním převodem jsme právě odeslali na váš e-mail.</p>
+        <p class="text-slate-500 text-sm mb-8">Pokud e-mail nedorazí do 10 minut, zkontrolujte prosím složku Spam.</p>
         <a href="/" class="inline-block px-6 py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Zpět na úvod</a>
     </div>
 </body>
