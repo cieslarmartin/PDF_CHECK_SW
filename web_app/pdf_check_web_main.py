@@ -1,7 +1,7 @@
 # pdf_dokucheck_pro_v41_with_api.py
 # PDF DokuCheck PRO - Build 41 (Flask verze s API + Agent data)
 # AKTUALIZACE 41: Excel export, TSA filtr, příprava pro licenční systém
-# Režimy: "Z Agenta" (primární) | "Na server, nebo na cloud" (upload/disk)
+# Režimy: "Z Agenta" (primární) | "Serverová / Cloudová kontrola" (upload/disk)
 #
 # © 2025 Ing. Martin Cieślar
 #
@@ -714,10 +714,10 @@ HTML_TEMPLATE = '''
                 <div class="sidebar-content">
                     <div class="mode-switcher">
                         <button class="mode-btn active" id="mode-agent" onclick="setMode('agent')">🌐 Z Agenta</button>
-                        <button class="mode-btn" id="mode-local" onclick="setMode('local')">💻 Na server, nebo na cloud</button>
+                        <button class="mode-btn" id="mode-local" onclick="setMode('local')">☁️ Cloudová kontrola</button>
                     </div>
                     <div style="font-size:0.75em;color:#6b7280;margin-bottom:10px;padding:8px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;">🔒 Systém načítá pouze metadata, PDF dokumenty zůstávají na vašem lokálním disku.</div>
-                    <div style="font-size:0.7em;color:#6b7280;margin-bottom:10px;padding:0 4px;"><strong>Z Agenta</strong> = soubory zůstaly na disku, na server šla jen metadata. <strong>Na server, nebo na cloud</strong> = nahrání PDF zde – celé soubory jdou na server (cloud).</div>
+                    <div style="font-size:0.7em;color:#6b7280;margin-bottom:10px;padding:0 4px;"><strong>Z Agenta</strong> = soubory zůstaly na disku, na server šla jen metadata. <strong>Serverová / Cloudová kontrola</strong> = nahrání PDF zde – celé soubory jdou na server (cloud).</div>
 
                     <!-- AGENT MODE - načítání dat z API -->
                     <div id="agent-mode">
@@ -750,7 +750,7 @@ HTML_TEMPLATE = '''
                         </div>
                     </div>
 
-                    <!-- UPLOAD MODE - Na server, nebo na cloud = celé soubory jdou na server -->
+                    <!-- UPLOAD MODE - Serverová / Cloudová kontrola = celé soubory jdou na server -->
                     <div id="upload-mode" class="hidden">
                         <div style="font-size:0.75em;color:#6b7280;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;">Celé PDF soubory se odesílají na server (cloud). Pro kontrolu bez odeslání souborů použijte Desktop aplikaci (Z Agenta – na server jdou jen metadata).</div>
                         <div class="drop-zone" id="drop-zone">
@@ -1076,9 +1076,9 @@ HTML_TEMPLATE = '''
                 <button class="modal-close" onclick="hideHelpModal()">×</button>
             </div>
             <div class="modal-content">
-                <h4>1. REŽIMY: Z Agenta vs. Lokální kontrola</h4>
-                <p><strong>Z Agenta (soukromý mód):</strong> Výsledky pocházejí z Desktop aplikace. PDF soubory zůstávají na vašem disku; na server odcházejí pouze metadata (výsledky kontroly). Maximální ochrana dat a vhodné pro běžnou práci.</p>
-                <p><strong>Lokální kontrola / Server demo:</strong> PDF nahrajete přímo na web (přetažením nebo výběrem složky). Soubory se zpracují na serveru. Vhodné pro rychlou ukázku; počet a velikost souborů mohou být omezeny.</p>
+                <h4>1. REŽIMY: Z Agenta vs. Serverová / Cloudová kontrola</h4>
+                <p><strong>Z Agenta (soukromý mód):</strong> Výsledky pocházejí z Desktop aplikace. PDF soubory zůstávají na vašem disku; na server odcházejí pouze metadata (výsledky kontroly). Maximální ochrana dat, vhodné pro citlivou firemní dokumentaci.</p>
+                <p><strong>Serverová / Cloudová kontrola:</strong> PDF soubory nahráváte přímo do prohlížeče. Soubory se odesílají a zpracovávají na serveru v RAM paměti. Vhodné pro rychlou ukázku (Demo); počet a velikost souborů jsou omezeny.</p>
 
                 <h4>2. NAHRÁNÍ SOUBORŮ</h4>
                 <p>Přetáhněte PDF nebo složku do šedé zóny, nebo použijte <strong>„Vybrat soubory"</strong> / <strong>„Vybrat složku"</strong>. Po náhledu potvrďte <strong>„Spustit analýzu"</strong>.</p>
@@ -2406,7 +2406,7 @@ function exportAllExcel() {
     fetchWithAuthAndDownload('/api/agent/export-all', 'export_vse.xlsx');
 }
 
-// Automaticky načíst data při startu: bez přihlášení defaultně Lokální (free trial), s přihlášením Z Agenta
+// Automaticky načíst data při startu: bez přihlášení defaultně Serverová/Cloudová (free trial), s přihlášením Z Agenta
 document.addEventListener('DOMContentLoaded', function() {
     try {
         var im = document.getElementById('info-modal');
