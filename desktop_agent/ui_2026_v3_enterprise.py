@@ -9,6 +9,7 @@ import threading
 import webbrowser
 import os
 import sys
+import time
 
 import customtkinter as ctk
 
@@ -60,6 +61,9 @@ FS_32 = 32
 BG_APP = "#0B0F14"
 BG_CARD = "#0B1220"
 BG_HEADER = "#0F172A"
+# Barvy pro ttk Treeview (theme clam) – musí být konzistentní s aplikací, žádná bílá
+TREEVIEW_BG = "#1a1a1a"
+TREEVIEW_FG = "#ffffff"
 BORDER = "#1F2937"
 TEXT = "#E5E7EB"
 TEXT_MUTED = "#94A3B8"
@@ -99,6 +103,7 @@ class PDFCheckUI_2026_V3:
 
         self.tasks = []
         self.queue_display = []
+        self.batches = []  # [{"label": "Dávka - HH:MM", "qidx_start": int, "qidx_end": int, "root_iid": str|None}, ...]
         self.session_files_checked = 0
         self.start_time = None
         self.total_files = 0
@@ -243,7 +248,7 @@ class PDFCheckUI_2026_V3:
         main.grid_rowconfigure(1, weight=0)
         ctk.CTkButton(bar, text="Přidat soubory", command=self.add_files, font=(FONT_STACK[0], FS_12), width=100, fg_color=ACCENT).pack(side=tk.LEFT, padx=6, pady=4)
         ctk.CTkButton(bar, text="+ Složka", command=self.add_folder, font=(FONT_STACK[0], FS_12), width=72, fg_color=ACCENT).pack(side=tk.LEFT, padx=2, pady=4)
-        ctk.CTkButton(bar, text="Vymazat vše", command=self.clear_queue, font=(FONT_STACK[0], FS_12), width=72, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
+        ctk.CTkButton(bar, text="VYMAZAT VŠE", command=self.clear_queue, font=(FONT_STACK[0], FS_12), width=100, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
         ctk.CTkButton(bar, text="Odebrat vybrané", command=self.remove_checked_from_queue, font=(FONT_STACK[0], FS_12), width=100, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
         ctk.CTkButton(bar, text="Odebrat položku", command=self.remove_selected_from_queue, font=(FONT_STACK[0], FS_12), width=96, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
         ctk.CTkButton(bar, text="Odebrat složku", command=self.remove_folder_of_selected, font=(FONT_STACK[0], FS_12), width=96, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
@@ -275,16 +280,34 @@ class PDFCheckUI_2026_V3:
         self._filter_btn.set("Vše")
         ctk.CTkButton(toolbar, text="Rozbalit vše", command=self._tree_expand_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=2, padx=4, pady=2)
         ctk.CTkButton(toolbar, text="Sbalit vše", command=self._tree_collapse_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=3, padx=4, pady=2)
-        # Kontejner pro tk Treeview (ttk potřebuje tk rodiče)
-        self._tree_container = tk.Frame(left, bg=BG_CARD)
+        # Kontejner pro tk Treeview (ttk potřebuje tk rodiče) – bez rámečku, barva jako aplikace
+        self._tree_container = tk.Frame(left, bg=TREEVIEW_BG, highlightthickness=0)
         self._tree_container.grid(row=2, column=0, sticky="nsew", padx=6, pady=(0, 6))
         self._tree_container.grid_columnconfigure(0, weight=1)
         self._tree_container.grid_rowconfigure(0, weight=1)
         self._queue_tree_style = ttk.Style()
-        self._queue_tree_style.configure("Queue.Treeview", rowheight=TREE_ROWHEIGHT, background=BG_CARD, foreground=TEXT, fieldbackground=BG_CARD)
-        self._queue_tree_style.configure("Queue.Treeview.Heading", background=BG_HEADER, foreground=TEXT)
-        self._queue_tree_style.map("Queue.Treeview", background=[("selected", BORDER)], foreground=[("selected", TEXT)])
-        self.queue_tree = ttk.Treeview(self._tree_container, columns=("status",), show="tree headings", height=18, style="Queue.Treeview", selectmode="browse")
+        try:
+            self._queue_tree_style.theme_use("clam")
+        except tk.TclError:
+            pass
+        self._queue_tree_style.configure(
+            "Queue.Treeview",
+            rowheight=TREE_ROWHEIGHT,
+            background=TREEVIEW_BG,
+            foreground=TREEVIEW_FG,
+            fieldbackground=TREEVIEW_BG,
+        )
+        self._queue_tree_style.configure("Queue.Treeview.Heading", background=BG_HEADER, foreground=TREEVIEW_FG)
+        self._queue_tree_style.map(
+            "Queue.Treeview",
+            background=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
+            foreground=[("selected", TREEVIEW_FG), ("!selected", TREEVIEW_FG)],
+            fieldbackground=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
+        )
+        self.queue_tree = ttk.Treeview(
+            self._tree_container, columns=("status",), show="tree headings", height=18,
+            style="Queue.Treeview", selectmode="browse",
+        )
         self.queue_tree.heading("#0", text="Položka")
         self.queue_tree.heading("status", text="Stav")
         self.queue_tree.column("#0", minwidth=200, stretch=True)
@@ -292,7 +315,7 @@ class PDFCheckUI_2026_V3:
         self.queue_tree.tag_configure("ok", foreground=SUCCESS)
         self.queue_tree.tag_configure("error", foreground=ERROR)
         self.queue_tree.tag_configure("pending", foreground=TEXT_MUTED)
-        scroll = tk.Scrollbar(self._tree_container, command=self.queue_tree.yview)
+        scroll = tk.Scrollbar(self._tree_container, command=self.queue_tree.yview, bg=TREEVIEW_BG, troughcolor=TREEVIEW_BG, activebackground=BORDER)
         self.queue_tree.configure(yscrollcommand=scroll.set)
         self.queue_tree.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
@@ -400,10 +423,10 @@ class PDFCheckUI_2026_V3:
         self._login_status.configure(text="")
         try:
             from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
-            email = DEMO_TRIAL_EMAIL or "free@trial.app"
+            email = DEMO_TRIAL_EMAIL or "zdarma@trial.verze"
             password = DEMO_TRIAL_PASSWORD or "free"
         except ImportError:
-            email, password = "free@trial.app", "free"
+            email, password = "zdarma@trial.verze", "free"
         if self.on_login_password_callback:
             result = self.on_login_password_callback(email, password)
             if result and result[0]:
@@ -464,10 +487,18 @@ class PDFCheckUI_2026_V3:
     def _on_drop(self, event):
         if getattr(self, "_dnd_overlay", None):
             self._dnd_overlay.place_forget()
+        start = len(self.queue_display)
         for raw in self.root.tk.splitlist(event.data):
             path = (raw.strip() if isinstance(raw, str) else None) or (raw.get("path") or raw.get("full_path") if isinstance(raw, dict) else None)
             if path and isinstance(path, str):
                 self.add_path_to_queue(path)
+        if len(self.queue_display) > start:
+            self.batches.append({
+                "label": "Dávka - " + time.strftime("%d.%m. %H:%M"),
+                "qidx_start": start,
+                "qidx_end": len(self.queue_display),
+                "root_iid": None,
+            })
         self.update_queue_display()
         self._update_progress_idle()
 
@@ -538,22 +569,44 @@ class PDFCheckUI_2026_V3:
 
     def add_files(self):
         files = filedialog.askopenfilenames(title="Vyberte PDF", filetypes=[("PDF", "*.pdf")])
+        start = len(self.queue_display)
         for f in files:
             self.add_path_to_queue(f)
+        if len(self.queue_display) > start:
+            self.batches.append({
+                "label": "Dávka - " + time.strftime("%d.%m. %H:%M"),
+                "qidx_start": start,
+                "qidx_end": len(self.queue_display),
+                "root_iid": None,
+            })
         self.update_queue_display()
         self._update_progress_idle()
 
     def add_folder(self):
         folder = filedialog.askdirectory(title="Vyberte složku s PDF")
         if folder:
+            start = len(self.queue_display)
             self.add_path_to_queue(folder)
+            if len(self.queue_display) > start:
+                self.batches.append({
+                    "label": "Dávka - " + time.strftime("%d.%m. %H:%M"),
+                    "qidx_start": start,
+                    "qidx_end": len(self.queue_display),
+                    "root_iid": None,
+                })
             self.update_queue_display()
             self._update_progress_idle()
 
     def clear_queue(self):
+        """Jediné místo, kde smí být voláno tree.delete – VYMAZAT VŠE."""
         self.tasks = []
         self.queue_display = []
-        self.update_queue_display()
+        self.batches = []
+        for iid in self.queue_tree.get_children(""):
+            self.queue_tree.delete(iid)
+        self._tree_iid_to_qidx.clear()
+        self._tree_iid_to_task_ix.clear()
+        self._qidx_to_tree_iid.clear()
         self._update_stats()
         self._show_session_summary()
         self._update_progress_idle()
@@ -592,14 +645,20 @@ class PDFCheckUI_2026_V3:
         self.update_queue_display()
 
     def _tree_expand_all(self):
-        for iid in self.queue_tree.get_children(""):
+        def _expand(iid):
             self.queue_tree.item(iid, open=True)
             for c in self.queue_tree.get_children(iid):
-                self.queue_tree.item(c, open=True)
+                _expand(c)
+        for iid in self.queue_tree.get_children(""):
+            _expand(iid)
 
     def _tree_collapse_all(self):
-        for iid in self.queue_tree.get_children(""):
+        def _collapse(iid):
+            for c in self.queue_tree.get_children(iid):
+                _collapse(c)
             self.queue_tree.item(iid, open=False)
+        for iid in self.queue_tree.get_children(""):
+            _collapse(iid)
 
     def _on_tree_select(self, event):
         sel = self.queue_tree.selection()
@@ -620,10 +679,12 @@ class PDFCheckUI_2026_V3:
         qidx = self._tree_iid_to_qidx.get(iid)
         if qidx is not None:
             self._toggle_checked(qidx)
-        else:
-            task_ix = self._tree_iid_to_task_ix.get(iid)
-            if task_ix is not None:
-                self._remove_folder_by_index(task_ix)
+            return
+        if self._tree_iid_to_task_ix.get(iid) is not None:
+            return
+        iid_str = str(iid) if iid else ""
+        if iid_str.startswith("path-") or iid_str.startswith("folder-"):
+            return
 
     def _show_help_modal(self):
         """Nápověda – terminologie: serverová / cloudová kontrola."""
@@ -646,57 +707,128 @@ class PDFCheckUI_2026_V3:
         lbl.pack(padx=20, pady=(0, 16), fill=tk.BOTH, expand=True)
         ctk.CTkButton(dialog, text="Zavřít", command=dialog.destroy, font=(FONT_STACK[0], FS_12), width=100).pack(pady=(0, 14))
 
-    def update_queue_display(self):
-        for iid in self.queue_tree.get_children(""):
-            self.queue_tree.delete(iid)
-        self._tree_iid_to_qidx.clear()
-        self._tree_iid_to_task_ix.clear()
-        self._qidx_to_tree_iid.clear()
-        qidx_global = 0
-        for task_ix, task in enumerate(self.tasks):
+    def _root_for_qidx(self, qidx):
+        """Vrátí kořenovou cestu (složku výběru) pro daný qidx – od ní se zobrazuje strom níže."""
+        qidx_start = 0
+        for task in self.tasks:
             file_paths = task.get("file_paths", [])
             if not file_paths:
                 continue
-            is_folder = task.get("type") == "folder"
-            name = task.get("name", "")
-            # Při filtru zjistit, zda má složka alespoň jeden zobrazený soubor
-            any_visible = self._queue_filter == "all" or any(
-                qidx_global + j < len(self.queue_display) and self._item_passes_filter(self.queue_display[qidx_global + j])
-                for j in range(len(file_paths))
-            )
-            folder_iid = f"folder-{task_ix}"
-            if is_folder and any_visible:
-                self.queue_tree.insert("", "end", iid=folder_iid, text=f"📁 {name}  ({len(file_paths)} souborů)", values=("",))
-                self._tree_iid_to_task_ix[folder_iid] = task_ix
-            elif is_folder and not any_visible:
-                qidx_global += len(file_paths)
+            if qidx_start <= qidx < qidx_start + len(file_paths):
+                if task.get("type") == "folder":
+                    return (task.get("path") or "").strip()
+                return (os.path.dirname(file_paths[0]) or "").strip()
+            qidx_start += len(file_paths)
+        return ""
+
+    def _path_to_folder_prefixes(self, path, root):
+        """Z cesty souboru vrátí relativní prefixy složek vůči root (od vybrané složky níže)."""
+        if not path or not path.strip():
+            return []
+        full = os.path.normpath(path).replace("\\", "/")
+        root_n = (os.path.normpath(root).replace("\\", "/").rstrip("/") + "/") if root else ""
+        if root_n and not full.startswith(root_n):
+            rel = full
+        else:
+            rel = full[len(root_n):] if root_n else full
+        rel = rel.lstrip("/")
+        dirname = os.path.dirname(rel)
+        if not dirname:
+            return []
+        parts = [p for p in dirname.replace("\\", "/").split("/") if p]
+        if not parts:
+            return []
+        return ["/".join(parts[:i]) for i in range(1, len(parts) + 1)]
+
+    def _append_to_tree(self, batch):
+        """Přidá jednu dávku do stromu bez mazání: kořen 📦 Dávka - [čas], pod ním hloubková struktura složek a souborů."""
+        root_iid = batch.get("root_iid")
+        if root_iid and self.queue_tree.exists(root_iid):
+            return
+        qidx_start = batch["qidx_start"]
+        qidx_end = batch["qidx_end"]
+        root_iid = "batch-%d-%d" % (qidx_start, qidx_end)
+        batch["root_iid"] = root_iid
+        self.queue_tree.insert("", "end", iid=root_iid, text="📦 " + batch["label"], values=("",))
+        self._tree_iid_to_task_ix[root_iid] = None
+
+        path_to_iid = {}  # relativní prefix (v rámci dávky) -> iid, aby se složky neduplikovaly
+        for qidx in range(qidx_start, qidx_end):
+            item = self.queue_display[qidx]
+            path = item.get("path") or ""
+            if not path:
                 continue
-            for j in range(len(file_paths)):
-                if qidx_global >= len(self.queue_display):
-                    break
-                item = self.queue_display[qidx_global]
-                qidx = qidx_global
-                qidx_global += 1
-                if self._queue_filter != "all" and not self._item_passes_filter(item):
+            root = self._root_for_qidx(qidx)
+            full = os.path.normpath(path).replace("\\", "/")
+            root_n = (os.path.normpath(root).replace("\\", "/").rstrip("/") + "/") if root else ""
+            if root_n and full.startswith(root_n):
+                rel = full[len(root_n):].lstrip("/")
+            else:
+                rel = full
+            dirname = os.path.dirname(rel)
+            for prefix in self._path_to_folder_prefixes(path, root):
+                if prefix in path_to_iid:
                     continue
-                chk = "☑" if item.get("checked", True) else "☐"
-                badge_text, _ = self._badge_text(item)
-                display_name = f"{chk}  📄 {item.get('filename', '')}"
-                parent = folder_iid if is_folder else ""
-                file_iid = f"file-{task_ix}-{qidx}"
-                self.queue_tree.insert(parent, "end", iid=file_iid, text=display_name, values=(badge_text,))
-                self._tree_iid_to_qidx[file_iid] = qidx
-                self._qidx_to_tree_iid[qidx] = file_iid
-                if badge_text == "✓":
-                    self.queue_tree.item(file_iid, tags=("ok",))
-                elif badge_text == "✗":
-                    self.queue_tree.item(file_iid, tags=("error",))
-                else:
-                    self.queue_tree.item(file_iid, tags=("pending",))
-            if is_folder:
-                self.queue_tree.item(folder_iid, open=True)
-        self._queue_tree_style.configure("Queue.Treeview", rowheight=TREE_ROWHEIGHT)
-        self._queue_tree_style.map("Queue.Treeview", foreground=[("selected", TEXT)], background=[("selected", BORDER)])
+                parts = [p for p in prefix.split("/") if p]
+                parent_prefix = "/".join(parts[:-1]) if len(parts) > 1 else None
+                parent_iid = path_to_iid.get(parent_prefix, root_iid) if parent_prefix else root_iid
+                safe = (root_iid + "-" + prefix).replace("/", "_").replace(":", "_").replace("\\", "_")
+                folder_iid = "path-" + safe
+                path_to_iid[prefix] = folder_iid
+                display_name = parts[-1] if parts else prefix
+                self.queue_tree.insert(parent_iid, "end", iid=folder_iid, text="📁 " + display_name, values=("",))
+            parent_iid = path_to_iid.get(dirname, root_iid) if dirname else root_iid
+            chk = "☑" if item.get("checked", True) else "☐"
+            badge_text, _ = self._badge_text(item)
+            display_name = "%s  📄 %s" % (chk, item.get("filename", ""))
+            file_iid = "file-%d" % qidx
+            self.queue_tree.insert(parent_iid, "end", iid=file_iid, text=display_name, values=(badge_text,))
+            self._tree_iid_to_qidx[file_iid] = qidx
+            self._qidx_to_tree_iid[qidx] = file_iid
+            if badge_text == "✓":
+                self.queue_tree.item(file_iid, tags=("ok",))
+            elif badge_text == "✗":
+                self.queue_tree.item(file_iid, tags=("error",))
+            else:
+                self.queue_tree.item(file_iid, tags=("pending",))
+
+        def _expand(iid):
+            self.queue_tree.item(iid, open=True)
+            for c in self.queue_tree.get_children(iid):
+                _expand(c)
+        _expand(root_iid)
+
+    def update_queue_display(self):
+        """Žádné mazání stromu – pouze přidání nových dávkových uzlů a aktualizace textu/tagů u existujících."""
+        for batch in self.batches:
+            self._append_to_tree(batch)
+        for qidx, item in enumerate(self.queue_display):
+            file_iid = self._qidx_to_tree_iid.get(qidx)
+            if not file_iid or not self.queue_tree.exists(file_iid):
+                continue
+            chk = "☑" if item.get("checked", True) else "☐"
+            badge_text, _ = self._badge_text(item)
+            name = item.get("filename", "")
+            self.queue_tree.item(file_iid, text="%s  📄 %s" % (chk, name), values=(badge_text,))
+            if badge_text == "✓":
+                self.queue_tree.item(file_iid, tags=("ok",))
+            elif badge_text == "✗":
+                self.queue_tree.item(file_iid, tags=("error",))
+            else:
+                self.queue_tree.item(file_iid, tags=("pending",))
+        self._queue_tree_style.configure(
+            "Queue.Treeview",
+            rowheight=TREE_ROWHEIGHT,
+            background=TREEVIEW_BG,
+            foreground=TREEVIEW_FG,
+            fieldbackground=TREEVIEW_BG,
+        )
+        self._queue_tree_style.map(
+            "Queue.Treeview",
+            foreground=[("selected", TREEVIEW_FG), ("!selected", TREEVIEW_FG)],
+            background=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
+            fieldbackground=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
+        )
         self._update_stats()
         if not self.is_running:
             self._update_progress_idle()
@@ -780,6 +912,7 @@ class PDFCheckUI_2026_V3:
             new_tasks.append({**task, "file_paths": kept_paths})
         self.tasks = new_tasks
         self.queue_display = new_queue_display
+        self.batches = []  # po změně obsahu fronty jsou qidx neplatné
         self.selected_qidx = None
         self.update_queue_display()
         self._show_session_summary()
@@ -824,59 +957,76 @@ class PDFCheckUI_2026_V3:
                     max_files = 5
             if max_files < 0:
                 max_files = 99999
-            task_checked = []
-            qidx_used = set()
-            for path, qidx in checked_paths_qidx:
-                if qidx in qidx_used:
-                    continue
-                for task_ix, task in enumerate(self.tasks):
-                    file_paths = task.get("file_paths", [])
-                    if not file_paths:
-                        continue
-                    qidx_start = sum(len(self.tasks[i].get("file_paths", [])) for i in range(task_ix))
-                    if qidx_start <= qidx < qidx_start + len(file_paths):
-                        found = False
-                        for tc in task_checked:
-                            if tc[0] == task_ix:
-                                tc[2].append((path, qidx))
-                                found = True
-                                break
-                        if not found:
-                            task_checked.append((task_ix, task, [(path, qidx)]))
-                        qidx_used.add(qidx)
-                        break
             all_results = []
             source_folder_for_batch = None
-            total_files_to_process = min(sum(len(items) for _, _, items in task_checked), max_files)
-            processed = 0
-            for task_ix, task, items in task_checked:
-                if self.cancel_requested or processed >= max_files:
-                    break
-                is_folder = task.get("type") == "folder"
-                task_path = task.get("path", "")
-                if is_folder and task_path:
-                    self.root.after(0, lambda p=processed, t=total_files_to_process: self.update_progress(p, t, os.path.basename(task_path)))
-                    folder_result = self.on_check_callback(task_path, mode="folder", auto_send=False)
-                    results_list = folder_result.get("results", []) if isinstance(folder_result, dict) else []
-                    qidx_start = sum(len(self.tasks[i].get("file_paths", [])) for i in range(task_ix))
-                    checked_qidx_in_task = {q for _, q in items}
-                    for j, res in enumerate(results_list):
-                        if processed >= max_files:
+
+            if max_files < 99999:
+                # Limitovaný účet (trial/zdarma): analyzovat jen prvních max_files souborů po jednom
+                to_process = checked_paths_qidx[:max_files]
+                total_files_to_process = len(to_process)
+                for path, qidx in to_process:
+                    if self.cancel_requested:
+                        break
+                    processed = len(all_results)
+                    self.root.after(0, lambda c=processed + 1, t=total_files_to_process, f=os.path.basename(path): self.update_progress(c, t, f))
+                    result = self.on_check_callback(path, mode="single", auto_send=False)
+                    all_results.append((qidx, result))
+                if all_results and to_process:
+                    source_folder_for_batch = os.path.dirname(to_process[0][0])
+            else:
+                # Neomezený účet: složky po složce, soubory po jednom
+                task_checked = []
+                qidx_used = set()
+                for path, qidx in checked_paths_qidx:
+                    if qidx in qidx_used:
+                        continue
+                    for task_ix, task in enumerate(self.tasks):
+                        file_paths = task.get("file_paths", [])
+                        if not file_paths:
+                            continue
+                        qidx_start = sum(len(self.tasks[i].get("file_paths", [])) for i in range(task_ix))
+                        if qidx_start <= qidx < qidx_start + len(file_paths):
+                            found = False
+                            for tc in task_checked:
+                                if tc[0] == task_ix:
+                                    tc[2].append((path, qidx))
+                                    found = True
+                                    break
+                            if not found:
+                                task_checked.append((task_ix, task, [(path, qidx)]))
+                            qidx_used.add(qidx)
                             break
-                        qidx = qidx_start + j
-                        if qidx in checked_qidx_in_task:
-                            all_results.append((qidx, res))
+                total_files_to_process = min(sum(len(items) for _, _, items in task_checked), max_files)
+                processed = 0
+                for task_ix, task, items in task_checked:
+                    if self.cancel_requested or processed >= max_files:
+                        break
+                    is_folder = task.get("type") == "folder"
+                    task_path = task.get("path", "")
+                    if is_folder and task_path:
+                        self.root.after(0, lambda p=processed, t=total_files_to_process: self.update_progress(p, t, os.path.basename(task_path)))
+                        folder_result = self.on_check_callback(task_path, mode="folder", auto_send=False)
+                        results_list = folder_result.get("results", []) if isinstance(folder_result, dict) else []
+                        qidx_start = sum(len(self.tasks[i].get("file_paths", [])) for i in range(task_ix))
+                        checked_qidx_in_task = {q for _, q in items}
+                        for j, res in enumerate(results_list):
+                            if processed >= max_files:
+                                break
+                            qidx = qidx_start + j
+                            if qidx in checked_qidx_in_task:
+                                all_results.append((qidx, res))
+                                processed += 1
+                        if all_results and source_folder_for_batch is None:
+                            source_folder_for_batch = task_path
+                    else:
+                        for path, qidx in items:
+                            if self.cancel_requested or processed >= max_files:
+                                break
                             processed += 1
-                    if all_results and source_folder_for_batch is None:
-                        source_folder_for_batch = task_path
-                else:
-                    for path, qidx in items:
-                        if self.cancel_requested or processed >= max_files:
-                            break
-                        processed += 1
-                        self.root.after(0, lambda c=processed, t=total_files_to_process, f=os.path.basename(path): self.update_progress(c, t, f))
-                        result = self.on_check_callback(path, mode="single", auto_send=False)
-                        all_results.append((qidx, result))
+                            self.root.after(0, lambda c=processed, t=total_files_to_process, f=os.path.basename(path): self.update_progress(c, t, f))
+                            result = self.on_check_callback(path, mode="single", auto_send=False)
+                            all_results.append((qidx, result))
+
             if not all_results:
                 self.root.after(0, lambda: self.display_error("Žádné PDF ke kontrole."))
             else:
@@ -1045,10 +1195,10 @@ class PDFCheckUI_2026_V3:
         def do_trial():
             try:
                 from license import DEMO_TRIAL_EMAIL, DEMO_TRIAL_PASSWORD
-                email = DEMO_TRIAL_EMAIL or "free@trial.app"
+                email = DEMO_TRIAL_EMAIL or "zdarma@trial.verze"
                 password = DEMO_TRIAL_PASSWORD or "free"
             except ImportError:
-                email, password = "free@trial.app", "free"
+                email, password = "zdarma@trial.verze", "free"
             if self.on_login_password_callback:
                 result = self.on_login_password_callback(email, password)
                 if result and result[0]:

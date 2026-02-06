@@ -535,14 +535,17 @@ HTML_TEMPLATE = '''
 
         /* Footer */
         #footer {
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            padding: 8px 16px;
+            background: #1f2937;
+            border-top: 1px solid #374151;
+            padding: 10px 16px;
             text-align: center;
             font-size: 0.7em;
             color: #9ca3af;
         }
-        #footer strong { color: #6b7280; }
+        #footer strong { color: #d1d5db; }
+        #footer a { color: #9ca3af; }
+        #footer a:hover { color: #e5e7eb; }
+        #footer .footer-provozovatel { font-size: 0.85em; color: #6b7280; margin-top: 6px; }
 
         /* Modal */
         .modal-overlay {
@@ -924,13 +927,14 @@ HTML_TEMPLATE = '''
         <footer id="footer">
             <strong>⚠️</strong> <span class="footer-disclaimer">Výsledky mají informativní charakter a nenahrazují Portál stavebníka.</span> Autor neručí za správnost.
             <span style="margin:0 8px;">|</span>
-            <a href="/vop" style="color:#6b7280;text-decoration:none;">VOP</a>
+            <a href="/vop">VOP</a>
             <span style="margin:0 6px;">·</span>
-            <a href="/gdpr" style="color:#6b7280;text-decoration:none;">GDPR</a>
+            <a href="/gdpr">GDPR</a>
             <span style="margin:0 6px;">·</span>
-            <a href="/#kontakt" style="color:#6b7280;text-decoration:none;">Kontakt</a>
+            <a href="/#kontakt">Kontakt</a>
             <span style="margin:0 8px;">|</span>
             Build {{ web_build }} | © Ing. Martin Cieślar
+            <div class="footer-provozovatel">Provozovatel: Ing. Martin Cieślar, Porubská 1, 742 83 Klimkovice, IČO: 04830661</div>
         </footer>
     </div>
 
@@ -981,6 +985,10 @@ HTML_TEMPLATE = '''
                     <h4>📧 Kontakt</h4>
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:12px 0;">
                         <p style="font-size:1.1em;font-weight:bold;color:#374151;">Ing. Martin Cieślar</p>
+                        <p style="margin:6px 0 0;color:#4b5563;">Sídlo: Porubská 1, 742 83 Klimkovice – Václavovice</p>
+                        <p style="margin:4px 0 0;color:#4b5563;">IČO: 04830661</p>
+                        <p style="margin:4px 0 0;font-size:0.9em;color:#6b7280;">Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.</p>
+                        <p style="margin:10px 0 0;"><a href="mailto:info@dokucheck.app" style="color:#1e5a8a;">info@dokucheck.app</a></p>
                     </div>
                     <p style="font-size:0.8em;color:#9ca3af;margin-top:16px;">Build {{ web_build }}</p>
                 </div>
@@ -2868,14 +2876,15 @@ def lp_v3():
 def auth_from_agent_token():
     """
     Přihlášení z Agenta: jednorázový token z URL přihlásí uživatele (session)
-    a přesměruje rovnou na /app (kontroly), ne na landing.
+    a přesměruje do portálu (/portal) – stejně jako přihlášení e-mailem na webu.
+    Trial i placený účet končí ve stejné aplikaci (portál).
     """
     token = request.args.get('login_token', '').strip()
     if not token:
-        return redirect(url_for('app_main'))
+        return redirect(url_for('portal'))
     api_key, license_info = consume_one_time_token(token)
     if not api_key or not license_info:
-        return redirect(url_for('app_main'))
+        return redirect(url_for('portal'))
     session['portal_user'] = {
         'api_key': api_key,
         'email': license_info.get('email'),
@@ -2884,7 +2893,7 @@ def auth_from_agent_token():
         'tier': license_info.get('license_tier', 0),
     }
     session.permanent = True
-    return redirect(url_for('app_main'))
+    return redirect(url_for('portal'))
 
 
 @app.route('/app')

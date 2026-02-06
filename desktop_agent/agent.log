@@ -3565,3 +3565,104 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-05 10:58:40,479 - INFO - Ověřuji licenci se serverem...
 2026-02-05 10:58:42,079 - INFO - Agent běží
 2026-02-05 11:14:04,415 - INFO - Agent ukončen
+2026-02-05 11:22:34,330 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 11:22:34,330 - INFO - Spouštím GUI...
+2026-02-05 11:22:34,784 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-05 11:22:34,785 - INFO - Agent běží
+2026-02-05 11:23:29,465 - INFO - Kontrola složky: C:/Zakazky
+2026-02-05 11:23:37,795 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:23:38,470 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:23:44,453 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-05 11:24:03,966 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:24:04,813 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:24:05,560 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:24:06,330 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:24:08,381 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:24:09,359 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:24:20,309 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:24:21,228 - INFO - Přihlášeno.
+2026-02-05 11:24:30,941 - INFO - Kontrola složky: C:/Zakazky
+2026-02-05 11:24:32,854 - INFO - Odesílám 115 výsledků na server (jeden request)...
+2026-02-05 11:24:37,876 - INFO - Batch úspěšně odeslán: batch_20260205_102422_5a97996c - Uloženo 115 souborů
+2026-02-05 11:30:56,117 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:30:56,836 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:31:05,709 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:31:06,676 - INFO - Přihlášeno.
+2026-02-05 11:31:30,497 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ
+2026-02-05 11:33:53,487 - INFO - Odesílám 1463 výsledků na server (jeden request)...
+2026-02-05 11:33:56,036 - ERROR - Chyba při odesílání batch: Denní kvóta vyčerpána. Limit bude obnoven do půlnoci.
+2026-02-05 11:45:52,796 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 11:45:52,797 - INFO - Spouštím GUI...
+2026-02-05 11:45:53,246 - INFO - Ověřuji licenci se serverem...
+2026-02-05 11:45:54,810 - INFO - Agent běží
+2026-02-05 11:45:58,777 - INFO - Agent ukončen
+2026-02-05 11:46:00,947 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 11:46:00,947 - INFO - Spouštím GUI...
+2026-02-05 11:46:01,317 - INFO - Ověřuji licenci se serverem...
+2026-02-05 11:46:02,709 - INFO - Agent běží
+2026-02-05 11:46:07,007 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:46:07,740 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:46:11,018 - INFO - Agent ukončen
+2026-02-05 11:46:52,029 - INFO - Agent ukončen
+2026-02-05 11:47:11,983 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 11:47:11,983 - INFO - Spouštím GUI...
+2026-02-05 11:47:12,386 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-05 11:47:12,386 - INFO - Agent běží
+2026-02-05 11:47:14,779 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:47:15,502 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:47:54,300 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU
+2026-02-05 11:49:58,606 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU
+2026-02-05 11:50:09,166 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-05 11:57:47,529 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 11:57:47,530 - INFO - Spouštím GUI...
+2026-02-05 11:57:47,906 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-05 11:57:47,906 - INFO - Agent běží
+2026-02-05 11:57:50,651 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:57:51,469 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-05 11:58:02,886 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka\4_01.1.1.70-01_TZ-SLB_sign.pdf
+2026-02-05 11:58:02,930 - INFO - Analýza dokončena: 4_01.1.1.70-01_TZ-SLB_sign.pdf
+2026-02-05 11:58:02,944 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka\4_01.1.1.70-02_Pudorys_1PP_sign.pdf
+2026-02-05 11:58:02,999 - INFO - Analýza dokončena: 4_01.1.1.70-02_Pudorys_1PP_sign.pdf
+2026-02-05 11:58:03,009 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka\4_01.1.1.70-03_Pudorys_1NP_sign.pdf
+2026-02-05 11:58:03,055 - INFO - Analýza dokončena: 4_01.1.1.70-03_Pudorys_1NP_sign.pdf
+2026-02-05 11:58:03,056 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka\4_01.1.1.70-04_Pudorys_2NP_sign.pdf
+2026-02-05 11:58:03,108 - INFO - Analýza dokončena: 4_01.1.1.70-04_Pudorys_2NP_sign.pdf
+2026-02-05 11:58:03,110 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka\4_01.1.1.70-05_Pudorys_3NP_sign.pdf
+2026-02-05 11:58:03,164 - INFO - Analýza dokončena: 4_01.1.1.70-05_Pudorys_3NP_sign.pdf
+2026-02-05 11:58:05,228 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-05 11:58:20,595 - INFO - Přihlášení e-mailem a heslem...
+2026-02-05 11:58:21,553 - INFO - Přihlášeno.
+2026-02-05 11:58:27,677 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka
+2026-02-05 11:58:38,895 - INFO - Odesílám 198 výsledků na server (jeden request)...
+2026-02-05 11:58:46,265 - INFO - Batch úspěšně odeslán: batch_20260205_105828_c39574fd - Uloženo 198 souborů
+2026-02-05 12:18:10,241 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 12:18:10,242 - INFO - Spouštím GUI...
+2026-02-05 12:18:10,611 - INFO - Ověřuji licenci se serverem...
+2026-02-05 12:18:12,138 - INFO - Agent běží
+2026-02-05 12:18:43,994 - INFO - Agent ukončen
+2026-02-05 12:18:48,584 - INFO - Agent ukončen
+2026-02-05 12:18:52,653 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 12:18:52,653 - INFO - Spouštím GUI...
+2026-02-05 12:18:53,161 - INFO - Ověřuji licenci se serverem...
+2026-02-05 12:18:54,535 - INFO - Agent běží
+2026-02-05 12:19:32,827 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_jedna_slozka/E_Doklady_MZ
+2026-02-05 12:19:34,615 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU
+2026-02-05 12:33:07,993 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-05 12:33:07,995 - INFO - Spouštím GUI...
+2026-02-05 12:33:08,359 - INFO - Ověřuji licenci se serverem...
+2026-02-05 12:33:09,813 - INFO - Agent běží
+2026-02-05 12:33:29,811 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP
+2026-02-05 12:33:42,945 - INFO - Odesílám 207 výsledků na server (jeden request)...
+2026-02-05 12:33:52,169 - INFO - Batch úspěšně odeslán: batch_20260205_113332_bee65b17 - Uloženo 207 souborů
+2026-02-05 12:34:17,569 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-00_TL_sez.pdf
+2026-02-05 12:34:17,593 - INFO - Analýza dokončena: 4_IO.01-00_TL_sez.pdf
+2026-02-05 12:34:17,611 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-01_TZ.pdf
+2026-02-05 12:34:17,663 - INFO - Analýza dokončena: 4_IO.01-01_TZ.pdf
+2026-02-05 12:34:17,672 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-02_Sit.pdf
+2026-02-05 12:34:17,711 - INFO - Analýza dokončena: 4_IO.01-02_Sit.pdf
+2026-02-05 12:34:17,711 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-03_Sit_HT.pdf
+2026-02-05 12:34:17,746 - INFO - Analýza dokončena: 4_IO.01-03_Sit_HT.pdf
+2026-02-05 12:34:17,750 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ\IO-01_Hospodareni_s_DV\PDF\4_IO.01-04_PP_ulo.pdf
+2026-02-05 12:34:17,778 - INFO - Analýza dokončena: 4_IO.01-04_PP_ulo.pdf
+2026-02-05 12:34:19,527 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-05 12:34:32,890 - INFO - Agent ukončen

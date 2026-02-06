@@ -7,8 +7,8 @@ import yaml
 import os
 from pathlib import Path
 
-# Demo Trial účet pro tlačítko "Vyzkoušet zdarma" (heslo musí odpovídat migrate_tiers.py)
-DEMO_TRIAL_EMAIL = 'free@trial.app'
+# Demo Trial účet pro tlačítko "Vyzkoušet zdarma" (načte se samo; stejný výstup jako placený účet)
+DEMO_TRIAL_EMAIL = 'zdarma@trial.verze'
 DEMO_TRIAL_PASSWORD = 'free'
 
 try:
