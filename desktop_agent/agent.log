@@ -4380,3 +4380,16 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-06 23:30:01,877 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ
 2026-02-06 23:30:34,331 - INFO - Agent ukončen
 2026-02-06 23:32:00,997 - INFO - Agent ukončen
+2026-02-07 00:06:50,704 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-07 00:06:50,705 - INFO - Spouštím GUI...
+2026-02-07 00:06:51,282 - INFO - Ověřuji licenci se serverem...
+2026-02-07 00:06:52,772 - INFO - Agent běží
+2026-02-07 00:07:13,965 - INFO - Kontrola složky: C:/Claude/testovaci PDF
+2026-02-07 00:07:20,532 - INFO - Odesílám 130 výsledků na server (jeden request)...
+2026-02-07 00:07:26,550 - INFO - Batch úspěšně odeslán: batch_20260206_230708_253a0385 - Uloženo 130 souborů
+2026-02-07 00:08:33,233 - INFO - Agent ukončen
+2026-02-07 00:09:14,735 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-07 00:09:14,736 - INFO - Spouštím GUI...
+2026-02-07 00:09:15,219 - INFO - Ověřuji licenci se serverem...
+2026-02-07 00:09:16,673 - INFO - Agent běží
+2026-02-07 00:14:32,040 - INFO - Agent ukončen

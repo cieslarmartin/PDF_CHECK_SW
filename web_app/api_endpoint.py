@@ -3,7 +3,7 @@
 # Build 41 | © 2025 Ing. Martin Cieślar
 # NOVÉ: Licenční systém, device binding, feature flags
 
-from flask import request, jsonify
+from flask import request, jsonify, url_for
 from database import Database
 import logging
 import os
@@ -22,10 +22,14 @@ except ImportError:
     LICENSE_SYSTEM_AVAILABLE = False
 
 try:
-    from settings_loader import get_trial_limit_total_files
+    from settings_loader import get_trial_limit_total_files, get_allowed_extensions, get_analysis_timeout_seconds
 except ImportError:
     def get_trial_limit_total_files(db):
         return getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+    def get_allowed_extensions(db):
+        return ['.pdf']
+    def get_analysis_timeout_seconds(db):
+        return 300
 
 logger = logging.getLogger(__name__)
 
@@ -1263,6 +1267,45 @@ def register_api_routes(app):
         except Exception as e:
             logger.exception(f"License info error: {e}")
             return jsonify({'error': 'Internal server error'}), 500
+
+    @app.route('/api/agent-config', methods=['GET'])
+    def agent_config():
+        """
+        Veřejná konfigurace pro desktop agenta: disclaimery, odkazy, volitelně limity.
+        Bez autentizace – agent ji načte při startu pro zobrazení textů a odkazů.
+        """
+        try:
+            disclaimer = db.get_global_setting('app_legal_notice', '')
+            if not disclaimer:
+                disclaimer = db.get_global_setting('footer_disclaimer', 'Výsledek je informativní. Za správnost odpovídá projektant.')
+            try:
+                vop_link = url_for('vop', _external=True)
+            except Exception:
+                vop_link = request.url_root.rstrip('/') + '/vop'
+            update_msg = db.get_global_setting('agent_update_msg', 'Používáte aktuální verzi.')
+            if not update_msg:
+                update_msg = 'Používáte aktuální verzi.'
+            out = {
+                'disclaimer': disclaimer,
+                'vop_link': vop_link,
+                'update_msg': update_msg,
+            }
+            try:
+                out['allowed_extensions'] = get_allowed_extensions(db)
+                out['analysis_timeout_seconds'] = get_analysis_timeout_seconds(db)
+            except Exception:
+                out['allowed_extensions'] = ['.pdf']
+                out['analysis_timeout_seconds'] = 300
+            return jsonify(out), 200
+        except Exception as e:
+            logger.exception(f"Agent config error: {e}")
+            return jsonify({
+                'disclaimer': 'Výsledek je informativní. Za správnost odpovídá projektant.',
+                'vop_link': request.url_root.rstrip('/') + '/vop' if request.url_root else 'https://dokucheck.pro/vop',
+                'update_msg': 'Používáte aktuální verzi.',
+                'allowed_extensions': ['.pdf'],
+                'analysis_timeout_seconds': 300,
+            }), 200
 
     # =========================================================================
     # RATE LIMITING PRO FREE CHECK (NOVÉ v41)

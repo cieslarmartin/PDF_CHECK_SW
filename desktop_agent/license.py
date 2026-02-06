@@ -28,6 +28,8 @@ class LicenseManager:
         self.config = self.load_config()
         self.api_url = self.config.get('api', {}).get('url', 'https://api.pdfcheck.cz')
         self.api_key = self.config.get('api', {}).get('key', '')
+        self.remote_config = None
+        self.fetch_remote_config()
 
     def load_config(self):
         """Načte konfiguraci z YAML"""
@@ -90,6 +92,30 @@ class LicenseManager:
     def has_valid_key(self):
         """Zkontroluje zda existuje API klíč"""
         return bool(self.api_key and self.api_key.strip())
+
+    def fetch_remote_config(self):
+        """Získá aktuální disclaimery a texty ze serveru (bez API klíče)."""
+        try:
+            response = requests.get(
+                f"{self.api_url.rstrip('/')}/api/agent-config",
+                timeout=5,
+            )
+            if response.status_code == 200:
+                self.remote_config = response.json()
+            else:
+                self.remote_config = self._get_default_config()
+        except Exception:
+            self.remote_config = self._get_default_config()
+
+    def _get_default_config(self):
+        """Záložní texty, pokud vypadne internet."""
+        return {
+            "disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.",
+            "vop_link": "https://dokucheck.pro/vop",
+            "update_msg": "Používáte aktuální verzi.",
+            "allowed_extensions": [".pdf"],
+            "analysis_timeout_seconds": 300,
+        }
 
     def _api_headers(self, api_key=None):
         """Základní hlavičky pro každý API request: Authorization + X-Machine-ID, X-Machine-Name."""

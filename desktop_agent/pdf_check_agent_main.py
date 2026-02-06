@@ -341,6 +341,10 @@ class PDFCheckAgent:
         """Spustí agenta"""
         logger.info("Spouštím GUI...")
 
+        def _get_remote_config():
+            rc = getattr(self.license_manager, 'remote_config', None)
+            return rc if isinstance(rc, dict) else self.license_manager._get_default_config()
+
         # Vytvoř GUI (api_url, přihlášení, odhlášení, limit souborů, odeslání batch s vrácením response)
         self.root, self.app = create_app(
             on_check_callback=self.check_pdf,
@@ -354,6 +358,7 @@ class PDFCheckAgent:
             on_get_web_login_url=lambda: self._get_web_login_url(),
             on_send_batch_callback=lambda results, src=None: self.send_batch_results_to_api(results, src),
             on_has_login=lambda: self.license_manager.has_valid_key(),
+            on_get_remote_config=_get_remote_config,
         )
 
         # Zkontroluj první spuštění a zobraz stav licence

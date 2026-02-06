@@ -346,21 +346,12 @@ class PDFCheckUI:
         main_frame.grid_rowconfigure(1, weight=1)
         main_frame.grid_columnconfigure(0, weight=1)
 
-        # Header: CTkSegmentedButton (All / Errors / PDF/A-3) + VYMAZAT VŠE
+        # Header: VYMAZAT VŠE (tlačítka filtru Vše/Chyby/PDF/A-3 OK odstraněna)
         header_dash = ctk.CTkFrame(main_frame, fg_color=self.BG_CARD, height=52, corner_radius=0)
         header_dash.grid(row=0, column=0, sticky="ew")
         header_dash.grid_propagate(False)
         main_frame.grid_columnconfigure(0, weight=1)
         self.results_filter = tk.StringVar(value="VŠE")
-        self.filter_segmented = ctk.CTkSegmentedButton(
-            header_dash,
-            values=["Vše", "Chyby", "PDF/A-3 OK"],
-            command=self._on_filter_segment,
-            font=(FONT_FAMILY, FONT_SIZE - 1),
-            height=32,
-        )
-        self.filter_segmented.pack(side=tk.LEFT, padx=12, pady=10)
-        self.filter_segmented.set("Vše")
         ctk.CTkButton(header_dash, text="VYMAZAT VŠE", command=self.clear_queue, corner_radius=8, fg_color=self.ERROR_RED, width=120, height=32, font=(FONT_FAMILY, FONT_SIZE - 1, "bold")).pack(side=tk.RIGHT, padx=12, pady=10)
 
         # Content: strom + detail vlevo, fronta úkolů vpravo (bez malé drop zóny)

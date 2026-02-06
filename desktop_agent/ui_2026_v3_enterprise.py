@@ -88,6 +88,7 @@ class PDFCheckUI_2026_V3:
     def __init__(self, root, on_check_callback, on_api_key_callback, api_url="",
                  on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                  on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
+                 on_get_remote_config=None,
                  on_send_batch_callback=None, on_has_login=None):
         self.root = root
         self.on_check_callback = on_check_callback
@@ -100,6 +101,7 @@ class PDFCheckUI_2026_V3:
         self.on_get_web_login_url = on_get_web_login_url
         self.on_send_batch_callback = on_send_batch_callback
         self.on_has_login = on_has_login  # callable() -> bool; bez přihlášení nelze analyzovat ani odesílat
+        self.on_get_remote_config = on_get_remote_config  # callable() -> dict s disclaimer, vop_link, update_msg
         self.api_url = api_url or "https://cieslar.pythonanywhere.com"
 
         self.tasks = []
@@ -220,6 +222,17 @@ class PDFCheckUI_2026_V3:
         self.license_status_label = ctk.CTkLabel(sidebar, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
         self.license_status_label.pack(anchor=tk.W, padx=12, pady=(0, 6))
         self.daily_limit_label = self.sidebar_daily_limit
+        # Patička sidebaru: disclaimer a VOP ze serveru (remote_config)
+        self._remote_footer = ctk.CTkFrame(sidebar, fg_color="transparent")
+        self._remote_footer.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(8, 12))
+        rc = self._get_remote_config()
+        self._disclaimer_label = ctk.CTkLabel(self._remote_footer, text=rc.get("disclaimer", "Výsledek je informativní."), font=(FONT_STACK[0], FS_12 - 1), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24, justify=tk.LEFT)
+        self._disclaimer_label.pack(anchor=tk.W)
+        vop_link = rc.get("vop_link", "")
+        if vop_link:
+            ctk.CTkButton(self._remote_footer, text="VOP (obchodní podmínky)", command=lambda: webbrowser.open(vop_link), font=(FONT_STACK[0], FS_12 - 1), fg_color="transparent", text_color=ACCENT, width=160, anchor="w").pack(anchor=tk.W, pady=(4, 0))
+        self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=(FONT_STACK[0], FS_12 - 1), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
+        self._update_msg_label.pack(anchor=tk.W, pady=(4, 0))
 
         main = ctk.CTkFrame(self.root, fg_color="transparent")
         main.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
@@ -271,16 +284,13 @@ class PDFCheckUI_2026_V3:
         left.grid_columnconfigure(0, weight=1)
         left.grid_rowconfigure(2, weight=1)
         ctk.CTkLabel(left, text="Fronta (strom složek)", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT).grid(row=0, column=0, sticky="w", padx=10, pady=(10, 4))
-        # Toolbar nad stromem: filtr (Vše / Chyby / PDF/A-3 OK) + Rozbalit / Sbalit
+        # Toolbar nad stromem: Rozbalit / Sbalit (tlačítka filtru Vše/Chyby/PDF/A-3 OK odstraněna)
         self._queue_filter = "all"
         toolbar = ctk.CTkFrame(left, fg_color="transparent")
         toolbar.grid(row=1, column=0, sticky="ew", padx=6, pady=(0, 4))
-        toolbar.grid_columnconfigure(1, weight=1)
-        self._filter_btn = ctk.CTkSegmentedButton(toolbar, values=["Vše", "Chyby", "PDF/A-3 OK"], command=self._on_queue_filter)
-        self._filter_btn.grid(row=0, column=0, padx=(0, 8), pady=2)
-        self._filter_btn.set("Vše")
-        ctk.CTkButton(toolbar, text="Rozbalit vše", command=self._tree_expand_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=2, padx=4, pady=2)
-        ctk.CTkButton(toolbar, text="Sbalit vše", command=self._tree_collapse_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=3, padx=4, pady=2)
+        toolbar.grid_columnconfigure(0, weight=1)
+        ctk.CTkButton(toolbar, text="Rozbalit vše", command=self._tree_expand_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=0, padx=4, pady=2)
+        ctk.CTkButton(toolbar, text="Sbalit vše", command=self._tree_collapse_all, font=(FONT_STACK[0], FS_12), width=90).grid(row=0, column=1, padx=4, pady=2)
         # Kontejner pro tk Treeview (ttk potřebuje tk rodiče) – bez rámečku, barva jako aplikace
         self._tree_container = tk.Frame(left, bg=TREEVIEW_BG, highlightthickness=0)
         self._tree_container.grid(row=2, column=0, sticky="nsew", padx=6, pady=(0, 6))
@@ -734,11 +744,20 @@ class PDFCheckUI_2026_V3:
                 self._update_progress_idle()
             return
 
+    def _get_remote_config(self):
+        """Vrátí slovník z serveru (disclaimer, vop_link, update_msg) nebo výchozí."""
+        if callable(getattr(self, "on_get_remote_config", None)):
+            try:
+                return self.on_get_remote_config() or {}
+            except Exception:
+                pass
+        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://dokucheck.pro/vop", "update_msg": "Používáte aktuální verzi."}
+
     def _show_help_modal(self):
-        """Nápověda – terminologie: serverová / cloudová kontrola."""
+        """Nápověda – terminologie: serverová / cloudová kontrola + disclaimer a VOP ze serveru."""
         dialog = ctk.CTkToplevel(self.root)
         dialog.title("Nápověda")
-        dialog.geometry("420x280")
+        dialog.geometry("420x320")
         dialog.configure(fg_color=BG_CARD)
         dialog.transient(self.root)
         ctk.CTkLabel(dialog, text="Nápověda", font=(FONT_STACK[0], FS_16, "bold"), text_color=TEXT).pack(pady=(14, 8))
@@ -753,7 +772,12 @@ class PDFCheckUI_2026_V3:
             "nikdy neopouští váš počítač."
         )
         lbl = ctk.CTkLabel(dialog, text=help_text, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, justify=tk.LEFT, wraplength=380)
-        lbl.pack(padx=20, pady=(0, 16), fill=tk.BOTH, expand=True)
+        lbl.pack(padx=20, pady=(0, 8), fill=tk.BOTH, expand=True)
+        rc = self._get_remote_config()
+        ctk.CTkLabel(dialog, text=rc.get("disclaimer", "Výsledek je informativní."), font=(FONT_STACK[0], FS_12 - 1), text_color=TEXT_MUTED, justify=tk.LEFT, wraplength=380).pack(padx=20, pady=(0, 4), anchor="w")
+        vop = rc.get("vop_link", "")
+        if vop:
+            ctk.CTkButton(dialog, text="VOP (obchodní podmínky)", command=lambda: webbrowser.open(vop), font=(FONT_STACK[0], FS_12 - 1), fg_color="transparent", text_color=ACCENT).pack(pady=(0, 8))
         ctk.CTkButton(dialog, text="Zavřít", command=dialog.destroy, font=(FONT_STACK[0], FS_12), width=100).pack(pady=(0, 14))
 
     def _root_for_qidx(self, qidx):
@@ -1333,9 +1357,10 @@ class PDFCheckUI_2026_V3:
 def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
                        on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                        on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
-                       on_send_batch_callback=None, on_has_login=None):
+                       on_send_batch_callback=None, on_has_login=None, on_get_remote_config=None):
     """Vytvoří a vrátí (root, app) pro preview V3 Enterprise.
-    on_has_login: callable() -> bool; bez přihlášení (Vyzkoušet zdarma nebo e-mail) nelze analyzovat ani odesílat."""
+    on_has_login: callable() -> bool; bez přihlášení (Vyzkoušet zdarma nebo e-mail) nelze analyzovat ani odesílat.
+    on_get_remote_config: callable() -> dict s disclaimer, vop_link, update_msg ze serveru."""
     _setup_high_dpi_v3()
     if TKINTERDND_AVAILABLE:
         try:
@@ -1355,5 +1380,6 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
         on_get_web_login_url=on_get_web_login_url,
         on_send_batch_callback=on_send_batch_callback,
         on_has_login=on_has_login,
+        on_get_remote_config=on_get_remote_config,
     )
     return root, app
