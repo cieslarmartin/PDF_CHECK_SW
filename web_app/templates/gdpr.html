@@ -22,6 +22,9 @@
 </head>
 <body>
     <div class="container">
+        {% if custom_content %}
+        {{ custom_content|safe }}
+        {% else %}
         <h1>Ochrana osobních údajů (GDPR)</h1>
         <p class="subtitle">Zásady zpracování osobních údajů v rámci služby DokuCheck PRO</p>
 
@@ -65,6 +68,7 @@
             <a href="/#kontakt">Kontakt</a>
             <a href="/">Úvod</a>
         </div>
+        {% endif %}
     </div>
 </body>
 </html>

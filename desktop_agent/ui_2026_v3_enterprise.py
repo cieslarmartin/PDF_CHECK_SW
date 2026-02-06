@@ -88,7 +88,7 @@ class PDFCheckUI_2026_V3:
     def __init__(self, root, on_check_callback, on_api_key_callback, api_url="",
                  on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                  on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
-                 on_send_batch_callback=None):
+                 on_send_batch_callback=None, on_has_login=None):
         self.root = root
         self.on_check_callback = on_check_callback
         self.on_api_key_callback = on_api_key_callback
@@ -99,6 +99,7 @@ class PDFCheckUI_2026_V3:
         self.on_after_logout_callback = on_after_logout_callback
         self.on_get_web_login_url = on_get_web_login_url
         self.on_send_batch_callback = on_send_batch_callback
+        self.on_has_login = on_has_login  # callable() -> bool; bez přihlášení nelze analyzovat ani odesílat
         self.api_url = api_url or "https://cieslar.pythonanywhere.com"
 
         self.tasks = []
@@ -126,6 +127,7 @@ class PDFCheckUI_2026_V3:
         self._setup_logo()
         self._show_session_summary()
         self.root.after(50, self._maximize_window)
+        self.root.after(250, self._update_analyze_send_state)
 
     def _maximize_window(self):
         """Maximalizace okna po startu – celá plocha."""
@@ -987,6 +989,9 @@ class PDFCheckUI_2026_V3:
         self.metric_pdfa.configure(text=f"PDF/A-3 OK: {pdfa_ok}")
 
     def on_check_clicked(self):
+        if self.on_has_login and callable(self.on_has_login) and not self.on_has_login():
+            self.show_message("Pro analýzu a odeslání na server se nejprve přihlaste („Vyzkoušet zdarma“ nebo e-mail v sidebaru).", msg_type="warning")
+            return
         checked = [(q["path"], i) for i, q in enumerate(self.queue_display) if q.get("checked")]
         if not checked:
             self.show_message("Přidejte a zaškrtněte položky ke kontrole.", msg_type="warning")
@@ -1173,13 +1178,22 @@ class PDFCheckUI_2026_V3:
         time_str = f"{int(total_time)}s" if total_time < 60 else f"{int(total_time / 60)}m {int(total_time % 60)}s"
         self.detail_text.configure(state="normal")
         self.detail_text.delete("0.0", "end")
-        self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\nKlikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu.")
         self.detail_text.configure(state="disabled")
         upload_error = result.get("upload_error")
-        if self.on_send_batch_callback and results_with_qidx:
+        can_send = self.on_has_login and callable(self.on_has_login) and self.on_has_login()
+        if can_send and self.on_send_batch_callback and results_with_qidx:
+            self.detail_text.configure(state="normal")
+            self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\nKlikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu.")
+            self.detail_text.configure(state="disabled")
             self._last_display_result = result
             self.send_btn.pack(side=tk.RIGHT, padx=4, pady=6)
             return
+        self.detail_text.configure(state="normal")
+        self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\n" + (
+            "Klikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu." if can_send else
+            "Pro odeslání na server se přihlaste („Vyzkoušet zdarma“ nebo e-mail v sidebaru)."
+        ))
+        self.detail_text.configure(state="disabled")
         if upload_error and ("limit" in upload_error.lower() or "vyčerpán" in upload_error.lower()):
             self.show_message(upload_error, msg_type="warning")
 
@@ -1221,6 +1235,14 @@ class PDFCheckUI_2026_V3:
         else:
             self.sidebar_daily_limit.configure(text=f"Limit: {used or 0}/{limit}")
 
+    def _update_analyze_send_state(self):
+        """Zapne nebo vypne „Analyzovat PDF“ podle toho, zda je uživatel přihlášen (Vyzkoušet zdarma nebo e-mail)."""
+        can = self.on_has_login() if (self.on_has_login and callable(self.on_has_login)) else True
+        if getattr(self, "check_btn", None):
+            self.check_btn.configure(state=tk.NORMAL if can else tk.DISABLED)
+            if not can:
+                self.send_btn.pack_forget()
+
     def set_license_display(self, text):
         self.sidebar_account.configure(text=text or "Nepřihlášen", text_color=TEXT if text else TEXT_MUTED)
         if text:
@@ -1231,6 +1253,7 @@ class PDFCheckUI_2026_V3:
             self._account_frame.pack_forget()
             self._login_frame.pack(fill=tk.X, pady=(0, 4))
             self.logout_btn.pack_forget()
+        self._update_analyze_send_state()
 
     def clear_results_and_queue(self):
         self.tasks = []
@@ -1310,9 +1333,9 @@ class PDFCheckUI_2026_V3:
 def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
                        on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                        on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
-                       on_send_batch_callback=None):
-    """Vytvoří a vrátí (root, app) pro preview V3 Enterprise – stejný podpis jako create_app.
-    Před vytvořením okna volá _setup_high_dpi_v3() pro DPI awareness a škálování na 2K/4K."""
+                       on_send_batch_callback=None, on_has_login=None):
+    """Vytvoří a vrátí (root, app) pro preview V3 Enterprise.
+    on_has_login: callable() -> bool; bez přihlášení (Vyzkoušet zdarma nebo e-mail) nelze analyzovat ani odesílat."""
     _setup_high_dpi_v3()
     if TKINTERDND_AVAILABLE:
         try:
@@ -1331,5 +1354,6 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
         on_after_logout_callback=on_after_logout_callback,
         on_get_web_login_url=on_get_web_login_url,
         on_send_batch_callback=on_send_batch_callback,
+        on_has_login=on_has_login,
     )
     return root, app

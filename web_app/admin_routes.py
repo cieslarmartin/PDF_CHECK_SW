@@ -11,6 +11,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 import os
 import subprocess
+import json
 from datetime import datetime, timedelta
 
 # Import databáze
@@ -18,6 +19,12 @@ try:
     from database import Database, generate_api_key
 except ImportError:
     Database = None
+
+# Import settings loader pro Admin Nastavení (global_settings)
+try:
+    from settings_loader import load_settings_for_views
+except ImportError:
+    load_settings_for_views = None
 
 # Import license config
 try:
@@ -365,10 +372,41 @@ def logs():
                           active_page='logs')
 
 
+def _settings_for_admin(db):
+    """Načte všechna nastavení pro Admin stránku Nastavení (s fallbacky)."""
+    if load_settings_for_views:
+        return load_settings_for_views(db)
+    s = {}
+    for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email',
+                'bank_account', 'bank_iban', 'landing_hero_title', 'landing_hero_subtitle', 'landing_hero_badge',
+                'landing_cta_primary', 'landing_cta_secondary', 'landing_section_how_title', 'landing_section_modes_title',
+                'landing_mode_agent_title', 'landing_mode_agent_text', 'landing_mode_cloud_title', 'landing_mode_cloud_text',
+                'landing_tarif_basic_desc', 'landing_tarif_standard_desc', 'landing_tarif_premium_desc',
+                'footer_disclaimer', 'app_legal_notice', 'seo_meta_title', 'seo_meta_description',
+                'email_order_confirmation_subject', 'email_order_confirmation_body', 'email_welcome_subject', 'email_welcome_body'):
+        s[key] = db.get_global_setting(key, '')
+    s['maintenance_mode'] = db.get_setting_bool('maintenance_mode', False)
+    s['allow_new_registrations'] = db.get_setting_bool('allow_new_registrations', True)
+    s['trial_limit_total_files'] = db.get_setting_int('trial_limit_total_files', 10)
+    s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
+    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 990}, 'standard': {'label': 'STANDARD', 'amount_czk': 1990}, 'premium': {'label': 'PREMIUM', 'amount_czk': 4990}})
+    s['landing_how_steps'] = db.get_setting_json('landing_how_steps', [])
+    s['landing_faq'] = db.get_setting_json('landing_faq', [])
+    s['legal_vop_html'] = db.get_global_setting('legal_vop_html', '')
+    s['legal_gdpr_html'] = db.get_global_setting('legal_gdpr_html', '')
+    s['testimonials'] = db.get_setting_json('testimonials', [])
+    s['partner_logos'] = db.get_setting_json('partner_logos', [])
+    s['top_promo_bar'] = db.get_setting_json('top_promo_bar', {'text': '', 'background_color': '#1e5a8a', 'is_active': False})
+    s['exit_intent_popup'] = db.get_setting_json('exit_intent_popup', {'title': '', 'body': '', 'button_text': 'Zavřít', 'is_active': False})
+    s['header_scripts'] = db.get_setting_json('header_scripts', [])
+    s['allowed_extensions'] = db.get_setting_json('allowed_extensions', ['.pdf'])
+    return s
+
+
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
 @admin_required
 def settings():
-    """Global Config: údržba, nové registrace, změna hesla admina."""
+    """Global Config: záložky Základní, Ceny, Marketing, Právní, Systém + údržba a změna hesla."""
     db = get_db()
     if request.method == 'POST':
         action = request.form.get('action', '')
@@ -399,17 +437,103 @@ def settings():
             db.set_global_setting('maintenance_mode', maintenance)
             db.set_global_setting('allow_new_registrations', allow_reg)
             flash('Globální nastavení uloženo', 'success')
+        elif action == 'save_basic':
+            for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'bank_account', 'bank_iban'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            flash('Základní nastavení uloženo', 'success')
+        elif action == 'save_pricing':
+            pricing_ok = True
+            try:
+                raw = request.form.get('pricing_tarifs_json', '')
+                if raw.strip():
+                    tarifs = json.loads(raw)
+                    if isinstance(tarifs, dict):
+                        db.set_global_setting('pricing_tarifs', tarifs)
+            except (json.JSONDecodeError, TypeError):
+                flash('Neplatný JSON u ceníku – uložení přeskočeno', 'error')
+                pricing_ok = False
+            trial = request.form.get('trial_limit_total_files', '')
+            if trial.strip():
+                try:
+                    db.set_global_setting('trial_limit_total_files', int(trial))
+                except ValueError:
+                    pass
+            if pricing_ok:
+                flash('Ceny a tarify uloženy', 'success')
+        elif action == 'save_marketing':
+            for key in ('landing_hero_title', 'landing_hero_subtitle', 'landing_hero_badge', 'landing_cta_primary', 'landing_cta_secondary',
+                        'landing_section_how_title', 'landing_section_modes_title', 'landing_mode_agent_title', 'landing_mode_agent_text',
+                        'landing_mode_cloud_title', 'landing_mode_cloud_text', 'landing_tarif_basic_desc', 'landing_tarif_standard_desc', 'landing_tarif_premium_desc'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            for json_key, form_key in (('landing_how_steps', 'landing_how_steps_json'), ('landing_faq', 'landing_faq_json'),
+                                       ('testimonials', 'testimonials_json'), ('partner_logos', 'partner_logos_json')):
+                raw = request.form.get(form_key, '')
+                if raw.strip():
+                    try:
+                        val = json.loads(raw)
+                        db.set_global_setting(json_key, val)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            for json_key, form_key in (('top_promo_bar', 'top_promo_bar_json'), ('exit_intent_popup', 'exit_intent_popup_json')):
+                raw = request.form.get(form_key, '')
+                if raw.strip():
+                    try:
+                        val = json.loads(raw)
+                        if isinstance(val, dict):
+                            db.set_global_setting(json_key, val)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            flash('Marketing uložen', 'success')
+        elif action == 'save_legal':
+            for key in ('legal_vop_html', 'legal_gdpr_html', 'footer_disclaimer', 'app_legal_notice'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            flash('Právní info uloženo', 'success')
+        elif action == 'save_system':
+            for key in ('seo_meta_title', 'seo_meta_description', 'email_order_confirmation_subject', 'email_order_confirmation_body',
+                        'email_welcome_subject', 'email_welcome_body'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            try:
+                n = request.form.get('analysis_timeout_seconds', '')
+                if n.strip():
+                    db.set_global_setting('analysis_timeout_seconds', int(n))
+            except ValueError:
+                pass
+            for json_key, form_key in (('header_scripts', 'header_scripts_json'), ('allowed_extensions', 'allowed_extensions_json')):
+                raw = request.form.get(form_key, '')
+                if raw.strip():
+                    try:
+                        val = json.loads(raw)
+                        db.set_global_setting(json_key, val)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            flash('Systémové nastavení uloženo', 'success')
         return redirect(url_for('admin.settings'))
 
-    maintenance = db.get_global_setting('maintenance_mode', False)
-    allow_reg = db.get_global_setting('allow_new_registrations', True)
+    st = _settings_for_admin(db)
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
-    return render_template('admin_settings.html', user=user,
-                          maintenance_mode=maintenance, allow_new_registrations=allow_reg,
-                          active_page='settings')
+    # Pro textarea s JSON předáme řetězce
+    def _json_str(val, default='[]'):
+        if val is None:
+            return default
+        if isinstance(val, str):
+            return val
+        return json.dumps(val, ensure_ascii=False, indent=2)
+    return render_template('admin_settings.html', user=user, active_page='settings',
+                          maintenance_mode=st.get('maintenance_mode', False),
+                          allow_new_registrations=st.get('allow_new_registrations', True),
+                          settings=st,
+                          pricing_tarifs_json=_json_str(st.get('pricing_tarifs'), '{}'),
+                          landing_how_steps_json=_json_str(st.get('landing_how_steps')),
+                          landing_faq_json=_json_str(st.get('landing_faq')),
+                          testimonials_json=_json_str(st.get('testimonials')),
+                          partner_logos_json=_json_str(st.get('partner_logos')),
+                          top_promo_bar_json=_json_str(st.get('top_promo_bar'), '{}'),
+                          exit_intent_popup_json=_json_str(st.get('exit_intent_popup'), '{}'),
+                          header_scripts_json=_json_str(st.get('header_scripts')),
+                          allowed_extensions_json=_json_str(st.get('allowed_extensions')))
 
 
 # =============================================================================
@@ -468,6 +592,27 @@ def api_update_tier():
         max_devices = int(max_devices_raw) if max_devices_raw else None
     except (TypeError, ValueError):
         max_devices = None
+    daily_files_limit = None
+    raw_daily = request.form.get('daily_files_limit', '').strip()
+    if raw_daily:
+        try:
+            daily_files_limit = int(raw_daily)
+        except ValueError:
+            pass
+    rate_limit_hour = None
+    raw_rate = request.form.get('rate_limit_hour', '').strip()
+    if raw_rate:
+        try:
+            rate_limit_hour = int(raw_rate)
+        except ValueError:
+            pass
+    max_file_size_mb = None
+    raw_size = request.form.get('max_file_size_mb', '').strip()
+    if raw_size:
+        try:
+            max_file_size_mb = int(raw_size)
+        except ValueError:
+            pass
 
     if not tier_id:
         return jsonify({'success': False, 'error': 'Chybí tier_id'}), 400
@@ -481,6 +626,9 @@ def api_update_tier():
         allow_excel_export=allow_excel_export,
         allow_advanced_filters=allow_advanced_filters,
         max_devices=max_devices,
+        daily_files_limit=daily_files_limit,
+        rate_limit_hour=rate_limit_hour,
+        max_file_size_mb=max_file_size_mb,
     )
     if ok:
         return jsonify({'success': True, 'message': 'Tier aktualizován'})

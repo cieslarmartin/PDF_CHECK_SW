@@ -21,6 +21,12 @@ try:
 except ImportError:
     LICENSE_SYSTEM_AVAILABLE = False
 
+try:
+    from settings_loader import get_trial_limit_total_files
+except ImportError:
+    def get_trial_limit_total_files(db):
+        return getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+
 logger = logging.getLogger(__name__)
 
 # Jednorázové přihlašovací tokeny (agent → web) – ukládají se do DB (sdílené mezi workery)
@@ -181,7 +187,7 @@ def register_api_routes(app):
                     }), 403
                 usage = db.get_trial_usage(machine_id)
                 total_so_far = (usage or {}).get('total_files', 0)
-                limit = getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+                limit = get_trial_limit_total_files(db)
                 if total_so_far >= limit:
                     return jsonify({
                         'error': 'Zkušební limit vyčerpán. Zakupte si prosím licenci.'
@@ -204,7 +210,7 @@ def register_api_routes(app):
             if is_trial and machine_id:
                 usage = db.get_trial_usage(machine_id)
                 total_so_far = (usage or {}).get('total_files', 0)
-                limit = getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
+                limit = get_trial_limit_total_files(db)
                 remaining = max(0, limit - total_so_far)
                 if remaining <= 0:
                     return jsonify({

@@ -353,6 +353,7 @@ class PDFCheckAgent:
             on_after_logout_callback=self._clear_view,
             on_get_web_login_url=lambda: self._get_web_login_url(),
             on_send_batch_callback=lambda results, src=None: self.send_batch_results_to_api(results, src),
+            on_has_login=lambda: self.license_manager.has_valid_key(),
         )
 
         # Zkontroluj první spuštění a zobraz stav licence

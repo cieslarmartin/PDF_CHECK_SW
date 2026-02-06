@@ -356,6 +356,24 @@ class Database:
                 except sqlite3.OperationalError:
                     pass  # Sloupec už existuje
 
+        # license_tiers: přidej sloupce pro admin-editable limity (denní limit, rate limit, max velikost souboru)
+        try:
+            cursor.execute("PRAGMA table_info(license_tiers)")
+            tier_columns = {row[1] for row in cursor.fetchall()}
+            tier_new = {
+                'daily_files_limit': 'INTEGER',
+                'rate_limit_hour': 'INTEGER DEFAULT 3',
+                'max_file_size_mb': 'INTEGER',
+            }
+            for col_name, col_type in tier_new.items():
+                if col_name not in tier_columns:
+                    try:
+                        cursor.execute(f'ALTER TABLE license_tiers ADD COLUMN {col_name} {col_type}')
+                    except sqlite3.OperationalError:
+                        pass
+        except Exception:
+            pass
+
     def create_api_key(self, api_key, user_name=None):
         """Vytvoří nový API klíč"""
         conn = self.get_connection()
@@ -1002,6 +1020,12 @@ class Database:
             result['tier_name'] = tier_row.get('name', 'Unknown')
             name = (tier_row.get('name') or '').strip().lower()
             result['license_tier'] = 0 if name in ('trial', 'free') else (1 if name == 'basic' else (2 if name == 'pro' else 3))
+            # Admin-editable limity z license_tiers (daily_files_limit, rate_limit_hour, max_file_size_mb)
+            result['limits'] = {
+                'daily_files_limit': tier_row.get('daily_files_limit'),
+                'rate_limit_hour': tier_row.get('rate_limit_hour'),
+                'max_file_size_mb': tier_row.get('max_file_size_mb'),
+            }
         else:
             try:
                 from license_config import get_tier_limits
@@ -1875,8 +1899,9 @@ class Database:
 
     def update_tier(self, tier_id: int, name=None, max_files_limit=None,
                     allow_signatures=None, allow_timestamp=None, allow_excel_export=None,
-                    allow_advanced_filters=None, max_devices=None) -> bool:
-        """Aktualizuje globální tier."""
+                    allow_advanced_filters=None, max_devices=None,
+                    daily_files_limit=None, rate_limit_hour=None, max_file_size_mb=None) -> bool:
+        """Aktualizuje globální tier (včetně denního limitu, rate limit, max velikost souboru)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         updates, values = [], []
@@ -1901,6 +1926,15 @@ class Database:
         if max_devices is not None:
             updates.append('max_devices = ?')
             values.append(max_devices)
+        if daily_files_limit is not None:
+            updates.append('daily_files_limit = ?')
+            values.append(daily_files_limit)
+        if rate_limit_hour is not None:
+            updates.append('rate_limit_hour = ?')
+            values.append(rate_limit_hour)
+        if max_file_size_mb is not None:
+            updates.append('max_file_size_mb = ?')
+            values.append(max_file_size_mb)
         if not updates:
             conn.close()
             return True
@@ -1916,7 +1950,7 @@ class Database:
     # =========================================================================
 
     def get_global_setting(self, key: str, default=None):
-        """Vrátí hodnotu globálního nastavení (řetězec)."""
+        """Vrátí hodnotu globálního nastavení. Prázdný řetězec = použít default (fallback)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('SELECT value FROM global_settings WHERE key = ?', (key,))
@@ -1925,17 +1959,57 @@ class Database:
         if not row:
             return default
         val = row['value']
+        if val is None or (isinstance(val, str) and val.strip() == ''):
+            return default
         if val in ('1', 'true', 'yes'):
             return True
         if val in ('0', 'false', 'no'):
             return False
         return val
 
+    def get_setting_int(self, key: str, default: int = 0) -> int:
+        """Globální nastavení jako int. Při chybě nebo prázdné hodnotě vrátí default."""
+        try:
+            v = self.get_global_setting(key, default)
+            return int(v) if v is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    def get_setting_bool(self, key: str, default: bool = False) -> bool:
+        """Globální nastavení jako bool. Při prázdné hodnotě vrátí default."""
+        v = self.get_global_setting(key, default)
+        if v is None:
+            return default
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str) and v.strip() == '':
+            return default
+        return v in ('1', 'true', 'yes')
+
+    def get_setting_json(self, key: str, default=None):
+        """Globální nastavení jako JSON (dict/list). Při chybě parsování vrátí default."""
+        import json
+        if default is None:
+            default = {}
+        val = self.get_global_setting(key, None)
+        if val is None or (isinstance(val, str) and val.strip() == ''):
+            return default
+        if isinstance(val, (dict, list)):
+            return val
+        try:
+            return json.loads(val)
+        except (TypeError, ValueError):
+            return default
+
     def set_global_setting(self, key: str, value) -> None:
-        """Nastaví globální nastavení (value bude převedeno na řetězec)."""
+        """Nastaví globální nastavení (value bude převedeno na řetězec; dict/list na JSON)."""
+        import json
         conn = self.get_connection()
         cursor = conn.cursor()
-        v = '1' if value is True else ('0' if value is False else str(value))
+        if isinstance(value, (dict, list)):
+            v = json.dumps(value, ensure_ascii=False)
+        else:
+            v = '1' if value is True else ('0' if value is False else str(value))
         cursor.execute(
             'INSERT OR REPLACE INTO global_settings (key, value) VALUES (?, ?)',
             (key, v)

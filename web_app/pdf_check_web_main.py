@@ -19,6 +19,10 @@ import webbrowser
 # NOVÉ IMPORTY PRO API:
 from api_endpoint import register_api_routes, consume_one_time_token
 from database import Database
+try:
+    from settings_loader import get_pricing_tarifs, get_email_order_confirmation_subject, load_settings_for_views
+except ImportError:
+    get_pricing_tarifs = get_email_order_confirmation_subject = load_settings_for_views = None
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp
@@ -925,7 +929,7 @@ HTML_TEMPLATE = '''
         </div>
 
         <footer id="footer">
-            <strong>⚠️</strong> <span class="footer-disclaimer">Výsledky mají informativní charakter a nenahrazují Portál stavebníka.</span> Autor neručí za správnost.
+            <strong>⚠️</strong> <span class="footer-disclaimer">{{ footer_disclaimer }}</span>
             <span style="margin:0 8px;">|</span>
             <a href="/vop">VOP</a>
             <span style="margin:0 6px;">·</span>
@@ -933,8 +937,8 @@ HTML_TEMPLATE = '''
             <span style="margin:0 6px;">·</span>
             <a href="/#kontakt">Kontakt</a>
             <span style="margin:0 8px;">|</span>
-            Build {{ web_build }} | © Ing. Martin Cieślar
-            <div class="footer-provozovatel">Provozovatel: Ing. Martin Cieślar, Porubská 1, 742 83 Klimkovice, IČO: 04830661</div>
+            Build {{ web_build }} | © {{ provider_name }}
+            <div class="footer-provozovatel">Provozovatel: {{ provider_name }}, {{ provider_address }}, IČO: {{ provider_ico }}</div>
         </footer>
     </div>
 
@@ -984,17 +988,17 @@ HTML_TEMPLATE = '''
                 <div id="tab-contact" class="hidden">
                     <h4>📧 Kontakt</h4>
                     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:12px 0;">
-                        <p style="font-size:1.1em;font-weight:bold;color:#374151;">Ing. Martin Cieślar</p>
-                        <p style="margin:6px 0 0;color:#4b5563;">Sídlo: Porubská 1, 742 83 Klimkovice – Václavovice</p>
-                        <p style="margin:4px 0 0;color:#4b5563;">IČO: 04830661</p>
-                        <p style="margin:4px 0 0;font-size:0.9em;color:#6b7280;">Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.</p>
-                        <p style="margin:10px 0 0;"><a href="mailto:info@dokucheck.app" style="color:#1e5a8a;">info@dokucheck.app</a></p>
+                        <p style="font-size:1.1em;font-weight:bold;color:#374151;">{{ provider_name }}</p>
+                        <p style="margin:6px 0 0;color:#4b5563;">Sídlo: {{ provider_address }}</p>
+                        <p style="margin:4px 0 0;color:#4b5563;">IČO: {{ provider_ico }}</p>
+                        <p style="margin:4px 0 0;font-size:0.9em;color:#6b7280;">{{ provider_legal_note }}</p>
+                        <p style="margin:10px 0 0;"><a href="mailto:{{ contact_email }}" style="color:#1e5a8a;">{{ contact_email }}</a></p>
                     </div>
                     <p style="font-size:0.8em;color:#9ca3af;margin-top:16px;">Build {{ web_build }}</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <strong>⚖️ Právní upozornění:</strong> Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.
+                <strong>⚖️ Právní upozornění:</strong> {{ app_legal_notice }}
             </div>
         </div>
     </div>
@@ -2837,20 +2841,26 @@ def count_pdfs_in_folder(folder_path):
 
 @app.route('/')
 def index():
-    """Landing page DokuCheck – verze V3 (světlé schéma, stejný obsah jako /lp/v3)."""
-    return render_template('landing_v3.html')
+    """Landing page DokuCheck – verze V3. Texty a promo z global_settings (fallback v šabloně)."""
+    db = Database()
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    return render_template('landing_v3.html', **settings)
 
 
 @app.route('/vop')
 def vop():
-    """Všeobecné obchodní podmínky."""
-    return render_template('vop.html')
+    """Všeobecné obchodní podmínky. Obsah z global_settings (legal_vop_html) nebo výchozí šablona."""
+    db = Database()
+    custom_content = db.get_global_setting('legal_vop_html', '') or ''
+    return render_template('vop.html', custom_content=custom_content)
 
 
 @app.route('/gdpr')
 def gdpr():
-    """Ochrana osobních údajů (GDPR)."""
-    return render_template('gdpr.html')
+    """Ochrana osobních údajů (GDPR). Obsah z global_settings (legal_gdpr_html) nebo výchozí šablona."""
+    db = Database()
+    custom_content = db.get_global_setting('legal_gdpr_html', '') or ''
+    return render_template('gdpr.html', custom_content=custom_content)
 
 
 # ========== TESTOVACÍ LANDING PAGE (sandbox designu – bez zásahu do produkce) ==========
@@ -2904,7 +2914,36 @@ def auth_from_agent_token():
 def app_main():
     """Hlavní aplikace – kontrola PDF (původní UI). Po přihlášení z agenta (token) se předá bootstrap_user pro auto-load."""
     bootstrap_user = session.get('portal_user')
-    return render_template_string(HTML_TEMPLATE, bootstrap_user=bootstrap_user)
+    try:
+        from .settings_loader import load_settings_for_views
+        db = Database()
+        settings = load_settings_for_views(db)
+        footer_disclaimer = settings.get("footer_disclaimer", "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.")
+        provider_name = settings.get("provider_name", "Ing. Martin Cieślar")
+        provider_address = settings.get("provider_address", "Porubská 1, 742 83 Klimkovice – Václavovice")
+        provider_ico = settings.get("provider_ico", "04830661")
+        provider_legal_note = settings.get("provider_legal_note", "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.")
+        contact_email = settings.get("contact_email", "info@dokucheck.app")
+        app_legal_notice = settings.get("app_legal_notice", "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.")
+    except Exception:
+        footer_disclaimer = "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost."
+        provider_name = "Ing. Martin Cieślar"
+        provider_address = "Porubská 1, 742 83 Klimkovice – Václavovice"
+        provider_ico = "04830661"
+        provider_legal_note = "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016."
+        contact_email = "info@dokucheck.app"
+        app_legal_notice = "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka."
+    return render_template_string(
+        HTML_TEMPLATE,
+        bootstrap_user=bootstrap_user,
+        footer_disclaimer=footer_disclaimer,
+        provider_name=provider_name,
+        provider_address=provider_address,
+        provider_ico=provider_ico,
+        provider_legal_note=provider_legal_note,
+        contact_email=contact_email,
+        app_legal_notice=app_legal_notice,
+    )
 
 
 @app.route('/download')
@@ -2913,8 +2952,10 @@ def download():
     return redirect(url_for('app_main'))
 
 
-def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk):
-    """Odešle e-mail s potvrzením objednávky a instrukcemi k platbě (VS = order_id, částka). Placeholder: smtplib nebo konfigurovatelné."""
+def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):
+    """Odešle e-mail s potvrzením objednávky. Banka a předmět z global_settings (fallback na env a výchozí text)."""
+    if db is None:
+        db = Database()
     try:
         import smtplib
         from email.mime.text import MIMEText
@@ -2925,9 +2966,8 @@ def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_c
         smtp_pass = os.environ.get('SMTP_PASS', '')
         if not smtp_host or not smtp_user:
             return False
-        subject = f"DokuCheck – potvrzení objednávky č. {order_id}"
-        bank_account = os.environ.get('BANK_ACCOUNT', '')
-        bank_iban = os.environ.get('BANK_IBAN', '')
+        bank_account = db.get_global_setting('bank_account', '') or os.environ.get('BANK_ACCOUNT', '')
+        bank_iban = db.get_global_setting('bank_iban', '') or os.environ.get('BANK_IBAN', '')
         bank_note = ""
         if bank_account or bank_iban:
             bank_note = "\nPlatební údaje pro bankovní převod:\n"
@@ -2939,16 +2979,27 @@ def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_c
             bank_note += f"  Částka: {amount_czk} Kč\n"
         else:
             bank_note = "\nPro platbu bankovním převodem použijte variabilní symbol uvedený výše. Číslo účtu vám zašleme v doplňující zprávě nebo doplňte dle dohody.\n"
-        body = (
-            f"Dobrý den,\n\n"
-            f"děkujeme za objednávku.\n\n"
-            f"Objednávka č.: {order_id}\n"
-            f"Variabilní symbol: {order_id}\n"
-            f"Částka k úhradě: {amount_czk} Kč\n"
-            f"Tarif: {tarif}\n"
-            f"{bank_note}\n"
-            f"S pozdravem,\nDokuCheck"
+        subject_tpl = get_email_order_confirmation_subject(db) if get_email_order_confirmation_subject else f"DokuCheck – potvrzení objednávky č. {order_id}"
+        subject = (subject_tpl or "DokuCheck – potvrzení objednávky č. {order_id}").format(
+            order_id=order_id, name=jmeno_firma, tarif=tarif, amount_czk=amount_czk, link=""
         )
+        body_tpl = db.get_global_setting("email_order_confirmation_body", "")
+        if body_tpl and body_tpl.strip():
+            body = body_tpl.format(
+                order_id=order_id, name=jmeno_firma, tarif=tarif, amount_czk=amount_czk,
+                bank_note=bank_note, link=""
+            )
+        else:
+            body = (
+                f"Dobrý den,\n\n"
+                f"děkujeme za objednávku.\n\n"
+                f"Objednávka č.: {order_id}\n"
+                f"Variabilní symbol: {order_id}\n"
+                f"Částka k úhradě: {amount_czk} Kč\n"
+                f"Tarif: {tarif}\n"
+                f"{bank_note}\n"
+                f"S pozdravem,\nDokuCheck"
+            )
         msg = MIMEMultipart()
         msg['Subject'] = subject
         msg['From'] = smtp_user
@@ -2972,14 +3023,22 @@ def online_check():
     return render_template('online_check.html')
 
 
-# Částky dle tarifu (Kč) – pro e-mail a zobrazení
-TARIF_AMOUNTS = {'basic': 990, 'standard': 1990, 'premium': 4990}
+# Fallback částky a štítky (použijí se když settings_loader není nebo DB prázdná)
+TARIF_AMOUNTS_FALLBACK = {'basic': 990, 'standard': 1990, 'premium': 4990}
+TARIF_LABELS_FALLBACK = {'basic': 'BASIC', 'standard': 'STANDARD', 'premium': 'PREMIUM'}
 
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     """Fakturační formulář. POST ukládá do pending_orders, odešle e-mail a přesměruje na order-success bez platebních údajů."""
-    TARIF_LABELS = {'basic': 'BASIC', 'standard': 'STANDARD', 'premium': 'PREMIUM'}
+    db = Database()
+    pricing = get_pricing_tarifs(db) if get_pricing_tarifs else TARIF_AMOUNTS_FALLBACK
+    if isinstance(pricing, dict) and all(isinstance(v, dict) for v in pricing.values()):
+        tarif_labels = {k: v.get('label', k.upper()) for k, v in pricing.items()}
+        tarif_amounts = {k: v.get('amount_czk', 1990) for k, v in pricing.items()}
+    else:
+        tarif_labels = TARIF_LABELS_FALLBACK
+        tarif_amounts = TARIF_AMOUNTS_FALLBACK
     if request.method == 'POST':
         jmeno_firma = (request.form.get('jmeno_firma') or '').strip()
         ico = (request.form.get('ico') or '').strip()
@@ -2992,19 +3051,18 @@ def checkout():
         if not souhlas:
             flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
-        db = Database()
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='pending')
         if order_id:
-            amount_czk = TARIF_AMOUNTS.get(tarif, TARIF_AMOUNTS.get('standard', 1990))
-            _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk)
+            amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+            _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=db)
             session['last_order_id'] = order_id
             return redirect(url_for('order_success'))
         flash('Chyba při odeslání. Zkuste to znovu.', 'error')
         return redirect(request.url)
     tarif = (request.args.get('tarif') or 'standard').strip().lower()
-    if tarif not in TARIF_LABELS:
+    if tarif not in tarif_labels:
         tarif = 'standard'
-    return render_template('checkout.html', tarif=tarif, tarif_label=TARIF_LABELS.get(tarif, 'STANDARD'))
+    return render_template('checkout.html', tarif=tarif, tarif_label=tarif_labels.get(tarif, 'STANDARD'))
 
 
 @app.route('/order-success')

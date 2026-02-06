@@ -3,45 +3,249 @@
 {% block content %}
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Nastavení</h2>
 
-<form method="post" action="{{ url_for('admin.settings') }}">
-    <input type="hidden" name="action" value="global">
-    <div class="admin-card">
-        <div class="card-header">Globální přepínače</div>
-        <div class="card-body">
-            <div class="form-check">
-                <input type="checkbox" name="maintenance_mode" value="1" id="maint" class="form-control" style="width:auto;" {{ 'checked' if maintenance_mode else '' }}>
-                <label for="maint" class="small">Maintenance Mode</label>
-            </div>
-            <div class="form-check">
-                <input type="checkbox" name="allow_new_registrations" value="1" id="allowreg" class="form-control" style="width:auto;" {{ 'checked' if allow_new_registrations else '' }}>
-                <label for="allowreg" class="small">Allow New Registrations</label>
-            </div>
-        </div>
-        <div class="card-footer">
-            <button type="submit" class="btn btn-primary btn-sm">Uložit globální nastavení</button>
-        </div>
-    </div>
-</form>
+<ul class="admin-tabs" style="display:flex;flex-wrap:wrap;gap:4px;list-style:none;padding:0;margin:0 0 16px;border-bottom:1px solid #e5e7eb;">
+    <li><a href="#tab-basic" class="admin-tab active" data-tab="basic">Základní</a></li>
+    <li><a href="#tab-pricing" class="admin-tab" data-tab="pricing">Ceny a Tarify</a></li>
+    <li><a href="#tab-marketing" class="admin-tab" data-tab="marketing">Marketing</a></li>
+    <li><a href="#tab-legal" class="admin-tab" data-tab="legal">Právní info</a></li>
+    <li><a href="#tab-system" class="admin-tab" data-tab="system">Systém</a></li>
+</ul>
 
-<div class="admin-card">
-    <div class="card-header">Změna hesla admina</div>
-    <div class="card-body">
-        <form method="post" action="{{ url_for('admin.settings') }}">
-            <input type="hidden" name="action" value="password">
-            <div class="form-group">
-                <label class="small">Aktuální heslo</label>
-                <input type="password" name="current_password" class="form-control" required>
+<style>
+.admin-tab { padding:8px 12px; text-decoration:none; color:#6b7280; border-radius:6px; }
+.admin-tab:hover { background:#f3f4f6; color:#374151; }
+.admin-tab.active { background:#1e5a8a; color:white; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+.admin-settings-label { display:block; font-size:0.85em; color:#4b5563; margin-bottom:4px; }
+.admin-settings-input { width:100%; max-width:480px; padding:6px 8px; margin-bottom:10px; }
+.admin-settings-textarea { width:100%; min-height:120px; padding:8px; font-family:monospace; font-size:12px; }
+</style>
+
+{# ----- Základní ----- #}
+<div id="tab-basic" class="tab-pane active">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="global">
+        <div class="admin-card">
+            <div class="card-header">Globální přepínače</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input type="checkbox" name="maintenance_mode" value="1" id="maint" style="width:auto;" {{ 'checked' if maintenance_mode else '' }}>
+                    <label for="maint" class="small">Režim údržby (Maintenance Mode)</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" name="allow_new_registrations" value="1" id="allowreg" style="width:auto;" {{ 'checked' if allow_new_registrations else '' }}>
+                    <label for="allowreg" class="small">Povolit nové registrace</label>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="small">Nové heslo</label>
-                <input type="password" name="new_password" class="form-control" minlength="6" required>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit přepínače</button>
             </div>
-            <div class="form-group">
-                <label class="small">Nové heslo znovu</label>
-                <input type="password" name="new_password2" class="form-control" minlength="6" required>
+        </div>
+    </form>
+
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_basic">
+        <div class="admin-card">
+            <div class="card-header">Provozovatel a kontakt</div>
+            <div class="card-body">
+                <label class="admin-settings-label">Jméno / firma (provider_name)</label>
+                <input type="text" name="provider_name" class="form-control admin-settings-input" value="{{ settings.provider_name|e }}">
+                <label class="admin-settings-label">Sídlo (provider_address)</label>
+                <input type="text" name="provider_address" class="form-control admin-settings-input" value="{{ settings.provider_address|e }}">
+                <label class="admin-settings-label">IČO (provider_ico)</label>
+                <input type="text" name="provider_ico" class="form-control admin-settings-input" value="{{ settings.provider_ico|e }}">
+                <label class="admin-settings-label">Právní doplněk (provider_legal_note)</label>
+                <input type="text" name="provider_legal_note" class="form-control admin-settings-input" value="{{ settings.provider_legal_note|e }}">
+                <label class="admin-settings-label">Kontaktní e-mail (contact_email)</label>
+                <input type="email" name="contact_email" class="form-control admin-settings-input" value="{{ settings.contact_email|e }}">
+                <label class="admin-settings-label">Číslo účtu (bank_account)</label>
+                <input type="text" name="bank_account" class="form-control admin-settings-input" value="{{ settings.bank_account|e }}">
+                <label class="admin-settings-label">IBAN (bank_iban)</label>
+                <input type="text" name="bank_iban" class="form-control admin-settings-input" value="{{ settings.bank_iban|e }}">
             </div>
-            <button type="submit" class="btn btn-primary btn-sm">Změnit heslo</button>
-        </form>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit základní nastavení</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="admin-card">
+        <div class="card-header">Změna hesla admina</div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('admin.settings') }}">
+                <input type="hidden" name="action" value="password">
+                <div class="form-group">
+                    <label class="small">Aktuální heslo</label>
+                    <input type="password" name="current_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="small">Nové heslo</label>
+                    <input type="password" name="new_password" class="form-control" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label class="small">Nové heslo znovu</label>
+                    <input type="password" name="new_password2" class="form-control" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Změnit heslo</button>
+            </form>
+        </div>
     </div>
 </div>
+
+{# ----- Ceny a Tarify ----- #}
+<div id="tab-pricing" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_pricing">
+        <div class="admin-card">
+            <div class="card-header">Ceník tarifů (JSON)</div>
+            <div class="card-body">
+                <label class="admin-settings-label">pricing_tarifs – např. {"basic":{"label":"BASIC","amount_czk":990},"standard":{...},"premium":{...}}</label>
+                <textarea name="pricing_tarifs_json" class="form-control admin-settings-textarea">{{ pricing_tarifs_json }}</textarea>
+                <label class="admin-settings-label">Trial – max. souborů (trial_limit_total_files)</label>
+                <input type="number" name="trial_limit_total_files" class="form-control admin-settings-input" value="{{ settings.trial_limit_total_files }}" min="1">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit ceny a tarify</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Marketing ----- #}
+<div id="tab-marketing" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_marketing">
+        <div class="admin-card">
+            <div class="card-header">Landing – Hero a CTA</div>
+            <div class="card-body">
+                <label class="admin-settings-label">landing_hero_title</label>
+                <input type="text" name="landing_hero_title" class="form-control admin-settings-input" value="{{ settings.landing_hero_title|e }}">
+                <label class="admin-settings-label">landing_hero_subtitle</label>
+                <input type="text" name="landing_hero_subtitle" class="form-control admin-settings-input" value="{{ settings.landing_hero_subtitle|e }}">
+                <label class="admin-settings-label">landing_hero_badge</label>
+                <input type="text" name="landing_hero_badge" class="form-control admin-settings-input" value="{{ settings.landing_hero_badge|e }}">
+                <label class="admin-settings-label">landing_cta_primary</label>
+                <input type="text" name="landing_cta_primary" class="form-control admin-settings-input" value="{{ settings.landing_cta_primary|e }}">
+                <label class="admin-settings-label">landing_cta_secondary</label>
+                <input type="text" name="landing_cta_secondary" class="form-control admin-settings-input" value="{{ settings.landing_cta_secondary|e }}">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Sekce „Jak to funguje“ a „Dva režimy“</div>
+                <label class="admin-settings-label">landing_section_how_title</label>
+                <input type="text" name="landing_section_how_title" class="form-control admin-settings-input" value="{{ settings.landing_section_how_title|e }}">
+                <label class="admin-settings-label">landing_section_modes_title</label>
+                <input type="text" name="landing_section_modes_title" class="form-control admin-settings-input" value="{{ settings.landing_section_modes_title|e }}">
+                <label class="admin-settings-label">landing_mode_agent_title / landing_mode_agent_text</label>
+                <input type="text" name="landing_mode_agent_title" class="form-control admin-settings-input" value="{{ settings.landing_mode_agent_title|e }}" placeholder="Z Agenta">
+                <input type="text" name="landing_mode_agent_text" class="form-control admin-settings-input" value="{{ settings.landing_mode_agent_text|e }}" placeholder="Popis režimu">
+                <label class="admin-settings-label">landing_mode_cloud_title / landing_mode_cloud_text</label>
+                <input type="text" name="landing_mode_cloud_title" class="form-control admin-settings-input" value="{{ settings.landing_mode_cloud_title|e }}" placeholder="Cloud">
+                <input type="text" name="landing_mode_cloud_text" class="form-control admin-settings-input" value="{{ settings.landing_mode_cloud_text|e }}" placeholder="Popis">
+                <label class="admin-settings-label">Popisy tarifů na landingu</label>
+                <input type="text" name="landing_tarif_basic_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_basic_desc|e }}" placeholder="Basic">
+                <input type="text" name="landing_tarif_standard_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_standard_desc|e }}" placeholder="Standard">
+                <input type="text" name="landing_tarif_premium_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_premium_desc|e }}" placeholder="Premium">
+            </div>
+            <div class="card-body">
+                <div class="card-header">JSON: landing_how_steps, landing_faq</div>
+                <label class="admin-settings-label">landing_how_steps – [{"title":"...","text":"..."}, ...]</label>
+                <textarea name="landing_how_steps_json" class="form-control admin-settings-textarea">{{ landing_how_steps_json }}</textarea>
+                <label class="admin-settings-label">landing_faq – [{"q":"...","a":"..."}, ...]</label>
+                <textarea name="landing_faq_json" class="form-control admin-settings-textarea">{{ landing_faq_json }}</textarea>
+                <label class="admin-settings-label">testimonials (reference)</label>
+                <textarea name="testimonials_json" class="form-control admin-settings-textarea">{{ testimonials_json }}</textarea>
+                <label class="admin-settings-label">partner_logos – [{"src":"url","alt":"...","url":"odkaz"}...]</label>
+                <textarea name="partner_logos_json" class="form-control admin-settings-textarea">{{ partner_logos_json }}</textarea>
+                <label class="admin-settings-label">top_promo_bar – {"text":"...","background_color":"#...","is_active":true/false}</label>
+                <textarea name="top_promo_bar_json" class="form-control admin-settings-textarea">{{ top_promo_bar_json }}</textarea>
+                <label class="admin-settings-label">exit_intent_popup – {"title":"...","body":"...","button_text":"...","is_active":false}</label>
+                <textarea name="exit_intent_popup_json" class="form-control admin-settings-textarea">{{ exit_intent_popup_json }}</textarea>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit marketing</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Právní info ----- #}
+<div id="tab-legal" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_legal">
+        <div class="admin-card">
+            <div class="card-header">Právní texty</div>
+            <div class="card-body">
+                <label class="admin-settings-label">footer_disclaimer (patička webu)</label>
+                <input type="text" name="footer_disclaimer" class="form-control admin-settings-input" value="{{ settings.footer_disclaimer|e }}">
+                <label class="admin-settings-label">app_legal_notice (disclaimer v aplikaci)</label>
+                <input type="text" name="app_legal_notice" class="form-control admin-settings-input" value="{{ settings.app_legal_notice|e }}">
+                <label class="admin-settings-label">legal_vop_html (celý obsah stránky VOP)</label>
+                <textarea name="legal_vop_html" class="form-control admin-settings-textarea">{{ settings.legal_vop_html|e }}</textarea>
+                <label class="admin-settings-label">legal_gdpr_html (celý obsah stránky GDPR)</label>
+                <textarea name="legal_gdpr_html" class="form-control admin-settings-textarea">{{ settings.legal_gdpr_html|e }}</textarea>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit právní info</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Systém ----- #}
+<div id="tab-system" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_system">
+        <div class="admin-card">
+            <div class="card-header">SEO a skripty</div>
+            <div class="card-body">
+                <label class="admin-settings-label">seo_meta_title</label>
+                <input type="text" name="seo_meta_title" class="form-control admin-settings-input" value="{{ settings.seo_meta_title|e }}">
+                <label class="admin-settings-label">seo_meta_description</label>
+                <input type="text" name="seo_meta_description" class="form-control admin-settings-input" value="{{ settings.seo_meta_description|e }}">
+                <label class="admin-settings-label">header_scripts – JSON pole HTML řetězců ["&lt;script&gt;...&lt;/script&gt;", ...]</label>
+                <textarea name="header_scripts_json" class="form-control admin-settings-textarea">{{ header_scripts_json }}</textarea>
+            </div>
+            <div class="card-body">
+                <div class="card-header">Agent a timeouty</div>
+                <label class="admin-settings-label">analysis_timeout_seconds</label>
+                <input type="number" name="analysis_timeout_seconds" class="form-control admin-settings-input" value="{{ settings.analysis_timeout_seconds }}" min="60">
+                <label class="admin-settings-label">allowed_extensions – JSON pole [".pdf", ...]</label>
+                <textarea name="allowed_extensions_json" class="form-control admin-settings-textarea">{{ allowed_extensions_json }}</textarea>
+            </div>
+            <div class="card-body">
+                <div class="card-header">E-maily (předmět a tělo)</div>
+                <label class="admin-settings-label">email_order_confirmation_subject (placeholders: {order_id}, {name}, {tarif}, {amount_czk})</label>
+                <input type="text" name="email_order_confirmation_subject" class="form-control admin-settings-input" value="{{ settings.email_order_confirmation_subject|e }}">
+                <label class="admin-settings-label">email_order_confirmation_body</label>
+                <textarea name="email_order_confirmation_body" class="form-control admin-settings-textarea">{{ settings.email_order_confirmation_body|e }}</textarea>
+                <label class="admin-settings-label">email_welcome_subject</label>
+                <input type="text" name="email_welcome_subject" class="form-control admin-settings-input" value="{{ settings.email_welcome_subject|e }}">
+                <label class="admin-settings-label">email_welcome_body</label>
+                <textarea name="email_welcome_body" class="form-control admin-settings-textarea">{{ settings.email_welcome_body|e }}</textarea>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit systémové nastavení</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function(){
+    var tabs = document.querySelectorAll('.admin-tab');
+    var panes = document.querySelectorAll('.tab-pane');
+    tabs.forEach(function(t){
+        t.addEventListener('click', function(e){
+            e.preventDefault();
+            var id = this.getAttribute('data-tab');
+            tabs.forEach(function(x){ x.classList.remove('active'); });
+            panes.forEach(function(p){
+                p.classList.toggle('active', p.id === 'tab-' + id);
+            });
+            this.classList.add('active');
+        });
+    });
+})();
+</script>
 {% endblock %}

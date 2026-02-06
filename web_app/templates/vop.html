@@ -21,6 +21,9 @@
 </head>
 <body>
     <div class="container">
+        {% if custom_content %}
+        {{ custom_content|safe }}
+        {% else %}
         <h1>Všeobecné obchodní podmínky</h1>
         <p class="subtitle">DokuCheck PRO – software pro kontrolu projektové dokumentace (Portál stavebníka)</p>
 
@@ -62,6 +65,7 @@
             <a href="/#kontakt">Kontakt</a>
             <a href="/">Úvod</a>
         </div>
+        {% endif %}
     </div>
 </body>
 </html>

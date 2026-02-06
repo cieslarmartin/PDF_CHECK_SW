@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DokuCheck – Dokumentace bez chyb | Portál stavebníka</title>
+    <title>{{ seo_meta_title|default('DokuCheck – Dokumentace bez chyb | Portál stavebníka') }}</title>
+    <meta name="description" content="{{ seo_meta_description|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů pro Portál stavebníka.') }}">
+    {% if header_scripts %}{% for script in header_scripts %}{{ script|safe }}{% endfor %}{% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -52,22 +54,22 @@
         <section class="lp-v3-panel rounded-2xl p-8 md:p-12 mb-10 shadow-sm">
             <div class="flex flex-col md:flex-row md:items-center gap-10">
                 <div class="flex-1">
-                    <span class="lp-v3-badge mb-4 inline-block" style="background:#eff6ff;color:#1e5a8a;">ONLINE + Desktop</span>
+                    <span class="lp-v3-badge mb-4 inline-block" style="background:#eff6ff;color:#1e5a8a;">{{ landing_hero_badge|default('ONLINE + Desktop') }}</span>
                     <h1 class="text-3xl md:text-4xl font-bold mb-4 leading-tight" style="color:#1f2937;">
-                        DokuCheck – Dokumentace bez chyb pro Portál stavebníka
+                        {{ landing_hero_title|default('DokuCheck – Dokumentace bez chyb pro Portál stavebníka') }}
                     </h1>
                     <p class="text-lg mb-6 max-w-xl" style="color:#6b7280;">
-                        Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.
+                        {{ landing_hero_subtitle|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.') }}
                     </p>
                     <p class="text-sm mb-6 flex items-center gap-2" style="color:#6b7280;">
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium" style="background:#f3f4f6;color:#374151;">⏱ Kontrola za 2–5 min</span>
                     </p>
                     <div class="flex flex-wrap gap-3">
                         <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-v3-btn-primary transition">
-                            Vyzkoušet ONLINE Check
+                            {{ landing_cta_primary|default('Vyzkoušet ONLINE Check') }}
                         </a>
                         <a href="/download" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-v3-btn-secondary transition">
-                            Stáhnout aplikaci zdarma
+                            {{ landing_cta_secondary|default('Stáhnout aplikaci zdarma') }}
                         </a>
                         <a href="/portal" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium lp-v3-link transition">Můj účet</a>
                     </div>
@@ -85,24 +87,16 @@
 
         {# 2) Jak to funguje #}
         <section id="jak" class="mb-14">
-            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Jak to funguje</h2>
+            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">{{ landing_section_how_title|default('Jak to funguje') }}</h2>
             <div class="lp-v3-panel rounded-2xl p-8 shadow-sm">
                 <div class="lp-v3-timeline space-y-0">
-                    <div class="relative pl-12 pb-8">
-                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">1</span>
-                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Nahraj / vyber složku</h3>
-                        <p class="text-sm" style="color:#6b7280;">Přetáhněte PDF nebo vyberte složku s dokumenty.</p>
+                    {% for step in landing_how_steps|default([{"title":"Nahraj / vyber složku","text":"Přetáhněte PDF nebo vyberte složku s dokumenty."},{"title":"Proveď kontrolu","text":"Automatická kontrola PDF/A, podpisy a časových razítek."},{"title":"Exportuj výsledky","text":"Výstupy do CSV/Excel, přehled podle složek."}]) %}
+                    <div class="relative pl-12 {{ 'pb-8' if not loop.last else '' }}">
+                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">{{ loop.index }}</span>
+                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ step.title }}</h3>
+                        <p class="text-sm" style="color:#6b7280;">{{ step.text }}</p>
                     </div>
-                    <div class="relative pl-12 pb-8">
-                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">2</span>
-                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Proveď kontrolu</h3>
-                        <p class="text-sm" style="color:#6b7280;">Automatická kontrola PDF/A, podpisy a časových razítek.</p>
-                    </div>
-                    <div class="relative pl-12">
-                        <span class="absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style="background:#1e5a8a;">3</span>
-                        <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Exportuj výsledky</h3>
-                        <p class="text-sm" style="color:#6b7280;">Výstupy do CSV/Excel, přehled podle složek.</p>
-                    </div>
+                    {% endfor %}
                 </div>
                 <div class="mt-8 rounded-xl h-32 flex items-center justify-center border" style="background:#f9fafb;border-color:#e5e7eb;">
                     <span class="text-sm" style="color:#9ca3af;">Schéma placeholder (SVG / obrázek)</span>
@@ -112,82 +106,77 @@
 
         {# 3) Dva režimy #}
         <section id="dva-rezimy" class="mb-14">
-            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Dva režimy: Z Agenta vs Cloud</h2>
+            <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">{{ landing_section_modes_title|default('Dva režimy: Z Agenta vs Cloud') }}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
                     <span class="text-2xl mb-2 block">🌐</span>
                     <span class="lp-v3-badge mb-2 inline-block" style="background:#d1fae5;color:#047857;">Soukromí</span>
-                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">Z Agenta</h3>
-                    <p class="text-sm" style="color:#6b7280;">Soubory na disku, na server jen metadata.</p>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">{{ landing_mode_agent_title|default('Z Agenta') }}</h3>
+                    <p class="text-sm" style="color:#6b7280;">{{ landing_mode_agent_text|default('Soubory na disku, na server jen metadata.') }}</p>
                 </div>
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
                     <span class="text-2xl mb-2 block">☁️</span>
                     <span class="lp-v3-badge mb-2 inline-block" style="background:#f3f4f6;color:#4b5563;">Demo</span>
-                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">Cloud</h3>
-                    <p class="text-sm" style="color:#6b7280;">Celé PDF na server. Rychlé vyzkoušení.</p>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1f2937;">{{ landing_mode_cloud_title|default('Cloud') }}</h3>
+                    <p class="text-sm" style="color:#6b7280;">{{ landing_mode_cloud_text|default('Celé PDF na server. Rychlé vyzkoušení.') }}</p>
                 </div>
             </div>
         </section>
 
-        {# 4) Ceník #}
+        {# 4) Ceník – z pricing_tarifs (basic, standard, premium) #}
         <section id="cenik" class="mb-14">
             <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Ceník</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":990},"standard":{"label":"STANDARD","amount_czk":1990},"premium":{"label":"PREMIUM","amount_czk":4990}}) %}
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Basic</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">Pro menší objemy.</p>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.basic.label|default('Basic') }}</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_basic_desc|default('Pro menší objemy.') }}</p>
                     <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-medium transition" style="background:#e5e7eb;color:#374151;">Vybrat</a>
                 </div>
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm relative border-2" style="border-color:#1e5a8a;">
                     <span class="lp-v3-badge absolute top-4 right-4" style="background:#eff6ff;color:#1e5a8a;">DOPORUČUJEME PRO ATELIÉRY</span>
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Pro</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">Plné funkce, export, historie.</p>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.standard.label|default('Pro') }}</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_standard_desc|default('Plné funkce, export, historie.') }}</p>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition">Vybrat</a>
                 </div>
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Firemní</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">Na míru pro větší týmy.</p>
-                    <a href="mailto:info@dokucheck.app" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-secondary transition">Kontakt</a>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.premium.label|default('Firemní') }}</h3>
+                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_premium_desc|default('Na míru pro větší týmy.') }}</p>
+                    <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-secondary transition">Kontakt</a>
                 </div>
             </div>
         </section>
 
-        {# 5) Důvěřují nám #}
+        {# 5) Důvěřují nám – partner_logos (volitelné) #}
+        {% if partner_logos and partner_logos|length > 0 %}
         <section class="mb-14">
             <h2 class="text-2xl font-bold mb-6" style="color:#1f2937;">Důvěřují nám</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {% for i in range(6) %}
-                <div class="h-16 lp-v3-panel rounded-lg flex items-center justify-center text-xs shadow-sm" style="color:#9ca3af;">Logo</div>
+                {% for logo in partner_logos %}
+                <div class="h-16 lp-v3-panel rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                    {% if logo.url %}<a href="{{ logo.url }}" target="_blank" rel="noopener"><img src="{{ logo.src }}" alt="{{ logo.alt|default('Partner') }}" class="max-h-full max-w-full object-contain"></a>{% else %}<img src="{{ logo.src }}" alt="{{ logo.alt|default('Partner') }}" class="max-h-full max-w-full object-contain">{% endif %}
+                </div>
                 {% endfor %}
             </div>
         </section>
+        {% endif %}
 
-        {# 6) FAQ #}
+        {# 6) FAQ – z landing_faq #}
         <section id="faq" class="mb-14">
             <h2 class="text-2xl font-bold mb-6" style="color:#1f2937;">Časté dotazy</h2>
             <div class="space-y-2">
+                {% for item in landing_faq|default([{"q":"Co kontroluje DokuCheck?","a":"PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka."},{"q":"Jaký je rozdíl mezi Z Agenta a Cloud?","a":"Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo)."},{"q":"Mohu zrušit předplatné?","a":"Ano, předplatné se neobnoví po ukončení období."},{"q":"Kde najdu Můj účet?","a":"Portál – historie a nastavení."}]) %}
                 <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
-                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Co kontroluje DokuCheck? <span class="group-open:rotate-180 transition">▼</span></summary>
-                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka.</p>
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">{{ item.q }} <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">{{ item.a|safe }}</p>
                 </details>
-                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
-                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Jaký je rozdíl mezi Z Agenta a Cloud? <span class="group-open:rotate-180 transition">▼</span></summary>
-                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo).</p>
-                </details>
-                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
-                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Mohu zrušit předplatné? <span class="group-open:rotate-180 transition">▼</span></summary>
-                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">Ano, předplatné se neobnoví po ukončení období.</p>
-                </details>
-                <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
-                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">Kde najdu Můj účet? <span class="group-open:rotate-180 transition">▼</span></summary>
-                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;"><a href="/portal" class="lp-v3-link">Portál</a> – historie a nastavení.</p>
-                </details>
+                {% endfor %}
             </div>
         </section>
 
         {# 7) Footer #}
         <footer class="pt-6 border-t" style="border-color:#e5e7eb;">
-            <p class="text-sm" style="color:#6b7280;">Kontakt: <a href="mailto:info@dokucheck.app" class="lp-v3-link">info@dokucheck.app</a> · <a href="/vop" class="lp-v3-link">VOP</a> · <a href="/gdpr" class="lp-v3-link">GDPR</a></p>
+            <p class="text-sm" style="color:#6b7280;">Kontakt: <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="lp-v3-link">{{ contact_email|default('info@dokucheck.app') }}</a> · <a href="/vop" class="lp-v3-link">VOP</a> · <a href="/gdpr" class="lp-v3-link">GDPR</a></p>
         </footer>
     </main>
 </body>

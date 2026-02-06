@@ -10,6 +10,9 @@
                 <th>Název</th>
                 <th>Max souborů</th>
                 <th>Max zařízení</th>
+                <th>Den. limit</th>
+                <th>Rate/h</th>
+                <th>Max MB</th>
                 <th>Podpisy</th>
                 <th>Čas. razítka</th>
                 <th>Excel export</th>
@@ -19,10 +22,13 @@
         </thead>
         <tbody>
             {% for t in tiers_list %}
-            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}">
+            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}">
                 <td><span class="badge badge-{{ t.name|lower }}">{{ t.name }}</span></td>
                 <td>{{ t.max_files_limit }}</td>
                 <td>{{ t.max_devices }}</td>
+                <td>{{ t.daily_files_limit|default('–') }}</td>
+                <td>{{ t.rate_limit_hour|default('–') }}</td>
+                <td>{{ t.max_file_size_mb|default('–') }}</td>
                 <td>{{ 'Ano' if t.allow_signatures else 'Ne' }}</td>
                 <td>{{ 'Ano' if t.allow_timestamp else 'Ne' }}</td>
                 <td>{{ 'Ano' if t.allow_excel_export else 'Ne' }}</td>
@@ -30,7 +36,7 @@
                 <td><button type="button" class="action-btn primary-btn btn-edit-tier">Upravit</button></td>
             </tr>
             {% else %}
-            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Spusťte migraci: <code>python migrate_tiers.py</code></td></tr>
+            <tr><td colspan="11" class="text-center text-muted" style="padding:24px;">Spusťte migraci: <code>python migrate_tiers.py</code></td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -55,6 +61,18 @@
             <div class="form-group">
                 <label class="small">Max zařízení</label>
                 <input type="number" id="edit_max_devices" class="form-control" min="1">
+            </div>
+            <div class="form-group">
+                <label class="small">Denní limit souborů (daily_files_limit)</label>
+                <input type="number" id="edit_daily_limit" class="form-control" min="0" placeholder="prázdné = bez limitu">
+            </div>
+            <div class="form-group">
+                <label class="small">Rate limit za hodinu (rate_limit_hour)</label>
+                <input type="number" id="edit_rate_limit" class="form-control" min="0" placeholder="prázdné">
+            </div>
+            <div class="form-group">
+                <label class="small">Max velikost souboru (MB) (max_file_size_mb)</label>
+                <input type="number" id="edit_max_size_mb" class="form-control" min="1" placeholder="prázdné">
             </div>
             <div class="form-check">
                 <input type="checkbox" id="edit_allow_sig" class="form-control" style="width:auto;">
@@ -89,6 +107,9 @@ document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
         document.getElementById('edit_tier_name').value = tr.getAttribute('data-name') || '';
         document.getElementById('edit_max_files').value = tr.getAttribute('data-max-files') || '';
         document.getElementById('edit_max_devices').value = tr.getAttribute('data-max-devices') || '';
+        document.getElementById('edit_daily_limit').value = tr.getAttribute('data-daily-limit') || '';
+        document.getElementById('edit_rate_limit').value = tr.getAttribute('data-rate-limit') || '';
+        document.getElementById('edit_max_size_mb').value = tr.getAttribute('data-max-size-mb') || '';
         document.getElementById('edit_allow_sig').checked = tr.getAttribute('data-allow-sig') === '1';
         document.getElementById('edit_allow_ts').checked = tr.getAttribute('data-allow-ts') === '1';
         document.getElementById('edit_allow_excel').checked = tr.getAttribute('data-allow-excel') === '1';
@@ -102,6 +123,9 @@ document.getElementById('btnTierSave').onclick = function() {
     fd.append('name', document.getElementById('edit_tier_name').value);
     fd.append('max_files_limit', document.getElementById('edit_max_files').value);
     fd.append('max_devices', document.getElementById('edit_max_devices').value);
+    fd.append('daily_files_limit', document.getElementById('edit_daily_limit').value);
+    fd.append('rate_limit_hour', document.getElementById('edit_rate_limit').value);
+    fd.append('max_file_size_mb', document.getElementById('edit_max_size_mb').value);
     fd.append('allow_signatures', document.getElementById('edit_allow_sig').checked ? '1' : '0');
     fd.append('allow_timestamp', document.getElementById('edit_allow_ts').checked ? '1' : '0');
     fd.append('allow_excel_export', document.getElementById('edit_allow_excel').checked ? '1' : '0');
