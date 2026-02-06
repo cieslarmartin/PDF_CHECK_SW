@@ -2876,15 +2876,19 @@ def lp_v3():
 def auth_from_agent_token():
     """
     Přihlášení z Agenta: jednorázový token z URL přihlásí uživatele (session)
-    a přesměruje do portálu (/portal) – stejně jako přihlášení e-mailem na webu.
-    Trial i placený účet končí ve stejné aplikaci (portál).
+    a přesměruje do webové aplikace (/app) – kontrola PDF, výsledky, kontext.
+    Bezpečnost: při chybějícím/neplatném tokenu se stará session vymaže,
+    aby se uživatel nepřihlásil pod cizím účtem (např. po trial pouze trial).
     """
     token = request.args.get('login_token', '').strip()
     if not token:
-        return redirect(url_for('portal'))
+        session.pop('portal_user', None)
+        return redirect(url_for('app_main'))
     api_key, license_info = consume_one_time_token(token)
     if not api_key or not license_info:
-        return redirect(url_for('portal'))
+        session.pop('portal_user', None)
+        return redirect(url_for('app_main'))
+    session.pop('portal_user', None)
     session['portal_user'] = {
         'api_key': api_key,
         'email': license_info.get('email'),
@@ -2893,7 +2897,7 @@ def auth_from_agent_token():
         'tier': license_info.get('license_tier', 0),
     }
     session.permanent = True
-    return redirect(url_for('portal'))
+    return redirect(url_for('app_main'))
 
 
 @app.route('/app')

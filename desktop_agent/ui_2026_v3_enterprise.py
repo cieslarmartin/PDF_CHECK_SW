@@ -465,9 +465,9 @@ class PDFCheckUI_2026_V3:
                 url = self.on_get_web_login_url()
             except Exception:
                 pass
-        # Přihlášený: url = odkaz s tokenem -> přihlášení na webu. Nepřihlášený: otevřít /portal (přihlášení), ne landing.
+        # Přihlášený: url = odkaz s tokenem -> přihlášení a rovnou webová aplikace (/app). Nepřihlášený: otevřít /app (kontrola PDF), ne landing.
         base = (self.api_url or "").rstrip("/")
-        fallback = (base + "/portal") if base else self.api_url
+        fallback = (base + "/app") if base else self.api_url
         webbrowser.open(url or fallback)
 
     def _setup_dnd_overlay(self):
@@ -539,13 +539,24 @@ class PDFCheckUI_2026_V3:
         return n_files, n_folders
 
     def _update_progress_idle(self):
-        """Aktualizuje oblast progressu v klidu: Připraveno: N souborů, M složek."""
+        """Pre-flight: Vybráno X souborů v Y složkách | Předpokládaný čas ~MM:SS."""
         if self.is_running:
             return
         n_files, n_folders = self._get_queue_totals()
+        checked = len([q for q in self.queue_display if q.get("checked", True)])
+        processed = len([q for q in self.queue_display if q.get("result")])
+        sent = len([q for q in self.queue_display if q.get("sent")])
+        new_count = n_files - processed
         if n_files > 0:
             self._progress_row.grid()
-            self.progress_label.configure(text=f"Připraveno: {n_files} souborů, {n_folders} složek", text_color=TEXT_MUTED)
+            eta_sec = checked * SECONDS_PER_FILE_ETA
+            mm, ss = int(eta_sec // 60), int(eta_sec % 60)
+            eta_str = f"{mm}:{ss:02d}" if mm > 0 else f"0:{ss:02d}"
+            stav = f"Nové: {new_count} | Zpracované: {processed} | Odeslané: {sent}"
+            self.progress_label.configure(
+                text=f"Vybráno: {checked} souborů v {n_folders} složkách | {stav} | Předpokládaný čas: ~{eta_str}",
+                text_color=TEXT_MUTED,
+            )
             self.eta_label.configure(text="")
             self._progress_speed_label.configure(text="")
             self.progress.set(0)
@@ -677,6 +688,17 @@ class PDFCheckUI_2026_V3:
         if qidx is not None:
             self._select_item(qidx)
 
+    def _collect_file_qindices_under(self, parent_iid):
+        """Rekurzivně vrátí set qidx všech souborů pod daným uzlem (složka/dávka)."""
+        out = set()
+        for c in self.queue_tree.get_children(parent_iid):
+            qidx = self._tree_iid_to_qidx.get(c)
+            if qidx is not None:
+                out.add(qidx)
+            else:
+                out.update(self._collect_file_qindices_under(c))
+        return out
+
     def _on_tree_click(self, event):
         region = self.queue_tree.identify_region(event.x, event.y)
         if region != "cell" and region != "tree":
@@ -688,10 +710,26 @@ class PDFCheckUI_2026_V3:
         if qidx is not None:
             self._toggle_checked(qidx)
             return
-        if self._tree_iid_to_task_ix.get(iid) is not None:
-            return
         iid_str = str(iid) if iid else ""
-        if iid_str.startswith("path-") or iid_str.startswith("folder-"):
+        if iid_str.startswith("path-") or iid_str.startswith("batch-"):
+            qindices = self._collect_file_qindices_under(iid)
+            if not qindices:
+                return
+            items = [self.queue_display[i] for i in qindices if 0 <= i < len(self.queue_display)]
+            all_checked = all(item.get("checked", True) for item in items)
+            new_val = not all_checked
+            for i in qindices:
+                if 0 <= i < len(self.queue_display):
+                    self.queue_display[i]["checked"] = new_val
+            for i in qindices:
+                fiid = self._qidx_to_tree_iid.get(i)
+                if fiid and self.queue_tree.exists(fiid):
+                    chk = "☑" if new_val else "☐"
+                    name = self.queue_display[i].get("filename", "")
+                    self.queue_tree.item(fiid, text=f"{chk}  📄 {name}")
+            self._update_stats()
+            if not self.is_running:
+                self._update_progress_idle()
             return
 
     def _show_help_modal(self):
@@ -1156,6 +1194,12 @@ class PDFCheckUI_2026_V3:
                 out = self.on_send_batch_callback(results_only, result.get("source_folder_for_batch"))
                 if out and len(out) >= 2 and not out[0]:
                     upload_error = out[1]
+                elif out and len(out) >= 1 and out[0]:
+                    for qidx, _ in results_with_qidx:
+                        if 0 <= qidx < len(self.queue_display):
+                            self.queue_display[qidx]["sent"] = True
+                    if not self.is_running:
+                        self._update_progress_idle()
             except Exception as e:
                 upload_error = str(e)
             self._open_web()
