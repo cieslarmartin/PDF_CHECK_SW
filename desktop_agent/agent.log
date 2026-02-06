@@ -3666,3 +3666,73 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-05 12:34:17,778 - INFO - Analýza dokončena: 4_IO.01-04_PP_ulo.pdf
 2026-02-05 12:34:19,527 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
 2026-02-05 12:34:32,890 - INFO - Agent ukončen
+2026-02-06 20:24:30,011 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-06 20:24:30,013 - INFO - Spouštím GUI...
+2026-02-06 20:24:30,485 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-06 20:24:30,486 - INFO - Agent běží
+2026-02-06 20:26:59,106 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:27:01,385 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-06 20:27:04,895 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:27:05,794 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-06 20:27:19,275 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:27:20,189 - INFO - Přihlášeno.
+2026-02-06 20:28:13,867 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:28:14,954 - INFO - Přihlášeno.
+2026-02-06 20:28:18,202 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:28:18,983 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-06 20:31:02,172 - INFO - Kontrola souboru: W:/Zdraví/vysetreni/Echokardio\Echokardio_2023.pdf
+2026-02-06 20:31:02,212 - INFO - Analýza dokončena: Echokardio_2023.pdf
+2026-02-06 20:31:02,215 - INFO - Kontrola souboru: W:/Zdraví/vysetreni/Echokardio\CIESLAR_2024_10_SONO_KAROTID.pdf
+2026-02-06 20:31:03,474 - INFO - Analýza dokončena: CIESLAR_2024_10_SONO_KAROTID.pdf
+2026-02-06 20:31:03,479 - INFO - Kontrola souboru: W:/Zdraví/vysetreni/Echokardio\Kardio_vysetreni_08_2024.pdf
+2026-02-06 20:31:06,129 - INFO - Analýza dokončena: Kardio_vysetreni_08_2024.pdf
+2026-02-06 20:31:06,129 - INFO - Kontrola souboru: W:/Zdraví/vysetreni/25_09_leva_ruka_gangliom\EUC_Zprava_gangliom_predlokti_07_2025.pdf
+2026-02-06 20:31:07,464 - INFO - Analýza dokončena: EUC_Zprava_gangliom_predlokti_07_2025.pdf
+2026-02-06 20:31:07,464 - INFO - Kontrola souboru: W:/Zdraví/vysetreni/25_09_leva_ruka_gangliom\Ortopedie_FNO_predlokti_06_2025.pdf
+2026-02-06 20:31:09,722 - INFO - Analýza dokončena: Ortopedie_FNO_predlokti_06_2025.pdf
+2026-02-06 20:31:21,926 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 20:31:22,924 - INFO - Přihlášeno.
+2026-02-06 20:32:31,279 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/SO-01_MZ/01.1.60-SLN/01.60_PDF_autorizace
+2026-02-06 20:32:32,151 - INFO - Kontrola složky: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ
+2026-02-06 20:32:51,773 - INFO - Odesílám 138 výsledků na server (jeden request)...
+2026-02-06 20:32:57,814 - INFO - Batch úspěšně odeslán: batch_20260206_193240_ace9acd9 - Uloženo 138 souborů
+2026-02-06 21:08:53,235 - INFO - Agent ukončen
+2026-02-06 21:08:58,430 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-06 21:08:58,431 - INFO - Spouštím GUI...
+2026-02-06 21:08:58,815 - INFO - Ověřuji licenci se serverem...
+2026-02-06 21:09:02,434 - INFO - Agent běží
+2026-02-06 21:09:29,068 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 21:09:30,036 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-06 21:09:37,317 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 21:09:38,241 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-02-06 21:11:06,157 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-02-06 21:11:06,215 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-02-06 21:11:06,216 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-02-06 21:11:06,242 - INFO - Analýza dokončena: 4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-02-06 21:11:06,243 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4-05.02.03_vzor.pdf
+2026-02-06 21:11:06,267 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-02-06 21:11:06,267 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 21:11:06,304 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 21:11:06,304 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 21:11:06,314 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 21:11:12,421 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 21:11:12,504 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 21:11:12,506 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 21:11:12,571 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 21:11:12,573 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa1.pdf
+2026-02-06 21:11:12,575 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-02-06 21:11:12,576 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2.pdf
+2026-02-06 21:11:12,577 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-02-06 21:11:12,577 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_bez casoveho.pdf
+2026-02-06 21:11:12,590 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-02-06 21:11:16,320 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_sign.pdf
+2026-02-06 21:11:16,349 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-02-06 21:11:16,351 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa3.pdf
+2026-02-06 21:11:16,352 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-02-06 21:11:16,357 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_standard.pdf
+2026-02-06 21:11:16,359 - INFO - Analýza dokončena: test_standard.pdf
+2026-02-06 21:11:16,359 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4-05.02.03_vzor.pdf
+2026-02-06 21:11:16,383 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-02-06 21:11:16,383 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 21:11:16,416 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 21:11:21,081 - WARNING - API klíč není nastaven, výsledky nebudou odeslány

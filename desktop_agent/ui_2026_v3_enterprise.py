@@ -112,7 +112,7 @@ class PDFCheckUI_2026_V3:
         self.is_running = False
         self.selected_qidx = None
 
-        self.root.title("DokuCheck Agent – Preview V3 Enterprise (2026)")
+        self.root.title("DokuCheck Agent")
         self.root.minsize(1200, 750)
         self.root.geometry("1680x1000")
         try:
@@ -189,7 +189,6 @@ class PDFCheckUI_2026_V3:
                 ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
         else:
             ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
-        ctk.CTkLabel(sidebar, text="V3 Enterprise", font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED).pack(pady=(0, 8))
         # Blok „Účet“ – zobrazen když přihlášen
         self._account_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         self._account_frame.pack(fill=tk.X, pady=(0, 4))
@@ -249,11 +248,11 @@ class PDFCheckUI_2026_V3:
         ctk.CTkButton(bar, text="Přidat soubory", command=self.add_files, font=(FONT_STACK[0], FS_12), width=100, fg_color=ACCENT).pack(side=tk.LEFT, padx=6, pady=4)
         ctk.CTkButton(bar, text="+ Složka", command=self.add_folder, font=(FONT_STACK[0], FS_12), width=72, fg_color=ACCENT).pack(side=tk.LEFT, padx=2, pady=4)
         ctk.CTkButton(bar, text="VYMAZAT VŠE", command=self.clear_queue, font=(FONT_STACK[0], FS_12), width=100, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
-        ctk.CTkButton(bar, text="Odebrat vybrané", command=self.remove_checked_from_queue, font=(FONT_STACK[0], FS_12), width=100, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
-        ctk.CTkButton(bar, text="Odebrat položku", command=self.remove_selected_from_queue, font=(FONT_STACK[0], FS_12), width=96, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
-        ctk.CTkButton(bar, text="Odebrat složku", command=self.remove_folder_of_selected, font=(FONT_STACK[0], FS_12), width=96, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
-        self.check_btn = ctk.CTkButton(bar, text="ODESLAT KE KONTROLE", command=self.on_check_clicked, font=(FONT_STACK[0], FS_14, "bold"), fg_color=ACCENT, height=32)
-        self.check_btn.pack(side=tk.RIGHT, padx=10, pady=6)
+        self.check_btn = ctk.CTkButton(bar, text="Analyzovat PDF", command=self.on_check_clicked, font=(FONT_STACK[0], FS_14, "bold"), fg_color=ACCENT, height=32)
+        self.check_btn.pack(side=tk.RIGHT, padx=4, pady=6)
+        self.send_btn = ctk.CTkButton(bar, text="Odeslat metadata na server", command=self._on_send_metadata_clicked, font=(FONT_STACK[0], FS_12, "bold"), fg_color=SUCCESS, height=28)
+        self.send_btn.pack(side=tk.RIGHT, padx=4, pady=6)
+        self.send_btn.pack_forget()
 
         # Content: queue širší + detail + "Jak to funguje"
         content = ctk.CTkFrame(main, fg_color="transparent")
@@ -321,9 +320,15 @@ class PDFCheckUI_2026_V3:
         scroll.grid(row=0, column=1, sticky="ns")
         self.queue_tree.bind("<<TreeviewSelect>>", self._on_tree_select)
         self.queue_tree.bind("<Button-1>", self._on_tree_click)
+        self._dnd_hint_label = ctk.CTkLabel(
+            self._tree_container, text="Zde přetáhněte soubory nebo složky k analýze",
+            text_color=TEXT_MUTED, font=(FONT_STACK[0], FS_14),
+        )
+        self._dnd_hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         self._tree_iid_to_qidx = {}
         self._tree_iid_to_task_ix = {}
         self._qidx_to_tree_iid = {}
+        self._last_display_result = None
         self.queue_scroll = None
 
         # Pravý panel – bez detailu kontroly jednotlivých PDF (citlivá data)
@@ -344,9 +349,9 @@ class PDFCheckUI_2026_V3:
         steps = [
             "1. Přidejte PDF",
             "2. Zaškrtněte položky",
-            "3. Odeslat ke kontrole",
+            "3. Analyzovat PDF",
             "4. Prohlédněte výsledky",
-            "5. Odeslat na server",
+            "5. Odeslat metadata na server",
         ]
         for i, s in enumerate(steps):
             ctk.CTkLabel(timeline, text=s, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, anchor="w").grid(row=i + 1, column=0, sticky="w", padx=10, pady=2)
@@ -460,7 +465,10 @@ class PDFCheckUI_2026_V3:
                 url = self.on_get_web_login_url()
             except Exception:
                 pass
-        webbrowser.open(url or self.api_url)
+        # Přihlášený: url = odkaz s tokenem -> přihlášení na webu. Nepřihlášený: otevřít /portal (přihlášení), ne landing.
+        base = (self.api_url or "").rstrip("/")
+        fallback = (base + "/portal") if base else self.api_url
+        webbrowser.open(url or fallback)
 
     def _setup_dnd_overlay(self):
         if not TKINTERDND_AVAILABLE:
@@ -696,12 +704,13 @@ class PDFCheckUI_2026_V3:
         ctk.CTkLabel(dialog, text="Nápověda", font=(FONT_STACK[0], FS_16, "bold"), text_color=TEXT).pack(pady=(14, 8))
         help_text = (
             "Kontroly v tomto režimu jsou serverová / cloudová kontrola.\n\n"
-            "Data z vybraných PDF odcházejí na server DokuCheck, kde probíhá analýza. "
-            "Výsledky pak uvidíte v portálu po odeslání na server.\n\n"
             "1. Přidejte PDF (soubory nebo složku)\n"
             "2. Zaškrtněte položky ke kontrole\n"
-            "3. Klikněte na „Odeslat ke kontrole“\n"
-            "4. Po dokončení můžete odeslat výsledky na server"
+            "3. Klikněte na „Analyzovat PDF“ (lokální kontrola)\n"
+            "4. Po dokončení můžete kliknout na „Odeslat metadata na server“\n\n"
+            "Bezpečnost: V režimu Agent jsou na server odesílána pouze technická metadata "
+            "o struktuře PDF a elektronických podpisech. Samotný obsah vašich výkresů a dokumentů "
+            "nikdy neopouští váš počítač."
         )
         lbl = ctk.CTkLabel(dialog, text=help_text, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, justify=tk.LEFT, wraplength=380)
         lbl.pack(padx=20, pady=(0, 16), fill=tk.BOTH, expand=True)
@@ -829,6 +838,11 @@ class PDFCheckUI_2026_V3:
             background=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
             fieldbackground=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
         )
+        if getattr(self, "_dnd_hint_label", None):
+            if not self.queue_display:
+                self._dnd_hint_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+            else:
+                self._dnd_hint_label.place_forget()
         self._update_stats()
         if not self.is_running:
             self._update_progress_idle()
@@ -1045,17 +1059,26 @@ class PDFCheckUI_2026_V3:
         self.cancel_requested = True
         self.progress_label.configure(text="Ruším…", text_color=WARNING)
 
+    def _on_send_metadata_clicked(self):
+        """Tlačítko „Odeslat metadata na server“ – zobrazí se po dokončení lokální analýzy."""
+        if self._last_display_result:
+            self._on_send_confirm(True, self._last_display_result)
+            self.send_btn.pack_forget()
+            self._last_display_result = None
+
     def show_progress(self):
         import time
         self.start_time = time.time()
         self.progress.set(0)
         total = len([q for q in self.queue_display if q.get("checked")])
-        self.progress_label.configure(text=f"Počet: 0 / {total} souborů", text_color=ACCENT)
+        self.progress_label.configure(text=f"Zpracováno: 0/{total} | Zbývá: --:-- (ETA) | Rychlost: — soub/s", text_color=ACCENT)
         self.eta_label.configure(text="")
         self._progress_speed_label.configure(text="")
         self._progress_row.grid()
         self.cancel_btn.pack(side=tk.RIGHT, padx=6)
         self.check_btn.configure(state="disabled")
+        if getattr(self, "send_btn", None):
+            self.send_btn.pack_forget()
 
     def finish_progress(self):
         self.is_running = False
@@ -1078,18 +1101,22 @@ class PDFCheckUI_2026_V3:
             return
         if total > 0:
             self.progress.set(current / total)
-            self.progress_label.configure(text=f"Počet: {current} / {total} souborů")
             remaining = total - current
             if current > 0 and self.start_time:
                 elapsed = time.time() - self.start_time
                 eta_seconds = elapsed / current * remaining
                 speed = current / elapsed if elapsed > 0 else 0
-                self._progress_speed_label.configure(text=f"Rychlost: {speed:.1f} souborů/s")
+                speed_str = f"{speed:.1f}"
             else:
                 eta_seconds = remaining * SECONDS_PER_FILE_ETA
-                self._progress_speed_label.configure(text="")
+                speed_str = "—"
             mm, ss = int(eta_seconds // 60), int(eta_seconds % 60)
-            self.eta_label.configure(text=f"ETA {mm:02d}:{ss:02d}")
+            self.progress_label.configure(
+                text=f"Zpracováno: {current}/{total} | Zbývá: {mm:02d}:{ss:02d} (ETA) | Rychlost: {speed_str} soub/s",
+                text_color=ACCENT,
+            )
+            self.eta_label.configure(text="")
+            self._progress_speed_label.configure(text="")
         self.root.update_idletasks()
 
     def display_results(self, result):
@@ -1108,16 +1135,12 @@ class PDFCheckUI_2026_V3:
         time_str = f"{int(total_time)}s" if total_time < 60 else f"{int(total_time / 60)}m {int(total_time % 60)}s"
         self.detail_text.configure(state="normal")
         self.detail_text.delete("0.0", "end")
-        self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\nPo odeslání na server uvidíte stav v portálu.")
+        self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\nKlikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu.")
         self.detail_text.configure(state="disabled")
         upload_error = result.get("upload_error")
         if self.on_send_batch_callback and results_with_qidx:
-            n = len(results_with_qidx)
-            self.show_message(
-                f"Poslat data z {n} souborů na server?",
-                buttons=[("Ano", True), ("Ne", False)],
-                callback=lambda choice: self._on_send_confirm(choice, result)
-            )
+            self._last_display_result = result
+            self.send_btn.pack(side=tk.RIGHT, padx=4, pady=6)
             return
         if upload_error and ("limit" in upload_error.lower() or "vyčerpán" in upload_error.lower()):
             self.show_message(upload_error, msg_type="warning")

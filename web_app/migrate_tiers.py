@@ -13,8 +13,8 @@ import secrets
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'pdfcheck_results.db')
 
-DEMO_TRIAL_EMAIL = 'free@trial.app'
-DEMO_TRIAL_PASSWORD = 'free'  # pro tlačítko "Vyzkoušet zdarma" v agentovi (CRITICAL: musí odpovídat license.py)
+DEMO_TRIAL_EMAIL = 'zdarma@trial.verze'
+DEMO_TRIAL_PASSWORD = 'free'  # pro tlačítko "Vyzkoušet zdarma" v agentovi (CRITICAL: musí odpovídat desktop_agent/license.py)
 
 
 def _hash_password(password: str) -> str:
@@ -97,7 +97,18 @@ def run():
     if updated:
         print(f"Zpětně vyplněno tier_id u {updated} záznamů (podle license_tier).")
 
-    # 4) Demo Trial uživatel: vytvoř nebo propoj s Trial tierem (heslo: demo123)
+    # 4) Demo Trial uživatel: vytvoř nebo propoj s Trial tierem (e-mail zdarma@trial.verze = shoda s agentem)
+    # Migrace: starý e-mail free@trial.app přejmenovat na zdarma@trial.verze, aby Trial v agentovi fungoval
+    cur.execute("SELECT api_key FROM api_keys WHERE LOWER(TRIM(email)) = 'free@trial.app'")
+    old_trial = cur.fetchone()
+    if old_trial and DEMO_TRIAL_EMAIL != 'free@trial.app':
+        cur.execute("UPDATE api_keys SET email = ? WHERE LOWER(TRIM(email)) = 'free@trial.app'", (DEMO_TRIAL_EMAIL,))
+        cur.execute("PRAGMA table_info(api_keys)")
+        api_keys_cols = {r[1] for r in cur.fetchall()}
+        if 'password_hash' in api_keys_cols:
+            cur.execute("UPDATE api_keys SET password_hash = ? WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))",
+                        (_hash_password(DEMO_TRIAL_PASSWORD), DEMO_TRIAL_EMAIL))
+        print(f"Trial účet migrován: free@trial.app -> {DEMO_TRIAL_EMAIL} (heslo: {DEMO_TRIAL_PASSWORD}).")
     cur.execute("SELECT id FROM license_tiers WHERE name = 'Trial'")
     row = cur.fetchone()
     trial_id = row[0] if row else None
