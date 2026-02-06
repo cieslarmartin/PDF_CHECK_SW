@@ -309,6 +309,17 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_check_history_user_id ON check_history(user_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_check_history_timestamp ON check_history(timestamp)')
 
+        # Jednorázové přihlašovací tokeny (agent → web); sdílené mezi workery
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS one_time_login_tokens (
+                token TEXT PRIMARY KEY,
+                api_key TEXT NOT NULL,
+                expires_at REAL NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_one_time_tokens_expires ON one_time_login_tokens(expires_at)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -1030,6 +1041,61 @@ class Database:
         result['active_devices'] = self.count_active_devices(api_key)
 
         return result
+
+    # =========================================================================
+    # Jednorázové přihlašovací tokeny (agent → web), sdílené mezi workery
+    # =========================================================================
+
+    def store_one_time_login_token(self, token, api_key, expires_at):
+        """Uloží jednorázový token. expires_at = Unix timestamp (float)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO one_time_login_tokens (token, api_key, expires_at) VALUES (?, ?, ?)',
+                (token, api_key, expires_at)
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def consume_one_time_login_token(self, token):
+        """
+        Jednorázově spotřebuje token: vrátí api_key a smaže záznam.
+        Vrátí (api_key, True) při úspěchu, (None, False) při neplatném/vypršeném tokenu.
+        """
+        import time
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            now = time.time()
+            cursor.execute(
+                'SELECT api_key, expires_at FROM one_time_login_tokens WHERE token = ?',
+                (token.strip(),)
+            )
+            row = cursor.fetchone()
+            if not row or row['expires_at'] <= now:
+                return None, False
+            api_key = row['api_key']
+            cursor.execute('DELETE FROM one_time_login_tokens WHERE token = ?', (token.strip(),))
+            conn.commit()
+            return api_key, True
+        finally:
+            conn.close()
+
+    def cleanup_expired_one_time_tokens(self):
+        """Smaže vypršené tokeny (volat občas)."""
+        import time
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM one_time_login_tokens WHERE expires_at <= ?', (time.time(),))
+            conn.commit()
+        finally:
+            conn.close()
 
     # =========================================================================
     # TRIAL USAGE (Machine-ID binding, hard limit)

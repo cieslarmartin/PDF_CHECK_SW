@@ -23,33 +23,24 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Jednorázové přihlašovací tokeny (agent → web): token -> { 'api_key', 'expires' }
-_one_time_login_tokens = {}
+# Jednorázové přihlašovací tokeny (agent → web) – ukládají se do DB (sdílené mezi workery)
 _TOKEN_EXPIRY_SEC = 120
 
 
 def consume_one_time_token(token):
     """
     Pro web: vymění jednorázový token za api_key a licence info. Token se po použití smaže.
+    Používá DB, aby token byl viditelný ve všech worker procesech.
     Vrací (api_key, license_info_dict) nebo (None, None) při neplatném/vypršeném tokenu.
     """
-    global _one_time_login_tokens
-    import time
     token = (token or '').strip()
     if not token:
         return None, None
-    now = time.time()
-    for t in list(_one_time_login_tokens.keys()):
-        if _one_time_login_tokens[t]['expires'] <= now:
-            del _one_time_login_tokens[t]
-    if token not in _one_time_login_tokens:
-        return None, None
-    data = _one_time_login_tokens.pop(token)
-    if data['expires'] <= now:
-        return None, None
-    api_key = data['api_key']
     _db = Database()
-    license_info = _db.get_user_license(api_key) if api_key else None
+    api_key, ok = _db.consume_one_time_login_token(token)
+    if not ok or not api_key:
+        return None, None
+    license_info = _db.get_user_license(api_key)
     if not license_info:
         return None, None
     return api_key, license_info
@@ -500,9 +491,8 @@ def register_api_routes(app):
         """
         Pro agenta: s platným API klíčem vrátí URL s jednorázovým tokenem.
         Agent otevře tuto URL v prohlížeči – web uživatele automaticky přihlásí.
-        Bezpečné: token je jednorázový a platí cca 2 minuty.
+        Token se ukládá do DB, aby fungoval u všech workerů (ne jen v paměti).
         """
-        global _one_time_login_tokens
         try:
             auth_header = request.headers.get('Authorization')
             if not auth_header or not auth_header.startswith('Bearer '):
@@ -514,10 +504,9 @@ def register_api_routes(app):
             if not license_info or license_info.get('is_expired'):
                 return jsonify({'success': False, 'error': 'Licence vypršela nebo není platná'}), 403
             token = secrets.token_urlsafe(32)
-            _one_time_login_tokens[token] = {
-                'api_key': api_key,
-                'expires': time.time() + _TOKEN_EXPIRY_SEC
-            }
+            expires_at = time.time() + _TOKEN_EXPIRY_SEC
+            if not db.store_one_time_login_token(token, api_key, expires_at):
+                return jsonify({'success': False, 'error': 'Nelze uložit token'}), 500
             # Base URL pro odkaz: na PythonAnywhere vždy HTTPS, jinak z requestu
             host = request.host or request.headers.get('Host', '')
             if 'pythonanywhere.com' in host:
@@ -535,24 +524,15 @@ def register_api_routes(app):
     def session_from_token():
         """
         Výměna jednorázového tokenu (z URL ?login_token=xxx) za údaje uživatele.
-        Volá se z webu po otevření odkazu z agenta. Token se po použití zruší.
+        Volá se z webu po otevření odkazu z agenta. Token se ukládá a spotřebovává v DB.
         """
-        global _one_time_login_tokens
         try:
-            token = request.args.get('token') or request.args.get('login_token') or ''
+            token = (request.args.get('token') or request.args.get('login_token') or '').strip()
             if not token:
                 return jsonify({'success': False, 'error': 'Chybí token'}), 400
-            now = time.time()
-            # Vyčisti vypršené tokeny (mutace, ne přiřazení)
-            for t in list(_one_time_login_tokens.keys()):
-                if _one_time_login_tokens[t]['expires'] <= now:
-                    del _one_time_login_tokens[t]
-            if token not in _one_time_login_tokens:
+            api_key, ok = db.consume_one_time_login_token(token)
+            if not ok or not api_key:
                 return jsonify({'success': False, 'error': 'Neplatný nebo vypršený token'}), 401
-            data = _one_time_login_tokens.pop(token)
-            if data['expires'] <= now:
-                return jsonify({'success': False, 'error': 'Token vypršel'}), 401
-            api_key = data['api_key']
             license_info = db.get_user_license(api_key)
             if not license_info:
                 return jsonify({'success': False, 'error': 'Účet nenalezen'}), 401

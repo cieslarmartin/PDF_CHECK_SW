@@ -4010,3 +4010,64 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-06 22:14:44,899 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
 2026-02-06 22:14:44,905 - INFO - Agent běží
 2026-02-06 22:14:50,201 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 22:15:13,228 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-06 22:15:13,229 - INFO - Spouštím GUI...
+2026-02-06 22:15:13,565 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-06 22:15:13,565 - INFO - Agent běží
+2026-02-06 22:15:25,874 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-00_TL_sez.pdf
+2026-02-06 22:15:25,909 - INFO - Analýza dokončena: 4_IO.01-00_TL_sez.pdf
+2026-02-06 22:15:25,919 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-01_TZ.pdf
+2026-02-06 22:15:25,973 - INFO - Analýza dokončena: 4_IO.01-01_TZ.pdf
+2026-02-06 22:15:25,976 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-02_Sit.pdf
+2026-02-06 22:15:26,015 - INFO - Analýza dokončena: 4_IO.01-02_Sit.pdf
+2026-02-06 22:15:26,017 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-03_Sit_HT.pdf
+2026-02-06 22:15:26,053 - INFO - Analýza dokončena: 4_IO.01-03_Sit_HT.pdf
+2026-02-06 22:15:26,056 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-04_PP_ulo.pdf
+2026-02-06 22:15:26,087 - INFO - Analýza dokončena: 4_IO.01-04_PP_ulo.pdf
+2026-02-06 22:15:28,496 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-06 22:15:47,914 - INFO - Přihlášení e-mailem a heslem...
+2026-02-06 22:15:57,933 - WARNING - Přihlášení selhalo: Nelze se připojit k serveru
+2026-02-06 22:21:26,375 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/250825_DSP/D_Dokumentace_MZ/IO-01_Hospodareni_s_DV\PDF\4_IO.01-05_vzorové objekty.pdf
+2026-02-06 22:21:26,456 - INFO - Analýza dokončena: 4_IO.01-05_vzorové objekty.pdf
+2026-02-06 22:21:26,456 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-02-06 22:21:26,487 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-02-06 22:21:26,500 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-02-06 22:21:26,520 - INFO - Analýza dokončena: 4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-02-06 22:21:26,521 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4-05.02.03_vzor.pdf
+2026-02-06 22:21:26,541 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-02-06 22:21:26,542 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 22:21:26,571 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 22:21:27,372 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-06 22:21:39,852 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 22:21:39,860 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 22:21:39,866 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 22:21:39,932 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 22:21:39,934 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 22:21:39,987 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 22:21:39,992 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-02-06 22:21:40,009 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-02-06 22:21:40,010 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa1.pdf
+2026-02-06 22:21:40,011 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-02-06 22:21:42,003 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-06 22:22:50,879 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2.pdf
+2026-02-06 22:22:50,880 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-02-06 22:22:50,889 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_bez casoveho.pdf
+2026-02-06 22:22:50,900 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-02-06 22:22:50,902 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_sign.pdf
+2026-02-06 22:22:50,921 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-02-06 22:22:50,923 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa3.pdf
+2026-02-06 22:22:50,923 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-02-06 22:22:50,930 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_standard.pdf
+2026-02-06 22:22:50,931 - INFO - Analýza dokončena: test_standard.pdf
+2026-02-06 22:22:52,640 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
+2026-02-06 22:23:01,620 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4-05.02.03_vzor.pdf
+2026-02-06 22:23:01,640 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-02-06 22:23:01,649 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 22:23:01,678 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-02-06 22:23:01,689 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 22:23:01,696 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-02-06 22:23:01,696 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 22:23:01,765 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-02-06 22:23:01,766 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 22:23:01,821 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-02-06 22:23:02,023 - WARNING - API klíč není nastaven, výsledky nebudou odeslány
