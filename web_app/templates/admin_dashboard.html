@@ -5,6 +5,38 @@
 <a href="{{ url_for('admin.settings') }}" class="btn btn-secondary btn-small">Global Config</a>
 {% endblock %}
 {% block content %}
+<section class="admin-links-section" style="margin-bottom:24px;">
+    <h2 style="font-size:1.1em;font-weight:600;margin-bottom:12px;">Odkazy na web</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="table-container" style="margin:0;">
+            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f0f9ff;border-bottom:1px solid #e5e7eb;">Agent</h3>
+            <table class="table-dense">
+                <tbody>
+                    <tr><td style="padding:8px 16px;"><strong>API konfigurace pro agenta</strong><br><small style="color:#6b7280;">Disclaimer, VOP/GDPR odkazy, update_msg</small></td><td style="padding:8px 16px;white-space:nowrap;"><a href="{{ url_for('agent_config', _external=True) }}" target="_blank" rel="noopener">/api/agent-config</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Kde upravit texty pro agenta</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.settings', _external=True) }}">Nastavení → Právní info / Základní</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Stránka VOP (agent na ni odkazuje)</td><td style="padding:8px 16px;"><a href="{{ url_for('vop', _external=True) }}" target="_blank" rel="noopener">{{ url_for('vop', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Stránka GDPR (agent na ni odkazuje)</td><td style="padding:8px 16px;"><a href="{{ url_for('gdpr', _external=True) }}" target="_blank" rel="noopener">{{ url_for('gdpr', _external=True) }}</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container" style="margin:0;">
+            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f9fafb;border-bottom:1px solid #e5e7eb;">Ostatní stránky</h3>
+            <table class="table-dense">
+                <tbody>
+                    <tr><td style="padding:8px 16px;">Landing (hlavní stránka)</td><td style="padding:8px 16px;"><a href="{{ url_for('index', _external=True) }}" target="_blank" rel="noopener">{{ url_for('index', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Aplikace (webová)</td><td style="padding:8px 16px;"><a href="{{ url_for('app_main', _external=True) }}" target="_blank" rel="noopener">/app</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Stáhnout (download)</td><td style="padding:8px 16px;"><a href="{{ url_for('download', _external=True) }}" target="_blank" rel="noopener">{{ url_for('download', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Portál (Můj účet)</td><td style="padding:8px 16px;"><a href="{{ url_for('portal', _external=True) }}" target="_blank" rel="noopener">{{ url_for('portal', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Online Check</td><td style="padding:8px 16px;"><a href="{{ url_for('online_check', _external=True) }}" target="_blank" rel="noopener">{{ url_for('online_check', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Checkout (objednávka)</td><td style="padding:8px 16px;"><a href="{{ url_for('checkout', _external=True) }}" target="_blank" rel="noopener">{{ url_for('checkout', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Admin přihlášení</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.login', _external=True) }}" target="_blank" rel="noopener">{{ url_for('admin.login', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Admin Nastavení</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.settings', _external=True) }}">{{ url_for('admin.settings', _external=True) }}</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
 <div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
     <h2 style="font-size:1.1em;margin:0;">Uživatelé</h2>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">

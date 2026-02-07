@@ -75,8 +75,11 @@ SECONDS_PER_FILE_ETA = 0.4
 SIDEBAR_W = 220
 # Strom – rowheight 38 px (vzdušnost)
 TREE_ROWHEIGHT = 38
-# Logo – vyměnitelné: nahraďte soubor v složce logo/ (logo.png nebo logo.ico)
-_AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Logo – vyměnitelné. Při běhu z exe (PyInstaller) jsou data v sys._MEIPASS.
+if getattr(sys, 'frozen', False):
+    _AGENT_DIR = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+else:
+    _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.png")
 LOGO_ICO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.ico")
 NO_DETAIL_MSG = "Výsledky kontroly jednotlivých PDF se v této aplikaci nezobrazují.\nStav uvidíte po odeslání na server."

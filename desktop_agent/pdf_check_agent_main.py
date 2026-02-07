@@ -75,18 +75,23 @@ def _ensure_config_in_exe_dir():
         pass
 
 
-# Nastavení logování – při exe zapisujeme do uživatelské složky (ne do Program Files)
+# Nastavení logování – při exe zapisujeme do AppData (ne do Program Files); při selhání zápisu jen StreamHandler
 _base_path = _get_base_path()
 _log_dir = _get_user_data_dir() if getattr(sys, 'frozen', False) else _base_path
 _log_file = os.path.join(_log_dir, 'agent.log')
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(_log_file, encoding='utf-8'),
-        logging.StreamHandler()
-    ]
-)
+_handlers = [logging.StreamHandler()]
+if getattr(sys, 'frozen', False):
+    try:
+        os.makedirs(_log_dir, exist_ok=True)
+        _handlers.append(logging.FileHandler(_log_file, encoding='utf-8'))
+    except OSError:
+        pass
+else:
+    try:
+        _handlers.append(logging.FileHandler(_log_file, encoding='utf-8'))
+    except OSError:
+        pass
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=_handlers)
 logger = logging.getLogger(__name__)
 
 
