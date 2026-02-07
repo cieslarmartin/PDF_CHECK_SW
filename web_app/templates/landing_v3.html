@@ -25,8 +25,11 @@
         .lp-v3-btn-primary:hover { background: #174a6e; }
         .lp-v3-btn-secondary { background: white; color: #1e5a8a; border: 1px solid #1e5a8a; }
         .lp-v3-btn-secondary:hover { background: #eff6ff; }
-        .lp-v3-link { color: #1e5a8a; }
+        .lp-v3-link { color: #059669; }
         .lp-v3-link:hover { text-decoration: underline; }
+        /* Navy Blue (#0f172a) a Emerald Green (#059669) pro produktové sekce */
+        .lp-navy { color: #0f172a; }
+        .lp-emerald { color: #059669; }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -37,6 +40,9 @@
                 <span class="logo-pdf">PDF</span><span class="logo-doku">Doku</span><span class="logo-pro">Check PRO</span>
             </a>
             <nav class="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium">
+                <a href="#problem-reseni">Problém vs. řešení</a>
+                <a href="#workflow">Workflow</a>
+                <a href="#pro-koho">Pro koho</a>
                 <a href="#jak">Jak to funguje</a>
                 <a href="#dva-rezimy">Dva režimy</a>
                 <a href="#cenik">Ceník</a>
@@ -98,8 +104,55 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div class="mt-8 rounded-xl h-32 flex items-center justify-center border" style="background:#f9fafb;border-color:#e5e7eb;">
-                    <span class="text-sm" style="color:#9ca3af;">Schéma placeholder (SVG / obrázek)</span>
+            </div>
+        </section>
+
+        {# 2b) Problém vs. Řešení #}
+        <section id="problem-reseni" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#0f172a;">Jistota dokumentace před expedicí</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse lp-v3-panel rounded-xl overflow-hidden shadow-sm">
+                    <thead>
+                        <tr style="background:#0f172a;color:#e5e7eb;">
+                            <th class="text-left py-4 px-6 font-semibold">Ruční kontrola</th>
+                            <th class="text-left py-4 px-6 font-semibold">DokuCheck PRO</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b" style="border-color:#e5e7eb;"><td class="py-3 px-6" style="color:#dc2626;">Chaos v expedicích, opakované vracení dokumentů</td><td class="py-3 px-6" style="color:#059669;">Hromadná kontrola před odesláním</td></tr>
+                        <tr class="border-b" style="border-color:#e5e7eb;"><td class="py-3 px-6" style="color:#dc2626;">Stres z chyb a vracení od investora</td><td class="py-3 px-6" style="color:#059669;">Strojová přesnost kontroly PDF/A a razítek</td></tr>
+                        <tr style="border-color:#e5e7eb;"><td class="py-3 px-6" style="color:#dc2626;">Žádný přehled, vše „od oka“</td><td class="py-3 px-6" style="color:#059669;">Excel report, přehled podle složek</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {# 2c) Workflow – schéma + bezpečnost #}
+        <section id="workflow" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#0f172a;">Automatizace kontroly: Od chaosu k jistotě</h2>
+            <div class="lp-v3-panel rounded-xl p-4 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto" style="min-height:180px;">
+                    <img src="{{ url_for('static', filename='assets/workflow_schema.svg') }}" alt="Workflow kontroly" class="w-full max-w-4xl h-auto mx-auto" style="min-width:600px;">
+                </div>
+                <p class="mt-4 text-sm text-center" style="color:#059669;font-weight:600;">Obsah výkresů zůstává na vašem disku, na server odchází pouze nezbytná metadata.</p>
+            </div>
+        </section>
+
+        {# 2d) Pro koho #}
+        <section id="pro-koho" class="mb-14">
+            <h2 class="text-2xl font-bold mb-8" style="color:#0f172a;">Pro koho</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm border-l-4" style="border-color:#059669;">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#0f172a;">Projektanti</h3>
+                    <p class="text-sm" style="color:#6b7280;">Expedice bez vracení – zkontrolujte PDF/A, podpisy a razítka před odesláním. Dodržení termínů a profesionální dojem.</p>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm border-l-4" style="border-color:#059669;">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#0f172a;">Manažeři</h3>
+                    <p class="text-sm" style="color:#6b7280;">Přehled o kvalitě dokumentace v týmu. Excel reporty, dodržení termínů a méně stresu z vracených zakázek.</p>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm border-l-4" style="border-color:#059669;">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#0f172a;">Investoři</h3>
+                    <p class="text-sm" style="color:#6b7280;">Jistota, že dodaná dokumentace splňuje požadavky Portálu stavebníka. Méně průtahů a vracení.</p>
                 </div>
             </div>
         </section>

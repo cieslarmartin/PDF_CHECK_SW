@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <style>.title{font:bold 14px 'Segoe UI',sans-serif;fill:#0f172a}.box{fill:#f0f9ff;stroke:#059669;stroke-width:2;rx:8}.label{font:12px 'Segoe UI',sans-serif;fill:#374151}</style>
+  </defs>
+  <text class="title" x="20" y="24">Automatizace kontroly: Od chaosu k jistot</text>
+  <rect class="box" x="40" y="50" width="120" height="50"/>
+  <text class="label" x="55" y="80">Expedice</text>
+  <rect class="box" x="220" y="50" width="120" height="50"/>
+  <text class="label" x="235" y="80">Kontrola DokuCheck</text>
+  <rect class="box" x="400" y="50" width="120" height="50"/>
+  <text class="label" x="415" y="80">Report / Excel</text>
+  <rect class="box" x="580" y="50" width="120" height="50"/>
+  <text class="label" x="595" y="80">Port�l stavebn�ka</text>
+  <path d="M160 75 L220 75" stroke="#059669" stroke-width="2" fill="none"/>
+  <path d="M340 75 L400 75" stroke="#059669" stroke-width="2" fill="none"/>
+  <path d="M520 75 L580 75" stroke="#059669" stroke-width="2" fill="none"/>
+</svg>

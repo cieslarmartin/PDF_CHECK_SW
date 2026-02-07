@@ -4408,3 +4408,13 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-07 09:56:16,017 - INFO - Kontrola složky: C:/Claude/testovaci PDF
 2026-02-07 09:56:28,036 - INFO - Odesílám 23 výsledků na server (jeden request)...
 2026-02-07 09:56:30,575 - INFO - Batch úspěšně odeslán: batch_20260207_085615_5bcad4bb - Uloženo 23 souborů
+2026-02-07 22:40:25,202 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-07 22:40:25,203 - INFO - Spouštím GUI...
+2026-02-07 22:40:25,744 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-07 22:40:25,744 - INFO - Agent běží
+2026-02-07 22:45:08,308 - INFO - Agent ukončen
+2026-02-07 22:48:36,593 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-07 22:48:36,593 - INFO - Spouštím GUI...
+2026-02-07 22:48:37,017 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-07 22:48:37,017 - INFO - Agent běží
+2026-02-07 22:49:39,836 - INFO - Agent ukončen

@@ -261,7 +261,10 @@ class PDFCheckUI_2026_V3:
         rc = self._get_remote_config()
         self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=FOOTER_FONT, text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
         self._update_msg_label.pack(anchor=tk.W, pady=(4, 0))
-        ctk.CTkLabel(self._remote_footer, text=f"Build {BUILD_VERSION}", font=(FONT_STACK[0], 9), text_color=TEXT_MUTED).pack(anchor=tk.W, pady=(2, 0))
+        about_row = ctk.CTkFrame(self._remote_footer, fg_color="transparent")
+        about_row.pack(anchor=tk.W, pady=(2, 0))
+        ctk.CTkLabel(about_row, text=f"Build {BUILD_VERSION}", font=(FONT_STACK[0], 9), text_color=TEXT_MUTED).pack(side=tk.LEFT)
+        ctk.CTkButton(about_row, text="ⓘ", command=self._show_about, font=(FONT_STACK[0], 11), fg_color="transparent", text_color=ACCENT, width=28, height=22, anchor="center").pack(side=tk.LEFT, padx=(8, 0))
 
         main = ctk.CTkFrame(self.root, fg_color="transparent")
         main.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
@@ -426,6 +429,11 @@ class PDFCheckUI_2026_V3:
         self._msg_btn_frame = ctk.CTkFrame(self._msg_row, fg_color="transparent")
         self._msg_btn_frame.pack(side=tk.RIGHT, padx=8, pady=4)
         self._msg_pending_callback = None  # pro Ano/Ne v panelu zpráv
+        # Tlačítko O programu (i) v pravém dolním rohu hlavní aplikace
+        about_footer = ctk.CTkFrame(main, fg_color="transparent")
+        about_footer.grid(row=5, column=0, sticky="e", padx=8, pady=2)
+        main.grid_rowconfigure(5, weight=0)
+        ctk.CTkButton(about_footer, text="ⓘ", command=self._show_about, font=(FONT_STACK[0], 12), fg_color="transparent", text_color=ACCENT, width=32, height=24).pack(side=tk.RIGHT)
         self.header_status = self.sidebar_account
 
     def show_message(self, text, msg_type="info", buttons=None, callback=None):
@@ -794,6 +802,92 @@ class PDFCheckUI_2026_V3:
             "vop_url": "https://cieslar.pythonanywhere.com/vop",
             "gdpr_url": "https://cieslar.pythonanywhere.com/gdpr",
         }
+
+    def _show_about(self):
+        """O programu – styl PDF-XChange: záhlaví (logo, verze), popis, právní doložka, komponenty, spodní banner. Modální."""
+        from datetime import datetime
+        top = ctk.CTkToplevel(self.root)
+        top.title("O programu DokuCheck PRO")
+        top.geometry("650x500")
+        top.configure(fg_color=BG_APP)
+        top.transient(self.root)
+        top.grab_set()
+        top.resizable(False, False)
+        TEXT_MAIN = TEXT
+
+        def _center_on_app():
+            top.update_idletasks()
+            w, h = 650, 500
+            rx = self.root.winfo_x()
+            ry = self.root.winfo_y()
+            rw = self.root.winfo_width()
+            rh = self.root.winfo_height()
+            if rw > 1 and rh > 1:
+                x = rx + (rw - w) // 2
+                y = ry + (rh - h) // 2
+            else:
+                x = (top.winfo_screenwidth() - w) // 2
+                y = (top.winfo_screenheight() - h) // 2
+            top.geometry(f"{w}x{h}+{max(0, x)}+{max(0, y)}")
+        top.after(50, _center_on_app)
+
+        main = ctk.CTkFrame(top, fg_color=BG_APP)
+        main.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
+
+        # —— 1. Záhlaví: logo vlevo, název + verze + datum vpravo ——
+        header = ctk.CTkFrame(main, fg_color="transparent")
+        header.pack(fill=tk.X, pady=(0, 12))
+        if os.path.isfile(LOGO_PATH):
+            try:
+                logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(140, 72))
+                ctk.CTkLabel(header, text="", image=logo_img).pack(side=tk.LEFT, padx=(0, 20))
+            except Exception:
+                pass
+        header_right = ctk.CTkFrame(header, fg_color="transparent")
+        header_right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        ctk.CTkLabel(header_right, text="DokuCheck PRO", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT_MAIN).pack(anchor=tk.W)
+        ctk.CTkLabel(header_right, text=f"Verze: {BUILD_VERSION} (Enterprise Edition)", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W)
+
+        # —— 2. Střed: účel aplikace ——
+        desc = (
+            "Automatizovaná kontrola PDF/A-3, autorizací a razítek pro Portál stavebníka. "
+            "Aplikace zajišťuje integritu souborů, kontrolu metadat a soulad se standardy pro digitální podání. "
+            "Soubory zůstávají na vašem disku, na server odcházejí pouze nezbytná metadata."
+        )
+        ctk.CTkLabel(main, text=desc, font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN, justify=tk.LEFT, wraplength=610).pack(anchor=tk.W, pady=(0, 8))
+        info_row = ctk.CTkFrame(main, fg_color="transparent")
+        info_row.pack(fill=tk.X, pady=(0, 12))
+        ctk.CTkLabel(info_row, text="Více informací o tomto produktu a našich dalších službách naleznete na webu ", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(side=tk.LEFT)
+        link_style = (FONT_STACK[0], FS_12)
+        b_web = ctk.CTkButton(info_row, text="www.dokucheck.cz", command=lambda: webbrowser.open("https://www.dokucheck.cz"), font=link_style, fg_color="transparent", text_color=ACCENT)
+        b_web.pack(side=tk.LEFT)
+        ctk.CTkLabel(info_row, text=" nebo e-mailová podpora ", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(side=tk.LEFT)
+        b_mail = ctk.CTkButton(info_row, text="podpora@dokucheck.cz", command=lambda: webbrowser.open("mailto:podpora@dokucheck.cz"), font=link_style, fg_color="transparent", text_color=ACCENT)
+        b_mail.pack(side=tk.LEFT)
+        ctk.CTkLabel(info_row, text=".", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(side=tk.LEFT)
+
+        # —— 3. Právní doložka a scrollable technologie ——
+        ctk.CTkLabel(main, text="Copyright © 2026 Ing. Martin Cieślar. Všechna práva vyhrazena.", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W, pady=(0, 6))
+        components = (
+            "Python 3.12\n"
+            "PyMuPDF / MuPDF\n"
+            "CustomTkinter"
+        )
+        comp_text = ctk.CTkTextbox(main, font=(FONT_STACK[0], 10), fg_color=BG_CARD, text_color=TEXT_MUTED, height=72, wrap="word")
+        comp_text.pack(fill=tk.X, pady=(0, 12))
+        comp_text.insert("1.0", components)
+        comp_text.configure(state="disabled")
+
+        # —— 4. Spodní banner ——
+        banner = ctk.CTkFrame(main, fg_color=BORDER, corner_radius=6)
+        banner.pack(fill=tk.X, side=tk.BOTTOM, pady=(12, 0))
+        banner_inner = ctk.CTkFrame(banner, fg_color="transparent")
+        banner_inner.pack(fill=tk.X, padx=12, pady=10)
+        ctk.CTkLabel(banner_inner, text="Software pro kontrolu, validaci a přípravu inženýrské dokumentace.", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(side=tk.LEFT)
+        ctk.CTkLabel(banner_inner, text="CIESLAR Group", font=(FONT_STACK[0], 10), text_color=TEXT_MUTED).pack(side=tk.RIGHT)
+
+        ctk.CTkButton(top, text="Zavřít", command=lambda: (top.grab_release(), top.destroy()), font=(FONT_STACK[0], FS_12), width=100, fg_color=ACCENT).pack(pady=(0, 12))
+        top.protocol("WM_DELETE_WINDOW", lambda: (top.grab_release(), top.destroy()))
 
     def _show_help_modal(self):
         """Nápověda – terminologie: serverová / cloudová kontrola + disclaimer a VOP ze serveru."""
