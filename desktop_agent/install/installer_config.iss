@@ -12,7 +12,7 @@
 #define BuildDir "..\dist\DokuCheckPRO"
 
 [Setup]
-AppId={{#MyAppId}}
+AppId="{#MyAppId}"
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -34,7 +34,7 @@ PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-SignTool=
+; SignTool=  – pro digitální podpis doplňte např.: SignTool=signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /f "cert.pfx" /p "heslo" $f
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} - Desktop agent pro kontrolu PDF

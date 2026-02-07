@@ -42,6 +42,21 @@
     </form>
 
     <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_download_url">
+        <div class="admin-card">
+            <div class="card-header">URL pro stažení nejnovější verze (GitHub Release)</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Odkaz na instalátor (.exe). Použije se na hlavní stránce u všech tlačítek „Stáhnout“. Pokud prázdné, použije se stránka /download.</p>
+                <label class="admin-settings-label">download_url</label>
+                <input type="url" name="download_url" class="form-control admin-settings-input" value="{{ settings.download_url|e }}" placeholder="https://github.com/UZIVATEL/REPO/releases/latest/download/NAZEV.exe" style="max-width:100%;">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit URL stažení</button>
+            </div>
+        </div>
+    </form>
+
+    <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="global">
         <div class="admin-card">
             <div class="card-header">Globální přepínače</div>

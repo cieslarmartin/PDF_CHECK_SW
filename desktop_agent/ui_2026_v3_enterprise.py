@@ -14,6 +14,7 @@ import time
 import customtkinter as ctk
 
 from ui import _count_errors_from_result, _session_summary_text
+from version import BUILD_VERSION
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -260,6 +261,7 @@ class PDFCheckUI_2026_V3:
         rc = self._get_remote_config()
         self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=FOOTER_FONT, text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
         self._update_msg_label.pack(anchor=tk.W, pady=(4, 0))
+        ctk.CTkLabel(self._remote_footer, text=f"Build {BUILD_VERSION}", font=(FONT_STACK[0], 9), text_color=TEXT_MUTED).pack(anchor=tk.W, pady=(2, 0))
 
         main = ctk.CTkFrame(self.root, fg_color="transparent")
         main.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)

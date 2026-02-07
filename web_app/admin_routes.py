@@ -394,6 +394,7 @@ def _settings_for_admin(db):
     s['landing_faq'] = db.get_setting_json('landing_faq', [])
     s['legal_vop_html'] = db.get_global_setting('legal_vop_html', '')
     s['legal_gdpr_html'] = db.get_global_setting('legal_gdpr_html', '')
+    s['download_url'] = db.get_global_setting('download_url', '')
     s['testimonials'] = db.get_setting_json('testimonials', [])
     s['partner_logos'] = db.get_setting_json('partner_logos', [])
     s['top_promo_bar'] = db.get_setting_json('top_promo_bar', {'text': '', 'background_color': '#1e5a8a', 'is_active': False})
@@ -441,6 +442,9 @@ def settings():
             db.set_global_setting('contact_email', request.form.get('contact_email', ''))
             db.set_global_setting('contact_phone', request.form.get('contact_phone', ''))
             flash('Kontakt uložen', 'success')
+        elif action == 'save_download_url':
+            db.set_global_setting('download_url', (request.form.get('download_url') or '').strip())
+            flash('URL stažení uložena', 'success')
         elif action == 'save_basic':
             for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone', 'bank_account', 'bank_iban'):
                 db.set_global_setting(key, request.form.get(key, ''))

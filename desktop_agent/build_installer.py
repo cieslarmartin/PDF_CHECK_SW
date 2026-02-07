@@ -25,15 +25,18 @@ BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 DIST_DIR = os.path.join(SCRIPT_DIR, "dist")
 DIST_APP = os.path.join(DIST_DIR, "DokuCheckPRO")
 
-# Možné soubory a proměnné pro verzi (v pořadí priority)
+# Jediný zdroj pravdy: desktop_agent/version.py (BUILD_VERSION)
 VERSION_SOURCES = [
+    (os.path.join(SCRIPT_DIR, "version.py"), re.compile(r'BUILD_VERSION\s*=\s*["\']([^"\']+)["\']')),
     (os.path.join(SCRIPT_DIR, "ui.py"), re.compile(r'BUILD_VERSION\s*=\s*["\']([^"\']+)["\']')),
     (os.path.join(SCRIPT_DIR, "ui.py"), re.compile(r'VERSION\s*=\s*["\']([^"\']+)["\']')),
-    (os.path.join(SCRIPT_DIR, "pdf_check_agent_main.py"), re.compile(r'BUILD_VERSION\s*=\s*["\']([^"\']+)["\']')),
-    (os.path.join(SCRIPT_DIR, "pdf_check_agent_main.py"), re.compile(r'VERSION\s*=\s*["\']([^"\']+)["\']')),
 ]
 
-INNO_DEFAULT_PATH = r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+# Inno Setup 6: 32bit a 64bit standardní cesty
+INNO_PATHS = [
+    r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+    r"C:\Program Files\Inno Setup 6\ISCC.exe",
+]
 
 
 def detect_version():
@@ -46,7 +49,7 @@ def detect_version():
         m = pattern.search(text)
         if m:
             return m.group(1).strip()
-    raise SystemExit("CHYBA: Nepodařilo se najít BUILD_VERSION ani VERSION v ui.py ani pdf_check_agent_main.py.")
+    raise SystemExit("CHYBA: Nepodařilo se najít BUILD_VERSION v desktop_agent/version.py.")
 
 
 def find_iscc():
@@ -54,11 +57,31 @@ def find_iscc():
     iscc = shutil.which("iscc")
     if iscc:
         return iscc
-    if os.path.isfile(INNO_DEFAULT_PATH):
-        return INNO_DEFAULT_PATH
+    for path in INNO_PATHS:
+        if os.path.isfile(path):
+            return path
     raise SystemExit(
-        "CHYBA: Inno Setup 6 (ISCC) nenalezen. Přidejte ho do PATH nebo nainstalujte do:\n  " + INNO_DEFAULT_PATH
+        "CHYBA: Inno Setup 6 (ISCC) nenalezen.\n"
+        "  Nainstalujte Inno Setup 6 nebo přidejte ISCC.exe do PATH.\n"
+        "  Očekávané cesty: " + ", ".join(INNO_PATHS)
     )
+
+
+def check_pyinstaller():
+    """Ověří, že PyInstaller je nainstalovaný."""
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "PyInstaller", "--version"],
+            cwd=SCRIPT_DIR,
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        raise SystemExit(
+            "CHYBA: PyInstaller není nainstalovaný nebo nefunguje.\n"
+            "  Nainstalujte: pip install pyinstaller\n"
+            "  (v aktivním venv nebo pro uživatele: pip install --user pyinstaller)"
+        ) from e
 
 
 def run_pyinstaller():
@@ -68,6 +91,13 @@ def run_pyinstaller():
         cwd=SCRIPT_DIR,
         check=True,
     )
+    exe_path = os.path.join(DIST_APP, "DokuCheckPRO.exe")
+    if not os.path.isfile(exe_path):
+        raise SystemExit(
+            f"CHYBA: Po PyInstalleru chybí očekávaný soubor:\n  {exe_path}\n"
+            "  Zkontrolujte výstup PyInstalleru výše."
+        )
+    print(f"  OK: {exe_path}")
 
 
 def run_inno_setup(version):
@@ -124,8 +154,15 @@ def clean_build_dirs():
 
 def main():
     os.chdir(SCRIPT_DIR)
+    print("=== Build instalátoru DokuCheck PRO ===\n")
+    print("Kontrola závislostí…")
+    check_pyinstaller()
+    iscc_path = find_iscc()
+    print(f"  PyInstaller: OK")
+    print(f"  Inno Setup (ISCC): {iscc_path}\n")
+
     version = detect_version()
-    print(f"Detekovaná verze: {version}")
+    print(f"Detekovaná verze: {version}\n")
 
     print("Krok 1/4: PyInstaller…")
     run_pyinstaller()
@@ -143,4 +180,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("\n--- CHYBA ---")
+        import traceback
+        traceback.print_exc()
+        print("\nVýstup výše ukazuje, kde build selhal. Viz NAVOD_BUILD_INSTALATOR.md.")
+        try:
+            input("Stiskněte Enter pro ukončení…")
+        except EOFError:
+            pass
+        sys.exit(1)

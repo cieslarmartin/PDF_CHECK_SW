@@ -129,6 +129,7 @@ def load_settings_for_views(db):
     out["header_scripts"] = db.get_setting_json("header_scripts", [])
     out["legal_vop_html"] = db.get_global_setting("legal_vop_html", "")
     out["legal_gdpr_html"] = db.get_global_setting("legal_gdpr_html", "")
+    out["download_url"] = db.get_global_setting("download_url", "") or ""
     return out
 
 

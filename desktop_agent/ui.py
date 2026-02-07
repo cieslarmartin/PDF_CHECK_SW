@@ -1,5 +1,5 @@
 # ui.py
-# PDF DokuCheck Agent – Build 46: Dashboard layout, Sidebar + Main, celoplošný DnD, moderní Treeview.
+# PDF DokuCheck Agent – Dashboard layout, Sidebar + Main, celoplošný DnD, moderní Treeview.
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -9,11 +9,13 @@ import os
 
 import customtkinter as ctk
 
+from version import BUILD_VERSION
+
 # Téma
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-# Globální font a Treeview (Build 46)
+# Globální font a Treeview
 FONT_FAMILY = "Segoe UI"
 FONT_SIZE = 14
 FONT_SIZE_TITLE = 15
@@ -22,7 +24,6 @@ TREEVIEW_BG = "#1e1e1e"
 TREEVIEW_FG = "#e5e7eb"
 TREEVIEW_ROWHEIGHT = 38
 TREEVIEW_SELECT = "#0891b2"
-BUILD_VERSION = "46"
 SIDEBAR_WIDTH = 260
 
 # Zkus importovat TkinterDnD (s CTk root může být nefunkční – drop zóna pak jen klik)

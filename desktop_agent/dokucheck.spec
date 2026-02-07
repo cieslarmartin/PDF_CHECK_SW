@@ -24,6 +24,7 @@ a = Analysis(
     binaries=[],
     datas=added_files,
     hiddenimports=[
+        'version',
         'customtkinter',
         'PIL',
         'PIL._tkinter_finder',
