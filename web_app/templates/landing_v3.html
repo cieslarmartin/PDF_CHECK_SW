@@ -127,14 +127,21 @@
             </div>
         </section>
 
-        {# 2c) Workflow – schéma + bezpečnost #}
-        <section id="workflow" class="mb-14">
-            <h2 class="text-2xl font-bold mb-8" style="color:#0f172a;">Automatizace kontroly: Od chaosu k jistotě</h2>
-            <div class="lp-v3-panel rounded-xl p-4 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto" style="min-height:180px;">
-                    <img src="{{ url_for('static', filename='assets/workflow_schema.svg') }}" alt="Workflow kontroly" class="w-full max-w-4xl h-auto mx-auto" style="min-width:600px;">
+        {# 2c) Srovnávací workflow – SVG schéma #}
+        <section id="workflow" class="py-16 bg-white">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-4" style="color:#0f172a;">Automatizace vs. Manuální kontrola</h2>
+                    <p class="mt-4 text-lg" style="color:#6b7280;">Podívejte se, jak DokuCheck PRO zkracuje proces expedice z hodin na minuty.</p>
                 </div>
-                <p class="mt-4 text-sm text-center" style="color:#059669;font-weight:600;">Obsah výkresů zůstává na vašem disku, na server odchází pouze nezbytná metadata.</p>
+                <div class="workflow-container overflow-x-auto shadow-2xl rounded-2xl border border-gray-100">
+                    <img src="{{ url_for('static', filename='img/workflow-comparison.svg') }}"
+                         alt="Srovnání workflow DokuCheck"
+                         class="min-w-[1000px] w-full h-auto">
+                </div>
+                <div class="mt-6 text-center lg:hidden">
+                    <span class="text-sm" style="color:#9ca3af;">← Posuňte schéma stranou pro zobrazení detailů →</span>
+                </div>
             </div>
         </section>
 
