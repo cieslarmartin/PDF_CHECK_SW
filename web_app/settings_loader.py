@@ -11,7 +11,8 @@ DEFAULTS = {
     "provider_address": "Porubská 1, 742 83 Klimkovice – Václavovice",
     "provider_ico": "04830661",
     "provider_legal_note": "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.",
-    "contact_email": "info@dokucheck.app",
+    "contact_email": "",
+    "contact_phone": "",
     "bank_account": "",
     "bank_iban": "",
     # Ceny a Tarify (čísla)

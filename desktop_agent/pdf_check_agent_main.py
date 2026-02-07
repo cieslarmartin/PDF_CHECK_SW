@@ -90,6 +90,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+PA_BASE_URL = "https://cieslar.pythonanywhere.com"
+LEGAL_CONFIG_URL = PA_BASE_URL + "/api/agent-config"
+
+LEGAL_CONFIG_FALLBACK = {
+    "disclaimer": "Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem.",
+    "vop_url": PA_BASE_URL + "/vop",
+    "gdpr_url": PA_BASE_URL + "/gdpr",
+}
+
+
 class PDFCheckAgent:
     """Hlavní třída desktop agenta"""
 
@@ -99,8 +109,27 @@ class PDFCheckAgent:
         self.license_manager = LicenseManager(config_path)
         self.root = None
         self.app = None
+        self.legal_config = self.fetch_legal_config()
 
         logger.info("PDF DokuCheck Agent spuštěn")
+
+    def fetch_legal_config(self):
+        """Stáhne právní konfiguraci z PA (disclaimer, vop_url, gdpr_url). Při nedostupnosti vrátí striktní fallback."""
+        try:
+            r = requests.get(LEGAL_CONFIG_URL, timeout=5)
+            if r.status_code == 200:
+                data = r.json()
+                if isinstance(data, dict):
+                    vop = data.get("vop_url") or data.get("vop_link") or LEGAL_CONFIG_FALLBACK["vop_url"]
+                    gdpr = data.get("gdpr_url") or data.get("gdpr_link") or LEGAL_CONFIG_FALLBACK["gdpr_url"]
+                    return {
+                        "disclaimer": data.get("disclaimer") or LEGAL_CONFIG_FALLBACK["disclaimer"],
+                        "vop_url": vop,
+                        "gdpr_url": gdpr,
+                    }
+        except Exception:
+            pass
+        return dict(LEGAL_CONFIG_FALLBACK)
 
     def check_pdf(self, filepath_or_folder, mode='single', auto_send=None):
         """
@@ -359,6 +388,7 @@ class PDFCheckAgent:
             on_send_batch_callback=lambda results, src=None: self.send_batch_results_to_api(results, src),
             on_has_login=lambda: self.license_manager.has_valid_key(),
             on_get_remote_config=_get_remote_config,
+            on_get_legal_config=lambda: self.legal_config,
         )
 
         # Zkontroluj první spuštění a zobraz stav licence

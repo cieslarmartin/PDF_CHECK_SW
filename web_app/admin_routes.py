@@ -377,7 +377,7 @@ def _settings_for_admin(db):
     if load_settings_for_views:
         return load_settings_for_views(db)
     s = {}
-    for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email',
+    for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone',
                 'bank_account', 'bank_iban', 'landing_hero_title', 'landing_hero_subtitle', 'landing_hero_badge',
                 'landing_cta_primary', 'landing_cta_secondary', 'landing_section_how_title', 'landing_section_modes_title',
                 'landing_mode_agent_title', 'landing_mode_agent_text', 'landing_mode_cloud_title', 'landing_mode_cloud_text',
@@ -437,8 +437,12 @@ def settings():
             db.set_global_setting('maintenance_mode', maintenance)
             db.set_global_setting('allow_new_registrations', allow_reg)
             flash('Globální nastavení uloženo', 'success')
+        elif action == 'save_contact':
+            db.set_global_setting('contact_email', request.form.get('contact_email', ''))
+            db.set_global_setting('contact_phone', request.form.get('contact_phone', ''))
+            flash('Kontakt uložen', 'success')
         elif action == 'save_basic':
-            for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'bank_account', 'bank_iban'):
+            for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone', 'bank_account', 'bank_iban'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Základní nastavení uloženo', 'success')
         elif action == 'save_pricing':
@@ -855,9 +859,11 @@ def api_welcome_package():
     alphabet = string.ascii_letters + string.digits
     new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
     db.admin_set_license_password(api_key, new_password)
-    # Odkaz na stažení – z requestu nebo výchozí
+    # Odkaz na stažení – vždy na aktuální doménu (PA)
     base_url = request.host_url.rstrip('/') if request else ''
-    download_url = base_url + '/download' if base_url else 'https://dokucheck.app/download'
+    if not base_url:
+        base_url = 'https://cieslar.pythonanywhere.com'
+    download_url = base_url + '/download'
     email_body = (
         f"Váš účet: {email}\n"
         f"Heslo: {new_password}\n"

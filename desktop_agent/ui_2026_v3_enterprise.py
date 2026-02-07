@@ -89,6 +89,7 @@ class PDFCheckUI_2026_V3:
                  on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                  on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
                  on_get_remote_config=None,
+                 on_get_legal_config=None,
                  on_send_batch_callback=None, on_has_login=None):
         self.root = root
         self.on_check_callback = on_check_callback
@@ -102,6 +103,7 @@ class PDFCheckUI_2026_V3:
         self.on_send_batch_callback = on_send_batch_callback
         self.on_has_login = on_has_login  # callable() -> bool; bez přihlášení nelze analyzovat ani odesílat
         self.on_get_remote_config = on_get_remote_config  # callable() -> dict s disclaimer, vop_link, update_msg
+        self.on_get_legal_config = on_get_legal_config  # callable() -> dict s disclaimer, vop_url, gdpr_url
         self.api_url = api_url or "https://cieslar.pythonanywhere.com"
 
         self.tasks = []
@@ -166,10 +168,18 @@ class PDFCheckUI_2026_V3:
             pass
 
     def _setup_logo(self):
-        """Ikona okna z logo/logo.ico (vyměnitelné)."""
+        """Ikona okna: logo/logo.ico (Windows), jinak logo/logo.png přes iconphoto."""
         try:
             if os.path.isfile(LOGO_ICO_PATH):
                 self.root.iconbitmap(LOGO_ICO_PATH)
+                return
+        except Exception:
+            pass
+        try:
+            if os.path.isfile(LOGO_PATH):
+                # Fallback: PNG jako ikona okna (taskbar, titulní lišta)
+                img = tk.PhotoImage(file=LOGO_PATH)
+                self.root.iconphoto(True, img)
         except Exception:
             pass
 
@@ -222,16 +232,30 @@ class PDFCheckUI_2026_V3:
         self.license_status_label = ctk.CTkLabel(sidebar, text="", font=(FONT_STACK[0], FS_12), text_color=ERROR, wraplength=SIDEBAR_W - 24)
         self.license_status_label.pack(anchor=tk.W, padx=12, pady=(0, 6))
         self.daily_limit_label = self.sidebar_daily_limit
-        # Patička sidebaru: disclaimer a VOP ze serveru (remote_config)
+        # Patička sidebaru (footer_frame): dynamické právní informace – disclaimer + odkazy VOP, GDPR
         self._remote_footer = ctk.CTkFrame(sidebar, fg_color="transparent")
         self._remote_footer.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(8, 12))
-        rc = self._get_remote_config()
-        self._disclaimer_label = ctk.CTkLabel(self._remote_footer, text=rc.get("disclaimer", "Výsledek je informativní."), font=(FONT_STACK[0], FS_12 - 1), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24, justify=tk.LEFT)
+        legal = self._get_legal_config()
+        FOOTER_FONT = (FONT_STACK[0], 10)
+        self._disclaimer_label = ctk.CTkLabel(
+            self._remote_footer,
+            text=legal.get("disclaimer", "Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem."),
+            font=FOOTER_FONT,
+            text_color=TEXT_MUTED,
+            wraplength=SIDEBAR_W - 24,
+            justify=tk.LEFT,
+        )
         self._disclaimer_label.pack(anchor=tk.W)
-        vop_link = rc.get("vop_link", "")
-        if vop_link:
-            ctk.CTkButton(self._remote_footer, text="VOP (obchodní podmínky)", command=lambda: webbrowser.open(vop_link), font=(FONT_STACK[0], FS_12 - 1), fg_color="transparent", text_color=ACCENT, width=160, anchor="w").pack(anchor=tk.W, pady=(4, 0))
-        self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=(FONT_STACK[0], FS_12 - 1), text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
+        links_row = ctk.CTkFrame(self._remote_footer, fg_color="transparent")
+        links_row.pack(anchor=tk.W, pady=(4, 0))
+        vop_url = legal.get("vop_url", "")
+        gdpr_url = legal.get("gdpr_url", "")
+        if vop_url:
+            ctk.CTkButton(links_row, text="VOP", command=lambda: webbrowser.open(vop_url), font=FOOTER_FONT, fg_color="transparent", text_color=ACCENT, width=36, height=18, anchor="w").pack(side=tk.LEFT, padx=(0, 8))
+        if gdpr_url:
+            ctk.CTkButton(links_row, text="GDPR", command=lambda: webbrowser.open(gdpr_url), font=FOOTER_FONT, fg_color="transparent", text_color=ACCENT, width=40, height=18, anchor="w").pack(side=tk.LEFT)
+        rc = self._get_remote_config()
+        self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=FOOTER_FONT, text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
         self._update_msg_label.pack(anchor=tk.W, pady=(4, 0))
 
         main = ctk.CTkFrame(self.root, fg_color="transparent")
@@ -751,7 +775,20 @@ class PDFCheckUI_2026_V3:
                 return self.on_get_remote_config() or {}
             except Exception:
                 pass
-        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://dokucheck.pro/vop", "update_msg": "Používáte aktuální verzi."}
+        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://cieslar.pythonanywhere.com/vop", "update_msg": "Používáte aktuální verzi."}
+
+    def _get_legal_config(self):
+        """Vrátí právní konfiguraci (disclaimer, vop_url, gdpr_url) z fetch_legal_config() nebo výchozí."""
+        if callable(getattr(self, "on_get_legal_config", None)):
+            try:
+                return self.on_get_legal_config() or {}
+            except Exception:
+                pass
+        return {
+            "disclaimer": "Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem.",
+            "vop_url": "https://cieslar.pythonanywhere.com/vop",
+            "gdpr_url": "https://cieslar.pythonanywhere.com/gdpr",
+        }
 
     def _show_help_modal(self):
         """Nápověda – terminologie: serverová / cloudová kontrola + disclaimer a VOP ze serveru."""
@@ -1357,10 +1394,11 @@ class PDFCheckUI_2026_V3:
 def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
                        on_login_password_callback=None, on_logout_callback=None, on_get_max_files=None,
                        on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
-                       on_send_batch_callback=None, on_has_login=None, on_get_remote_config=None):
+                       on_send_batch_callback=None, on_has_login=None, on_get_remote_config=None, on_get_legal_config=None):
     """Vytvoří a vrátí (root, app) pro preview V3 Enterprise.
     on_has_login: callable() -> bool; bez přihlášení (Vyzkoušet zdarma nebo e-mail) nelze analyzovat ani odesílat.
-    on_get_remote_config: callable() -> dict s disclaimer, vop_link, update_msg ze serveru."""
+    on_get_remote_config: callable() -> dict s disclaimer, vop_link, update_msg ze serveru.
+    on_get_legal_config: callable() -> dict s disclaimer, vop_url, gdpr_url pro patičku."""
     _setup_high_dpi_v3()
     if TKINTERDND_AVAILABLE:
         try:
@@ -1381,5 +1419,6 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
         on_send_batch_callback=on_send_batch_callback,
         on_has_login=on_has_login,
         on_get_remote_config=on_get_remote_config,
+        on_get_legal_config=on_get_legal_config,
     )
     return root, app

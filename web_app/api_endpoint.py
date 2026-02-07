@@ -1280,14 +1280,18 @@ def register_api_routes(app):
                 disclaimer = db.get_global_setting('footer_disclaimer', 'Výsledek je informativní. Za správnost odpovídá projektant.')
             try:
                 vop_link = url_for('vop', _external=True)
+                gdpr_link = url_for('gdpr', _external=True)
             except Exception:
-                vop_link = request.url_root.rstrip('/') + '/vop'
+                base = request.url_root.rstrip('/') if request.url_root else 'https://cieslar.pythonanywhere.com'
+                vop_link = base + '/vop'
+                gdpr_link = base + '/gdpr'
             update_msg = db.get_global_setting('agent_update_msg', 'Používáte aktuální verzi.')
             if not update_msg:
                 update_msg = 'Používáte aktuální verzi.'
             out = {
                 'disclaimer': disclaimer,
                 'vop_link': vop_link,
+                'gdpr_link': gdpr_link,
                 'update_msg': update_msg,
             }
             try:
@@ -1299,9 +1303,11 @@ def register_api_routes(app):
             return jsonify(out), 200
         except Exception as e:
             logger.exception(f"Agent config error: {e}")
+            base = request.url_root.rstrip('/') if request.url_root else 'https://cieslar.pythonanywhere.com'
             return jsonify({
-                'disclaimer': 'Výsledek je informativní. Za správnost odpovídá projektant.',
-                'vop_link': request.url_root.rstrip('/') + '/vop' if request.url_root else 'https://dokucheck.pro/vop',
+                'disclaimer': 'Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem.',
+                'vop_link': base + '/vop',
+                'gdpr_link': base + '/gdpr',
                 'update_msg': 'Používáte aktuální verzi.',
                 'allowed_extensions': ['.pdf'],
                 'analysis_timeout_seconds': 300,

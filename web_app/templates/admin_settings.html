@@ -25,6 +25,23 @@
 {# ----- Základní ----- #}
 <div id="tab-basic" class="tab-pane active">
     <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_contact">
+        <div class="admin-card">
+            <div class="card-header">Kontakt (zobrazený na webu, stránce Stáhnout a v aplikaci)</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Tyto údaje můžete kdykoli změnit. Zobrazí se na stránce /download, v patičce webu a v kontaktu aplikace.</p>
+                <label class="admin-settings-label">Kontaktní e-mail (contact_email)</label>
+                <input type="email" name="contact_email" class="form-control admin-settings-input" value="{{ settings.contact_email|e }}" placeholder="např. info@vasedomena.cz">
+                <label class="admin-settings-label">Kontaktní telefon (contact_phone) – volitelné</label>
+                <input type="text" name="contact_phone" class="form-control admin-settings-input" value="{{ settings.contact_phone|e }}" placeholder="+420 123 456 789">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit kontakt</button>
+            </div>
+        </div>
+    </form>
+
+    <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="global">
         <div class="admin-card">
             <div class="card-header">Globální přepínače</div>

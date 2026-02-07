@@ -2923,7 +2923,7 @@ def app_main():
         provider_address = settings.get("provider_address", "Porubská 1, 742 83 Klimkovice – Václavovice")
         provider_ico = settings.get("provider_ico", "04830661")
         provider_legal_note = settings.get("provider_legal_note", "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.")
-        contact_email = settings.get("contact_email", "info@dokucheck.app")
+        contact_email = settings.get("contact_email", "")
         app_legal_notice = settings.get("app_legal_notice", "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.")
     except Exception:
         footer_disclaimer = "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost."
@@ -2931,7 +2931,7 @@ def app_main():
         provider_address = "Porubská 1, 742 83 Klimkovice – Václavovice"
         provider_ico = "04830661"
         provider_legal_note = "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016."
-        contact_email = "info@dokucheck.app"
+        contact_email = ""
         app_legal_notice = "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka."
     return render_template_string(
         HTML_TEMPLATE,
@@ -2948,8 +2948,11 @@ def app_main():
 
 @app.route('/download')
 def download():
-    """Stránka stažení desktop agenta – propojení na budoucí odkaz ke stažení."""
-    return redirect(url_for('app_main'))
+    """Stránka stažení desktop agenta na doméně (PA). Kontakt z global_settings."""
+    db = Database()
+    contact_email = db.get_global_setting('contact_email', '') or ''
+    contact_phone = db.get_global_setting('contact_phone', '') or ''
+    return render_template('download.html', contact_email=contact_email, contact_phone=contact_phone)
 
 
 def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):
@@ -3098,7 +3101,7 @@ def portal():
         tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
         exp = (lic or {}).get('license_expires')
         license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
-        upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL', 'info@dokucheck.app')
+        upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
         return render_template('portal_dashboard.html',
                                tier_name=tier_name,
                                license_expires_label=license_expires_label,
@@ -3147,7 +3150,7 @@ def _portal_dashboard_with_message(message, error=True):
     tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
     exp = (lic or {}).get('license_expires')
     license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
-    upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL', 'info@dokucheck.app')
+    upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
     return render_template('portal_dashboard.html',
                            tier_name=tier_name,
                            license_expires_label=license_expires_label,

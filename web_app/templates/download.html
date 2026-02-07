@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stáhnout DokuCheck Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .landing-header { background: white; border-bottom: 2px solid #1e5a8a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .landing-header .logo-pdf { color: #1e5a8a; }
+        .landing-header .logo-doku { color: #374151; }
+        .landing-header .logo-pro { color: #9ca3af; font-weight: 400; }
+        .landing-header a { color: #6b7280; text-decoration: none; }
+        .landing-header a:hover { color: #1e5a8a; }
+        .lp-panel { background: white; border: 1px solid #e5e7eb; }
+        .lp-btn-primary { background: #1e5a8a; color: white; }
+        .lp-btn-primary:hover { background: #174a6e; }
+        .lp-link { color: #1e5a8a; }
+    </style>
+</head>
+<body class="min-h-screen antialiased">
+    <header class="landing-header">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <a href="/" class="text-xl font-bold">
+                <span class="logo-pdf">PDF</span><span class="logo-doku">Doku</span><span class="logo-pro">Check PRO</span>
+            </a>
+            <nav class="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium">
+                <a href="/#jak">Jak to funguje</a>
+                <a href="/#cenik">Ceník</a>
+                <a href="/app">Vyzkoušet ONLINE</a>
+                <a href="/download">Stáhnout</a>
+                <a href="/portal">Můj účet</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-6 py-12">
+        <section class="lp-panel rounded-2xl p-8 shadow-sm">
+            <h1 class="text-2xl font-bold mb-4" style="color:#1f2937;">Stáhnout DokuCheck Agent</h1>
+            <p class="text-gray-600 mb-6">
+                Desktop aplikace DokuCheck Agent slouží ke kontrole PDF dokumentů (PDF/A-3, podpisy, časová razítka) 
+                a odesílání výsledků na tento portál. Po stažení a instalaci se přihlaste pomocí e-mailu a hesla nebo API klíče.
+            </p>
+            <p class="mb-6">
+                <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-btn-primary transition text-white no-underline">
+                    Přejít do webové aplikace (ONLINE kontrola)
+                </a>
+            </p>
+            <p class="text-sm text-gray-500">
+                Odkaz na stažení instalátoru agenta bude doplněn. Prozatím můžete využít webovou verzi výše.
+            </p>
+        </section>
+
+        <footer class="mt-8 pt-6 border-t border-gray-200">
+            <p class="text-sm text-gray-600">
+                Kontakt: {% if contact_email %}<a href="mailto:{{ contact_email }}" class="lp-link">{{ contact_email }}</a>{% else %}vyplňte v Adminu – Nastavení → Kontakt{% endif %}
+                {% if contact_phone %} · {{ contact_phone }}{% endif %}
+                · <a href="/vop" class="lp-link">VOP</a> · <a href="/gdpr" class="lp-link">GDPR</a>
+            </p>
+        </footer>
+    </main>
+</body>
+</html>
