@@ -22,6 +22,10 @@
           {% endif %}
         {% endwith %}
         <p class="text-slate-400 mb-6">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
+        <p class="mb-6 p-4 rounded-lg bg-slate-800/80 border border-slate-600 text-slate-300 text-sm">Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.</p>
+        {% if payment_instructions %}
+        <div class="mb-6 p-4 rounded-lg bg-slate-800 border border-slate-600 text-slate-300 text-sm whitespace-pre-wrap">{{ payment_instructions }}</div>
+        {% endif %}
         <form method="post" action="/checkout" class="space-y-4">
             <input type="hidden" name="tarif" value="{{ tarif or 'standard' }}">
             <div>
@@ -38,7 +42,7 @@
             </div>
             <div>
                 <label class="block text-slate-300 text-sm mb-1">Vybraný tarif</label>
-                <input type="text" readonly class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-slate-300" value="{{ tarif_label or 'STANDARD' }}">
+                <input type="text" readonly class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-slate-300" value="{{ tarif_label or 'PRO' }}">
             </div>
             <div class="flex items-start gap-2">
                 <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500">

@@ -5,6 +5,7 @@
 
 <ul class="admin-tabs" style="display:flex;flex-wrap:wrap;gap:4px;list-style:none;padding:0;margin:0 0 16px;border-bottom:1px solid #e5e7eb;">
     <li><a href="#tab-basic" class="admin-tab active" data-tab="basic">Základní</a></li>
+    <li><a href="#tab-sales" class="admin-tab" data-tab="sales">Správa prodeje</a></li>
     <li><a href="#tab-pricing" class="admin-tab" data-tab="pricing">Ceny a Tarify</a></li>
     <li><a href="#tab-marketing" class="admin-tab" data-tab="marketing">Marketing</a></li>
     <li><a href="#tab-legal" class="admin-tab" data-tab="legal">Právní info</a></li>
@@ -125,7 +126,41 @@
     </div>
 </div>
 
-{# ----- Ceny a Tarify ----- #}
+{# ----- Správa prodeje (licence BASIC a PRO, platební instrukce) ----- #}
+<div id="tab-sales" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_sales">
+        <div class="admin-card">
+            <div class="card-header">Ceny licencí (zobrazené na webu a v checkoutu)</div>
+            <div class="card-body">
+                {% set pt = settings.pricing_tarifs or {} %}
+                {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1290) %}
+                {% set price_pro_val = (pt.get('standard') or {}).get('amount_czk', 1990) %}
+                <label class="admin-settings-label">Cena licence BASIC (Kč)</label>
+                <input type="number" name="price_basic" class="form-control admin-settings-input" value="{{ price_basic_val }}" min="0" step="1">
+                <label class="admin-settings-label">Cena licence PRO (Kč)</label>
+                <input type="number" name="price_pro" class="form-control admin-settings-input" value="{{ price_pro_val }}" min="0" step="1">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Texty ceníku na hlavní stránce</div>
+                <label class="admin-settings-label">Popisek licence BASIC (pod nadpisem)</label>
+                <input type="text" name="landing_tarif_basic_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_basic_desc|e }}" placeholder="Ideální pro samostatné projektanty...">
+                <label class="admin-settings-label">Popisek licence PRO (pod nadpisem)</label>
+                <input type="text" name="landing_tarif_pro_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_standard_desc|e }}" placeholder="Nástroj pro řízení velkých zakázek...">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Platební instrukce (zobrazí se uživateli po kliknutí na „Koupit“)</div>
+                <p class="small text-muted mb-3">Text se zobrazí na stránce checkout nad formulářem. Můžete doplnit číslo účtu, variabilní symbol apod.</p>
+                <textarea name="payment_instructions" class="form-control admin-settings-textarea" rows="4" placeholder="Po odeslání objednávky vám e-mailem zašleme platební údaje...">{{ settings.payment_instructions|e }}</textarea>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit správu prodeje</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Ceny a Tarify (JSON) ----- #}
 <div id="tab-pricing" class="tab-pane">
     <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="save_pricing">
@@ -174,10 +209,9 @@
                 <label class="admin-settings-label">landing_mode_cloud_title / landing_mode_cloud_text</label>
                 <input type="text" name="landing_mode_cloud_title" class="form-control admin-settings-input" value="{{ settings.landing_mode_cloud_title|e }}" placeholder="Cloud">
                 <input type="text" name="landing_mode_cloud_text" class="form-control admin-settings-input" value="{{ settings.landing_mode_cloud_text|e }}" placeholder="Popis">
-                <label class="admin-settings-label">Popisy tarifů na landingu</label>
-                <input type="text" name="landing_tarif_basic_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_basic_desc|e }}" placeholder="Basic">
-                <input type="text" name="landing_tarif_standard_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_standard_desc|e }}" placeholder="Standard">
-                <input type="text" name="landing_tarif_premium_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_premium_desc|e }}" placeholder="Premium">
+                <label class="admin-settings-label">Popisy tarifů na landingu (pouze BASIC a PRO)</label>
+                <input type="text" name="landing_tarif_basic_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_basic_desc|e }}" placeholder="BASIC – popis">
+                <input type="text" name="landing_tarif_standard_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_standard_desc|e }}" placeholder="PRO – popis">
             </div>
             <div class="card-body">
                 <div class="card-header">JSON: landing_how_steps, landing_faq</div>

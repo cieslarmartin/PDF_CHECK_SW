@@ -47,9 +47,8 @@ DEFAULTS = {
 
 # Výchozí hodnoty pro JSON klíče
 DEFAULT_PRICING_TARIFS = {
-    "basic": {"label": "BASIC", "amount_czk": 990},
-    "standard": {"label": "STANDARD", "amount_czk": 1990},
-    "premium": {"label": "PREMIUM", "amount_czk": 4990},
+    "basic": {"label": "BASIC", "amount_czk": 1290},
+    "standard": {"label": "PRO", "amount_czk": 1990},
 }
 
 DEFAULT_LANDING_HOW_STEPS = [

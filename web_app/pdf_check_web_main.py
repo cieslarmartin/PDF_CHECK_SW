@@ -3029,8 +3029,8 @@ def online_check():
 
 
 # Fallback částky a štítky (použijí se když settings_loader není nebo DB prázdná)
-TARIF_AMOUNTS_FALLBACK = {'basic': 990, 'standard': 1990, 'premium': 4990}
-TARIF_LABELS_FALLBACK = {'basic': 'BASIC', 'standard': 'STANDARD', 'premium': 'PREMIUM'}
+TARIF_AMOUNTS_FALLBACK = {'basic': 990, 'standard': 1990}
+TARIF_LABELS_FALLBACK = {'basic': 'BASIC', 'standard': 'PRO'}
 
 
 @app.route('/checkout', methods=['GET', 'POST'])
@@ -3067,7 +3067,8 @@ def checkout():
     tarif = (request.args.get('tarif') or 'standard').strip().lower()
     if tarif not in tarif_labels:
         tarif = 'standard'
-    return render_template('checkout.html', tarif=tarif, tarif_label=tarif_labels.get(tarif, 'STANDARD'))
+    payment_instructions = db.get_global_setting('payment_instructions', '') or ''
+    return render_template('checkout.html', tarif=tarif, tarif_label=tarif_labels.get(tarif, 'PRO'), payment_instructions=payment_instructions)
 
 
 @app.route('/order-success')

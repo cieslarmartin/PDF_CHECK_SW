@@ -389,7 +389,8 @@ def _settings_for_admin(db):
     s['allow_new_registrations'] = db.get_setting_bool('allow_new_registrations', True)
     s['trial_limit_total_files'] = db.get_setting_int('trial_limit_total_files', 10)
     s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
-    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 990}, 'standard': {'label': 'STANDARD', 'amount_czk': 1990}, 'premium': {'label': 'PREMIUM', 'amount_czk': 4990}})
+    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+    s['payment_instructions'] = db.get_global_setting('payment_instructions', '')
     s['landing_how_steps'] = db.get_setting_json('landing_how_steps', [])
     s['landing_faq'] = db.get_setting_json('landing_faq', [])
     s['legal_vop_html'] = db.get_global_setting('legal_vop_html', '')
@@ -449,6 +450,34 @@ def settings():
             for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone', 'bank_account', 'bank_iban'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Základní nastavení uloženo', 'success')
+        elif action == 'save_sales':
+            # Správa prodeje: ceny BASIC/PRO, texty ceníku, platební instrukce
+            try:
+                price_basic = request.form.get('price_basic', '')
+                price_pro = request.form.get('price_pro', '')
+                pricing = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+                if not isinstance(pricing, dict):
+                    pricing = {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}}
+                if price_basic.strip():
+                    amt = int(price_basic)
+                    if 'basic' not in pricing:
+                        pricing['basic'] = {'label': 'BASIC', 'amount_czk': amt}
+                    else:
+                        pricing['basic']['amount_czk'] = amt
+                if price_pro.strip():
+                    amt = int(price_pro)
+                    if 'standard' not in pricing:
+                        pricing['standard'] = {'label': 'PRO', 'amount_czk': amt}
+                    else:
+                        pricing['standard']['amount_czk'] = amt
+                        pricing['standard']['label'] = 'PRO'
+                db.set_global_setting('pricing_tarifs', pricing)
+            except (ValueError, TypeError):
+                pass
+            db.set_global_setting('landing_tarif_basic_desc', request.form.get('landing_tarif_basic_desc', ''))
+            db.set_global_setting('landing_tarif_standard_desc', request.form.get('landing_tarif_pro_desc', ''))
+            db.set_global_setting('payment_instructions', request.form.get('payment_instructions', ''))
+            flash('Správa prodeje uložena', 'success')
         elif action == 'save_pricing':
             pricing_ok = True
             try:
