@@ -697,6 +697,8 @@ HTML_TEMPLATE = '''
                 </div>
             </div>
             <div class="header-actions">
+                <a href="/" class="header-btn" style="text-decoration:none;">🏠 Úvod</a>
+                <div class="header-divider"></div>
                 <button class="header-btn" onclick="showHelpModal()">❓ Nápověda</button>
                 <div class="header-divider"></div>
                 <button class="header-btn" onclick="showInfoModal()">📘 Info</button>

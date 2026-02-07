@@ -123,28 +123,43 @@
             </div>
         </section>
 
-        {# 4) Ceník – z pricing_tarifs (basic, standard, premium) #}
+        {# 4) Ceník – Basic a Pro s funkcemi a cenami (bez třetího tarifu) #}
         <section id="cenik" class="mb-14">
             <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Ceník</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":990},"standard":{"label":"STANDARD","amount_czk":1990},"premium":{"label":"PREMIUM","amount_czk":4990}}) %}
-                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.basic.label|default('Basic') }}</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_basic_desc|default('Pro menší objemy.') }}</p>
-                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-medium transition" style="background:#e5e7eb;color:#374151;">Vybrat</a>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="max-width:720px;margin:0 auto;">
+                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col">
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">PROJEKTANT</h3>
+                    <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.basic.label|default('Basic') }}</p>
+                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} Kč</p>
+                    <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
+                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_basic_desc|default('Ideální pro samostatné projektanty a kontrolu vlastních expedicí před odesláním objednateli.') }}</p>
+                    <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
+                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
+                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Kontrola PDF/A, metadat, podpisů, autorizované osoby a časového razítka</li>
+                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Standardní UI</li>
+                    </ul>
+                    <p class="text-xs py-3 border-t mt-auto" style="color:#059669;font-weight:600;border-color:#e5e7eb;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-medium transition mt-2" style="background:#e5e7eb;color:#374151;">Zakoupit Basic</a>
                 </div>
-                <div class="lp-v3-panel rounded-xl p-6 shadow-sm relative border-2" style="border-color:#1e5a8a;">
-                    <span class="lp-v3-badge absolute top-4 right-4" style="background:#eff6ff;color:#1e5a8a;">DOPORUČUJEME PRO ATELIÉRY</span>
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.standard.label|default('Pro') }}</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_standard_desc|default('Plné funkce, export, historie.') }}</p>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition">Vybrat</a>
-                </div>
-                <div class="lp-v3-panel rounded-xl p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">{{ tarifs.premium.label|default('Firemní') }}</h3>
-                    <p class="text-sm mb-4" style="color:#6b7280;">{{ landing_tarif_premium_desc|default('Na míru pro větší týmy.') }}</p>
-                    <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-secondary transition">Kontakt</a>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col relative border-2" style="border-color:#1e5a8a;background:linear-gradient(180deg, #f0f9ff 0%, #ffffff 24%);">
+                    <span class="lp-v3-badge absolute top-4 right-4" style="background:#1e5a8a;color:white;padding:4px 10px;border-radius:0 0 8px 8px;font-size:0.7em;font-weight:700;">DOPORUČUJEME PRO ATELIÉRY</span>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Z BASIC +</h3>
+                    <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.standard.label|default('Pro') }}</p>
+                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} Kč</p>
+                    <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
+                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
+                    <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:600;">✓</span> Hromadný export do Excelu (XLS)</li>
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:600;">✓</span> Sofistikované filtry chyb</li>
+                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Vše z Basic</li>
+                    </ul>
+                    <p class="text-xs py-3 border-t mt-auto" style="color:#059669;font-weight:600;border-color:#e5e7eb;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition mt-2">Zakoupit Pro</a>
                 </div>
             </div>
+            <p class="mt-6 py-3 px-5 rounded-lg text-center text-sm max-w-xl mx-auto" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f;"><strong style="color:#1e5a8a;">Při odběru 10+ licencí</strong> sleva <strong style="color:#1e5a8a;">10 %</strong> pro vaši firmu.</p>
+            <p class="mt-3 text-center text-sm" style="color:#9ca3af;">Objednávka vede do Checkout; po zaplacení aktivujeme licenci. <a href="#faq" class="lp-v3-link">Časté dotazy</a> · <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="lp-v3-link">Kontakt</a> pro firemní nabídky.</p>
         </section>
 
         {# 5) Důvěřují nám – partner_logos (volitelné) #}
