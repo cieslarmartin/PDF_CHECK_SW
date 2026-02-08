@@ -42,7 +42,8 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         use_ssl = app.config.get('MAIL_USE_SSL', True)
         msg = MIMEText(body_plain, 'plain', 'utf-8')
         msg['Subject'] = subject
-        msg['From'] = smtp_user
+        from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
+        msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
         if use_ssl and smtp_port == 465:
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
@@ -104,7 +105,8 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
             return False
         msg = MIMEMultipart()
         msg['Subject'] = subject
-        msg['From'] = smtp_user
+        from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
+        msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
         msg.attach(MIMEText(body_plain, 'plain', 'utf-8'))
         if attachment_path and os.path.isfile(attachment_path):

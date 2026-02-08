@@ -266,10 +266,26 @@ def dashboard():
                           active_page='dashboard')
 
 
+@admin_bp.route('/admin/marketing-emails', methods=['GET'])
+@admin_required
+def marketing_emails():
+    """Záložka MARKETING / E-MAILY – úprava textů e-mailů (načítají se z DB)."""
+    try:
+        from site_config_loader import get_email_templates
+        email_templates = get_email_templates() if get_email_templates else {}
+    except Exception:
+        email_templates = {}
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_marketing_emails.html', email_templates=email_templates, user=user, active_page='marketing_emails')
+
+
 @admin_bp.route('/admin/save-email-templates', methods=['POST'])
 @admin_required
 def save_email_templates_route():
-    """Uloží e-mailové šablony do site_config.json."""
+    """Uloží e-mailové šablony do DB (nebo site_config.json jako záloha)."""
     templates = {
         'footer_text': request.form.get('footer_text', ''),
         'order_confirmation_subject': request.form.get('order_confirmation_subject', ''),
@@ -281,6 +297,8 @@ def save_email_templates_route():
         flash('E-mailové šablony uloženy', 'success')
     else:
         flash('Uložení šablon se nezdařilo', 'error')
+    if request.form.get('from_page') == 'marketing':
+        return redirect(url_for('admin.marketing_emails'))
     return redirect(url_for('admin.dashboard') + '#email-templates')
 
 

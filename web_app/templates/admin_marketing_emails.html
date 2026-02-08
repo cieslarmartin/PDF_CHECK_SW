@@ -1,0 +1,40 @@
+{% extends "admin_base.html" %}
+{% block title %}PDF DokuCheck Admin – MARKETING / E-MAILY{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">MARKETING / E-MAILY</h2>
+<p style="margin-bottom:16px;color:#6b7280;font-size:0.9em;">Texty odcházejících e-mailů se načítají z databáze. Placeholdery: <strong>Potvrzení objednávky</strong> – {jmeno}, {cena}, {vs}; <strong>Aktivační e-mail</strong> – {email}, {heslo}, {download_url}. Patička se připojí ke každému e-mailu.</p>
+
+<form method="post" action="{{ url_for('admin.save_email_templates_route') }}" style="max-width:720px;">
+    <input type="hidden" name="from_page" value="marketing">
+    <div class="admin-card" style="margin-bottom:16px;">
+        <div class="card-header">1) Potvrzení objednávky</div>
+        <div class="card-body">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Předmět (order_confirmation_subject)</label>
+            <input type="text" name="order_confirmation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('order_confirmation_subject', '')|e }}" placeholder="{vs}, {cena}, {jmeno}">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;margin-top:10px;">Tělo (order_confirmation_body)</label>
+            <textarea name="order_confirmation_body" class="form-control" rows="6" style="width:100%;">{{ (email_templates or {}).get('order_confirmation_body', '')|e }}</textarea>
+        </div>
+    </div>
+    <div class="admin-card" style="margin-bottom:16px;">
+        <div class="card-header">2) Aktivační e-mail</div>
+        <div class="card-body">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Předmět (activation_subject)</label>
+            <input type="text" name="activation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('activation_subject', '')|e }}">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;margin-top:10px;">Tělo (activation_body)</label>
+            <textarea name="activation_body" class="form-control" rows="6" style="width:100%;">{{ (email_templates or {}).get('activation_body', '')|e }}</textarea>
+        </div>
+    </div>
+    <div class="admin-card" style="margin-bottom:16px;">
+        <div class="card-header">Patička (footer_text)</div>
+        <div class="card-body">
+            <textarea name="footer_text" class="form-control" rows="3" style="width:100%;">{{ (email_templates or {}).get('footer_text', '')|e }}</textarea>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Uložit šablony</button>
+</form>
+
+<form method="post" action="{{ url_for('admin.send_test_email_route') }}" style="margin-top:16px;">
+    <input type="hidden" name="test_email_to" value="info@dokucheck.cz">
+    <button type="submit" class="btn btn-secondary btn-sm">Odeslat testovací e-mail na info@dokucheck.cz</button>
+</form>
+{% endblock %}

@@ -27,7 +27,19 @@ def load_site_config():
 
 
 def get_email_templates():
-    """Vrátí slovník email_templates (footer_text, order_confirmation_*, activation_*)."""
+    """Vrátí slovník email_templates (footer_text, order_confirmation_*, activation_*). Načítá z DB, jinak z site_config.json, jinak výchozí z kódu."""
+    try:
+        from database import Database
+        db = Database()
+        db_templates = db.get_email_templates_dict()
+        if any(db_templates.get(k) for k in ('order_confirmation_subject', 'order_confirmation_body', 'activation_subject', 'activation_body')):
+            out = dict(DEFAULT_EMAIL_TEMPLATES)
+            for k in out:
+                if k in db_templates and db_templates[k] is not None:
+                    out[k] = str(db_templates[k])
+            return out
+    except Exception:
+        pass
     config = load_site_config()
     templates = config.get("email_templates") or {}
     out = dict(DEFAULT_EMAIL_TEMPLATES)
@@ -38,7 +50,29 @@ def get_email_templates():
 
 
 def save_email_templates(templates):
-    """Uloží email_templates do site_config.json (sloučí s existujícím obsahem)."""
+    """Uloží email_templates: nejdřív do DB (pokud je k dispozici), jinak do site_config.json."""
+    if not templates:
+        return False
+    try:
+        from database import Database
+        db = Database()
+        # order_confirmation
+        db.set_email_template(
+            'order_confirmation',
+            templates.get('order_confirmation_subject', ''),
+            templates.get('order_confirmation_body', '')
+        )
+        # activation
+        db.set_email_template(
+            'activation',
+            templates.get('activation_subject', ''),
+            templates.get('activation_body', '')
+        )
+        # footer_text (body only)
+        db.set_email_template('footer_text', '', templates.get('footer_text', ''))
+        return True
+    except Exception:
+        pass
     config = load_site_config()
     if "email_templates" not in config:
         config["email_templates"] = {}

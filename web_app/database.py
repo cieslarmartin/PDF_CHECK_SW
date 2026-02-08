@@ -209,6 +209,28 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_license_tiers_name ON license_tiers(name)')
 
+        # E-mailové šablony (Potvrzení objednávky, Aktivační e-mail) – načítají se z DB
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS email_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                subject TEXT NOT NULL DEFAULT '',
+                body TEXT NOT NULL DEFAULT ''
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_email_templates_name ON email_templates(name)')
+        # Výchozí řádky (pouze pokud tabulka byla právě vytvořena nebo je prázdná)
+        cursor.execute('SELECT COUNT(*) FROM email_templates')
+        if cursor.fetchone()[0] == 0:
+            cursor.execute('''
+                INSERT INTO email_templates (name, subject, body) VALUES
+                ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
+                 'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
+                ('activation', 'DokuCheck PRO – přístup aktivní',
+                 'Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}'),
+                ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
+            ''')
+
         # Globální nastavení (Maintenance Mode, Allow New Registrations)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS global_settings (
@@ -383,6 +405,30 @@ class Database:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_path TEXT')
             if 'status' not in po_cols:
                 cursor.execute("ALTER TABLE pending_orders ADD COLUMN status TEXT DEFAULT 'NEW_ORDER'")
+        except Exception:
+            pass
+
+        # email_templates: tabulka pro šablony (pro existující DB, které ji nemají)
+        try:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS email_templates (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    subject TEXT NOT NULL DEFAULT '',
+                    body TEXT NOT NULL DEFAULT ''
+                )
+            ''')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_email_templates_name ON email_templates(name)')
+            cursor.execute('SELECT COUNT(*) FROM email_templates')
+            if cursor.fetchone()[0] == 0:
+                cursor.execute('''
+                    INSERT INTO email_templates (name, subject, body) VALUES
+                    ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
+                     'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
+                    ('activation', 'DokuCheck PRO – přístup aktivní',
+                     'Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}'),
+                    ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
+                ''')
         except Exception:
             pass
 
@@ -2009,6 +2055,54 @@ class Database:
         conn.commit()
         conn.close()
         return ok
+
+    # =========================================================================
+    # EMAIL TEMPLATES (načítání z DB pro Marketing / E-maily)
+    # =========================================================================
+
+    def get_email_templates_dict(self):
+        """Vrátí slovník šablon ve formátu: order_confirmation_subject, order_confirmation_body, activation_subject, activation_body, footer_text."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT name, subject, body FROM email_templates')
+        rows = cursor.fetchall()
+        conn.close()
+        out = {
+            'order_confirmation_subject': '',
+            'order_confirmation_body': '',
+            'activation_subject': '',
+            'activation_body': '',
+            'footer_text': '',
+        }
+        for row in rows:
+            name = (row['name'] or '').strip()
+            subject = (row['subject'] or '').strip()
+            body = (row['body'] or '').strip()
+            if name == 'order_confirmation':
+                out['order_confirmation_subject'] = subject
+                out['order_confirmation_body'] = body
+            elif name == 'activation':
+                out['activation_subject'] = subject
+                out['activation_body'] = body
+            elif name == 'footer_text':
+                out['footer_text'] = body
+        return out
+
+    def set_email_template(self, name: str, subject: str, body: str) -> bool:
+        """Uloží nebo aktualizuje šablonu (name: order_confirmation, activation, footer_text). Pro footer_text se subject ignoruje."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO email_templates (name, subject, body) VALUES (?, ?, ?) ON CONFLICT(name) DO UPDATE SET subject=excluded.subject, body=excluded.body',
+                (name.strip(), (subject or '').strip(), (body or '').strip())
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
 
     # =========================================================================
     # GLOBAL SETTINGS (Maintenance Mode, Allow New Registrations)

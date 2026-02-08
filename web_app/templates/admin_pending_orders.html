@@ -84,6 +84,10 @@
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-primary btn-sm">POTVRDIT PLATBU</button>
                     </form>
+                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">VYTVOŘIT UŽIVATELE A AKTIVOVAT</button>
+                    </form>
                     <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-outline-secondary btn-sm">AKTIVOVAT BEZ FAKTURY</button>

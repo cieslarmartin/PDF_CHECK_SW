@@ -80,7 +80,8 @@ app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or 465)
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'info@dokucheck.cz')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'info@dokucheck.cz')
+# Jméno odesílatele pro zákazníky; oznámení pro admina jdou na info@dokucheck.cz
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'DokuCheck Objednávky <info@dokucheck.cz>')
 try:
     from flask_mail import Mail
     mail = Mail(app)
@@ -3080,7 +3081,13 @@ def checkout():
                     send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
                     db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
                 else:
-                    fallback_body = 'Děkujeme, objednávku zpracováváme. Fakturu vám zašleme dodatečně.'
+                    # Bez PDF (fpdf2 chybí nebo chyba): e-mail bez přílohy + platební údaje v textu
+                    ucet = (bank_iban or bank_account or '').strip() or 'bude uveden v dodatečné faktuře'
+                    fallback_body = (
+                        'Děkujeme za objednávku. Fakturu vám zašleme dodatečně.\n\n'
+                        'Pro urychlení aktivace můžete zaslat platbu:\n'
+                        'Částka: {} Kč\nVariabilní symbol: {}\nÚčet: {}'
+                    ).format(int(amount_czk), order_id, ucet)
                     send_email(email, 'DokuCheck – objednávka č. {}'.format(order_id), fallback_body, append_footer=True)
             except Exception:
                 pass
