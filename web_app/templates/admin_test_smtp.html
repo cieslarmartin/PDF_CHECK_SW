@@ -1,0 +1,10 @@
+{% extends "admin_base.html" %}
+{% block title %}PDF DokuCheck Admin – TEST SMTP{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">TEST SMTP</h2>
+<p style="margin-bottom:16px;color:#6b7280;">Odešle jeden testovací e-mail na <strong>info@dokucheck.cz</strong>. Používá přihlašovací údaje z WSGI (MAIL_USERNAME, MAIL_PASSWORD). Při chybě (např. 535) se do Error logu zapíše: <em>SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!</em></p>
+<form method="post" action="{{ url_for('admin.test_smtp') }}">
+    <button type="submit" class="btn btn-primary">Odeslat TEST SMTP na info@dokucheck.cz</button>
+</form>
+<p style="margin-top:16px;font-size:0.9em;"><a href="{{ url_for('admin.dashboard') }}">← Zpět na Dashboard</a> &nbsp;|&nbsp; <a href="{{ url_for('admin.settings') }}">Nastavení</a></p>
+{% endblock %}

@@ -7,7 +7,7 @@
 # - /logout - Odhlášení
 # - /admin - Admin dashboard pro správu licencí
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from functools import wraps
 import os
 import subprocess
@@ -287,7 +287,7 @@ def save_email_templates_route():
 @admin_bp.route('/admin/send-test-email', methods=['POST'])
 @admin_required
 def send_test_email_route():
-    """Odešle testovací e-mail na info@dokucheck.cz (kontrola vzhledu). Při chybě vypíše podrobný log do konzole."""
+    """Odešle testovací e-mail na zadanou adresu (výchozí info@dokucheck.cz). Při chybě vypíše podrobný log do konzole."""
     to_email = (request.form.get('test_email_to') or 'info@dokucheck.cz').strip()
     if not to_email:
         flash('Zadejte e-mail příjemce', 'error')
@@ -303,20 +303,49 @@ def send_test_email_route():
         if send_email(to_email, subject, body, append_footer=False):
             flash('Testovací e-mail odeslán na {}'.format(to_email), 'success')
         else:
+            _log_smtp_error()
             flash('Odeslání testovacího e-mailu se nezdařilo (zkontrolujte SMTP). Podrobnosti v konzoli PythonAnywhere (Error log).', 'error')
     except Exception as e:
-        import traceback
-        err_detail = traceback.format_exc()
-        print('[SMTP TEST EMAIL] Chyba pri odesilani testovaciho emailu:', str(e))
-        print('[SMTP TEST EMAIL] Traceback:\n' + err_detail)
-        try:
-            from flask import current_app
-            if getattr(current_app, 'logger', None):
-                current_app.logger.exception('SMTP test email failed')
-        except Exception:
-            pass
+        _log_smtp_error(e)
         flash('Chyba: {}. Podrobnosti viz konzole / Error log na PythonAnywhere.'.format(str(e)), 'error')
     return redirect(url_for('admin.dashboard') + '#email-templates')
+
+
+def _log_smtp_error(e=None):
+    """Při SMTP chybě (např. 535) zapíše do logu přesné upozornění."""
+    msg = "SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!"
+    print('[SMTP TEST]', msg)
+    try:
+        if getattr(current_app, 'logger', None):
+            current_app.logger.warning(msg)
+        if e is not None:
+            import traceback
+            current_app.logger.exception('SMTP test failed: %s', e)
+    except Exception:
+        pass
+
+
+@admin_bp.route('/admin/test-smtp', methods=['GET', 'POST'])
+@admin_required
+def test_smtp():
+    """TEST SMTP: odešle jeden e-mail na info@dokucheck.cz. Při chybě (např. 535) vypíše do logu: SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!"""
+    if request.method == 'GET':
+        return render_template('admin_test_smtp.html')
+    # POST
+    try:
+        from email_sender import send_email
+        ok = send_email('info@dokucheck.cz', 'DokuCheck – TEST SMTP', 'Toto je testovací e-mail z Adminu (TEST SMTP). Pokud jste ho obdrželi, SMTP funguje.', append_footer=False)
+        if ok:
+            flash('TEST SMTP: E-mail byl odeslán na info@dokucheck.cz.', 'success')
+        else:
+            _log_smtp_error()
+            flash('TEST SMTP: Odeslání se nezdařilo. Zkontrolujte Error log (SMTP CHYBA: Heslo pro aplikace ve WSGI).', 'error')
+    except Exception as e:
+        _log_smtp_error(e)
+        import traceback
+        print('[SMTP TEST] Traceback:\n' + traceback.format_exc())
+        flash('TEST SMTP: Chyba – {}. Viz Error log.'.format(str(e)), 'error')
+    return redirect(url_for('admin.test_smtp'))
 
 
 @admin_bp.route('/admin/users')
@@ -534,6 +563,53 @@ def confirm_payment():
     except Exception:
         pass
     flash('Platba potvrzena. Licence vytvořena, e-mail s heslem odeslán.', 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/activate-without-invoice', methods=['POST'])
+@admin_required
+def activate_without_invoice():
+    """AKTIVOVAT BEZ FAKTURY: status -> ACTIVE, vytvoření licence, heslo, aktivační e-mail, notifikace na info@dokucheck.cz (ruční aktivace)."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    status = (order.get('status') or '').upper()
+    if status not in ('PENDING', 'WAITING_PAYMENT'):
+        flash('Objednávka již byla zpracována nebo není ve stavu Čekající na platbu.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
+    if not tier_row:
+        flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    tier_id = tier_row.get('id')
+    password_plain = secrets.token_urlsafe(12)
+    user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
+    email = (order.get('email') or '').strip()
+    if not email:
+        flash('Objednávka nemá e-mail', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
+    if not api_key:
+        flash('Vytvoření licence se nezdařilo (možná duplicitní e-mail?).', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db.update_pending_order_status(order_id, 'ACTIVE')
+    try:
+        from email_sender import send_activation_email, notify_admin
+        download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
+        send_activation_email(email, password_plain, download_url)
+        notify_admin(
+            'Ruční aktivace – objednávka #{}'.format(order_id),
+            'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). Licence vytvořena, aktivační e-mail odeslán.'.format(order_id, user_name, email)
+        )
+    except Exception:
+        pass
+    flash('Uživatel aktivován ručně. Licence vytvořena, aktivační e-mail odeslán. Na info@dokucheck.cz přišla notifikace.', 'success')
     return redirect(url_for('admin.pending_orders'))
 
 

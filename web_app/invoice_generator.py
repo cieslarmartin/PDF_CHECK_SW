@@ -152,7 +152,12 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
 
         filename = 'faktura_{}.pdf'.format(order_id)
         filepath = os.path.join(INVOICES_DIR, filename)
-        pdf.output(filepath)
+        try:
+            pdf.output(filepath)
+        except Exception as write_err:
+            logger.error('[invoice_generator] Chyba pri zapisu PDF souboru %s: %s', filepath, write_err)
+            logger.error(traceback.format_exc())
+            return None
         return filepath
 
     except Exception as e:

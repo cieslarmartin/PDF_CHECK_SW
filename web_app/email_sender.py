@@ -33,10 +33,10 @@ def send_email(to_email, subject, body_plain, append_footer=True):
             return True
         import smtplib
         from email.mime.text import MIMEText
-        smtp_host = app.config.get('MAIL_SERVER', '') or os.environ.get('MAIL_SERVER', '')
-        smtp_port = int(app.config.get('MAIL_PORT', 465) or os.environ.get('MAIL_PORT', '465') or 465)
-        smtp_user = app.config.get('MAIL_USERNAME', '') or os.environ.get('MAIL_USERNAME', '')
-        smtp_pass = app.config.get('MAIL_PASSWORD', '') or os.environ.get('MAIL_PASSWORD', '')
+        smtp_host = os.environ.get('MAIL_SERVER') or app.config.get('MAIL_SERVER', '') or 'smtp.seznam.cz'
+        smtp_port = int(os.environ.get('MAIL_PORT') or app.config.get('MAIL_PORT') or 465)
+        smtp_user = os.environ.get('MAIL_USERNAME') or app.config.get('MAIL_USERNAME', '') or 'info@dokucheck.cz'
+        smtp_pass = os.environ.get('MAIL_PASSWORD') or app.config.get('MAIL_PASSWORD', '')
         if not smtp_host or not smtp_user:
             return False
         use_ssl = app.config.get('MAIL_USE_SSL', True)
@@ -62,12 +62,13 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         err_str = str(e)
         print('[SMTP] Odeslání e-mailu se nezdařilo:', err_str)
         print('[SMTP] Traceback:\n' + traceback.format_exc())
-        if '530' in err_str:
-            print('[SMTP] Chyba 530 (auth required): Zkontrolujte heslo MAIL_PASSWORD v proměnných prostředí a nastavení SMTP na Seznamu (přihlášení aplikací).')
+        if '530' in err_str or '535' in err_str:
+            msg = "SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!"
+            print('[SMTP]', msg)
+            if app and hasattr(app, 'logger'):
+                app.logger.warning(msg)
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
-            if '530' in err_str:
-                app.logger.warning("SMTP 530: Ověřte MAIL_PASSWORD a nastavení SMTP na Seznamu.")
         return False
 
 
@@ -95,10 +96,10 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
         from email.mime.multipart import MIMEMultipart
         from email.mime.base import MIMEBase
         from email import encoders
-        smtp_host = app.config.get('MAIL_SERVER', '') or os.environ.get('MAIL_SERVER', '')
-        smtp_port = int(app.config.get('MAIL_PORT', 465) or os.environ.get('MAIL_PORT', '465') or 465)
-        smtp_user = app.config.get('MAIL_USERNAME', '') or os.environ.get('MAIL_USERNAME', '')
-        smtp_pass = app.config.get('MAIL_PASSWORD', '') or os.environ.get('MAIL_PASSWORD', '')
+        smtp_host = os.environ.get('MAIL_SERVER') or app.config.get('MAIL_SERVER', '') or 'smtp.seznam.cz'
+        smtp_port = int(os.environ.get('MAIL_PORT') or app.config.get('MAIL_PORT') or 465)
+        smtp_user = os.environ.get('MAIL_USERNAME') or app.config.get('MAIL_USERNAME', '') or 'info@dokucheck.cz'
+        smtp_pass = os.environ.get('MAIL_PASSWORD') or app.config.get('MAIL_PASSWORD', '')
         if not smtp_host or not smtp_user:
             return False
         msg = MIMEMultipart()
@@ -132,12 +133,13 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
         err_str = str(e)
         print('[SMTP] Odeslání e-mailu s přílohou se nezdařilo:', err_str)
         print('[SMTP] Traceback:\n' + traceback.format_exc())
-        if '530' in err_str:
-            print('[SMTP] Chyba 530 (auth required): Zkontrolujte heslo MAIL_PASSWORD v proměnných prostředí a nastavení SMTP na Seznamu (přihlášení aplikací).')
+        if '530' in err_str or '535' in err_str:
+            msg = "SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!"
+            print('[SMTP]', msg)
+            if app and hasattr(app, 'logger'):
+                app.logger.warning(msg)
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
-            if '530' in err_str:
-                app.logger.warning("SMTP 530: Ověřte MAIL_PASSWORD a nastavení SMTP na Seznamu.")
         return False
 
 

@@ -73,14 +73,14 @@ app.config['SESSION_COOKIE_SECURE'] = False  # V produkci nastavit na True s HTT
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 
-# Flask-Mail – SMTP Seznam Email Profi (objednávky)
-# Heslo: na PythonAnywhere → Web → Vaše aplikace → "Environment variables" → přidej MAIL_PASSWORD = tvé_heslo
+# Flask-Mail – SMTP Seznam (info@dokucheck.cz)
+# MAIL_USERNAME a MAIL_PASSWORD: na PythonAnywhere → Web → Environment variables (nebo WSGI)
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.seznam.cz')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or 465)
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'info@dokucheck.cz')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'objednavky@dokucheck.cz')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'info@dokucheck.cz')
 try:
     from flask_mail import Mail
     mail = Mail(app)
@@ -3038,7 +3038,7 @@ def checkout():
             except Exception:
                 pass
 
-            # 2. ZÁKAZNICKÁ NOTIFIKACE (z objednavky@dokucheck.cz): pokus o PDF, pak e-mail s/bez přílohy
+            # 2. ZÁKAZNICKÁ NOTIFIKACE (z info@dokucheck.cz): pokus o PDF, pak e-mail s/bez přílohy
             try:
                 from email_sender import send_email, send_email_with_attachment, get_email_templates, _apply_footer
                 supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
