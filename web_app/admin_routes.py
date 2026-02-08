@@ -266,6 +266,37 @@ def dashboard():
                           active_page='dashboard')
 
 
+@admin_bp.route('/admin/company-settings', methods=['GET', 'POST'])
+@admin_required
+def company_settings():
+    """Záložka NASTAVENÍ FIRMY – údaje pro faktury (dodavatel, účet, živnostenský rejstřík, složka faktur)."""
+    db = get_db()
+    if request.method == 'POST':
+        db.set_global_setting('provider_name', request.form.get('provider_name', '').strip())
+        db.set_global_setting('provider_address', request.form.get('provider_address', '').strip())
+        db.set_global_setting('provider_ico', request.form.get('provider_ico', '').strip())
+        db.set_global_setting('bank_account', request.form.get('bank_account', '').strip())
+        db.set_global_setting('bank_iban', request.form.get('bank_iban', '').strip())
+        db.set_global_setting('provider_trade_register', request.form.get('provider_trade_register', '').strip())
+        db.set_global_setting('invoices_dir', request.form.get('invoices_dir', '').strip())
+        flash('Nastavení firmy uloženo.', 'success')
+        return redirect(url_for('admin.company_settings'))
+    company = {
+        'provider_name': db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar',
+        'provider_address': db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice',
+        'provider_ico': db.get_global_setting('provider_ico', '') or '04830661',
+        'bank_account': db.get_global_setting('bank_account', ''),
+        'bank_iban': db.get_global_setting('bank_iban', ''),
+        'provider_trade_register': db.get_global_setting('provider_trade_register', '') or 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.',
+        'invoices_dir': db.get_global_setting('invoices_dir', '') or '',
+    }
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_company_settings.html', company=company, user=user, active_page='company_settings')
+
+
 @admin_bp.route('/admin/marketing-emails', methods=['GET'])
 @admin_required
 def marketing_emails():
@@ -466,32 +497,11 @@ def delete_pending_order():
     return redirect(url_for('admin.pending_orders'))
 
 
-@admin_bp.route('/admin/generate-invoice-and-send', methods=['POST'])
-@admin_required
-def generate_invoice_and_send():
-    """VYGENERUJ FAKTURU A POSLAT ÚDAJE: PDF faktura, e-mail zákazníkovi s přílohou, notifikace adminu, status -> WAITING_PAYMENT."""
-    order_id = request.form.get('order_id', '').strip()
-    if not order_id:
-        flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
-    db = get_db()
-    order = db.get_pending_order_by_id(order_id)
-    if not order:
-        flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
-    if (order.get('status') or '').upper() != 'NEW_ORDER':
-        flash('Objednávka není ve stavu Nová (NEW_ORDER).', 'error')
-        return redirect(url_for('admin.pending_orders'))
-    try:
-        from settings_loader import get_pricing_tarifs
-        pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
-    except Exception:
-        pricing = {}
-    tarif = order.get('tarif') or 'standard'
-    if isinstance(pricing, dict) and pricing.get(tarif):
-        amount_czk = pricing[tarif].get('amount_czk', 1990)
-    else:
-        amount_czk = 1990
+def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
+    """Pomocná: vygeneruje PDF fakturu pro objednávku a vrátí (filepath nebo None, chybová zpráva)."""
+    import logging
+    invoices_dir = (db.get_global_setting('invoices_dir') or '').strip() or None
+    supplier_trade_register = (db.get_global_setting('provider_trade_register') or '').strip() or None
     supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
     supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
     supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
@@ -515,47 +525,104 @@ def generate_invoice_and_send():
             bank_iban=bank_iban,
             bank_account=bank_account,
             invoice_number=invoice_number,
+            supplier_trade_register=supplier_trade_register,
+            output_dir=invoices_dir,
         )
+        return (filepath, None)
     except Exception as e:
-        import traceback
-        import logging
         logging.getLogger(__name__).error('Admin: generování PDF faktury selhalo: %s', e)
-        logging.getLogger(__name__).error(traceback.format_exc())
-        flash('Vygenerování PDF faktury se nezdařilo. Podrobnosti v Error logu. Objednávka zůstává beze změny.', 'error')
+        return (None, str(e))
+
+
+@admin_bp.route('/admin/generate-invoice', methods=['POST'])
+@admin_required
+def generate_invoice():
+    """VYGENERUJ FAKTURU: pouze vygeneruje PDF a uloží na server (bez odesílání e-mailu)."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    try:
+        from settings_loader import get_pricing_tarifs
+        pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
+    except Exception:
+        pricing = {}
+    tarif = order.get('tarif') or 'standard'
+    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1990) if isinstance(pricing, dict) else 1990
+    filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
+    if err:
+        flash('Vygenerování PDF faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
         return redirect(url_for('admin.pending_orders'))
     if not filepath or not os.path.isfile(filepath):
-        import logging
-        logging.getLogger(__name__).warning('Admin: PDF faktura nebyla vygenerována (filepath=%s). Objednávka zůstává beze změny.', filepath)
-        flash('Vygenerování PDF faktury se nezdařilo. Objednávka zůstává v sekci Nové – můžete zkusit znovu nebo aktivovat bez faktury.', 'error')
+        flash('Vygenerování PDF faktury se nezdařilo. Zkontrolujte Nastavení firmy (složka faktur) a font Unicode.', 'error')
         return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_invoice_path(order_id, filepath)
-    try:
-        from email_sender import send_email_with_attachment, get_email_templates, _apply_footer, notify_admin
-        jmeno = order.get('jmeno_firma') or ''
-        email = order.get('email') or ''
-        templates = get_email_templates() if get_email_templates else {}
-        subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
-        body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
-        subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
-        body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
-        body = _apply_footer(body, templates.get('footer_text', ''))
-        ok = send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
-    except Exception as e:
-        import traceback
-        print('[admin generate_invoice_and_send] Chyba pri odesilani emailu:', e)
-        print(traceback.format_exc())
-        flash('E-mail zákazníkovi se nepodařilo odeslat. Podrobnosti v konzoli / Error log.', 'error')
+    if (order.get('status') or '').upper() == 'NEW_ORDER':
+        db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+    flash('Faktura vygenerována a uložena. Objednávka v sekci Čekající na platbu.', 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/regenerate-invoice', methods=['POST'])
+@admin_required
+def regenerate_invoice():
+    """GENEROVAT ZNOVU: přegeneruje PDF fakturu (např. po změně údajů firmy)."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
         return redirect(url_for('admin.pending_orders'))
-    if not ok:
-        flash('E-mail zákazníkovi se nepodařilo odeslat.', 'error')
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
         return redirect(url_for('admin.pending_orders'))
-    db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
     try:
-        notify_admin('Faktura vygenerována a odeslána #{}'.format(order_id),
-                     'Faktura k objednávce #{} byla vygenerována a odeslána na {}. Status změněn na Čekající na platbu.'.format(order_id, email))
+        from settings_loader import get_pricing_tarifs
+        pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
     except Exception:
-        pass
-    flash('Faktura vygenerována a odeslána zákazníkovi. Objednávka je nyní v sekci Čekající na platbu.', 'success')
+        pricing = {}
+    tarif = order.get('tarif') or 'standard'
+    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1990) if isinstance(pricing, dict) else 1990
+    filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
+    if err:
+        flash('Přegenerování faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
+        return redirect(url_for('admin.pending_orders'))
+    if not filepath or not os.path.isfile(filepath):
+        flash('Přegenerování faktury se nezdařilo. Zkontrolujte Nastavení firmy a font Unicode.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db.update_pending_order_invoice_path(order_id, filepath)
+    flash('Faktura přegenerována a uložena.', 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/invoice/<int:order_id>/download')
+@admin_required
+def download_invoice(order_id):
+    """Stáhne PDF fakturu k objednávce (ze složky podle invoice_path nebo invoices_dir)."""
+    from flask import send_file
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    path = (order.get('invoice_path') or '').strip()
+    if path and os.path.isfile(path):
+        return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
+    invoices_dir = (db.get_global_setting('invoices_dir') or '').strip()
+    if invoices_dir:
+        path = os.path.join(invoices_dir, 'faktura_{}.pdf'.format(order_id))
+        if os.path.isfile(path):
+            return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
+    from invoice_generator import INVOICES_DIR
+    path = os.path.join(INVOICES_DIR, 'faktura_{}.pdf'.format(order_id))
+    if os.path.isfile(path):
+        return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
+    flash('Faktura k objednávce #{} nebyla nalezena. Vygenerujte ji tlačítkem „VYGENEROVAT FAKTURU“ nebo „GENEROVAT ZNOVU“.'.format(order_id), 'error')
     return redirect(url_for('admin.pending_orders'))
 
 

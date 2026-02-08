@@ -61,16 +61,24 @@ def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
 
 def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                          supplier_name, supplier_address, supplier_ico, bank_iban, bank_account,
-                         invoice_number=None):
+                         invoice_number=None, supplier_trade_register=None, output_dir=None):
     """
-    Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH a uloží do data/invoices/.
-    invoice_number: číslo ve tvaru RRMMNNN (např. 2502001). Pokud chybí, použije se order_id.
+    Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH.
+    output_dir: složka pro uložení PDF (např. /home/cieslar/web_app/invoices). Pokud None, použije se data/invoices/.
+    supplier_trade_register: text o živnostenském rejstříku (z Adminu). Pokud None, výchozí text.
     Používá Unicode font (DejaVu/Arial). Při chybě vrátí None a zapíše do logu.
     """
+    save_dir = (output_dir or '').strip() or INVOICES_DIR
     try:
-        _ensure_invoices_dir()
+        os.makedirs(save_dir, exist_ok=True)
     except Exception:
-        return None
+        if save_dir == INVOICES_DIR:
+            try:
+                _ensure_invoices_dir()
+            except Exception:
+                return None
+        else:
+            return None
 
     try:
         from fpdf import FPDF
@@ -96,7 +104,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         _name = supplier_name or 'Ing. Martin Cieślar'
         _addr = supplier_address or 'Porubská 1, 742 83 Klimkovice – Václavovice'
         _ico = supplier_ico or '04830661'
-        zivnost = 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.'
+        zivnost = (supplier_trade_register or '').strip() or 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.'
         dph_text = 'Nejsem plátce DPH.'
 
         class SimpleFPDF(FPDF):
@@ -178,7 +186,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                 buf = io.BytesIO()
                 img.save(buf, format='PNG')
                 buf.seek(0)
-                qr_path = os.path.join(INVOICES_DIR, '_qr_temp_{}.png'.format(order_id))
+                qr_path = os.path.join(save_dir, '_qr_temp_{}.png'.format(order_id))
                 with open(qr_path, 'wb') as f:
                     f.write(buf.getvalue())
                 if os.path.isfile(qr_path):
@@ -194,7 +202,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
             pdf.cell(0, 6, 'Pro QR platbu nastavte v Adminu účet (IBAN).', 0, 1)
 
         filename = 'faktura_{}.pdf'.format(order_id)
-        filepath = os.path.join(INVOICES_DIR, filename)
+        filepath = os.path.join(save_dir, filename)
         pdf.output(filepath)
         return filepath
 

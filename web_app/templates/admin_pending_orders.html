@@ -2,9 +2,9 @@
 {% block title %}Objednávky a licence – DokuCheck Admin{% endblock %}
 {% block content %}
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Správa objednávek</h2>
-<p style="margin-bottom:20px;color:#6b7280;">Nové objednávky → vygenerovat fakturu a poslat údaje → čekající na platbu → potvrdit přijetí platby.</p>
+<p style="margin-bottom:20px;color:#6b7280;">Nové objednávky → vygenerovat fakturu (uloží se na server) → čekající na platbu → stáhnout fakturu / odeslat zákazníkovi manuálně → potvrdit platbu.</p>
 
-{# A) Nové objednávky (NEW_ORDER) – VYGENEROVAT FAKTURU A POSLAT ÚDAJE #}
+{# A) Nové objednávky (NEW_ORDER) – VYGENEROVAT FAKTURU (bez odesílání e-mailu) #}
 <h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Nové objednávky</h3>
 <div class="table-container">
     <table class="table-dense">
@@ -29,9 +29,14 @@
                 <td>{{ (o.tarif or '—')|upper }}</td>
                 <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">Nová</span></td>
                 <td style="white-space:nowrap;">
-                    <form method="post" action="{{ url_for('admin.generate_invoice_and_send') }}" style="display:inline;">
+                    <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU</a>
+                    <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-primary btn-sm">VYGENEROVAT FAKTURU A POSLAT ÚDAJE</button>
+                        <button type="submit" class="btn btn-primary btn-sm">VYGENEROVAT FAKTURU</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">GENEROVAT ZNOVU</button>
                     </form>
                     <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
@@ -88,7 +93,12 @@
                 <td>{{ (o.tarif or '—')|upper }}</td>
                 <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">Čeká na platbu</span></td>
                 <td style="white-space:nowrap;">
-                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
+                    <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU</a>
+                    <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">GENEROVAT ZNOVU</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-primary btn-sm">POTVRDIT PLATBU</button>
                     </form>

@@ -3068,57 +3068,54 @@ def checkout():
             except Exception:
                 pass
 
-            # 2. ZÁKAZNICKÁ NOTIFIKACE (E-mail č. 1): automaticky vygenerovat PDF a přiložit; při chybě PDF e-mail bez přílohy
+            # 2. Vygenerovat PDF fakturu a uložit na server (bez odesílání e-mailu s přílohou – manuální odesílání)
+            invoices_dir = (db.get_global_setting('invoices_dir') or '').strip()
+            supplier_trade_register = (db.get_global_setting('provider_trade_register') or '').strip()
+            supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
+            supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
+            supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
+            bank_iban = db.get_global_setting('bank_iban', '') or ''
+            bank_account = db.get_global_setting('bank_account', '') or ''
+            filepath = None
             try:
-                from email_sender import send_email, send_email_with_attachment, get_email_templates, _apply_footer
-                supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
-                supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
-                supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
-                bank_iban = db.get_global_setting('bank_iban', '') or ''
-                bank_account = db.get_global_setting('bank_account', '') or ''
-                filepath = None
-                try:
-                    from invoice_generator import generate_invoice_pdf
-                    filepath = generate_invoice_pdf(
-                        order_id=order_id,
-                        jmeno_firma=jmeno_firma,
-                        ico=ico,
-                        email=email,
-                        tarif=tarif,
-                        amount_czk=amount_czk,
-                        supplier_name=supplier_name,
-                        supplier_address=supplier_address,
-                        supplier_ico=supplier_ico,
-                        bank_iban=bank_iban,
-                        bank_account=bank_account,
-                        invoice_number=invoice_number,
-                    )
-                except Exception as e:
-                    if current_app and getattr(current_app, 'logger', None):
-                        current_app.logger.error('Checkout: generování PDF faktury selhalo: %s', e)
-                        current_app.logger.error(traceback.format_exc())
-                    logging.getLogger(__name__).error('Checkout: generování PDF faktury selhalo: %s', e)
-                    logging.getLogger(__name__).error(traceback.format_exc())
+                from invoice_generator import generate_invoice_pdf
+                filepath = generate_invoice_pdf(
+                    order_id=order_id,
+                    jmeno_firma=jmeno_firma,
+                    ico=ico,
+                    email=email,
+                    tarif=tarif,
+                    amount_czk=amount_czk,
+                    supplier_name=supplier_name,
+                    supplier_address=supplier_address,
+                    supplier_ico=supplier_ico,
+                    bank_iban=bank_iban,
+                    bank_account=bank_account,
+                    invoice_number=invoice_number,
+                    supplier_trade_register=supplier_trade_register or None,
+                    output_dir=invoices_dir or None,
+                )
+            except Exception as e:
+                if current_app and getattr(current_app, 'logger', None):
+                    current_app.logger.error('Checkout: generování PDF faktury selhalo: %s', e)
+                logging.getLogger(__name__).error('Checkout: generování PDF faktury selhalo: %s', e)
 
-                if filepath and os.path.isfile(filepath):
-                    db.update_pending_order_invoice_path(order_id, filepath)
-                    templates = get_email_templates() if get_email_templates else {}
-                    subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
-                    body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
-                    subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
-                    body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
-                    body = _apply_footer(body, templates.get('footer_text', ''))
-                    send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
-                    db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
-                else:
-                    # Pojistka: PDF selhalo (font, fpdf2…) – e-mail ODEŠLEME BEZ PŘÍLOHY, chybu máme v logu
-                    ucet = (bank_iban or bank_account or '').strip() or 'bude uveden v dodatečné faktuře'
-                    fallback_body = (
-                        'Děkujeme za objednávku. Fakturu vám zašleme dodatečně.\n\n'
-                        'Pro urychlení aktivace můžete zaslat platbu:\n'
-                        'Částka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet: {}'
-                    ).format(int(amount_czk), order_id, invoice_number, ucet)
-                    send_email(email, 'DokuCheck – objednávka č. {}'.format(order_id), fallback_body, append_footer=True)
+            if filepath and os.path.isfile(filepath):
+                db.update_pending_order_invoice_path(order_id, filepath)
+            db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+
+            # 3. E-mail zákazníkovi BEZ přílohy (faktura se odesílá manuálně z Adminu)
+            try:
+                from email_sender import send_email, get_email_templates, _apply_footer
+                ucet = (bank_iban or bank_account or '').strip() or 'bude uveden v dodatečné faktuře'
+                templates = get_email_templates() if get_email_templates else {}
+                subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
+                body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
+                subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
+                body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
+                body = _apply_footer(body, templates.get('footer_text', ''))
+                body += '\n\nČástka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet: {}'.format(int(amount_czk), order_id, invoice_number, ucet)
+                send_email(email, subject, body, append_footer=False)
             except Exception:
                 pass
 
