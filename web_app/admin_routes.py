@@ -514,12 +514,15 @@ def generate_invoice_and_send():
         )
     except Exception as e:
         import traceback
-        print('[admin generate_invoice_and_send] Chyba pri generovani faktury:', e)
-        print(traceback.format_exc())
-        flash('Vygenerování PDF faktury se nezdařilo. Podrobnosti v konzoli / Error log.', 'error')
+        import logging
+        logging.getLogger(__name__).error('Admin: generování PDF faktury selhalo: %s', e)
+        logging.getLogger(__name__).error(traceback.format_exc())
+        flash('Vygenerování PDF faktury se nezdařilo. Podrobnosti v Error logu. Objednávka zůstává beze změny.', 'error')
         return redirect(url_for('admin.pending_orders'))
     if not filepath or not os.path.isfile(filepath):
-        flash('Vygenerování PDF faktury se nezdařilo.', 'error')
+        import logging
+        logging.getLogger(__name__).warning('Admin: PDF faktura nebyla vygenerována (filepath=%s). Objednávka zůstává beze změny.', filepath)
+        flash('Vygenerování PDF faktury se nezdařilo. Objednávka zůstává v sekci Nové – můžete zkusit znovu nebo aktivovat bez faktury.', 'error')
         return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_invoice_path(order_id, filepath)
     try:

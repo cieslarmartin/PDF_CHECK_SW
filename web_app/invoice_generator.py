@@ -1,5 +1,5 @@
 # invoice_generator.py – generování PDF faktury s QR kódem (SPAYD)
-# Knihovny: fpdf2, qrcode. Dodavatel: Ing. Martin Cieślar; odběratel z objednávky.
+# Knihovny: fpdf2, qrcode. Unicode: TrueType font (DejaVu nebo systémový Arial).
 
 import os
 import io
@@ -10,6 +10,26 @@ logger = logging.getLogger(__name__)
 
 # Cesta k složce faktur – vytvoří se včetně web_app/data/ při prvním volání
 INVOICES_DIR = os.path.join(os.path.dirname(__file__), 'data', 'invoices')
+# Složka s fonty pro Unicode (diakritika) – očekává se DejaVuSans.ttf
+FONTS_DIR = os.path.join(os.path.dirname(__file__), 'fonts')
+
+
+def _get_unicode_font_path():
+    """Vrátí (cesta_regular, cesta_bold nebo None) pro TrueType font s Unicode. Preferuje DejaVu, fallback Arial / systém."""
+    dejaVu = os.path.join(FONTS_DIR, 'DejaVuSans.ttf')
+    dejaVuBold = os.path.join(FONTS_DIR, 'DejaVuSans-Bold.ttf')
+    if os.path.isfile(dejaVu):
+        return (dejaVu, dejaVuBold if os.path.isfile(dejaVuBold) else None)
+    if os.name == 'nt':
+        arial = os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'Fonts', 'arial.ttf')
+        if os.path.isfile(arial):
+            return (arial, None)
+    for path in ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                 '/usr/share/fonts/TTF/DejaVuSans.ttf'):
+        if os.path.isfile(path):
+            bold = path.replace('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf')
+            return (path, bold if os.path.isfile(bold) else None)
+    return (None, None)
 
 
 def _ensure_invoices_dir():
@@ -65,6 +85,11 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
             print(traceback.format_exc())
             return None
 
+    font_path, font_path_bold = _get_unicode_font_path()
+    if not font_path or not os.path.isfile(font_path):
+        logger.error('[invoice_generator] Nenalezen font s Unicode. Přidejte web_app/fonts/DejaVuSans.ttf (viz fonts/README.txt).')
+        return None
+
     try:
         # Výchozí údaje dodavatele: Ing. Martin Cieślar (doplňte adresu a IČO v Adminu nebo zde)
         _name = supplier_name or 'Ing. Martin Cieślar'
@@ -72,33 +97,40 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         _ico = supplier_ico or '04830661'
 
         class SimpleFPDF(FPDF):
+            def __init__(self, font_path, font_path_bold, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._font_path = font_path
+                self._font_path_bold = font_path_bold
+
             def header(self):
-                self.set_font('Helvetica', 'B', 14)
+                self.set_font('DejaVu', 'B', 14)
                 self.cell(0, 8, 'FAKTURA', 0, 1, 'C')
                 self.ln(4)
 
             def footer(self):
                 self.set_y(-18)
-                self.set_font('Helvetica', '', 8)
+                self.set_font('DejaVu', '', 8)
                 self.cell(0, 6, 'DokuCheck | www.dokucheck.cz', 0, 1, 'C')
                 self.cell(0, 6, 'Faktura vygenerována automaticky.', 0, 1, 'C')
 
-        pdf = SimpleFPDF()
+        pdf = SimpleFPDF(font_path, font_path_bold)
+        pdf.add_font('DejaVu', '', font_path, uni=True)
+        pdf.add_font('DejaVu', 'B', font_path_bold or font_path, uni=True)
         pdf.add_page()
         pdf.set_auto_page_break(True, margin=18)
-        pdf.set_font('Helvetica', '', 10)
+        pdf.set_font('DejaVu', '', 10)
 
         # Dodavatel
-        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 6, 'Dodavatel', 0, 1)
-        pdf.set_font('Helvetica', '', 10)
+        pdf.set_font('DejaVu', '', 10)
         pdf.multi_cell(0, 5, '{}\n{}\nIČ: {}'.format(_name, _addr, _ico))
         pdf.ln(6)
 
         # Odběratel (z objednávky)
-        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 6, 'Odběratel', 0, 1)
-        pdf.set_font('Helvetica', '', 10)
+        pdf.set_font('DejaVu', '', 10)
         pdf.multi_cell(0, 5, '{}\nIČ: {}\nE-mail: {}'.format(
             jmeno_firma or '—',
             ico or '—',
@@ -107,11 +139,11 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.ln(8)
 
         # Tabulka položek
-        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(100, 6, 'Položka', 1, 0)
         pdf.cell(30, 6, 'Množství', 1, 0)
         pdf.cell(30, 6, 'Cena (Kč)', 1, 1)
-        pdf.set_font('Helvetica', '', 10)
+        pdf.set_font('DejaVu', '', 10)
         pdf.cell(100, 8, 'Licence DokuCheck PRO', 1, 0)
         pdf.cell(30, 8, '1', 1, 0)
         pdf.cell(30, 8, str(int(amount_czk)), 1, 1)
@@ -144,25 +176,17 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                     except Exception:
                         pass
             except Exception as e:
-                print('[invoice_generator] QR kód se nepodařilo vygenerovat:', e)
-                print(traceback.format_exc())
+                logger.warning('[invoice_generator] QR kód se nepodařilo vygenerovat: %s', e)
                 pdf.cell(0, 6, 'QR platba (SPAYD): {}'.format(spayd[:70] + '...'), 0, 1)
         else:
             pdf.cell(0, 6, 'Pro QR platbu nastavte v Adminu účet (IBAN).', 0, 1)
 
         filename = 'faktura_{}.pdf'.format(order_id)
         filepath = os.path.join(INVOICES_DIR, filename)
-        try:
-            pdf.output(filepath)
-        except Exception as write_err:
-            logger.error('[invoice_generator] Chyba pri zapisu PDF souboru %s: %s', filepath, write_err)
-            logger.error(traceback.format_exc())
-            return None
+        pdf.output(filepath)
         return filepath
 
     except Exception as e:
         logger.error('[invoice_generator] Chyba pri generovani PDF faktury: %s', e)
         logger.error(traceback.format_exc())
-        print('[invoice_generator] Chyba pri generovani PDF faktury:', e)
-        print(traceback.format_exc())
         return None

@@ -1,0 +1,43 @@
+================================================================================
+  PYTHONANYWHERE – instalace závislostí pro generování faktur (fpdf2, qrcode)
+================================================================================
+
+Faktury (invoice_generator.py) potřebují: fpdf2, qrcode.
+Jsou už v requirements.txt, takže stačí po nasazení kódu znovu nainstalovat
+závislosti v aktivovaném venv.
+
+--------------------------------------------------------------------------------
+CO ZKOPÍROVAT DO BASH NA PA (jedna dávka)
+--------------------------------------------------------------------------------
+
+  cd /home/cieslar/web_app/web_app
+  source /home/cieslar/web_app-virtualenv/bin/activate
+  pip install --upgrade pip
+  pip install -r requirements.txt
+  touch wsgi_pythonanywhere.py
+
+(Pokud máte jinou cestu k projektu nebo venv, nahraďte:
+  /home/cieslar/web_app/web_app  → vaše cesta k aplikaci, kde je requirements.txt
+  /home/cieslar/web_app-virtualenv  → vaše virtualenv, např. /home/cieslar/venv)
+
+--------------------------------------------------------------------------------
+POUZE fpdf2 + qrcode (pokud nechcete celý requirements.txt)
+--------------------------------------------------------------------------------
+
+  source /home/cieslar/web_app-virtualenv/bin/activate
+  pip install fpdf2 qrcode[pil]
+
+--------------------------------------------------------------------------------
+FONT PRO DIAKRITIKU NA PA
+--------------------------------------------------------------------------------
+Na Linuxu (PA) generátor hledá DejaVu v:
+  /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+Na PythonAnywhere bývá k dispozici. Pokud by faktury padaly na znaky (ř, š, ś…),
+přidejte do projektu složku web_app/fonts/ a do ní soubor DejaVuSans.ttf
+(stáhnout z https://dejavu-fonts.github.io/Download.html) a nahrajte na PA do
+stejné cesty (web_app/fonts/DejaVuSans.ttf).
+
+--------------------------------------------------------------------------------
+PO INSTALACI
+--------------------------------------------------------------------------------
+V záložce Web klikněte na  Reload  pro znovunačtení aplikace.
