@@ -22,9 +22,10 @@ import webbrowser
 from api_endpoint import register_api_routes, consume_one_time_token
 from database import Database
 try:
-    from settings_loader import get_pricing_tarifs, get_email_order_confirmation_subject, load_settings_for_views
+    from settings_loader import get_pricing_tarifs, get_email_order_confirmation_subject, load_settings_for_views, DEFAULT_PRICING_TARIFS
 except ImportError:
     get_pricing_tarifs = get_email_order_confirmation_subject = load_settings_for_views = None
+    DEFAULT_PRICING_TARIFS = {"basic": {"label": "BASIC", "amount_czk": 1290}, "standard": {"label": "PRO", "amount_czk": 1990}}
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp
@@ -2991,9 +2992,9 @@ def online_check():
     return render_template('online_check.html')
 
 
-# Fallback částky a štítky (použijí se když settings_loader není nebo DB prázdná)
-TARIF_AMOUNTS_FALLBACK = {'basic': 990, 'standard': 1990}
-TARIF_LABELS_FALLBACK = {'basic': 'BASIC', 'standard': 'PRO'}
+# Fallback částky a štítky – odvozeno z DEFAULT_PRICING_TARIFS (jediný zdroj cen = DB / Admin)
+TARIF_AMOUNTS_FALLBACK = {k: v.get("amount_czk", 1990) for k, v in DEFAULT_PRICING_TARIFS.items()}
+TARIF_LABELS_FALLBACK = {k: v.get("label", k.upper()) for k, v in DEFAULT_PRICING_TARIFS.items()}
 
 
 def _checkout_tier_features(tier_row, tarif_key):
