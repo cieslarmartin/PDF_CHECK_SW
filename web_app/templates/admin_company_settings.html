@@ -8,17 +8,23 @@
     <div class="admin-card" style="max-width:640px;">
         <div class="card-header">Údaje pro fakturu (dodavatel)</div>
         <div class="card-body">
-            <label class="admin-settings-label">Jméno / Firma (provider_name)</label>
+            <label class="admin-settings-label">Jméno / Název (provider_name)</label>
             <input type="text" name="provider_name" class="form-control admin-settings-input" value="{{ company.provider_name|e }}" placeholder="Ing. Martin Cieślar">
-            <label class="admin-settings-label">Adresa (provider_address)</label>
+            <label class="admin-settings-label">Adresa – Ulice, Město, PSČ (provider_address)</label>
             <input type="text" name="provider_address" class="form-control admin-settings-input" value="{{ company.provider_address|e }}" placeholder="Porubská 1, 742 83 Klimkovice">
             <label class="admin-settings-label">IČO (provider_ico)</label>
             <input type="text" name="provider_ico" class="form-control admin-settings-input" value="{{ company.provider_ico|e }}" placeholder="04830661">
-            <label class="admin-settings-label">Číslo účtu (bank_account)</label>
-            <input type="text" name="bank_account" class="form-control admin-settings-input" value="{{ company.bank_account|e }}" placeholder="192000145399/0800">
-            <label class="admin-settings-label">IBAN (bank_iban)</label>
-            <input type="text" name="bank_iban" class="form-control admin-settings-input" value="{{ company.bank_iban|e }}" placeholder="CZ65 0800 0000 1920 0014 5399">
-            <label class="admin-settings-label">Text o živnostenském rejstříku (provider_trade_register)</label>
+            <label class="admin-settings-label">Banka (provider_bank_name)</label>
+            <input type="text" name="provider_bank_name" class="form-control admin-settings-input" value="{{ company.provider_bank_name|e }}" placeholder="ČSOB">
+            <label class="admin-settings-label">Číslo účtu a Kód banky (bank_account) – např. 172912882/0300</label>
+            <input type="text" name="bank_account" class="form-control admin-settings-input" value="{{ company.bank_account|e }}" placeholder="172912882/0300">
+            <label class="admin-settings-label">IBAN (bank_iban) – volitelně; pokud vyplněno, použije se pro QR platbu místo převodu z účtu</label>
+            <input type="text" name="bank_iban" class="form-control admin-settings-input" value="{{ company.bank_iban|e }}" placeholder="CZ65 0300 0000 0017 2912 8822">
+            <label class="admin-settings-label">Telefon (provider_phone) – pro patu faktury</label>
+            <input type="text" name="provider_phone" class="form-control admin-settings-input" value="{{ company.provider_phone|e }}" placeholder="+420 123 456 789">
+            <label class="admin-settings-label">E-mail (provider_email) – pro patu faktury</label>
+            <input type="email" name="provider_email" class="form-control admin-settings-input" value="{{ company.provider_email|e }}" placeholder="info@dokucheck.cz">
+            <label class="admin-settings-label">Text o registraci (provider_trade_register)</label>
             <textarea name="provider_trade_register" class="form-control" rows="2" style="width:100%;max-width:100%;padding:6px 8px;">{{ company.provider_trade_register|e }}</textarea>
             <p class="small text-muted mt-1">Např.: Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.</p>
             <label class="admin-settings-label">Složka pro ukládání faktur (invoices_dir) – volitelné</label>

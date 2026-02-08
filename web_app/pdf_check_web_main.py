@@ -3074,6 +3074,9 @@ def checkout():
             supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
             supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
             supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
+            supplier_bank_name = (db.get_global_setting('provider_bank_name') or '').strip() or None
+            supplier_phone = (db.get_global_setting('provider_phone') or '').strip() or None
+            supplier_email = (db.get_global_setting('provider_email') or '').strip() or None
             bank_iban = db.get_global_setting('bank_iban', '') or ''
             bank_account = db.get_global_setting('bank_account', '') or ''
             filepath = None
@@ -3094,6 +3097,9 @@ def checkout():
                     invoice_number=invoice_number,
                     supplier_trade_register=supplier_trade_register or None,
                     output_dir=invoices_dir or None,
+                    supplier_bank_name=supplier_bank_name,
+                    supplier_phone=supplier_phone,
+                    supplier_email=supplier_email,
                 )
             except Exception as e:
                 if current_app and getattr(current_app, 'logger', None):

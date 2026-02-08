@@ -275,8 +275,11 @@ def company_settings():
         db.set_global_setting('provider_name', request.form.get('provider_name', '').strip())
         db.set_global_setting('provider_address', request.form.get('provider_address', '').strip())
         db.set_global_setting('provider_ico', request.form.get('provider_ico', '').strip())
+        db.set_global_setting('provider_bank_name', request.form.get('provider_bank_name', '').strip())
         db.set_global_setting('bank_account', request.form.get('bank_account', '').strip())
         db.set_global_setting('bank_iban', request.form.get('bank_iban', '').strip())
+        db.set_global_setting('provider_phone', request.form.get('provider_phone', '').strip())
+        db.set_global_setting('provider_email', request.form.get('provider_email', '').strip())
         db.set_global_setting('provider_trade_register', request.form.get('provider_trade_register', '').strip())
         db.set_global_setting('invoices_dir', request.form.get('invoices_dir', '').strip())
         flash('Nastavení firmy uloženo.', 'success')
@@ -285,8 +288,11 @@ def company_settings():
         'provider_name': db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar',
         'provider_address': db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice',
         'provider_ico': db.get_global_setting('provider_ico', '') or '04830661',
-        'bank_account': db.get_global_setting('bank_account', ''),
-        'bank_iban': db.get_global_setting('bank_iban', ''),
+        'provider_bank_name': db.get_global_setting('provider_bank_name', '') or 'ČSOB',
+        'bank_account': db.get_global_setting('bank_account', '') or '',
+        'bank_iban': db.get_global_setting('bank_iban', '') or '',
+        'provider_phone': db.get_global_setting('provider_phone', '') or '',
+        'provider_email': db.get_global_setting('provider_email', '') or '',
         'provider_trade_register': db.get_global_setting('provider_trade_register', '') or 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.',
         'invoices_dir': db.get_global_setting('invoices_dir', '') or '',
     }
@@ -505,6 +511,9 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
     supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
     supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
     supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
+    supplier_bank_name = (db.get_global_setting('provider_bank_name') or '').strip() or None
+    supplier_phone = (db.get_global_setting('provider_phone') or '').strip() or None
+    supplier_email = (db.get_global_setting('provider_email') or '').strip() or None
     bank_iban = db.get_global_setting('bank_iban', '') or ''
     bank_account = db.get_global_setting('bank_account', '') or ''
     invoice_number = (order.get('invoice_number') or '').strip() or db.get_next_invoice_number()
@@ -527,6 +536,9 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
             invoice_number=invoice_number,
             supplier_trade_register=supplier_trade_register,
             output_dir=invoices_dir,
+            supplier_bank_name=supplier_bank_name,
+            supplier_phone=supplier_phone,
+            supplier_email=supplier_email,
         )
         return (filepath, None)
     except Exception as e:
