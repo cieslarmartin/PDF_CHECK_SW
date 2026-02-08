@@ -9,6 +9,7 @@
     <li><a href="#tab-pricing" class="admin-tab" data-tab="pricing">Ceny a Tarify</a></li>
     <li><a href="#tab-marketing" class="admin-tab" data-tab="marketing">Marketing</a></li>
     <li><a href="#tab-legal" class="admin-tab" data-tab="legal">Právní info</a></li>
+    <li><a href="#tab-coming-soon" class="admin-tab" data-tab="coming-soon">Připravujeme</a></li>
     <li><a href="#tab-system" class="admin-tab" data-tab="system">Systém</a></li>
 </ul>
 
@@ -263,6 +264,46 @@
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit právní info</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Připravujeme (Coming Soon) – texty sekce na hlavní stránce ----- #}
+<div id="tab-coming-soon" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_coming_soon">
+        <div class="admin-card">
+            <div class="card-header">Sekce „Připravujeme“ na hlavní stránce</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Úvodní text sekce a dvě karty (Path Checker, Online editor). Odrážky pište na samostatné řádky.</p>
+                <label class="admin-settings-label">Úvodní odstavec sekce (coming_soon_intro)</label>
+                <textarea name="coming_soon_intro" class="form-control admin-settings-textarea" rows="2">{{ settings.coming_soon_intro|e }}</textarea>
+            </div>
+            <div class="card-body">
+                <div class="card-header">Karta 1 – Path Checker</div>
+                <label class="admin-settings-label">Nadpis (coming_soon_path_title)</label>
+                <input type="text" name="coming_soon_path_title" class="form-control admin-settings-input" value="{{ settings.coming_soon_path_title|e }}">
+                <label class="admin-settings-label">Podnadpis (coming_soon_path_subtitle)</label>
+                <input type="text" name="coming_soon_path_subtitle" class="form-control admin-settings-input" value="{{ settings.coming_soon_path_subtitle|e }}">
+                <label class="admin-settings-label">Odrážky – jeden bod na řádek (coming_soon_path_items)</label>
+                <textarea name="coming_soon_path_items" class="form-control admin-settings-textarea" rows="4">{{ settings.coming_soon_path_items|e }}</textarea>
+                <label class="admin-settings-label">Závěrečná věta / benefit (coming_soon_path_benefit)</label>
+                <input type="text" name="coming_soon_path_benefit" class="form-control admin-settings-input" value="{{ settings.coming_soon_path_benefit|e }}">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Karta 2 – Online editor a podpis PDF</div>
+                <label class="admin-settings-label">Nadpis (coming_soon_editor_title)</label>
+                <input type="text" name="coming_soon_editor_title" class="form-control admin-settings-input" value="{{ settings.coming_soon_editor_title|e }}">
+                <label class="admin-settings-label">Podnadpis (coming_soon_editor_subtitle)</label>
+                <input type="text" name="coming_soon_editor_subtitle" class="form-control admin-settings-input" value="{{ settings.coming_soon_editor_subtitle|e }}">
+                <label class="admin-settings-label">Odrážky – jeden bod na řádek (coming_soon_editor_items)</label>
+                <textarea name="coming_soon_editor_items" class="form-control admin-settings-textarea" rows="4">{{ settings.coming_soon_editor_items|e }}</textarea>
+                <label class="admin-settings-label">Závěrečná věta / benefit (coming_soon_editor_benefit)</label>
+                <input type="text" name="coming_soon_editor_benefit" class="form-control admin-settings-input" value="{{ settings.coming_soon_editor_benefit|e }}">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit sekci Připravujeme</button>
             </div>
         </div>
     </form>

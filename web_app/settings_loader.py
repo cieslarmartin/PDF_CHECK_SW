@@ -137,6 +137,21 @@ def load_settings_for_views(db):
     out["download_url"] = db.get_global_setting("download_url", "") or ""
     out["pilot_notice_text"] = db.get_global_setting("pilot_notice_text", DEFAULTS.get("pilot_notice_text", "")) or DEFAULTS.get("pilot_notice_text", "")
     out["show_pilot_notice"] = db.get_setting_bool("show_pilot_notice", DEFAULTS.get("show_pilot_notice", True))
+    # Sekce Připravujeme (Coming Soon) na hlavní stránce
+    out["coming_soon_intro"] = db.get_global_setting("coming_soon_intro", "") or "Rozšíření Agenta, která řeší reálné potřeby projektantů: kontrola cest a názvů souborů a úpravy PDF včetně podepisování přímo v systému."
+    out["coming_soon_path_title"] = db.get_global_setting("coming_soon_path_title", "") or "Path Checker"
+    out["coming_soon_path_subtitle"] = db.get_global_setting("coming_soon_path_subtitle", "") or "Aplikace pro kontrolu cest, revizi a logistiku souborů"
+    out["coming_soon_path_items"] = db.get_global_setting("coming_soon_path_items", "") or "Kontrola délky názvů a cest (Path Length) na vašem PC – prevence problémů na OneDrive/SharePoint\nBlesková kontrola tisíců souborů najednou\nExport problematických souborů do Excelu pro rychlou opravu"
+    out["coming_soon_path_benefit"] = db.get_global_setting("coming_soon_path_benefit", "") or "→ Žádné neočekávané pády u velkých zakázek. Z Agenta – vše běží na vašem PC."
+    out["coming_soon_editor_title"] = db.get_global_setting("coming_soon_editor_title", "") or "Online editor a podpis PDF"
+    out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
+    out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
+    out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
+    # Seznamy odrážek pro šablonu (řádky rozdělené \n)
+    path_items = (out.get("coming_soon_path_items") or "").split("\n")
+    out["coming_soon_path_items_list"] = [x.strip() for x in path_items if x.strip()]
+    editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
+    out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
     return out
 
 

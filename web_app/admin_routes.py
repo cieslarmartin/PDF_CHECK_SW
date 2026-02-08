@@ -863,6 +863,9 @@ def _settings_for_admin(db):
     s['exit_intent_popup'] = db.get_setting_json('exit_intent_popup', {'title': '', 'body': '', 'button_text': 'Zavřít', 'is_active': False})
     s['header_scripts'] = db.get_setting_json('header_scripts', [])
     s['allowed_extensions'] = db.get_setting_json('allowed_extensions', ['.pdf'])
+    for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
+                'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
+        s[key] = db.get_global_setting(key, '')
     return s
 
 
@@ -988,6 +991,11 @@ def settings():
             for key in ('legal_vop_html', 'legal_gdpr_html', 'footer_disclaimer', 'app_legal_notice'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Právní info uloženo', 'success')
+        elif action == 'save_coming_soon':
+            for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
+                        'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            flash('Sekce Připravujeme uložena', 'success')
         elif action == 'save_system':
             for key in ('seo_meta_title', 'seo_meta_description', 'email_order_confirmation_subject', 'email_order_confirmation_body',
                         'email_welcome_subject', 'email_welcome_body'):
