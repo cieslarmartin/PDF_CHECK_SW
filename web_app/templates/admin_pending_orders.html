@@ -28,10 +28,18 @@
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
                 <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">Nová</span></td>
-                <td>
+                <td style="white-space:nowrap;">
                     <form method="post" action="{{ url_for('admin.generate_invoice_and_send') }}" style="display:inline;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-primary btn-sm">VYGENEROVAT FAKTURU A POSLAT ÚDAJE</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">VYTVOŘIT UŽIVATELE A AKTIVOVAT</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.id }}?');">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
                     </form>
                 </td>
             </tr>
@@ -79,7 +87,7 @@
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
                 <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">Čeká na platbu</span></td>
-                <td>
+                <td style="white-space:nowrap;">
                     <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-primary btn-sm">POTVRDIT PLATBU</button>
@@ -91,6 +99,10 @@
                     <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-outline-secondary btn-sm">AKTIVOVAT BEZ FAKTURY</button>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.id }}?');">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
                     </form>
                 </td>
             </tr>

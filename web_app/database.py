@@ -1313,6 +1313,21 @@ class Database:
         finally:
             conn.close()
 
+    def delete_pending_order(self, order_id):
+        """Smaže objednávku z pending_orders. Vrátí True při úspěchu."""
+        if not order_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM pending_orders WHERE id = ?', (order_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
     def get_tier_by_name(self, name):
         """Vrátí tier (dict) podle názvu (case-insensitive): Basic, Pro, Free, Trial. Pro tarif z objednávky: basic->Basic, standard->Pro."""
         if not name or not str(name).strip():

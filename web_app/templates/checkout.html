@@ -5,52 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fakturační údaje – DokuCheck</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .checkout-header { background: white; border-bottom: 2px solid #1e5a8a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .checkout-header .logo-pdf { color: #1e5a8a; }
+        .checkout-header .logo-doku { color: #374151; }
+        .checkout-panel { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .checkout-btn-primary { background: #1e5a8a; color: white; }
+        .checkout-btn-primary:hover { background: #174a6e; }
+        .checkout-link { color: #059669; }
+        .checkout-link:hover { text-decoration: underline; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
-    <nav class="border-b border-slate-700/50 bg-slate-900/95">
-        <div class="max-w-4xl mx-auto px-6 py-4">
-            <a href="/" class="text-xl font-bold text-white">DokuCheck</a>
+<body class="min-h-screen antialiased">
+    <header class="checkout-header">
+        <div class="max-w-4xl mx-auto px-4 py-3">
+            <a href="/" class="text-xl font-bold">
+                <span class="logo-pdf">PDF</span><span class="logo-doku">DokuCheck</span>
+            </a>
         </div>
-    </nav>
-    <main class="max-w-lg mx-auto px-6 py-12">
-        <h1 class="text-2xl font-bold text-white mb-6">Fakturační údaje</h1>
+    </header>
+
+    <main class="max-w-lg mx-auto px-4 py-8 md:py-12">
+        <h1 class="text-2xl font-bold mb-2" style="color:#1f2937;">Fakturační údaje</h1>
+        <p class="text-sm mb-6" style="color:#6b7280;">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, msg in messages %}
-              <p class="mb-4 p-3 rounded-lg {% if category == 'error' %}bg-red-900/50 text-red-300{% else %}bg-slate-800 text-slate-300{% endif %}">{{ msg }}</p>
+              <div class="mb-4 p-4 rounded-xl {{ 'bg-red-50 border border-red-200 text-red-800' if category == 'error' else 'bg-blue-50 border border-blue-200 text-blue-800' }}">{{ msg }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <p class="text-slate-400 mb-6">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
-        <p class="mb-6 p-4 rounded-lg bg-slate-800/80 border border-slate-600 text-slate-300 text-sm">Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.</p>
+
+        {# Rekapitulace: Vaše objednávka – dynamicky podle tarifu z hlavní stránky #}
+        <section class="checkout-panel p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4" style="color:#1f2937;">Vaše objednávka</h2>
+            <div class="flex justify-between items-baseline mb-2">
+                <span class="font-medium" style="color:#374151;">{{ (order_summary or {}).tier_label|default(tarif_label|default('PRO')) }}</span>
+                <span class="text-xl font-bold" style="color:#1e5a8a;">{{ (order_summary or {}).amount_czk|default(1990) }} Kč</span>
+            </div>
+            <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
+            {% if order_summary and order_summary.features %}
+            <ul class="text-sm space-y-2 list-none pl-0" style="color:#4b5563;">
+                {% for f in order_summary.features %}
+                <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> {{ f }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <ul class="text-sm space-y-2 list-none pl-0" style="color:#4b5563;">
+                <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Kontrola PDF/A a metadat</li>
+                <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Z Agenta – soubory u vás</li>
+            </ul>
+            {% endif %}
+        </section>
+
+        <div class="checkout-panel p-4 mb-6 text-sm" style="color:#6b7280;border-left:4px solid #1e5a8a;">
+            Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.
+        </div>
         {% if payment_instructions %}
-        <div class="mb-6 p-4 rounded-lg bg-slate-800 border border-slate-600 text-slate-300 text-sm whitespace-pre-wrap">{{ payment_instructions }}</div>
+        <div class="checkout-panel p-4 mb-6 text-sm whitespace-pre-wrap" style="color:#4b5563;">{{ payment_instructions }}</div>
         {% endif %}
-        <form method="post" action="/checkout" class="space-y-4">
+
+        <form method="post" action="{{ url_for('checkout') }}" class="checkout-panel p-6 space-y-4">
             <input type="hidden" name="tarif" value="{{ tarif or 'standard' }}">
+            {% if order_summary and order_summary.tier_id %}
+            <input type="hidden" name="tier_id" value="{{ order_summary.tier_id }}">
+            {% endif %}
             <div>
-                <label class="block text-slate-300 text-sm mb-1">Jméno / Firma *</label>
-                <input type="text" name="jmeno_firma" required class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="Jan Novák nebo Firma s.r.o.">
+                <label class="block text-sm font-medium mb-1" style="color:#374151;">Jméno / Firma *</label>
+                <input type="text" name="jmeno_firma" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1 focus:ring-1e5a8a" style="border-color:#e5e7eb;" placeholder="Jan Novák nebo Firma s.r.o.">
             </div>
             <div>
-                <label class="block text-slate-300 text-sm mb-1">IČ</label>
-                <input type="text" name="ico" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="12345678">
+                <label class="block text-sm font-medium mb-1" style="color:#374151;">IČ</label>
+                <input type="text" name="ico" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="12345678">
             </div>
             <div>
-                <label class="block text-slate-300 text-sm mb-1">E-mail *</label>
-                <input type="email" name="email" required class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:border-blue-500" placeholder="vas@email.cz">
+                <label class="block text-sm font-medium mb-1" style="color:#374151;">E-mail *</label>
+                <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="vas@email.cz">
             </div>
             <div>
-                <label class="block text-slate-300 text-sm mb-1">Vybraný tarif</label>
-                <input type="text" readonly class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 text-slate-300" value="{{ tarif_label or 'PRO' }}">
+                <label class="block text-sm font-medium mb-1" style="color:#374151;">Vybraný tarif</label>
+                <input type="text" readonly class="w-full px-4 py-2.5 rounded-lg border bg-gray-50 text-gray-600" style="border-color:#e5e7eb;" value="{{ (order_summary or {}).tier_label|default(tarif_label|default('PRO')) }}">
             </div>
             <div class="flex items-start gap-2">
-                <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500">
-                <label for="souhlas_vop_gdpr" class="text-slate-300 text-sm">Souhlasím s <a href="/vop" target="_blank" class="text-blue-400 hover:underline">obchodními podmínkami</a> a <a href="/gdpr" target="_blank" class="text-blue-400 hover:underline">zásadami ochrany osobních údajů (GDPR)</a>. *</label>
+                <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-gray-300 text-1e5a8a focus:ring-1e5a8a" style="accent-color:#1e5a8a;">
+                <label for="souhlas_vop_gdpr" class="text-sm" style="color:#4b5563;">Souhlasím s <a href="{{ url_for('vop') }}" target="_blank" class="checkout-link">obchodními podmínkami</a> a <a href="{{ url_for('gdpr') }}" target="_blank" class="checkout-link">zásadami ochrany osobních údajů (GDPR)</a>. *</label>
             </div>
-            <button type="submit" class="w-full py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500 transition">Odeslat a vystavit fakturu</button>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">Odeslat a vystavit fakturu</button>
         </form>
-        <p class="mt-6 text-slate-500 text-sm"><a href="/#cenik" class="text-blue-400 hover:underline">Zpět na ceník</a></p>
+
+        <p class="mt-6 text-sm text-center" style="color:#6b7280;"><a href="/#cenik" class="checkout-link">Zpět na ceník</a></p>
     </main>
 </body>
 </html>

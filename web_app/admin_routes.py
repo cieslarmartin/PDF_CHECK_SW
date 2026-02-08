@@ -442,6 +442,30 @@ def pending_orders():
         user=user, active_page='pending_orders')
 
 
+@admin_bp.route('/admin/delete-pending-order', methods=['POST'])
+@admin_required
+def delete_pending_order():
+    """Smaže objednávku (novou nebo čekající na platbu). Nelze mazat již aktivované."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    status = (order.get('status') or '').upper()
+    if status == 'ACTIVE':
+        flash('Aktivní objednávku nelze smazat.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    if db.delete_pending_order(order_id):
+        flash('Objednávka #{} byla smazána.'.format(order_id), 'success')
+    else:
+        flash('Objednávku se nepodařilo smazat.', 'error')
+    return redirect(url_for('admin.pending_orders'))
+
+
 @admin_bp.route('/admin/generate-invoice-and-send', methods=['POST'])
 @admin_required
 def generate_invoice_and_send():
@@ -542,7 +566,7 @@ def toggle_auto_activate_csob():
 @admin_bp.route('/admin/confirm-payment', methods=['POST'])
 @admin_required
 def confirm_payment():
-    """POTVRDIT PŘIJETÍ PLATBY: status -> ACTIVE, vytvoření licence, heslo, e-mail 2, notifikace adminu."""
+    """POTVRDIT PŘIJETÍ PLATBY / VYTVOŘIT UŽIVATELE: status -> ACTIVE, vytvoření licence, heslo, e-mail 2, notifikace adminu. Funguje i u Nových objednávek."""
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
@@ -553,8 +577,8 @@ def confirm_payment():
         flash('Objednávka nenalezena', 'error')
         return redirect(url_for('admin.pending_orders'))
     status = (order.get('status') or '').upper()
-    if status not in ('PENDING', 'WAITING_PAYMENT'):
-        flash('Objednávka již byla zpracována nebo není ve stavu Čekající na platbu.', 'error')
+    if status not in ('PENDING', 'WAITING_PAYMENT', 'NEW_ORDER'):
+        flash('Objednávka již byla zpracována nebo není ve stavu Nová / Čekající na platbu.', 'error')
         return redirect(url_for('admin.pending_orders'))
     tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
     if not tier_row:

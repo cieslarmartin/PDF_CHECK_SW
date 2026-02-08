@@ -2996,6 +2996,30 @@ TARIF_AMOUNTS_FALLBACK = {'basic': 990, 'standard': 1990}
 TARIF_LABELS_FALLBACK = {'basic': 'BASIC', 'standard': 'PRO'}
 
 
+def _checkout_tier_features(tier_row, tarif_key):
+    """Sestaví seznam hlavních funkcí licence z tabulky license_tiers pro rekapitulaci v checkoutu."""
+    if not tier_row:
+        return ['Kontrola PDF/A a metadat', 'Kontrola podpisů', 'Z Agenta – soubory u vás'] if tarif_key == 'basic' else ['Vše z Basic', 'Export do Excel', 'Pokročilé filtry', 'Z Agenta – soubory u vás']
+    features = []
+    max_files = tier_row.get('max_files_limit')
+    if max_files is not None:
+        features.append('Až {} souborů v dávce'.format(max_files) if max_files and int(max_files) > 0 else 'Kontrola PDF v dávkách')
+    if tier_row.get('allow_signatures'):
+        features.append('Kontrola elektronických podpisů')
+    if tier_row.get('allow_timestamp'):
+        features.append('Časová razítka')
+    if tier_row.get('allow_excel_export'):
+        features.append('Export do Excel (XLS)')
+    if tier_row.get('allow_advanced_filters'):
+        features.append('Pokročilé filtry chyb')
+    max_devices = tier_row.get('max_devices')
+    if max_devices is not None and int(max_devices or 0) > 0:
+        features.append('Až {} zařízení'.format(max_devices))
+    if not features:
+        features = ['Kontrola PDF/A a metadat', 'Z Agenta – soubory u vás']
+    return features
+
+
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     """Fakturační formulář. POST ukládá do pending_orders, odešle e-mail a přesměruje na order-success bez platebních údajů."""
@@ -3100,7 +3124,22 @@ def checkout():
     if tarif not in tarif_labels:
         tarif = 'standard'
     payment_instructions = db.get_global_setting('payment_instructions', '') or ''
-    return render_template('checkout.html', tarif=tarif, tarif_label=tarif_labels.get(tarif, 'PRO'), payment_instructions=payment_instructions)
+    amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+    tier_label = tarif_labels.get(tarif, 'PRO')
+    tier_row = db.get_tier_by_name(tarif)
+    order_summary = {
+        'tier_name': tier_row.get('name', tier_label) if tier_row else tier_label,
+        'tier_label': tier_label,
+        'amount_czk': amount_czk,
+        'tier_id': tier_row.get('id') if tier_row else None,
+        'features': _checkout_tier_features(tier_row, tarif),
+    }
+    return render_template('checkout.html',
+        tarif=tarif,
+        tarif_label=tier_label,
+        payment_instructions=payment_instructions,
+        order_summary=order_summary,
+    )
 
 
 @app.route('/order-success')
