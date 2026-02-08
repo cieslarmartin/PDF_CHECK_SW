@@ -227,7 +227,7 @@ class Database:
                 ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
                  'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
                 ('activation', 'DokuCheck PRO – přístup aktivní',
-                 'Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}'),
+                 'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
                 ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
             ''')
 
@@ -426,7 +426,7 @@ class Database:
                     ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
                      'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
                     ('activation', 'DokuCheck PRO – přístup aktivní',
-                     'Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}'),
+                     'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
                     ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
                 ''')
         except Exception:
@@ -2665,6 +2665,53 @@ class Database:
         conn.commit()
         conn.close()
         return ok
+
+    def admin_assign_order_to_existing_license(self, api_key: str, tier_id: int, days: int = 365,
+                                               password_plain: str = None, user_name: str = None) -> bool:
+        """Přiřadí objednávku existujícímu účtu: aktualizuje tier, expiraci, heslo a limity z license_tiers. Vrátí True při úspěchu."""
+        if not api_key or not str(api_key).strip():
+            return False
+        tier_row = self.get_tier_by_id(tier_id)
+        if not tier_row:
+            return False
+        license_expires = (datetime.now() + timedelta(days=days)).isoformat() if days and days > 0 else None
+        password_hash = self._hash_password(password_plain) if password_plain and str(password_plain).strip() else None
+        max_files = tier_row.get('max_files_limit', 10)
+        max_devices = tier_row.get('max_devices', 1)
+        allow_sig = 1 if tier_row.get('allow_signatures') else 0
+        allow_ts = 1 if tier_row.get('allow_timestamp') else 0
+        allow_excel = 1 if tier_row.get('allow_excel_export') else 0
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            if user_name is not None and password_hash is not None:
+                cursor.execute('''
+                    UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?, user_name = ?,
+                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                    WHERE api_key = ?
+                ''', (tier_id, license_expires, password_hash, user_name or '', max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+            elif password_hash is not None:
+                cursor.execute('''
+                    UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?,
+                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                    WHERE api_key = ?
+                ''', (tier_id, license_expires, password_hash, max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+            elif user_name is not None:
+                cursor.execute('''
+                    UPDATE api_keys SET tier_id = ?, license_expires = ?, user_name = ?,
+                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                    WHERE api_key = ?
+                ''', (tier_id, license_expires, user_name or '', max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+            else:
+                cursor.execute('''
+                    UPDATE api_keys SET tier_id = ?, license_expires = ?,
+                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                    WHERE api_key = ?
+                ''', (tier_id, license_expires, max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
 
     def admin_update_license_features(self, api_key: str, max_batch_size=None,
                                        allow_signatures=None, allow_timestamp=None,

@@ -10,7 +10,7 @@ DEFAULT_EMAIL_TEMPLATES = {
     "order_confirmation_subject": "DokuCheck – potvrzení objednávky č. {vs}",
     "order_confirmation_body": "Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}",
     "activation_subject": "DokuCheck PRO – přístup aktivní",
-    "activation_body": "Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}",
+    "activation_body": "Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}",
 }
 
 

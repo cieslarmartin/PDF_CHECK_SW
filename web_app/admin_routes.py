@@ -585,26 +585,44 @@ def confirm_payment():
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.pending_orders'))
     tier_id = tier_row.get('id')
-    password_plain = secrets.token_urlsafe(12)
+    import string
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
         flash('Objednávka nemá e-mail', 'error')
         return redirect(url_for('admin.pending_orders'))
-    api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
-    if not api_key:
-        flash('Vytvoření licence se nezdařilo (možná duplicitní e-mail?).', 'error')
-        return redirect(url_for('admin.pending_orders'))
+    existing = db.get_license_by_email(email)
+    has_password = existing and (existing.get('password_hash') or '').strip()
+    if existing and has_password:
+        password_plain = None
+    else:
+        password_plain = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+    if existing:
+        ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
+        if not ok:
+            flash('Aktualizace licence existujícího účtu se nezdařila.', 'error')
+            return redirect(url_for('admin.pending_orders'))
+        api_key = existing['api_key']
+    else:
+        api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
+        if not api_key:
+            flash('Vytvoření licence se nezdařilo.', 'error')
+            return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
-        send_activation_email(email, password_plain, download_url)
-        notify_admin('Platba potvrzena – objednávka #{}'.format(order_id),
-                     'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s přístupovými údaji odeslán.'.format(order_id, email))
+        login_url = 'https://www.dokucheck.cz/portal'
+        send_activation_email(email, password_plain, download_url=download_url, login_url=login_url, user_name=user_name)
+        if existing:
+            notify_admin('Platba potvrzena – objednávka #{} (existující účet)'.format(order_id),
+                         'Přijetí platby pro objednávku #{} ({}). Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.'.format(order_id, email))
+        else:
+            notify_admin('Platba potvrzena – objednávka #{}'.format(order_id),
+                         'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s přístupovými údaji odeslán.'.format(order_id, email))
     except Exception:
         pass
-    flash('Platba potvrzena. Licence vytvořena, e-mail s heslem odeslán.', 'success')
+    flash('Platba potvrzena. ' + ('Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.' if existing else 'Licence vytvořena, e-mail s heslem odeslán.'), 'success')
     return redirect(url_for('admin.pending_orders'))
 
 
@@ -630,28 +648,42 @@ def activate_without_invoice():
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.pending_orders'))
     tier_id = tier_row.get('id')
-    password_plain = secrets.token_urlsafe(12)
+    import string
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
         flash('Objednávka nemá e-mail', 'error')
         return redirect(url_for('admin.pending_orders'))
-    api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
-    if not api_key:
-        flash('Vytvoření licence se nezdařilo (možná duplicitní e-mail?).', 'error')
-        return redirect(url_for('admin.pending_orders'))
+    existing = db.get_license_by_email(email)
+    has_password = existing and (existing.get('password_hash') or '').strip()
+    if existing and has_password:
+        password_plain = None
+    else:
+        password_plain = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+    if existing:
+        ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
+        if not ok:
+            flash('Aktualizace licence existujícího účtu se nezdařila.', 'error')
+            return redirect(url_for('admin.pending_orders'))
+    else:
+        api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
+        if not api_key:
+            flash('Vytvoření licence se nezdařilo.', 'error')
+            return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
-        send_activation_email(email, password_plain, download_url)
+        login_url = 'https://www.dokucheck.cz/portal'
+        send_activation_email(email, password_plain, download_url=download_url, login_url=login_url, user_name=user_name)
         notify_admin(
             'Ruční aktivace – objednávka #{}'.format(order_id),
-            'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). Licence vytvořena, aktivační e-mail odeslán.'.format(order_id, user_name, email)
+            'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). '.format(order_id, user_name, email)
+            + ('Licence přiřazena existujícímu účtu.' if existing else 'Licence vytvořena.') + ' Aktivační e-mail odeslán.'
         )
     except Exception:
         pass
-    flash('Uživatel aktivován ručně. Licence vytvořena, aktivační e-mail odeslán. Na info@dokucheck.cz přišla notifikace.', 'success')
+    flash('Uživatel aktivován ručně. ' + ('Licence přiřazena existujícímu účtu.' if existing else 'Licence vytvořena.') + ' Aktivační e-mail odeslán.', 'success')
     return redirect(url_for('admin.pending_orders'))
 
 
@@ -1218,9 +1250,7 @@ def api_update_license():
 @admin_bp.route('/admin/api/license/welcome-package', methods=['POST'])
 @admin_required
 def api_welcome_package():
-    """Vygeneruje náhodné heslo, nastaví ho v DB a vrátí text e-mailu pro uvítací balíček."""
-    import secrets
-    import string
+    """Vrátí pouze údaje licence pro zobrazení (Info balíček). Heslo se negeneruje ani nemění – pouze čtení."""
     db = get_db()
     api_key = (request.form.get('api_key') or '').strip()
     if not api_key and request.is_json:
@@ -1232,26 +1262,23 @@ def api_welcome_package():
     if not lic:
         return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
     email = lic.get('email') or ''
+    user_name = lic.get('user_name') or ''
     tier_name = lic.get('tier_name') or 'Standard'
-    # Generovat náhodné heslo (8 znaků: písmena + číslice)
-    alphabet = string.ascii_letters + string.digits
-    new_password = ''.join(secrets.choice(alphabet) for _ in range(10))
-    db.admin_set_license_password(api_key, new_password)
-    # Odkaz na stažení – vždy na aktuální doménu (PA)
-    base_url = request.host_url.rstrip('/') if request else ''
-    if not base_url:
-        base_url = 'https://cieslar.pythonanywhere.com'
+    base_url = request.host_url.rstrip('/') if request else 'https://www.dokucheck.cz'
     download_url = base_url + '/download'
+    login_url = base_url + '/portal'
     email_body = (
-        f"Váš účet: {email}\n"
-        f"Heslo: {new_password}\n"
+        f"Účet (e-mail): {email}\n"
+        f"Jméno: {user_name or '—'}\n"
         f"Licence: {tier_name}\n"
-        f"API Klíč: {api_key}\n"
+        f"API klíč: {api_key}\n"
         f"Odkaz na stažení: {download_url}\n"
+        f"Odkaz na přihlášení: {login_url}\n\n"
+        "Heslo je nastaveno (z bezpečnostních důvodů se nezobrazuje).\n"
+        "Pro změnu hesla použijte tlačítko „Změnit heslo“ v řádku uživatele."
     )
     return jsonify({
         'success': True,
-        'password': new_password,
         'email_body': email_body,
         'email': email,
         'tier_name': tier_name,

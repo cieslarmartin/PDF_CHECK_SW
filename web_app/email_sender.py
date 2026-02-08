@@ -162,15 +162,25 @@ def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_cz
     return send_email(email, subject, body, append_footer=True)
 
 
-def send_activation_email(user_email, password_plain, download_url=None):
-    """E-mail 2: aktivace. Šablona z site_config (placeholdery: email, heslo, download_url), na konec footer."""
+def send_activation_email(user_email, password_plain, download_url=None, login_url=None, user_name=None):
+    """E-mail 2: aktivace. Šablona z DB (placeholdery: {jmeno}, {email}, {heslo}, {login_url}, {download_url}). Při password_plain=None se {heslo} nahradí textem o stávajícím hesle."""
     if not download_url:
         download_url = os.environ.get('DOWNLOAD_URL', 'https://www.dokucheck.cz/download')
+    if not login_url:
+        login_url = 'https://www.dokucheck.cz/portal'
+    jmeno_text = (user_name or user_email or '').strip() or user_email or ''
+    heslo_text = (password_plain if (password_plain is not None and str(password_plain).strip()) else
+                 'Vaše stávající heslo (použijte heslo z předchozí aktivace).')
     templates = get_email_templates()
     subject_tpl = templates.get("activation_subject") or "DokuCheck PRO – přístup aktivní"
     body_tpl = templates.get("activation_body") or (
-        "Vaše platba byla přijata!\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte zde: {download_url}"
+        "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\n"
+        "Přihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\n"
+        "Odkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}"
     )
-    subject = subject_tpl.replace("{email}", user_email).replace("{heslo}", password_plain).replace("{download_url}", download_url)
-    body = body_tpl.replace("{email}", user_email).replace("{heslo}", password_plain).replace("{download_url}", download_url)
+    def repl(t):
+        return (t.replace("{jmeno}", jmeno_text).replace("{email}", user_email or '')
+                .replace("{heslo}", heslo_text).replace("{download_url}", download_url or '').replace("{login_url}", login_url or ''))
+    subject = repl(subject_tpl)
+    body = repl(body_tpl)
     return send_email(user_email, subject, body, append_footer=True)

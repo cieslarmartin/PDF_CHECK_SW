@@ -136,9 +136,9 @@
                         <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Prodloužit licenci">PRODLOUŽIT</button>
                         <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Deaktivovat licenci' if license.is_active else 'Aktivovat' }}">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
                         <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat licenci">SMAZAT</button>
-                        <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Generovat uvítací balíček">INFO BALÍČEK</button>
+                        <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Zobrazit údaje licence (heslo se nemění)">INFO BALÍČEK</button>
                         <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="Audit">Audit</a>
-                        <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Heslo">Heslo</button>
+                        <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Změnit heslo ručně">Změnit heslo</button>
                     </div>
                 </td>
             </tr>
@@ -370,10 +370,10 @@
 <div class="modal-overlay" id="welcomePackageModal">
     <div class="modal" style="max-width:560px;">
         <div class="modal-header">
-            <h3>Generovat uvítací balíček</h3>
+            <h3>Údaje licence</h3>
             <button class="modal-close" onclick="closeModal('welcomePackageModal')">&times;</button>
         </div>
-        <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Vygeneruje náhodné heslo a připraví text e-mailu. Heslo se propíše do účtu.</p>
+        <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Pouze zobrazení údajů licence. Heslo se negeneruje ani nemění – pro změnu hesla použijte tlačítko „Změnit heslo“.</p>
         <div id="welcomePackageContent" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:0.85em;white-space:pre-wrap;word-break:break-all;max-height:280px;overflow-y:auto;"></div>
         <div class="modal-actions" style="margin-top:16px;">
             <button type="button" class="btn btn-secondary" onclick="closeModal('welcomePackageModal')">Zavřít</button>
