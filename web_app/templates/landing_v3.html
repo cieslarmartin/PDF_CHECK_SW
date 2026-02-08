@@ -30,6 +30,10 @@
         /* Navy Blue (#0f172a) a Emerald Green (#059669) pro produktové sekce */
         .lp-navy { color: #0f172a; }
         .lp-emerald { color: #059669; }
+        /* Připravujeme / Coming Soon – karty v duchu stránky */
+        #pripravujeme { background: linear-gradient(180deg, #f0f9ff 0%, #f9fafb 100%); border-radius: 1rem; border: 1px solid #e5e7eb; padding: 2rem; }
+        .coming-badge { position: absolute; top: 1rem; right: 1rem; padding: 0.25rem 0.6rem; background: #fef3c7; color: #b45309; border-radius: 6px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em; }
+        .coming-card { position: relative; border: 1px dashed #94a3b8; }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -46,6 +50,7 @@
                 <a href="#jak">Jak to funguje</a>
                 <a href="#dva-rezimy">Dva režimy</a>
                 <a href="#cenik">Ceník</a>
+                <a href="#pripravujeme">Připravujeme</a>
                 <a href="#faq">Časté dotazy</a>
                 <a href="/app">Vyzkoušet ONLINE</a>
                 <a href="{{ download_url or url_for('download') }}">Stáhnout</a>
@@ -244,6 +249,38 @@
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ download_url or url_for('download') }}" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-v3-btn-primary transition">🪟 Stáhnout pro Windows (.exe)</a>
                     <a href="/download" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium border transition rounded-lg" style="border-color:#e5e7eb;color:#374151;">Stránka Stažení</a>
+                </div>
+            </div>
+        </section>
+
+        {# 4c) PŘIPRAVUJEME (Coming Soon) #}
+        <section id="pripravujeme" class="mb-14">
+            <h2 class="text-2xl font-bold mb-4" style="color:#1f2937;">Připravujeme</h2>
+            <p class="text-sm mb-8 max-w-2xl" style="color:#6b7280;">Rozšíření Agenta, která řeší reálné potřeby projektantů: kontrola cest a názvů souborů a úpravy PDF včetně podepisování přímo v systému.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm coming-card">
+                    <span class="coming-badge">COMING SOON</span>
+                    <span class="text-2xl mb-2 block">📂</span>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1e5a8a;">Path Checker</h3>
+                    <p class="text-sm mb-3" style="color:#64748b;">Aplikace pro kontrolu cest, revizi a logistiku souborů</p>
+                    <ul class="text-sm space-y-1.5 mb-4" style="color:#475569;list-style:none;padding-left:0;">
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Kontrola délky názvů a cest (Path Length) na vašem PC – prevence problémů na OneDrive/SharePoint</li>
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Blesková kontrola tisíců souborů najednou</li>
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Export problematických souborů do Excelu pro rychlou opravu</li>
+                    </ul>
+                    <p class="text-xs pt-3 border-t" style="color:#1e5a8a;font-weight:600;border-color:#e2e8f0;">→ Žádné neočekávané pády u velkých zakázek. Z Agenta – vše běží na vašem PC.</p>
+                </div>
+                <div class="lp-v3-panel rounded-xl p-6 shadow-sm coming-card">
+                    <span class="coming-badge">COMING SOON</span>
+                    <span class="text-2xl mb-2 block">✏️</span>
+                    <h3 class="text-lg font-semibold mb-2" style="color:#1e5a8a;">Online editor a podpis PDF</h3>
+                    <p class="text-sm mb-3" style="color:#64748b;">Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému</p>
+                    <ul class="text-sm space-y-1.5 mb-4" style="color:#475569;list-style:none;padding-left:0;">
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a</li>
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Nové podepsání autorizačním razítkem v jednom kroku</li>
+                        <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:bold;">•</span> Snadná oprava nevyhovujících PDF pro Portál stavebníka</li>
+                    </ul>
+                    <p class="text-xs pt-3 border-t" style="color:#1e5a8a;font-weight:600;border-color:#e2e8f0;">→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku.</p>
                 </div>
             </div>
         </section>
