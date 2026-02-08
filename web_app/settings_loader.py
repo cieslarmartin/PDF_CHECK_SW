@@ -29,7 +29,7 @@ DEFAULTS = {
     "landing_mode_agent_text": "Soubory na disku, na server jen metadata.",
     "landing_mode_cloud_title": "Cloud",
     "landing_mode_cloud_text": "Celé PDF na server. Rychlé vyzkoušení.",
-    "landing_tarif_basic_desc": "Pro menší objemy.",
+    "landing_tarif_basic_desc": "Ideální pro otestování v pilotním provozu.",
     "landing_tarif_standard_desc": "Plné funkce, export, historie.",
     "landing_tarif_premium_desc": "Na míru pro větší týmy.",
     # Právní – krátké texty (dlouhé VOP/GDPR mají fallback v šabloně nebo prázdné = zobraz šablonu)
@@ -43,6 +43,9 @@ DEFAULTS = {
     "email_order_confirmation_body": "",
     "email_welcome_subject": "Vítejte v DokuCheck",
     "email_welcome_body": "",
+    # Upozornění na webu (pilotní provoz, SmartScreen)
+    "pilot_notice_text": "Aplikace je v pilotním provozu.\nHláška systému SmartScreen je očekávaná (aplikace prochází certifikací).",
+    "show_pilot_notice": True,
 }
 
 # Výchozí hodnoty pro JSON klíče
@@ -129,6 +132,8 @@ def load_settings_for_views(db):
     out["legal_vop_html"] = db.get_global_setting("legal_vop_html", "")
     out["legal_gdpr_html"] = db.get_global_setting("legal_gdpr_html", "")
     out["download_url"] = db.get_global_setting("download_url", "") or ""
+    out["pilot_notice_text"] = db.get_global_setting("pilot_notice_text", DEFAULTS.get("pilot_notice_text", "")) or DEFAULTS.get("pilot_notice_text", "")
+    out["show_pilot_notice"] = db.get_setting_bool("show_pilot_notice", DEFAULTS.get("show_pilot_notice", True))
     return out
 
 

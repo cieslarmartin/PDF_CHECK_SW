@@ -42,15 +42,47 @@
                 Desktop aplikace DokuCheck Agent slouží ke kontrole PDF dokumentů (PDF/A-3, podpisy, časová razítka) 
                 a odesílání výsledků na tento portál. Po stažení a instalaci se přihlaste pomocí e-mailu a hesla nebo API klíče.
             </p>
+            {% if show_pilot_notice and pilot_notice_text %}
+            <div class="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900" role="alert">
+                <p class="font-medium mb-1">ℹ Upozornění</p>
+                <div class="text-sm whitespace-pre-line">{{ pilot_notice_text }}</div>
+                <p class="mt-3 text-sm">
+                    <button type="button" id="btn-jak-nainstalovat" class="lp-link font-medium underline cursor-pointer">Jak nainstalovat?</button>
+                </p>
+                <div id="jak-nainstalovat" class="hidden mt-3 p-3 rounded-lg bg-amber-100/80 text-sm border border-amber-200">
+                    <p class="font-medium mb-2">Windows SmartScreen:</p>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>Po stažení .exe klikněte na soubor.</li>
+                        <li>Uvidíte hlášku „Windows chrání váš počítač“ – klikněte <strong>Více informací</strong>.</li>
+                        <li>Poté zvolte <strong>Přesto spustit</strong>. Aplikace prochází certifikací.</li>
+                    </ol>
+                </div>
+            </div>
+            {% endif %}
             <p class="mb-6">
-                <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-btn-primary transition text-white no-underline">
+                <a href="{{ download_url or '#' }}" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-btn-primary transition text-white no-underline {% if not download_url %}opacity-70 pointer-events-none{% endif %}">
+                    {% if download_url %}🪟 Stáhnout pro Windows (.exe){% else %}Odkaz na stažení bude doplněn v Adminu{% endif %}
+                </a>
+            </p>
+            <p class="mb-6">
+                <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold border border-gray-300 transition text-gray-700 no-underline hover:bg-gray-50">
                     Přejít do webové aplikace (ONLINE kontrola)
                 </a>
             </p>
+            {% if not download_url %}
             <p class="text-sm text-gray-500">
-                Odkaz na stažení instalátoru agenta bude doplněn. Prozatím můžete využít webovou verzi výše.
+                Odkaz na stažení instalátoru agenta nastavte v Adminu (Nastavení → Základní → download_url). Prozatím můžete využít webovou verzi výše.
             </p>
+            {% endif %}
         </section>
+        <script>
+            (function(){
+                var btn = document.getElementById('btn-jak-nainstalovat');
+                var box = document.getElementById('jak-nainstalovat');
+                if (box && window.location.hash === '#jak-nainstalovat') box.classList.remove('hidden');
+                if (btn && box) btn.addEventListener('click', function(){ box.classList.toggle('hidden'); });
+            })();
+        </script>
 
         <footer class="mt-8 pt-6 border-t border-gray-200">
             <p class="text-sm text-gray-600">

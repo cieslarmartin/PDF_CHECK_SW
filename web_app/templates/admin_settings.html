@@ -131,7 +131,7 @@
     <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="save_sales">
         <div class="admin-card">
-            <div class="card-header">Ceny licencí (zobrazené na webu a v checkoutu)</div>
+            <div class="card-header">Ceny licencí (propisují se do Ceníku na webu a do Objednávky)</div>
             <div class="card-body">
                 {% set pt = settings.pricing_tarifs or {} %}
                 {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1290) %}
@@ -152,6 +152,16 @@
                 <div class="card-header">Platební instrukce (zobrazí se uživateli po kliknutí na „Koupit“)</div>
                 <p class="small text-muted mb-3">Text se zobrazí na stránce checkout nad formulářem. Můžete doplnit číslo účtu, variabilní symbol apod.</p>
                 <textarea name="payment_instructions" class="form-control admin-settings-textarea" rows="4" placeholder="Po odeslání objednávky vám e-mailem zašleme platební údaje...">{{ settings.payment_instructions|e }}</textarea>
+            </div>
+            <div class="card-body">
+                <div class="card-header">Upozornění na webu (pilotní provoz, SmartScreen)</div>
+                <p class="small text-muted mb-3">Text se zobrazí u tlačítka Stáhnout na hlavní stránce a na stránce /download. Po ukončení pilotního provozu upozornění skryjte přepínačem.</p>
+                <label class="admin-settings-label">Text upozornění (řádky oddělte Enterem)</label>
+                <textarea name="pilot_notice_text" class="form-control admin-settings-textarea" rows="3" placeholder="Aplikace je v pilotním provozu.&#10;Hláška systému SmartScreen je očekávaná...">{{ settings.pilot_notice_text|e }}</textarea>
+                <label class="d-flex align-items-center gap-2 mt-3">
+                    <input type="checkbox" name="show_pilot_notice" value="1" {% if settings.show_pilot_notice %}checked{% endif %} class="form-check-input">
+                    <span class="admin-settings-label mb-0">Zobrazit upozornění na webu (odškrtněte, až bude aplikace finální)</span>
+                </label>
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit správu prodeje</button>

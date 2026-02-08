@@ -2950,11 +2950,16 @@ def app_main():
 
 @app.route('/download')
 def download():
-    """Stránka stažení desktop agenta na doméně (PA). Kontakt z global_settings."""
+    """Stránka stažení desktop agenta na doméně (PA). Kontakt a pilotní upozornění z global_settings."""
     db = Database()
     contact_email = db.get_global_setting('contact_email', '') or ''
     contact_phone = db.get_global_setting('contact_phone', '') or ''
-    return render_template('download.html', contact_email=contact_email, contact_phone=contact_phone)
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    return render_template('download.html',
+        contact_email=contact_email, contact_phone=contact_phone,
+        download_url=settings.get('download_url', ''),
+        pilot_notice_text=settings.get('pilot_notice_text', ''),
+        show_pilot_notice=settings.get('show_pilot_notice', True))
 
 
 def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):

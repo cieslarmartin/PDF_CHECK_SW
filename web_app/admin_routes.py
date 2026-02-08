@@ -391,6 +391,8 @@ def _settings_for_admin(db):
     s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
     s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
     s['payment_instructions'] = db.get_global_setting('payment_instructions', '')
+    s['pilot_notice_text'] = db.get_global_setting('pilot_notice_text', '') or ''
+    s['show_pilot_notice'] = db.get_setting_bool('show_pilot_notice', True)
     s['landing_how_steps'] = db.get_setting_json('landing_how_steps', [])
     s['landing_faq'] = db.get_setting_json('landing_faq', [])
     s['legal_vop_html'] = db.get_global_setting('legal_vop_html', '')
@@ -477,6 +479,8 @@ def settings():
             db.set_global_setting('landing_tarif_basic_desc', request.form.get('landing_tarif_basic_desc', ''))
             db.set_global_setting('landing_tarif_standard_desc', request.form.get('landing_tarif_pro_desc', ''))
             db.set_global_setting('payment_instructions', request.form.get('payment_instructions', ''))
+            db.set_global_setting('pilot_notice_text', request.form.get('pilot_notice_text', ''))
+            db.set_global_setting('show_pilot_notice', '1' if request.form.get('show_pilot_notice') == '1' else '0')
             flash('Správa prodeje uložena', 'success')
         elif action == 'save_pricing':
             pricing_ok = True
