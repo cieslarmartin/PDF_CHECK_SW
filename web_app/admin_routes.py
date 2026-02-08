@@ -497,6 +497,9 @@ def generate_invoice_and_send():
     supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
     bank_iban = db.get_global_setting('bank_iban', '') or ''
     bank_account = db.get_global_setting('bank_account', '') or ''
+    invoice_number = (order.get('invoice_number') or '').strip() or db.get_next_invoice_number()
+    if not (order.get('invoice_number') or '').strip():
+        db.update_pending_order_invoice_number(order_id, invoice_number)
     try:
         from invoice_generator import generate_invoice_pdf
         filepath = generate_invoice_pdf(
@@ -511,6 +514,7 @@ def generate_invoice_and_send():
             supplier_ico=supplier_ico,
             bank_iban=bank_iban,
             bank_account=bank_account,
+            invoice_number=invoice_number,
         )
     except Exception as e:
         import traceback

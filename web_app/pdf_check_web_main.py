@@ -3047,23 +3047,28 @@ def checkout():
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
 
-            # 1. ADMIN NOTIFIKACE (ihned po odeslání objednávky, před fakturou) – pouze pro info@dokucheck.cz
+            # Číslo faktury (RRMMNNN) – přiřadíme hned po vytvoření objednávky
+            invoice_number = db.get_next_invoice_number()
+            db.update_pending_order_invoice_number(order_id, invoice_number)
+
+            # 1. ADMIN NOTIFIKACE (ihned po odeslání objednávky)
             try:
                 from email_sender import send_email, ADMIN_INFO_EMAIL
                 admin_subject = 'Nová objednávka: {}'.format(jmeno_firma or 'bez jména')
                 admin_body = (
-                    'Jméno / Firma: {}\nE-mail: {}\nVybraný tarif: {}\nIČO/DIČ: {}'
+                    'Jméno / Firma: {}\nE-mail: {}\nVybraný tarif: {}\nIČO/DIČ: {}\nČíslo faktury: {}'
                 ).format(
                     jmeno_firma or '',
                     email or '',
                     tarif or '',
-                    ico if ico else 'nevyplněno'
+                    ico if ico else 'nevyplněno',
+                    invoice_number
                 )
                 send_email(ADMIN_INFO_EMAIL, admin_subject, admin_body, append_footer=False)
             except Exception:
                 pass
 
-            # 2. ZÁKAZNICKÁ NOTIFIKACE (z info@dokucheck.cz): pokus o PDF, pak e-mail s/bez přílohy
+            # 2. ZÁKAZNICKÁ NOTIFIKACE (E-mail č. 1): automaticky vygenerovat PDF a přiložit; při chybě PDF e-mail bez přílohy
             try:
                 from email_sender import send_email, send_email_with_attachment, get_email_templates, _apply_footer
                 supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
@@ -3086,6 +3091,7 @@ def checkout():
                         supplier_ico=supplier_ico,
                         bank_iban=bank_iban,
                         bank_account=bank_account,
+                        invoice_number=invoice_number,
                     )
                 except Exception as e:
                     if current_app and getattr(current_app, 'logger', None):
@@ -3105,13 +3111,13 @@ def checkout():
                     send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
                     db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
                 else:
-                    # Bez PDF (fpdf2 chybí nebo chyba): e-mail bez přílohy + platební údaje v textu
+                    # Pojistka: PDF selhalo (font, fpdf2…) – e-mail ODEŠLEME BEZ PŘÍLOHY, chybu máme v logu
                     ucet = (bank_iban or bank_account or '').strip() or 'bude uveden v dodatečné faktuře'
                     fallback_body = (
                         'Děkujeme za objednávku. Fakturu vám zašleme dodatečně.\n\n'
                         'Pro urychlení aktivace můžete zaslat platbu:\n'
-                        'Částka: {} Kč\nVariabilní symbol: {}\nÚčet: {}'
-                    ).format(int(amount_czk), order_id, ucet)
+                        'Částka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet: {}'
+                    ).format(int(amount_czk), order_id, invoice_number, ucet)
                     send_email(email, 'DokuCheck – objednávka č. {}'.format(order_id), fallback_body, append_footer=True)
             except Exception:
                 pass

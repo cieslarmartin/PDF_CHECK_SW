@@ -397,7 +397,7 @@ class Database:
         except Exception:
             pass
 
-        # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF) a status s výchozí hodnotou NEW_ORDER
+        # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF), status a číslo faktury (RRMMNNN)
         try:
             cursor.execute("PRAGMA table_info(pending_orders)")
             po_cols = {row[1] for row in cursor.fetchall()}
@@ -405,6 +405,8 @@ class Database:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_path TEXT')
             if 'status' not in po_cols:
                 cursor.execute("ALTER TABLE pending_orders ADD COLUMN status TEXT DEFAULT 'NEW_ORDER'")
+            if 'invoice_number' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_number TEXT')
         except Exception:
             pass
 
@@ -1295,6 +1297,52 @@ class Database:
             cursor.execute('UPDATE pending_orders SET status = ? WHERE id = ?', (str(new_status).strip(), order_id))
             conn.commit()
             return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def get_next_invoice_number(self):
+        """Vygeneruje další číslo faktury ve tvaru RRMMNNN (rok měsíc pořadí). Pro neplátce DPH."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "SELECT strftime('%y', 'now') || strftime('%m', 'now') as prefix"
+            )
+            prefix = cursor.fetchone()[0]
+            cursor.execute(
+                '''SELECT invoice_number FROM pending_orders
+                   WHERE invoice_number IS NOT NULL AND invoice_number LIKE ?
+                   ORDER BY invoice_number DESC LIMIT 1''',
+                (prefix + '%',)
+            )
+            row = cursor.fetchone()
+            if row and row[0] and len(row[0]) >= 7:
+                try:
+                    last_seq = int(row[0][4:7])
+                    next_seq = min(last_seq + 1, 999)
+                except (ValueError, TypeError):
+                    next_seq = 1
+            else:
+                next_seq = 1
+            return prefix + str(next_seq).zfill(3)
+        except Exception:
+            from datetime import datetime
+            return datetime.now().strftime('%y%m') + '001'
+        finally:
+            conn.close()
+
+    def update_pending_order_invoice_number(self, order_id, invoice_number):
+        """Uloží číslo faktury k objednávce."""
+        if not order_id or not invoice_number:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE pending_orders SET invoice_number = ? WHERE id = ?', (str(invoice_number).strip(), order_id))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
         finally:
             conn.close()
 

@@ -51,6 +51,7 @@ def main():
         supplier_ico=SUPPLIER_ICO,
         bank_iban=BANK_IBAN,
         bank_account=BANK_ACCOUNT,
+        invoice_number='2502TEST',
     )
     if not filepath or not os.path.isfile(filepath):
         print('Chyba: Fakturu se nepodařilo vygenerovat. Zkontrolujte font (web_app/fonts/DejaVuSans.ttf).')

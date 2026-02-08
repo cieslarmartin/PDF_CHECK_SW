@@ -1,21 +1,20 @@
-# invoice_generator.py – generování PDF faktury s QR kódem (SPAYD)
+# invoice_generator.py – generování PDF faktury (daňový doklad pro neplátce DPH)
 # Knihovny: fpdf2, qrcode. Unicode: TrueType font (DejaVu nebo systémový Arial).
 
 import os
 import io
 import logging
 import traceback
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-# Cesta k složce faktur – vytvoří se včetně web_app/data/ při prvním volání
 INVOICES_DIR = os.path.join(os.path.dirname(__file__), 'data', 'invoices')
-# Složka s fonty pro Unicode (diakritika) – očekává se DejaVuSans.ttf
 FONTS_DIR = os.path.join(os.path.dirname(__file__), 'fonts')
 
 
 def _get_unicode_font_path():
-    """Vrátí (cesta_regular, cesta_bold nebo None) pro TrueType font s Unicode. Preferuje DejaVu, fallback Arial / systém."""
+    """Vrátí (cesta_regular, cesta_bold nebo None) pro TrueType font s Unicode."""
     dejaVu = os.path.join(FONTS_DIR, 'DejaVuSans.ttf')
     dejaVuBold = os.path.join(FONTS_DIR, 'DejaVuSans-Bold.ttf')
     if os.path.isfile(dejaVu):
@@ -33,7 +32,6 @@ def _get_unicode_font_path():
 
 
 def _ensure_invoices_dir():
-    """Vytvoří složku web_app/data/invoices/ (a data/), pokud neexistuje. Vyhnutí se FileNotFoundError."""
     path = INVOICES_DIR
     try:
         os.makedirs(path, exist_ok=True)
@@ -45,7 +43,6 @@ def _ensure_invoices_dir():
 
 
 def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
-    """Vytvoří SPAYD řetězec pro QR platbu (české banky). ACC = IBAN, AM = částka, X-VS = variabilní symbol."""
     acc = (iban or '').replace(' ', '').strip()
     if not acc:
         return None
@@ -63,12 +60,12 @@ def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
 
 
 def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
-                         supplier_name, supplier_address, supplier_ico, bank_iban, bank_account):
+                         supplier_name, supplier_address, supplier_ico, bank_iban, bank_account,
+                         invoice_number=None):
     """
-    Vygeneruje PDF fakturu a uloží ji do web_app/data/invoices/faktura_{order_id}.pdf.
-    Dodavatel z parametrů (fallback: Ing. Martin Cieślar), odběratel z objednávky.
-    QR kód SPAYD: IBAN, částka, variabilní symbol (ID objednávky).
-    Při chybě vypíše traceback do konzole a vrátí None.
+    Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH a uloží do data/invoices/.
+    invoice_number: číslo ve tvaru RRMMNNN (např. 2502001). Pokud chybí, použije se order_id.
+    Používá Unicode font (DejaVu/Arial). Při chybě vrátí None a zapíše do logu.
     """
     try:
         _ensure_invoices_dir()
@@ -81,20 +78,26 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         try:
             from fpdf2 import FPDF
         except ImportError:
-            print('[invoice_generator] Chyba: nebyla nalezena knihovna fpdf2. Nainstalujte: pip install fpdf2')
-            print(traceback.format_exc())
+            logger.error('[invoice_generator] Nainstalujte: pip install fpdf2')
             return None
 
     font_path, font_path_bold = _get_unicode_font_path()
     if not font_path or not os.path.isfile(font_path):
-        logger.error('[invoice_generator] Nenalezen font s Unicode. Přidejte web_app/fonts/DejaVuSans.ttf (viz fonts/README.txt).')
+        logger.error('[invoice_generator] Nenalezen font s Unicode. Přidejte web_app/fonts/DejaVuSans.ttf')
         return None
 
+    cislo_faktury = (invoice_number or str(order_id)).strip()
+    today = datetime.now()
+    datum_vystaveni = today.strftime('%d.%m.%Y')
+    datum_splatnosti = (today + timedelta(days=14)).strftime('%d.%m.%Y')
+    datum_plneni = datum_vystaveni
+
     try:
-        # Výchozí údaje dodavatele: Ing. Martin Cieślar (doplňte adresu a IČO v Adminu nebo zde)
         _name = supplier_name or 'Ing. Martin Cieślar'
         _addr = supplier_address or 'Porubská 1, 742 83 Klimkovice – Václavovice'
         _ico = supplier_ico or '04830661'
+        zivnost = 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.'
+        dph_text = 'Nejsem plátce DPH.'
 
         class SimpleFPDF(FPDF):
             def __init__(self, font_path, font_path_bold, *args, **kwargs):
@@ -103,9 +106,9 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                 self._font_path_bold = font_path_bold
 
             def header(self):
-                self.set_font('DejaVu', 'B', 14)
-                self.cell(0, 8, 'FAKTURA', 0, 1, 'C')
-                self.ln(4)
+                self.set_font('DejaVu', 'B', 12)
+                self.cell(0, 6, 'Faktura - Daňový doklad č. {}'.format(cislo_faktury), 0, 1, 'C')
+                self.ln(2)
 
             def footer(self):
                 self.set_y(-18)
@@ -120,33 +123,42 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.set_auto_page_break(True, margin=18)
         pdf.set_font('DejaVu', '', 10)
 
-        # Dodavatel
-        pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(0, 6, 'Dodavatel', 0, 1)
-        pdf.set_font('DejaVu', '', 10)
-        pdf.multi_cell(0, 5, '{}\n{}\nIČ: {}'.format(_name, _addr, _ico))
-        pdf.ln(6)
+        # Datumy (jedna řádka)
+        pdf.set_font('DejaVu', '', 9)
+        pdf.cell(0, 5, 'Datum vystavení: {}   |   Datum splatnosti: {}   |   Datum uskutečnění zdanitelného plnění: {}'.format(
+            datum_vystaveni, datum_splatnosti, datum_plneni), 0, 1)
+        pdf.ln(4)
 
-        # Odběratel (z objednávky)
+        # Dva sloupce: Dodavatel | Odběratel
+        col_w = 92
+        y_start = pdf.get_y()
+        # Levý sloupec – Dodavatel
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(0, 6, 'Odběratel', 0, 1)
-        pdf.set_font('DejaVu', '', 10)
-        pdf.multi_cell(0, 5, '{}\nIČ: {}\nE-mail: {}'.format(
+        pdf.cell(col_w, 6, 'Dodavatel', 0, 1)
+        pdf.set_font('DejaVu', '', 9)
+        pdf.multi_cell(col_w, 5, '{}\n{}\nIČ: {}\n{}\n{}'.format(_name, _addr, _ico, zivnost, dph_text))
+        y_end_left = pdf.get_y()
+        # Pravý sloupec – Odběratel
+        pdf.set_xy(10 + col_w + 6, y_start)
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(col_w, 6, 'Odběratel', 0, 1)
+        pdf.set_font('DejaVu', '', 9)
+        pdf.multi_cell(col_w, 5, '{}\nIČ: {}\nE-mail: {}'.format(
             jmeno_firma or '—',
             ico or '—',
             email or '—'
         ))
-        pdf.ln(8)
+        pdf.set_y(max(y_end_left, pdf.get_y()) + 6)
 
-        # Tabulka položek
+        # Tabulka položek (cena zarovnaná vpravo)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(100, 6, 'Položka', 1, 0)
-        pdf.cell(30, 6, 'Množství', 1, 0)
-        pdf.cell(30, 6, 'Cena (Kč)', 1, 1)
+        pdf.cell(25, 6, 'Množství', 1, 0)
+        pdf.cell(35, 6, 'Cena (Kč)', 1, 1, 'R')
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(100, 8, 'Licence DokuCheck PRO', 1, 0)
-        pdf.cell(30, 8, '1', 1, 0)
-        pdf.cell(30, 8, str(int(amount_czk)), 1, 1)
+        pdf.cell(25, 8, '1', 1, 0)
+        pdf.cell(35, 8, str(int(amount_czk)), 1, 1, 'R')
         pdf.ln(4)
         pdf.cell(0, 6, 'Variabilní symbol: {}'.format(order_id), 0, 1)
         pdf.cell(0, 6, 'Částka k úhradě: {} Kč'.format(int(amount_czk)), 0, 1)
@@ -154,8 +166,8 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
             pdf.cell(0, 6, 'Účet: {}'.format(bank_iban or bank_account or ''), 0, 1)
         pdf.ln(8)
 
-        # QR kód SPAYD (pokud máme IBAN/účet)
-        spayd = _spayd_string(bank_iban or bank_account or '', amount_czk, order_id, 'Faktura {}'.format(order_id))
+        # QR kód SPAYD
+        spayd = _spayd_string(bank_iban or bank_account or '', amount_czk, order_id, 'Faktura {}'.format(cislo_faktury))
         if spayd:
             try:
                 import qrcode
@@ -176,7 +188,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                     except Exception:
                         pass
             except Exception as e:
-                logger.warning('[invoice_generator] QR kód se nepodařilo vygenerovat: %s', e)
+                logger.warning('[invoice_generator] QR kód: %s', e)
                 pdf.cell(0, 6, 'QR platba (SPAYD): {}'.format(spayd[:70] + '...'), 0, 1)
         else:
             pdf.cell(0, 6, 'Pro QR platbu nastavte v Adminu účet (IBAN).', 0, 1)
@@ -187,6 +199,6 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         return filepath
 
     except Exception as e:
-        logger.error('[invoice_generator] Chyba pri generovani PDF faktury: %s', e)
+        logger.error('[invoice_generator] Chyba pri generovani PDF: %s', e)
         logger.error(traceback.format_exc())
         return None
