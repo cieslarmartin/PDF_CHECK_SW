@@ -120,7 +120,26 @@ Na server patří obsah složky **41** (WSGI, Flask app, `admin_routes`, `api_en
 
 ---
 
-## 4. Shrnutí
+## 4. Heslo pro e-maily (SMTP Seznam)
+
+Aby web mohl posílat e-maily (objednávky, aktivace, notifikace), musí na **PythonAnywhere** znát heslo k účtu **objednavky@dokucheck.cz**. Heslo se **neukládá v kódu ani na Git** – zadáte ho jen na serveru.
+
+**Kam heslo zadat:**
+
+1. Přihlaste se na [pythonanywhere.com](https://www.pythonanywhere.com/) → záložka **Web**.
+2. Klikněte na **vaši webovou aplikaci** (např. cieslar.pythonanywhere.com).
+3. Sjeďte k sekci **"Environment variables"** (nebo "Code" → "Environment variables").
+4. Do pole přidejte řádek (nahraďte `VASE_HESLO` skutečným heslem k objednavky@dokucheck.cz):
+   ```
+   MAIL_PASSWORD=VASE_HESLO
+   ```
+5. Klikněte na zelené **Save** a pak **Reload** webové aplikace.
+
+**Kde se uloží:** Jen na PythonAnywhere u vaší web app v konfiguraci. Nikdy se neposílá do Gitu ani do repozitáře. Ostatní SMTP údaje (server, port, uživatel) jsou v kódu s výchozími hodnotami; heslo je vždy jen z proměnné prostředí.
+
+---
+
+## 5. Shrnutí
 
 | Způsob | Co děláte vy | Automaticky |
 |--------|----------------|-------------|

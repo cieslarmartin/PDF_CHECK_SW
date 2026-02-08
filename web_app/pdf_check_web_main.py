@@ -71,13 +71,14 @@ app.config['SESSION_COOKIE_SECURE'] = False  # V produkci nastavit na True s HTT
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 
-# Flask-Mail – SMTP Seznam (objednávky)
+# Flask-Mail – SMTP Seznam Email Profi (objednávky)
+# Heslo: na PythonAnywhere → Web → Vaše aplikace → "Environment variables" → přidej MAIL_PASSWORD = tvé_heslo
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.seznam.cz')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or '465')
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'true').lower() in ('1', 'true', 'yes')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or 465)
+app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'objednavky@dokucheck.cz')
 try:
     from flask_mail import Mail
     mail = Mail(app)

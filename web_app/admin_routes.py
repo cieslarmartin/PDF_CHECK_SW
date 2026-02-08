@@ -287,7 +287,7 @@ def save_email_templates_route():
 @admin_bp.route('/admin/send-test-email', methods=['POST'])
 @admin_required
 def send_test_email_route():
-    """Odešle testovací e-mail na info@dokucheck.cz (kontrola vzhledu)."""
+    """Odešle testovací e-mail na info@dokucheck.cz (kontrola vzhledu). Při chybě vypíše podrobný log do konzole."""
     to_email = (request.form.get('test_email_to') or 'info@dokucheck.cz').strip()
     if not to_email:
         flash('Zadejte e-mail příjemce', 'error')
@@ -303,9 +303,19 @@ def send_test_email_route():
         if send_email(to_email, subject, body, append_footer=False):
             flash('Testovací e-mail odeslán na {}'.format(to_email), 'success')
         else:
-            flash('Odeslání testovacího e-mailu se nezdařilo (zkontrolujte SMTP)', 'error')
+            flash('Odeslání testovacího e-mailu se nezdařilo (zkontrolujte SMTP). Podrobnosti v konzoli PythonAnywhere (Error log).', 'error')
     except Exception as e:
-        flash('Chyba: {}'.format(str(e)), 'error')
+        import traceback
+        err_detail = traceback.format_exc()
+        print('[SMTP TEST EMAIL] Chyba pri odesilani testovaciho emailu:', str(e))
+        print('[SMTP TEST EMAIL] Traceback:\n' + err_detail)
+        try:
+            from flask import current_app
+            if getattr(current_app, 'logger', None):
+                current_app.logger.exception('SMTP test email failed')
+        except Exception:
+            pass
+        flash('Chyba: {}. Podrobnosti viz konzole / Error log na PythonAnywhere.'.format(str(e)), 'error')
     return redirect(url_for('admin.dashboard') + '#email-templates')
 
 

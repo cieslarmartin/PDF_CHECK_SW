@@ -58,6 +58,9 @@ def send_email(to_email, subject, body_plain, append_footer=True):
                 server.sendmail(smtp_user, [to_email], msg.as_string())
         return True
     except Exception as e:
+        import traceback
+        print('[SMTP] Odeslání e-mailu se nezdařilo:', str(e))
+        print('[SMTP] Traceback:\n' + traceback.format_exc())
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
         return False
@@ -120,6 +123,9 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
                 server.sendmail(smtp_user, [to_email], msg.as_string())
         return True
     except Exception as e:
+        import traceback
+        print('[SMTP] Odeslání e-mailu s přílohou se nezdařilo:', str(e))
+        print('[SMTP] Traceback:\n' + traceback.format_exc())
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
         return False
