@@ -12,6 +12,7 @@ from functools import wraps
 import os
 import subprocess
 import json
+import secrets
 from datetime import datetime, timedelta
 
 # Import databáze
@@ -25,6 +26,12 @@ try:
     from settings_loader import load_settings_for_views
 except ImportError:
     load_settings_for_views = None
+
+try:
+    from site_config_loader import get_email_templates, save_email_templates
+except ImportError:
+    get_email_templates = lambda: {}
+    save_email_templates = lambda x: False
 
 # Import license config
 try:
@@ -238,6 +245,7 @@ def dashboard():
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
+    email_templates = get_email_templates() if get_email_templates else {}
     return render_template('admin_dashboard.html',
                           licenses=licenses,
                           stats=stats,
@@ -253,8 +261,52 @@ def dashboard():
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
+                          email_templates=email_templates,
                           user=user,
                           active_page='dashboard')
+
+
+@admin_bp.route('/admin/save-email-templates', methods=['POST'])
+@admin_required
+def save_email_templates_route():
+    """Uloží e-mailové šablony do site_config.json."""
+    templates = {
+        'footer_text': request.form.get('footer_text', ''),
+        'order_confirmation_subject': request.form.get('order_confirmation_subject', ''),
+        'order_confirmation_body': request.form.get('order_confirmation_body', ''),
+        'activation_subject': request.form.get('activation_subject', ''),
+        'activation_body': request.form.get('activation_body', ''),
+    }
+    if save_email_templates(templates):
+        flash('E-mailové šablony uloženy', 'success')
+    else:
+        flash('Uložení šablon se nezdařilo', 'error')
+    return redirect(url_for('admin.dashboard') + '#email-templates')
+
+
+@admin_bp.route('/admin/send-test-email', methods=['POST'])
+@admin_required
+def send_test_email_route():
+    """Odešle testovací e-mail na info@dokucheck.cz (kontrola vzhledu)."""
+    to_email = (request.form.get('test_email_to') or 'info@dokucheck.cz').strip()
+    if not to_email:
+        flash('Zadejte e-mail příjemce', 'error')
+        return redirect(url_for('admin.dashboard') + '#email-templates')
+    try:
+        from email_sender import send_email
+        templates = get_email_templates()
+        subject = (templates.get('order_confirmation_subject') or 'Test').replace('{vs}', '999').replace('{cena}', '1990').replace('{jmeno}', 'Test Firma')
+        body = (templates.get('order_confirmation_body') or 'Test').replace('{vs}', '999').replace('{cena}', '1990').replace('{jmeno}', 'Test Firma')
+        footer = templates.get('footer_text', '')
+        if footer:
+            body = (body.rstrip() + '\n\n' + footer.strip()).strip()
+        if send_email(to_email, subject, body, append_footer=False):
+            flash('Testovací e-mail odeslán na {}'.format(to_email), 'success')
+        else:
+            flash('Odeslání testovacího e-mailu se nezdařilo (zkontrolujte SMTP)', 'error')
+    except Exception as e:
+        flash('Chyba: {}'.format(str(e)), 'error')
+    return redirect(url_for('admin.dashboard') + '#email-templates')
 
 
 @admin_bp.route('/admin/users')
@@ -301,17 +353,161 @@ def tiers():
     return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=user, active_page='tiers')
 
 
-@admin_bp.route('/admin/pending-orders')
+@admin_bp.route('/admin/pending-orders', methods=['GET'])
 @admin_required
 def pending_orders():
-    """Čekající objednávky (fakturační formulář – Čeká na platbu)."""
+    """Správa objednávek: A) Nové objednávky (NEW_ORDER), B) Čekající na platbu (WAITING_PAYMENT), C) Aktivní licence."""
     db = get_db()
-    orders = db.get_pending_orders(status=None, limit=200)
+    orders_new = db.get_pending_orders(status='NEW_ORDER', limit=200)
+    orders_waiting = db.get_pending_orders(status='WAITING_PAYMENT', limit=200)
+    # Zpětná kompatibilita: i staré "pending" ukaž v čekajících
+    orders_pending_legacy = db.get_pending_orders(status='pending', limit=50)
+    if orders_pending_legacy:
+        seen_ids = {o['id'] for o in (orders_waiting or [])}
+        for o in orders_pending_legacy:
+            if o['id'] not in seen_ids:
+                (orders_waiting or []).append(o)
+    licenses = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
+    active_licenses = [l for l in licenses if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')] if licenses else []
+    try:
+        auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
+    except Exception:
+        auto_activate_csob = False
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
-    return render_template('admin_pending_orders.html', orders=orders or [], user=user, active_page='pending_orders')
+    return render_template('admin_pending_orders.html',
+        orders_new=orders_new or [],
+        orders_waiting=orders_waiting or [],
+        active_licenses=active_licenses,
+        auto_activate_csob=auto_activate_csob,
+        user=user, active_page='pending_orders')
+
+
+@admin_bp.route('/admin/generate-invoice-and-send', methods=['POST'])
+@admin_required
+def generate_invoice_and_send():
+    """VYGENERUJ FAKTURU A POSLAT ÚDAJE: PDF faktura, e-mail zákazníkovi s přílohou, notifikace adminu, status -> WAITING_PAYMENT."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    if (order.get('status') or '').upper() != 'NEW_ORDER':
+        flash('Objednávka není ve stavu Nová (NEW_ORDER).', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    try:
+        from settings_loader import get_pricing_tarifs
+        pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
+    except Exception:
+        pricing = {}
+    tarif = order.get('tarif') or 'standard'
+    if isinstance(pricing, dict) and pricing.get(tarif):
+        amount_czk = pricing[tarif].get('amount_czk', 1990)
+    else:
+        amount_czk = 1990
+    supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
+    supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
+    supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
+    bank_iban = db.get_global_setting('bank_iban', '') or ''
+    bank_account = db.get_global_setting('bank_account', '') or ''
+    from invoice_generator import generate_invoice_pdf
+    filepath = generate_invoice_pdf(
+        order_id=order_id,
+        jmeno_firma=order.get('jmeno_firma') or '',
+        ico=order.get('ico') or '',
+        email=order.get('email') or '',
+        tarif=tarif,
+        amount_czk=amount_czk,
+        supplier_name=supplier_name,
+        supplier_address=supplier_address,
+        supplier_ico=supplier_ico,
+        bank_iban=bank_iban,
+        bank_account=bank_account,
+    )
+    if not filepath or not os.path.isfile(filepath):
+        flash('Vygenerování PDF faktury se nezdařilo.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db.update_pending_order_invoice_path(order_id, filepath)
+    from email_sender import send_email_with_attachment, get_email_templates, _apply_footer, notify_admin
+    jmeno = order.get('jmeno_firma') or ''
+    email = order.get('email') or ''
+    templates = get_email_templates() if get_email_templates else {}
+    subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
+    body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
+    subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
+    body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
+    body = _apply_footer(body, templates.get('footer_text', ''))
+    ok = send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
+    if not ok:
+        flash('E-mail zákazníkovi se nepodařilo odeslat.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+    notify_admin('Faktura vygenerována a odeslána #{}'.format(order_id),
+                 'Faktura k objednávce #{} byla vygenerována a odeslána na {}. Status změněn na Čekající na platbu.'.format(order_id, email))
+    flash('Faktura vygenerována a odeslána zákazníkovi. Objednávka je nyní v sekci Čekající na platbu.', 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/toggle-auto-activate-csob', methods=['POST'])
+@admin_required
+def toggle_auto_activate_csob():
+    """Přepínač: Automaticky aktivovat po zaplacení (ČSOB)."""
+    db = get_db()
+    value = request.form.get('auto_activate_csob') == '1'
+    db.set_global_setting('auto_activate_csob', '1' if value else '0')
+    flash('Nastavení „Automaticky aktivovat po zaplacení (ČSOB)“ uloženo.', 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/confirm-payment', methods=['POST'])
+@admin_required
+def confirm_payment():
+    """POTVRDIT PŘIJETÍ PLATBY: status -> ACTIVE, vytvoření licence, heslo, e-mail 2, notifikace adminu."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    status = (order.get('status') or '').upper()
+    if status not in ('PENDING', 'WAITING_PAYMENT'):
+        flash('Objednávka již byla zpracována nebo není ve stavu Čekající na platbu.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
+    if not tier_row:
+        flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    tier_id = tier_row.get('id')
+    password_plain = secrets.token_urlsafe(12)
+    user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
+    email = (order.get('email') or '').strip()
+    if not email:
+        flash('Objednávka nemá e-mail', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
+    if not api_key:
+        flash('Vytvoření licence se nezdařilo (možná duplicitní e-mail?).', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db.update_pending_order_status(order_id, 'ACTIVE')
+    try:
+        from email_sender import send_activation_email, notify_admin
+        download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
+        send_activation_email(email, password_plain, download_url)
+        notify_admin('Platba potvrzena – objednávka #{}'.format(order_id),
+                     'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s přístupovými údaji odeslán.'.format(order_id, email))
+    except Exception:
+        pass
+    flash('Platba potvrzena. Licence vytvořena, e-mail s heslem odeslán.', 'success')
+    return redirect(url_for('admin.pending_orders'))
 
 
 @admin_bp.route('/admin/trial')

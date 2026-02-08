@@ -37,6 +37,40 @@
     </div>
 </section>
 
+<section id="email-templates" class="admin-card" style="margin-bottom:24px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <h2 style="font-size:1.1em;font-weight:600;margin:0;padding:12px 16px;background:#f0f9ff;border-bottom:1px solid #e5e7eb;">E-mailové šablony</h2>
+    <p style="padding:8px 16px;margin:0;color:#6b7280;font-size:0.9em;">Texty odcházejících e-mailů (potvrzení objednávky, aktivace). Placeholdery: {jmeno}, {cena}, {vs} (objednávka); {email}, {heslo}, {download_url} (aktivace). Patička se připojí ke každému e-mailu.</p>
+    <form method="post" action="{{ url_for('admin.save_email_templates_route') }}" style="padding:16px;">
+        <div style="margin-bottom:12px;">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Patička (footer_text) – připojí se ke každému e-mailu</label>
+            <textarea name="footer_text" class="form-control" rows="3" style="width:100%;">{{ (email_templates or {}).get('footer_text', '')|e }}</textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Potvrzení objednávky – předmět (order_confirmation_subject)</label>
+            <input type="text" name="order_confirmation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('order_confirmation_subject', '')|e }}" placeholder="{vs}, {cena}, {jmeno}">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Potvrzení objednávky – tělo (order_confirmation_body)</label>
+            <textarea name="order_confirmation_body" class="form-control" rows="5" style="width:100%;">{{ (email_templates or {}).get('order_confirmation_body', '')|e }}</textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Aktivační e-mail – předmět (activation_subject)</label>
+            <input type="text" name="activation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('activation_subject', '')|e }}">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Aktivační e-mail – tělo (activation_body)</label>
+            <textarea name="activation_body" class="form-control" rows="5" style="width:100%;">{{ (email_templates or {}).get('activation_body', '')|e }}</textarea>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="submit" class="btn btn-primary btn-sm">Uložit šablony</button>
+        </div>
+    </form>
+    <form method="post" action="{{ url_for('admin.send_test_email_route') }}" style="padding:0 16px 16px;margin:0;">
+        <input type="hidden" name="test_email_to" value="info@dokucheck.cz">
+        <button type="submit" class="btn btn-secondary btn-sm">Odeslat testovací e-mail na info@dokucheck.cz</button>
+    </form>
+</section>
+
 <div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
     <h2 style="font-size:1.1em;margin:0;">Uživatelé</h2>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">

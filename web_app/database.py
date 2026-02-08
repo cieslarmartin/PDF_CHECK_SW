@@ -374,6 +374,15 @@ class Database:
         except Exception:
             pass
 
+        # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF)
+        try:
+            cursor.execute("PRAGMA table_info(pending_orders)")
+            po_cols = {row[1] for row in cursor.fetchall()}
+            if 'invoice_path' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_path TEXT')
+        except Exception:
+            pass
+
     def create_api_key(self, api_key, user_name=None):
         """Vytvoří nový API klíč"""
         conn = self.get_connection()
@@ -1215,6 +1224,59 @@ class Database:
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
+
+    def get_pending_order_by_id(self, order_id):
+        """Vrátí jednu objednávku podle id nebo None."""
+        if not order_id:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM pending_orders WHERE id = ?', (order_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_pending_order_status(self, order_id, new_status):
+        """Aktualizuje status objednávky (NEW_ORDER, WAITING_PAYMENT, ACTIVE). Vrátí True při úspěchu."""
+        if not order_id or not str(new_status).strip():
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE pending_orders SET status = ? WHERE id = ?', (str(new_status).strip(), order_id))
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def update_pending_order_invoice_path(self, order_id, invoice_path):
+        """Uloží cestu k vygenerované fakturě (PDF). Sloupec invoice_path přidává migrace."""
+        if not order_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE pending_orders SET invoice_path = ? WHERE id = ?', (str(invoice_path or ''), order_id))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def get_tier_by_name(self, name):
+        """Vrátí tier (dict) podle názvu (case-insensitive): Basic, Pro, Free, Trial. Pro tarif z objednávky: basic->Basic, standard->Pro."""
+        if not name or not str(name).strip():
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        n = str(name).strip().lower()
+        if n == 'standard':
+            n = 'pro'
+        cursor.execute('SELECT * FROM license_tiers WHERE LOWER(TRIM(name)) = ? LIMIT 1', (n,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
 
     def insert_online_demo_log(self, ip_address=None, file_count=0):
         """Zapíše záznam o použití Online Dema (pro admin statistiku)."""

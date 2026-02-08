@@ -1,0 +1,17 @@
+{
+  "pricing_tarifs": {
+    "basic": { "label": "BASIC", "amount_czk": 1290 },
+    "standard": { "label": "PRO", "amount_czk": 1990 }
+  },
+  "tarif_features": {
+    "basic": ["Kontrola PDF/A", "Podpisy", "Z Agenta"],
+    "standard": ["Vše z BASIC", "Export Excel", "Pokročilé filtry"]
+  },
+  "email_templates": {
+    "footer_text": "---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.",
+    "order_confirmation_subject": "DokuCheck – potvrzení objednávky č. {vs}",
+    "order_confirmation_body": "Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}",
+    "activation_subject": "DokuCheck PRO – přístup aktivní",
+    "activation_body": "Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací e-mail: {email}\nHeslo: {heslo}\n\nStahujte aplikaci zde: {download_url}"
+  }
+}

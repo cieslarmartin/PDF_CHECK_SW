@@ -1,6 +1,9 @@
 # settings_loader.py
 # Centrální fallbacky pro global_settings. Všechna čtení přes tyto hodnoty, aby web/agent nespadly při prázdné DB.
 
+import json
+import os
+
 # Výchozí hodnoty pro string / int / bool klíče (fallback když v DB nic není)
 DEFAULTS = {
     # Globální přepínače (čtené jako bool v get_global_setting)
@@ -143,7 +146,16 @@ def get_trial_limit_total_files(db) -> int:
 
 
 def get_pricing_tarifs(db):
-    """Ceník tarifů: { basic: {label, amount_czk}, ... }. Pro checkout a e-mail."""
+    """Ceník tarifů: { basic: {label, amount_czk}, ... }. Načte ze site_config.json (pokud existuje), jinak z DB."""
+    config_path = os.path.join(os.path.dirname(__file__), 'site_config.json')
+    if os.path.isfile(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data.get('pricing_tarifs'), dict) and data['pricing_tarifs']:
+                return data['pricing_tarifs']
+        except (json.JSONDecodeError, IOError):
+            pass
     return db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
 
 

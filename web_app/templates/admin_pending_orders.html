@@ -1,8 +1,11 @@
 {% extends "admin_base.html" %}
-{% block title %}Čeká na platbu – DokuCheck Admin{% endblock %}
+{% block title %}Objednávky a licence – DokuCheck Admin{% endblock %}
 {% block content %}
-<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Čeká na platbu</h2>
-<p style="margin-bottom:16px;color:#6b7280;">Objednávky z fakturačního formuláře. Po zaplacení aktivujte účet v Nástěnce (vytvořte licenci a označte jako zaplaceno).</p>
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Správa objednávek</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Nové objednávky → vygenerovat fakturu a poslat údaje → čekající na platbu → potvrdit přijetí platby.</p>
+
+{# A) Nové objednávky (NEW_ORDER) – VYGENEROVAT FAKTURU A POSLAT ÚDAJE #}
+<h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Nové objednávky</h3>
 <div class="table-container">
     <table class="table-dense">
         <thead>
@@ -13,20 +16,106 @@
                 <th>E-mail</th>
                 <th>Tarif</th>
                 <th>Stav</th>
+                <th>Akce</th>
             </tr>
         </thead>
         <tbody>
-            {% for o in orders %}
+            {% for o in orders_new %}
             <tr>
                 <td>{{ (o.created_at or '')[:16] }}</td>
                 <td>{{ o.jmeno_firma or '—' }}</td>
                 <td>{{ o.ico or '—' }}</td>
                 <td>{{ o.email or '—' }}</td>
-                <td>{{ o.tarif or '—' }}</td>
-                <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ o.status or 'pending' }}</span></td>
+                <td>{{ (o.tarif or '—')|upper }}</td>
+                <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">Nová</span></td>
+                <td>
+                    <form method="post" action="{{ url_for('admin.generate_invoice_and_send') }}" style="display:inline;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-primary btn-sm">VYGENEROVAT FAKTURU A POSLAT ÚDAJE</button>
+                    </form>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné čekající objednávky.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# B) Čekající na platbu (WAITING_PAYMENT) – toggle ČSOB + POTVRDIT PŘIJETÍ PLATBY #}
+<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">B) Čekající na platbu</h3>
+<div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <form method="post" action="{{ url_for('admin.toggle_auto_activate_csob') }}" id="form-csob" style="display:flex;align-items:center;gap:8px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" name="auto_activate_csob" value="1" {% if auto_activate_csob %}checked{% endif %} onchange="document.getElementById('form-csob').submit();">
+            <span style="font-size:0.9em;">Automaticky aktivovat po zaplacení (ČSOB)</span>
+        </label>
+    </form>
+    <script>
+    document.getElementById('form-csob').addEventListener('submit', function(e) {
+        var cb = this.querySelector('input[name=auto_activate_csob]');
+        if (!cb.checked) { var h = document.createElement('input'); h.type = 'hidden'; h.name = 'auto_activate_csob'; h.value = '0'; this.appendChild(h); }
+    });
+    </script>
+    <span style="font-size:0.85em;color:#6b7280;">Manuálně: tlačítko „POTVRDIT PŘIJETÍ PLATBY“ níže.</span>
+</div>
+<div class="table-container">
+    <table class="table-dense">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Jméno / Firma</th>
+                <th>E-mail</th>
+                <th>Tarif</th>
+                <th>Stav</th>
+                <th>Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for o in orders_waiting %}
+            <tr>
+                <td>{{ (o.created_at or '')[:16] }}</td>
+                <td>{{ o.jmeno_firma or '—' }}</td>
+                <td>{{ o.email or '—' }}</td>
+                <td>{{ (o.tarif or '—')|upper }}</td>
+                <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">Čeká na platbu</span></td>
+                <td>
+                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-primary btn-sm">POTVRDIT PŘIJETÍ PLATBY</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné objednávky čekající na platbu.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# C) Aktivní licence (Zaplaceno) #}
+<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">C) Aktivní licence (Zaplaceno)</h3>
+<p style="margin-bottom:10px;color:#6b7280;font-size:0.9em;">Uživatelé s přístupem (Basic / PRO).</p>
+<div class="table-container">
+    <table class="table-dense">
+        <thead>
+            <tr>
+                <th>E-mail</th>
+                <th>Jméno</th>
+                <th>Tarif</th>
+                <th>Expirace</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in active_licenses %}
+            <tr>
+                <td>{{ l.email or '—' }}</td>
+                <td>{{ l.user_name or '—' }}</td>
+                <td><span style="background:#d1fae5;color:#047857;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ l.tier_name or 'Pro' }}</span></td>
+                <td>{{ (l.license_expires or '')[:10] if l.license_expires else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted" style="padding:24px;">Žádné aktivní licence (nebo pouze Trial/Free).</td></tr>
             {% endfor %}
         </tbody>
     </table>

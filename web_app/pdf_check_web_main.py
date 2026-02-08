@@ -71,6 +71,19 @@ app.config['SESSION_COOKIE_SECURE'] = False  # V produkci nastavit na True s HTT
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 
+# Flask-Mail – SMTP Seznam (objednávky)
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.seznam.cz')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or '465')
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'true').lower() in ('1', 'true', 'yes')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
+try:
+    from flask_mail import Mail
+    mail = Mail(app)
+except ImportError:
+    mail = None
+
 # =============================================================================
 # HTML ŠABLONA - NOVÝ DESIGN V26 se splash screenem
 # =============================================================================
@@ -2962,69 +2975,10 @@ def download():
         show_pilot_notice=settings.get('show_pilot_notice', True))
 
 
-def _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):
-    """Odešle e-mail s potvrzením objednávky. Banka a předmět z global_settings (fallback na env a výchozí text)."""
-    if db is None:
-        db = Database()
-    try:
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        smtp_host = os.environ.get('SMTP_HOST', '')
-        smtp_port = int(os.environ.get('SMTP_PORT', '587') or '587')
-        smtp_user = os.environ.get('SMTP_USER', '')
-        smtp_pass = os.environ.get('SMTP_PASS', '')
-        if not smtp_host or not smtp_user:
-            return False
-        bank_account = db.get_global_setting('bank_account', '') or os.environ.get('BANK_ACCOUNT', '')
-        bank_iban = db.get_global_setting('bank_iban', '') or os.environ.get('BANK_IBAN', '')
-        bank_note = ""
-        if bank_account or bank_iban:
-            bank_note = "\nPlatební údaje pro bankovní převod:\n"
-            if bank_account:
-                bank_note += f"  Číslo účtu: {bank_account}\n"
-            if bank_iban:
-                bank_note += f"  IBAN: {bank_iban}\n"
-            bank_note += f"  Variabilní symbol: {order_id}\n"
-            bank_note += f"  Částka: {amount_czk} Kč\n"
-        else:
-            bank_note = "\nPro platbu bankovním převodem použijte variabilní symbol uvedený výše. Číslo účtu vám zašleme v doplňující zprávě nebo doplňte dle dohody.\n"
-        subject_tpl = get_email_order_confirmation_subject(db) if get_email_order_confirmation_subject else f"DokuCheck – potvrzení objednávky č. {order_id}"
-        subject = (subject_tpl or "DokuCheck – potvrzení objednávky č. {order_id}").format(
-            order_id=order_id, name=jmeno_firma, tarif=tarif, amount_czk=amount_czk, link=""
-        )
-        body_tpl = db.get_global_setting("email_order_confirmation_body", "")
-        if body_tpl and body_tpl.strip():
-            body = body_tpl.format(
-                order_id=order_id, name=jmeno_firma, tarif=tarif, amount_czk=amount_czk,
-                bank_note=bank_note, link=""
-            )
-        else:
-            body = (
-                f"Dobrý den,\n\n"
-                f"děkujeme za objednávku.\n\n"
-                f"Objednávka č.: {order_id}\n"
-                f"Variabilní symbol: {order_id}\n"
-                f"Částka k úhradě: {amount_czk} Kč\n"
-                f"Tarif: {tarif}\n"
-                f"{bank_note}\n"
-                f"S pozdravem,\nDokuCheck"
-            )
-        msg = MIMEMultipart()
-        msg['Subject'] = subject
-        msg['From'] = smtp_user
-        msg['To'] = email
-        msg.attach(MIMEText(body, 'plain', 'utf-8'))
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            if smtp_pass:
-                server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [email], msg.as_string())
-        return True
-    except Exception as e:
-        if app and hasattr(app, 'logger'):
-            app.logger.warning("Odeslání potvrzovacího e-mailu se nezdařilo: %s", e)
-        return False
+try:
+    from email_sender import send_order_confirmation_email, send_activation_email
+except ImportError:
+    send_order_confirmation_email = send_activation_email = None
 
 
 @app.route('/online-check')
@@ -3061,10 +3015,19 @@ def checkout():
         if not souhlas:
             flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
-        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='pending')
+        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER')
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
-            _send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=db)
+            try:
+                from email_sender import notify_admin
+                notify_admin(
+                    'Nová objednávka #{}'.format(order_id),
+                    'Nová objednávka z webu.\n\nID: {}\nOdběratel: {}\nE-mail: {}\nTarif: {}\nČástka: {} Kč\n\nVygenerujte fakturu a pošlete údaje z Adminu (Nové objednávky).'.format(
+                        order_id, jmeno_firma or '', email or '', tarif or '', amount_czk
+                    )
+                )
+            except Exception:
+                pass
             session['last_order_id'] = order_id
             return redirect(url_for('order_success'))
         flash('Chyba při odeslání. Zkuste to znovu.', 'error')
