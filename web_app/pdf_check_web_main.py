@@ -7,10 +7,12 @@
 #
 # Spuštění: python pdf_check_web_main.py
 
-from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for, session, flash, current_app
 import io
+import logging
 import re
 import os
+import traceback
 import json
 import subprocess
 import threading
@@ -3019,16 +3021,70 @@ def checkout():
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER')
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+
+            # 1. ADMIN NOTIFIKACE (ihned po odeslání objednávky, před fakturou) – pouze pro info@dokucheck.cz
             try:
-                from email_sender import notify_admin
-                notify_admin(
-                    'Nová objednávka #{}'.format(order_id),
-                    'Nová objednávka z webu.\n\nID: {}\nOdběratel: {}\nE-mail: {}\nTarif: {}\nČástka: {} Kč\n\nVygenerujte fakturu a pošlete údaje z Adminu (Nové objednávky).'.format(
-                        order_id, jmeno_firma or '', email or '', tarif or '', amount_czk
-                    )
+                from email_sender import send_email, ADMIN_INFO_EMAIL
+                admin_subject = 'Nová objednávka: {}'.format(jmeno_firma or 'bez jména')
+                admin_body = (
+                    'Jméno / Firma: {}\nE-mail: {}\nVybraný tarif: {}\nIČO/DIČ: {}'
+                ).format(
+                    jmeno_firma or '',
+                    email or '',
+                    tarif or '',
+                    ico if ico else 'nevyplněno'
                 )
+                send_email(ADMIN_INFO_EMAIL, admin_subject, admin_body, append_footer=False)
             except Exception:
                 pass
+
+            # 2. ZÁKAZNICKÁ NOTIFIKACE (z objednavky@dokucheck.cz): pokus o PDF, pak e-mail s/bez přílohy
+            try:
+                from email_sender import send_email, send_email_with_attachment, get_email_templates, _apply_footer
+                supplier_name = db.get_global_setting('provider_name', '') or 'Ing. Martin Cieślar'
+                supplier_address = db.get_global_setting('provider_address', '') or 'Porubská 1, 742 83 Klimkovice'
+                supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
+                bank_iban = db.get_global_setting('bank_iban', '') or ''
+                bank_account = db.get_global_setting('bank_account', '') or ''
+                filepath = None
+                try:
+                    from invoice_generator import generate_invoice_pdf
+                    filepath = generate_invoice_pdf(
+                        order_id=order_id,
+                        jmeno_firma=jmeno_firma,
+                        ico=ico,
+                        email=email,
+                        tarif=tarif,
+                        amount_czk=amount_czk,
+                        supplier_name=supplier_name,
+                        supplier_address=supplier_address,
+                        supplier_ico=supplier_ico,
+                        bank_iban=bank_iban,
+                        bank_account=bank_account,
+                    )
+                except Exception as e:
+                    if current_app and getattr(current_app, 'logger', None):
+                        current_app.logger.error('Checkout: generování PDF faktury selhalo: %s', e)
+                        current_app.logger.error(traceback.format_exc())
+                    logging.getLogger(__name__).error('Checkout: generování PDF faktury selhalo: %s', e)
+                    logging.getLogger(__name__).error(traceback.format_exc())
+
+                if filepath and os.path.isfile(filepath):
+                    db.update_pending_order_invoice_path(order_id, filepath)
+                    templates = get_email_templates() if get_email_templates else {}
+                    subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
+                    body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
+                    subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
+                    body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
+                    body = _apply_footer(body, templates.get('footer_text', ''))
+                    send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
+                    db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+                else:
+                    fallback_body = 'Děkujeme, objednávku zpracováváme. Fakturu vám zašleme dodatečně.'
+                    send_email(email, 'DokuCheck – objednávka č. {}'.format(order_id), fallback_body, append_footer=True)
+            except Exception:
+                pass
+
             session['last_order_id'] = order_id
             return redirect(url_for('order_success'))
         flash('Chyba při odeslání. Zkuste to znovu.', 'error')
