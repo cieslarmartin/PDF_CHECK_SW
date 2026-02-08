@@ -426,40 +426,57 @@ def generate_invoice_and_send():
     supplier_ico = db.get_global_setting('provider_ico', '') or '04830661'
     bank_iban = db.get_global_setting('bank_iban', '') or ''
     bank_account = db.get_global_setting('bank_account', '') or ''
-    from invoice_generator import generate_invoice_pdf
-    filepath = generate_invoice_pdf(
-        order_id=order_id,
-        jmeno_firma=order.get('jmeno_firma') or '',
-        ico=order.get('ico') or '',
-        email=order.get('email') or '',
-        tarif=tarif,
-        amount_czk=amount_czk,
-        supplier_name=supplier_name,
-        supplier_address=supplier_address,
-        supplier_ico=supplier_ico,
-        bank_iban=bank_iban,
-        bank_account=bank_account,
-    )
+    try:
+        from invoice_generator import generate_invoice_pdf
+        filepath = generate_invoice_pdf(
+            order_id=order_id,
+            jmeno_firma=order.get('jmeno_firma') or '',
+            ico=order.get('ico') or '',
+            email=order.get('email') or '',
+            tarif=tarif,
+            amount_czk=amount_czk,
+            supplier_name=supplier_name,
+            supplier_address=supplier_address,
+            supplier_ico=supplier_ico,
+            bank_iban=bank_iban,
+            bank_account=bank_account,
+        )
+    except Exception as e:
+        import traceback
+        print('[admin generate_invoice_and_send] Chyba pri generovani faktury:', e)
+        print(traceback.format_exc())
+        flash('Vygenerování PDF faktury se nezdařilo. Podrobnosti v konzoli / Error log.', 'error')
+        return redirect(url_for('admin.pending_orders'))
     if not filepath or not os.path.isfile(filepath):
         flash('Vygenerování PDF faktury se nezdařilo.', 'error')
         return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_invoice_path(order_id, filepath)
-    from email_sender import send_email_with_attachment, get_email_templates, _apply_footer, notify_admin
-    jmeno = order.get('jmeno_firma') or ''
-    email = order.get('email') or ''
-    templates = get_email_templates() if get_email_templates else {}
-    subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
-    body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
-    subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
-    body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
-    body = _apply_footer(body, templates.get('footer_text', ''))
-    ok = send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
+    try:
+        from email_sender import send_email_with_attachment, get_email_templates, _apply_footer, notify_admin
+        jmeno = order.get('jmeno_firma') or ''
+        email = order.get('email') or ''
+        templates = get_email_templates() if get_email_templates else {}
+        subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
+        body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
+        subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
+        body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno)
+        body = _apply_footer(body, templates.get('footer_text', ''))
+        ok = send_email_with_attachment(email, subject, body, attachment_path=filepath, attachment_filename='faktura_{}.pdf'.format(order_id), append_footer=False)
+    except Exception as e:
+        import traceback
+        print('[admin generate_invoice_and_send] Chyba pri odesilani emailu:', e)
+        print(traceback.format_exc())
+        flash('E-mail zákazníkovi se nepodařilo odeslat. Podrobnosti v konzoli / Error log.', 'error')
+        return redirect(url_for('admin.pending_orders'))
     if not ok:
         flash('E-mail zákazníkovi se nepodařilo odeslat.', 'error')
         return redirect(url_for('admin.pending_orders'))
     db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
-    notify_admin('Faktura vygenerována a odeslána #{}'.format(order_id),
-                 'Faktura k objednávce #{} byla vygenerována a odeslána na {}. Status změněn na Čekající na platbu.'.format(order_id, email))
+    try:
+        notify_admin('Faktura vygenerována a odeslána #{}'.format(order_id),
+                     'Faktura k objednávce #{} byla vygenerována a odeslána na {}. Status změněn na Čekající na platbu.'.format(order_id, email))
+    except Exception:
+        pass
     flash('Faktura vygenerována a odeslána zákazníkovi. Objednávka je nyní v sekci Čekající na platbu.', 'success')
     return redirect(url_for('admin.pending_orders'))
 

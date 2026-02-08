@@ -59,10 +59,15 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         return True
     except Exception as e:
         import traceback
-        print('[SMTP] Odeslání e-mailu se nezdařilo:', str(e))
+        err_str = str(e)
+        print('[SMTP] Odeslání e-mailu se nezdařilo:', err_str)
         print('[SMTP] Traceback:\n' + traceback.format_exc())
+        if '530' in err_str:
+            print('[SMTP] Chyba 530 (auth required): Zkontrolujte heslo MAIL_PASSWORD v proměnných prostředí a nastavení SMTP na Seznamu (přihlášení aplikací).')
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
+            if '530' in err_str:
+                app.logger.warning("SMTP 530: Ověřte MAIL_PASSWORD a nastavení SMTP na Seznamu.")
         return False
 
 
@@ -124,10 +129,15 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
         return True
     except Exception as e:
         import traceback
-        print('[SMTP] Odeslání e-mailu s přílohou se nezdařilo:', str(e))
+        err_str = str(e)
+        print('[SMTP] Odeslání e-mailu s přílohou se nezdařilo:', err_str)
         print('[SMTP] Traceback:\n' + traceback.format_exc())
+        if '530' in err_str:
+            print('[SMTP] Chyba 530 (auth required): Zkontrolujte heslo MAIL_PASSWORD v proměnných prostředí a nastavení SMTP na Seznamu (přihlášení aplikací).')
         if app and hasattr(app, 'logger'):
             app.logger.warning("Odeslání e-mailu se nezdařilo: %s", e)
+            if '530' in err_str:
+                app.logger.warning("SMTP 530: Ověřte MAIL_PASSWORD a nastavení SMTP na Seznamu.")
         return False
 
 

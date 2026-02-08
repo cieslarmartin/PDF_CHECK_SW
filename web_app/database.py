@@ -356,7 +356,7 @@ class Database:
                 except sqlite3.OperationalError:
                     pass  # Sloupec už existuje
 
-        # license_tiers: přidej sloupce pro admin-editable limity (denní limit, rate limit, max velikost souboru)
+        # license_tiers: přidej sloupce pro admin-editable limity a allow_advanced_filters (pro existující DB)
         try:
             cursor.execute("PRAGMA table_info(license_tiers)")
             tier_columns = {row[1] for row in cursor.fetchall()}
@@ -364,6 +364,7 @@ class Database:
                 'daily_files_limit': 'INTEGER',
                 'rate_limit_hour': 'INTEGER DEFAULT 3',
                 'max_file_size_mb': 'INTEGER',
+                'allow_advanced_filters': 'INTEGER DEFAULT 0',
             }
             for col_name, col_type in tier_new.items():
                 if col_name not in tier_columns:
@@ -374,12 +375,14 @@ class Database:
         except Exception:
             pass
 
-        # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF)
+        # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF) a status s výchozí hodnotou NEW_ORDER
         try:
             cursor.execute("PRAGMA table_info(pending_orders)")
             po_cols = {row[1] for row in cursor.fetchall()}
             if 'invoice_path' not in po_cols:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_path TEXT')
+            if 'status' not in po_cols:
+                cursor.execute("ALTER TABLE pending_orders ADD COLUMN status TEXT DEFAULT 'NEW_ORDER'")
         except Exception:
             pass
 
