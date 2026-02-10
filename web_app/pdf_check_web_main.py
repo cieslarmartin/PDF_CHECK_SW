@@ -60,6 +60,34 @@ def kill_port(port=5000):
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
+# Kanonická doména a HTTPS (obcházení problému s DNS přesměrováním na Wedosu)
+CANONICAL_HOST = 'www.dokucheck.cz'
+BARE_DOMAIN = 'dokucheck.cz'
+
+
+@app.before_request
+def enforce_https_and_www():
+    """
+    Vynucení HTTPS a kanonické URL www.dokucheck.cz.
+    Na PythonAnywhere se HTTPS detekuje přes hlavičku X-Forwarded-Proto.
+    """
+    host = (request.host or '').split(':')[0].lower()
+    # HTTPS: za proxy (PythonAnywhere) přichází X-Forwarded-Proto
+    is_https = request.is_secure or (request.headers.get('X-Forwarded-Proto') == 'https')
+    full_path = (request.full_path or request.path or '/').rstrip('?')
+    if not full_path.startswith('/'):
+        full_path = '/' + full_path
+
+    # Doména bez www -> trvalé přesměrování na https://www.dokucheck.cz
+    if host == BARE_DOMAIN:
+        target = f'https://{CANONICAL_HOST}{full_path}'
+        return redirect(target, code=301)
+
+    # HTTP -> trvalé přesměrování na HTTPS (zachovat host a cestu)
+    if not is_https:
+        target = f'https://{request.host}{full_path}'
+        return redirect(target, code=301)
+
 
 @app.context_processor
 def inject_web_build():
@@ -3056,20 +3084,10 @@ def checkout():
             invoice_number = db.get_next_invoice_number()
             db.update_pending_order_invoice_number(order_id, invoice_number)
 
-            # 1. ADMIN NOTIFIKACE (ihned po odeslání objednávky)
+            # 1. Notifikace na info@dokucheck.cz (UTF-8, send_message)
             try:
-                from email_sender import send_email, ADMIN_INFO_EMAIL
-                admin_subject = 'Nová objednávka: {}'.format(jmeno_firma or 'bez jména')
-                admin_body = (
-                    'Jméno / Firma: {}\nE-mail: {}\nVybraný tarif: {}\nIČO/DIČ: {}\nČíslo faktury: {}'
-                ).format(
-                    jmeno_firma or '',
-                    email or '',
-                    tarif or '',
-                    ico if ico else 'nevyplněno',
-                    invoice_number
-                )
-                send_email(ADMIN_INFO_EMAIL, admin_subject, admin_body, append_footer=False)
+                from email_sender import send_order_notification_to_admin
+                send_order_notification_to_admin(order_display_number, jmeno_firma, tarif, amount_czk)
             except Exception:
                 pass
 
@@ -3131,6 +3149,7 @@ def checkout():
                 pass
 
             session['last_order_id'] = order_id
+            session['last_order_display_number'] = order_display_number
             return redirect(url_for('order_success'))
         flash('Chyba při odeslání. Zkuste to znovu.', 'error')
         return redirect(request.url)
@@ -3158,9 +3177,10 @@ def checkout():
 
 @app.route('/order-success')
 def order_success():
-    """Potvrzovací stránka po objednávce – bez platebních údajů (ty jsou v e-mailu)."""
+    """Potvrzovací stránka po objednávce – zobrazí zformátované číslo (Prefix + Pořadové číslo)."""
     order_id = session.pop('last_order_id', None)
-    return render_template('checkout_thanks.html', order_id=order_id)
+    order_number = session.pop('last_order_display_number', None) or (str(order_id) if order_id else None)
+    return render_template('checkout_thanks.html', order_id=order_id, order_number=order_number)
 
 
 @app.route('/portal', methods=['GET', 'POST'])

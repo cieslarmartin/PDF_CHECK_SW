@@ -34,6 +34,7 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         import smtplib
         from email.message import EmailMessage
         from email.policy import SMTPUTF8
+        # UTF-8: send_message(msg) + set_content(..., charset='utf-8') – odstraní chybu 'ascii' codec (ý, í, ě)
         smtp_host = os.environ.get('MAIL_SERVER') or app.config.get('MAIL_SERVER', '') or 'smtp.seznam.cz'
         smtp_port = int(os.environ.get('MAIL_PORT') or app.config.get('MAIL_PORT') or 465)
         smtp_user = os.environ.get('MAIL_USERNAME') or app.config.get('MAIL_USERNAME', '') or 'info@dokucheck.cz'
@@ -78,15 +79,13 @@ def send_email(to_email, subject, body_plain, append_footer=True):
 ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
 
 
-def send_order_notification_to_admin(order_id, jmeno_firma, tarif, amount_czk):
-    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce (UTF-8). Volá se po kliknutí na OBJEDNAT v adminu."""
+def send_order_notification_to_admin(order_number, jmeno_firma, tarif, amount_czk=None):
+    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce. UTF-8 (send_message + set_content charset=utf-8)."""
     to_email = 'info@dokucheck.cz'
-    subject = 'Nová objednávka: {}'.format(order_id)
-    body = (
-        'Jméno zákazníka: {}\n'
-        'Tarif: {}\n'
-        'Částka: {} Kč\n'
-    ).format(jmeno_firma or '—', tarif or '—', amount_czk or '—')
+    subject = 'Nová objednávka: {}'.format(order_number)
+    body = 'Nová objednávka č. {}, Zákazník: {}, Tarif: {}'.format(
+        order_number or '—', jmeno_firma or '—', tarif or '—'
+    )
     return send_email(to_email, subject, body, append_footer=False)
 
 
