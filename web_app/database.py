@@ -407,6 +407,8 @@ class Database:
                 cursor.execute("ALTER TABLE pending_orders ADD COLUMN status TEXT DEFAULT 'NEW_ORDER'")
             if 'invoice_number' not in po_cols:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_number TEXT')
+            if 'order_display_number' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN order_display_number TEXT')
         except Exception:
             pass
 
@@ -1242,15 +1244,31 @@ class Database:
         conn.close()
         return rows
 
-    def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending'):
-        """Vloží čekající objednávku (fakturační formulář). Vrátí id nebo None."""
+    def get_next_order_number(self):
+        """Vrátí další číslo objednávky (Prefix + Pořadové číslo) a zvýší počítadlo v nastavení. Jediný zdroj: global_settings (order_number_prefix, order_number_next)."""
+        prefix = (self.get_global_setting('order_number_prefix', '') or '2026-').strip() or '2026-'
+        next_val = self.get_setting_int('order_number_next', 100)
+        display_number = prefix + str(next_val)
+        self.set_global_setting('order_number_next', next_val + 1)
+        return display_number
+
+    def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending', order_display_number=None):
+        """Vloží čekající objednávku (fakturační formulář). order_display_number může být z get_next_order_number(). Vrátí id nebo None."""
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute('''
-                INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status))
+            cursor.execute("PRAGMA table_info(pending_orders)")
+            po_cols = {row[1] for row in cursor.fetchall()}
+            if 'order_display_number' in po_cols:
+                cursor.execute('''
+                    INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status, order_display_number)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status, order_display_number or ''))
+            else:
+                cursor.execute('''
+                    INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status))
             conn.commit()
             return cursor.lastrowid
         except Exception:

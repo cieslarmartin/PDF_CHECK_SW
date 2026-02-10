@@ -58,6 +58,38 @@ def get_db():
     return Database()
 
 
+def _get_env_labels(db):
+    """Načte texty pro Nastavení prostředí (číslování, stavy, tlačítka). Použito v dashboardu a v context_processor."""
+    if not db:
+        return {}
+    defaults = {
+        'order_number_prefix': '2026-',
+        'order_number_next': '100',
+        'label_status_new': 'Nová',
+        'label_status_waiting_payment': 'Čeká na platbu',
+        'label_status_active': 'Zaplaceno',
+        'label_section_new_orders': 'Nové objednávky',
+        'label_section_waiting_payment': 'Čekající na platbu',
+        'label_section_active_licenses': 'Aktivní licence (Zaplaceno)',
+        'label_menu_pending_orders': 'Čeká na platbu',
+        'label_btn_obednat': 'OBJEDNAT',
+        'label_btn_confirm_payment': 'POTVRDIT PLATBU',
+        'label_btn_activate': 'VYTVOŘIT UŽIVATELE A AKTIVOVAT',
+        'label_btn_activate_without_invoice': 'AKTIVOVAT BEZ FAKTURY',
+    }
+    out = {}
+    for k, v in defaults.items():
+        raw = db.get_global_setting(k, v)
+        if k == 'order_number_next':
+            try:
+                out[k] = str(int(raw)) if raw is not None and str(raw).strip() else v
+            except (TypeError, ValueError):
+                out[k] = v
+        else:
+            out[k] = (raw or '').strip() if raw else v
+    return out
+
+
 def login_required(f):
     """Dekorátor: DOČASNĚ VYPNOUT – vždy propustí (viz admin_required)."""
     @wraps(f)
@@ -576,6 +608,11 @@ def generate_invoice():
     db.update_pending_order_invoice_path(order_id, filepath)
     if (order.get('status') or '').upper() == 'NEW_ORDER':
         db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+    try:
+        from email_sender import send_order_notification_to_admin
+        send_order_notification_to_admin(order_id, order.get('jmeno_firma'), order.get('tarif'), amount_czk)
+    except Exception:
+        pass
     flash('Faktura vygenerována a uložena. Objednávka v sekci Čekající na platbu.', 'success')
     return redirect(url_for('admin.pending_orders'))
 
@@ -869,6 +906,16 @@ def _settings_for_admin(db):
     return s
 
 
+@admin_bp.context_processor
+def inject_env_labels():
+    """Injektuje env_labels do všech admin šablon (sidebar, stránka objednávek)."""
+    try:
+        db = get_db()
+        return {'env_labels': _get_env_labels(db)}
+    except Exception:
+        return {'env_labels': {}}
+
+
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
 @admin_required
 def settings():
@@ -991,6 +1038,20 @@ def settings():
             for key in ('legal_vop_html', 'legal_gdpr_html', 'footer_disclaimer', 'app_legal_notice'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Právní info uloženo', 'success')
+        elif action == 'save_environment':
+            db.set_global_setting('order_number_prefix', (request.form.get('order_number_prefix') or '').strip() or '2026-')
+            next_raw = request.form.get('order_number_next', '').strip()
+            if next_raw:
+                try:
+                    db.set_global_setting('order_number_next', str(int(next_raw)))
+                except ValueError:
+                    pass
+            for key in ('label_status_new', 'label_status_waiting_payment', 'label_status_active',
+                        'label_section_new_orders', 'label_section_waiting_payment', 'label_section_active_licenses',
+                        'label_menu_pending_orders', 'label_btn_obednat', 'label_btn_confirm_payment',
+                        'label_btn_activate', 'label_btn_activate_without_invoice'):
+                db.set_global_setting(key, request.form.get(key, ''))
+            flash('Nastavení prostředí uloženo', 'success')
         elif action == 'save_coming_soon':
             for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
                         'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
@@ -1029,10 +1090,12 @@ def settings():
         if isinstance(val, str):
             return val
         return json.dumps(val, ensure_ascii=False, indent=2)
+    env_labels = _get_env_labels(db)
     return render_template('admin_settings.html', user=user, active_page='settings',
                           maintenance_mode=st.get('maintenance_mode', False),
                           allow_new_registrations=st.get('allow_new_registrations', True),
                           settings=st,
+                          env_labels=env_labels,
                           pricing_tarifs_json=_json_str(st.get('pricing_tarifs'), '{}'),
                           landing_how_steps_json=_json_str(st.get('landing_how_steps')),
                           landing_faq_json=_json_str(st.get('landing_faq')),

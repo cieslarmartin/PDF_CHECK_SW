@@ -3044,7 +3044,8 @@ def checkout():
         if not souhlas:
             flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
-        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER')
+        order_display_number = db.get_next_order_number()
+        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER', order_display_number=order_display_number)
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
 

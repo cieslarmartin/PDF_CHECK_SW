@@ -41,7 +41,8 @@ def send_email(to_email, subject, body_plain, append_footer=True):
             return False
         use_ssl = app.config.get('MAIL_USE_SSL', True)
         msg = MIMEText(body_plain, 'plain', 'utf-8')
-        msg['Subject'] = subject
+        from email.header import Header
+        msg['Subject'] = Header(subject, 'utf-8')
         from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
         msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
@@ -74,6 +75,20 @@ def send_email(to_email, subject, body_plain, append_footer=True):
 
 
 ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
+
+
+def send_order_notification_to_admin(order_id, jmeno_firma, tarif, amount_czk):
+    """Odešle na info@dokucheck.cz notifikaci o nové objednávce (UTF-8). Volá se po kliknutí na OBJEDNAT v adminu."""
+    to_email = 'info@dokucheck.cz'
+    subject = 'Nová objednávka v systému DokuCheck'
+    body = (
+        'Nová objednávka v systému DokuCheck\n\n'
+        'ID objednávky: {}\n'
+        'Jméno zákazníka: {}\n'
+        'Vybraný tarif: {}\n'
+        'Částka: {} Kč\n'
+    ).format(order_id, jmeno_firma or '—', tarif or '—', amount_czk or '—')
+    return send_email(to_email, subject, body, append_footer=False)
 
 
 def send_email_with_attachment(to_email, subject, body_plain, attachment_path=None, attachment_filename=None, append_footer=True):

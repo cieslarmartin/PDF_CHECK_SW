@@ -4,12 +4,13 @@
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Správa objednávek</h2>
 <p style="margin-bottom:20px;color:#6b7280;">Nové objednávky → vygenerovat fakturu (uloží se na server) → čekající na platbu → stáhnout fakturu / odeslat zákazníkovi manuálně → potvrdit platbu.</p>
 
-{# A) Nové objednávky (NEW_ORDER) – VYGENEROVAT FAKTURU (bez odesílání e-mailu) #}
-<h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Nové objednávky</h3>
+{# A) Nové objednávky (NEW_ORDER) – OBJEDNAT (vygeneruje fakturu + notifikace) #}
+<h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) {{ env_labels.label_section_new_orders|default('Nové objednávky') }}</h3>
 <div class="table-container">
     <table class="table-dense">
         <thead>
             <tr>
+                <th>Č. objednávky</th>
                 <th>Datum</th>
                 <th>Jméno / Firma</th>
                 <th>IČ</th>
@@ -22,17 +23,18 @@
         <tbody>
             {% for o in orders_new %}
             <tr>
+                <td>{{ o.order_display_number or o.id }}</td>
                 <td>{{ (o.created_at or '')[:16] }}</td>
                 <td>{{ o.jmeno_firma or '—' }}</td>
                 <td>{{ o.ico or '—' }}</td>
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
-                <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">Nová</span></td>
+                <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_new|default('Nová') }}</span></td>
                 <td style="white-space:nowrap;">
                     <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU (PDF)</a>
                     <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-primary btn-sm">VYGENEROVAT FAKTURU</button>
+                        <button type="submit" class="btn btn-primary btn-sm">{{ env_labels.label_btn_obednat|default('OBJEDNAT') }}</button>
                     </form>
                     <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
@@ -40,23 +42,23 @@
                     </form>
                     <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">VYTVOŘIT UŽIVATELE A AKTIVOVAT</button>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate|default('VYTVOŘIT UŽIVATELE A AKTIVOVAT') }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.id }}?');">
+                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
                     </form>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 {# B) Čekající na platbu (WAITING_PAYMENT) – toggle ČSOB + POTVRDIT PŘIJETÍ PLATBY #}
-<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">B) Čekající na platbu</h3>
+<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">B) {{ env_labels.label_section_waiting_payment|default('Čekající na platbu') }}</h3>
 <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <form method="post" action="{{ url_for('admin.toggle_auto_activate_csob') }}" id="form-csob" style="display:flex;align-items:center;gap:8px;">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -76,6 +78,7 @@
     <table class="table-dense">
         <thead>
             <tr>
+                <th>Č. objednávky</th>
                 <th>Datum</th>
                 <th>Jméno / Firma</th>
                 <th>E-mail</th>
@@ -87,11 +90,12 @@
         <tbody>
             {% for o in orders_waiting %}
             <tr>
+                <td>{{ o.order_display_number or o.id }}</td>
                 <td>{{ (o.created_at or '')[:16] }}</td>
                 <td>{{ o.jmeno_firma or '—' }}</td>
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
-                <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">Čeká na platbu</span></td>
+                <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_waiting_payment|default('Čeká na platbu') }}</span></td>
                 <td style="white-space:nowrap;">
                     <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU (PDF)</a>
                     <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
@@ -100,31 +104,31 @@
                     </form>
                     <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-primary btn-sm">POTVRDIT PLATBU</button>
+                        <button type="submit" class="btn btn-primary btn-sm">{{ env_labels.label_btn_confirm_payment|default('POTVRDIT PLATBU') }}</button>
                     </form>
                     <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">VYTVOŘIT UŽIVATELE A AKTIVOVAT</button>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate|default('VYTVOŘIT UŽIVATELE A AKTIVOVAT') }}</button>
                     </form>
                     <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">AKTIVOVAT BEZ FAKTURY</button>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate_without_invoice|default('AKTIVOVAT BEZ FAKTURY') }}</button>
                     </form>
-                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.id }}?');">
+                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
                     </form>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné objednávky čekající na platbu.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné objednávky čekající na platbu.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 {# C) Aktivní licence (Zaplaceno) #}
-<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">C) Aktivní licence (Zaplaceno)</h3>
+<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">C) {{ env_labels.label_section_active_licenses|default('Aktivní licence (Zaplaceno)') }}</h3>
 <p style="margin-bottom:10px;color:#6b7280;font-size:0.9em;">Uživatelé s přístupem (Basic / PRO).</p>
 <div class="table-container">
     <table class="table-dense">

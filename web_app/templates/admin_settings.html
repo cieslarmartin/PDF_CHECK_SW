@@ -10,6 +10,7 @@
     <li><a href="#tab-marketing" class="admin-tab" data-tab="marketing">Marketing</a></li>
     <li><a href="#tab-legal" class="admin-tab" data-tab="legal">Právní info</a></li>
     <li><a href="#tab-coming-soon" class="admin-tab" data-tab="coming-soon">Připravujeme</a></li>
+    <li><a href="#tab-environment" class="admin-tab" data-tab="environment">Nastavení prostředí</a></li>
     <li><a href="#tab-system" class="admin-tab" data-tab="system">Systém</a></li>
 </ul>
 
@@ -304,6 +305,54 @@
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit sekci Připravujeme</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- Nastavení prostředí: číslování objednávek + texty tlačítek a stavů ----- #}
+<div id="tab-environment" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_environment">
+        <div class="admin-card">
+            <div class="card-header">Číslování objednávek</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Každá nová objednávka dostane číslo: Prefix + Pořadové číslo (např. 2026-100, 2026-101, …). Počáteční číslo se po uložení použije pro další objednávku.</p>
+                <label class="admin-settings-label">Prefix objednávky (order_number_prefix)</label>
+                <input type="text" name="order_number_prefix" class="form-control admin-settings-input" value="{{ (env_labels or {}).order_number_prefix|e }}" placeholder="2026-">
+                <label class="admin-settings-label">Počáteční číslo (order_number_next) – další objednávka dostane toto číslo a pak se zvýší</label>
+                <input type="number" name="order_number_next" class="form-control admin-settings-input" value="{{ (env_labels or {}).order_number_next|e }}" min="1" step="1" placeholder="100">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Texty stavů a sekcí v dashboardu (objednávky)</div>
+                <label class="admin-settings-label">Stav: Nová (label_status_new)</label>
+                <input type="text" name="label_status_new" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_status_new|e }}">
+                <label class="admin-settings-label">Stav: Čeká na platbu (label_status_waiting_payment)</label>
+                <input type="text" name="label_status_waiting_payment" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_status_waiting_payment|e }}">
+                <label class="admin-settings-label">Stav: Zaplaceno (label_status_active)</label>
+                <input type="text" name="label_status_active" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_status_active|e }}">
+                <label class="admin-settings-label">Nadpis sekce: Nové objednávky (label_section_new_orders)</label>
+                <input type="text" name="label_section_new_orders" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_section_new_orders|e }}">
+                <label class="admin-settings-label">Nadpis sekce: Čekající na platbu (label_section_waiting_payment)</label>
+                <input type="text" name="label_section_waiting_payment" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_section_waiting_payment|e }}">
+                <label class="admin-settings-label">Nadpis sekce: Aktivní licence (label_section_active_licenses)</label>
+                <input type="text" name="label_section_active_licenses" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_section_active_licenses|e }}">
+                <label class="admin-settings-label">Položka menu (sidebar): Čeká na platbu (label_menu_pending_orders)</label>
+                <input type="text" name="label_menu_pending_orders" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_menu_pending_orders|e }}">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Texty tlačítek v seznamu objednávek</div>
+                <label class="admin-settings-label">Tlačítko OBJEDNAT (label_btn_obednat)</label>
+                <input type="text" name="label_btn_obednat" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_btn_obednat|e }}">
+                <label class="admin-settings-label">Tlačítko POTVRDIT PLATBU (label_btn_confirm_payment)</label>
+                <input type="text" name="label_btn_confirm_payment" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_btn_confirm_payment|e }}">
+                <label class="admin-settings-label">Tlačítko VYTVOŘIT UŽIVATELE A AKTIVOVAT (label_btn_activate)</label>
+                <input type="text" name="label_btn_activate" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_btn_activate|e }}">
+                <label class="admin-settings-label">Tlačítko AKTIVOVAT BEZ FAKTURY (label_btn_activate_without_invoice)</label>
+                <input type="text" name="label_btn_activate_without_invoice" class="form-control admin-settings-input" value="{{ (env_labels or {}).label_btn_activate_without_invoice|e }}">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit nastavení prostředí</button>
             </div>
         </div>
     </form>
