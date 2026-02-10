@@ -42,6 +42,7 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         if not smtp_host or not smtp_user:
             return False
         from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
+        # Ekvivalent MIMEText(body_plain, 'plain', 'utf-8') + server.send_message(msg) – pojistka proti 'ascii' codec (ě, č, ř, ý)
         msg = EmailMessage(policy=SMTPUTF8)
         msg['Subject'] = subject
         msg['From'] = from_addr if from_addr else smtp_user
@@ -80,12 +81,13 @@ ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
 
 
 def send_order_notification_to_admin(order_number, jmeno_firma, tarif, amount_czk=None):
-    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce. UTF-8 (send_message + set_content charset=utf-8)."""
+    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce.
+    Tělo: číslo objednávky (Prefix+ID), jméno, tarif, částka. UTF-8 (send_message + set_content charset=utf-8)."""
     to_email = 'info@dokucheck.cz'
     subject = 'Nová objednávka: {}'.format(order_number)
-    body = 'Nová objednávka č. {}, Zákazník: {}, Tarif: {}'.format(
-        order_number or '—', jmeno_firma or '—', tarif or '—'
-    )
+    body = (
+        'Nová objednávka č. {}, Zákazník: {}, Tarif: {}, Částka: {} Kč'
+    ).format(order_number or '—', jmeno_firma or '—', tarif or '—', amount_czk if amount_czk is not None else '—')
     return send_email(to_email, subject, body, append_footer=False)
 
 
