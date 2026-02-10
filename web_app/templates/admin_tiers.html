@@ -22,7 +22,19 @@
         </thead>
         <tbody>
             {% for t in tiers_list %}
-            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}" data-checkout-features="{{ (t.checkout_features or '')|e }}">
+            {% set tier_name_lower = (t.name or '')|lower %}
+            {% if tier_name_lower == 'basic' %}
+            {% set default_checkout = 'Až 500 souborů v dávce\nKontrola elektronických podpisů\nČasová razítka\nAž 1 zařízení' %}
+            {% elif tier_name_lower == 'pro' or tier_name_lower == 'standard' %}
+            {% set default_checkout = 'Až 99999 souborů v dávce\nKontrola elektronických podpisů\nČasová razítka\nExport do Excel (XLS)\nPokročilé filtry chyb\nAž 3 zařízení' %}
+            {% elif tier_name_lower == 'trial' %}
+            {% set default_checkout = 'Až 100 souborů v dávce\nKontrola elektronických podpisů\nČasová razítka\nExport do Excel\nPokročilé filtry\nAž 1 zařízení' %}
+            {% elif tier_name_lower == 'unlimited' %}
+            {% set default_checkout = 'Až 99999 souborů v dávce\nKontrola elektronických podpisů\nČasová razítka\nExport do Excel (XLS)\nPokročilé filtry chyb\nAž 10 zařízení' %}
+            {% else %}
+            {% set default_checkout = 'Kontrola PDF v dávkách\nKontrola elektronických podpisů\nČasová razítka' %}
+            {% endif %}
+            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}" data-checkout-features="{{ (t.checkout_features or '')|e }}" data-default-checkout="{{ default_checkout|replace('\n', '&#10;')|e }}">
                 <td><span class="badge badge-{{ t.name|lower }}">{{ t.name }}</span></td>
                 <td>{{ t.max_files_limit }}</td>
                 <td>{{ t.max_devices }}</td>
@@ -92,8 +104,8 @@
             </div>
             <div class="form-group">
                 <label class="small">Checkout body (jedna výhoda na řádek)</label>
-                <textarea id="edit_checkout_features" class="form-control" rows="6" placeholder="Prázdné = automaticky z limitu a zaškrtávek. Např.:&#10;Až 500000 souborů v dávce&#10;Kontrola elektronických podpisů&#10;Časová razítka&#10;Až 1 zařízení"></textarea>
-                <p class="small text-muted mt-1">Texty pod cenou na stránce objednávky (✓). Jeden řádek = jeden bod.</p>
+                <textarea id="edit_checkout_features" class="form-control" rows="8"></textarea>
+                <p class="small text-muted mt-1">Texty pod cenou na stránce objednávky (✓). Jeden řádek = jeden bod. Když je pole prázdné, zobrazí se výchozí text podle tieru; můžete ho zkopírovat sem a upravit.</p>
             </div>
         </div>
         <div class="modal-actions">
@@ -120,7 +132,8 @@ document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
         document.getElementById('edit_allow_excel').checked = tr.getAttribute('data-allow-excel') === '1';
         document.getElementById('edit_allow_filters').checked = tr.getAttribute('data-allow-filters') === '1';
         var cf = tr.getAttribute('data-checkout-features') || '';
-        document.getElementById('edit_checkout_features').value = cf;
+        var defaultText = (tr.getAttribute('data-default-checkout') || '').replace(/&#10;/g, '\n');
+        document.getElementById('edit_checkout_features').value = cf ? cf : defaultText;
         document.getElementById('tierEditModal').classList.add('active');
     });
 });
