@@ -353,6 +353,22 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_faq_order_index ON faq(order_index)')
 
+        # Výchozí FAQ pro editaci v Adminu (pouze pokud tabulka prázdná)
+        cursor.execute('SELECT COUNT(*) FROM faq')
+        if cursor.fetchone()[0] == 0:
+            _default_faq = [
+                ('Co kontroluje DokuCheck?', 'PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka.', 0),
+                ('Jaký je rozdíl mezi Z Agenta a Cloud?', 'Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo).', 1),
+                ('Mohu zrušit předplatné?', 'Ano, předplatné se neobnoví po ukončení období.', 2),
+                ('Kde najdu Můj účet?', 'Portál – historie a nastavení.', 3),
+                ('Co je DokuCheck?', 'Nástroj pro kontrolu PDF dokumentace (PDF-A, podpisy, soulad s Portálem stavebníka). K dispozici jako desktopová aplikace a web.', 4),
+                ('Jak vyzkoušet online?', 'Na webu záložka Na server, nebo na cloud = nahrání PDF na server (cloud). V Desktop aplikaci Z Agenta = soubory na disku, na server jdou jen metadata.', 5),
+                ('Jaké soubory mohu nahrát?', 'PDF projekty. Na webu může platit limit velikosti; v desktopové aplikaci bez tohoto omezení.', 6),
+                ('Jak probíhá licencování?', 'Licence jsou měsíční (BASIC a PRO). Po objednávce obdržíte fakturu e-mailem. Po zaplacení aktivujeme váš účet.', 7),
+            ]
+            for q, a, idx in _default_faq:
+                cursor.execute('INSERT INTO faq (question, answer, order_index) VALUES (?, ?, ?)', (q, a, idx))
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
