@@ -3141,7 +3141,7 @@ def checkout():
                 subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
                 body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {amount} Kč na účet, VS: {vs}.'
                 def repl(t):
-                    return (t.replace('{vs}', str(order_display_number)).replace('{order_number}', str(order_display_number))
+                    return (t.replace('{vs}', str(order_display_number)).replace('{order_number}', str(order_display_number)))
                 subject = repl(subject_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or ''))
                 body = repl(body_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or '')).replace('{ucet}', ucet)
                 body = _apply_footer(body, templates.get('footer_text', ''))
