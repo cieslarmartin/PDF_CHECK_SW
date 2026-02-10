@@ -284,7 +284,7 @@
         <header class="header">
             <div>
                 <span class="header-badge">ADMIN</span>
-                <span style="font-size:0.75em;color:#7f8c8d;font-weight:600;margin-left:8px;">build {{ web_build }}</span>
+                <span style="font-size:0.75em;color:#7f8c8d;font-weight:600;margin-left:8px;">{{ web_version|default(web_build)|default('w26.02.001') }}</span>
             </div>
             <div class="header-right">
                 {% block header_right %}

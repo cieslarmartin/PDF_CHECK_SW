@@ -19,7 +19,7 @@ def _apply_footer(body_plain, footer_text):
 
 
 def send_email(to_email, subject, body_plain, append_footer=True):
-    """Odešle e-mail. Pokud append_footer=True, na konec přidá footer_text ze šablon."""
+    """Odešle e-mail (UTF-8). Pokud append_footer=True, na konec přidá footer_text ze šablon."""
     if append_footer:
         templates = get_email_templates()
         body_plain = _apply_footer(body_plain, templates.get("footer_text", ""))
@@ -32,32 +32,33 @@ def send_email(to_email, subject, body_plain, append_footer=True):
             mail.send(msg)
             return True
         import smtplib
-        from email.mime.text import MIMEText
+        from email.message import EmailMessage
+        from email.policy import SMTPUTF8
         smtp_host = os.environ.get('MAIL_SERVER') or app.config.get('MAIL_SERVER', '') or 'smtp.seznam.cz'
         smtp_port = int(os.environ.get('MAIL_PORT') or app.config.get('MAIL_PORT') or 465)
         smtp_user = os.environ.get('MAIL_USERNAME') or app.config.get('MAIL_USERNAME', '') or 'info@dokucheck.cz'
         smtp_pass = os.environ.get('MAIL_PASSWORD') or app.config.get('MAIL_PASSWORD', '')
         if not smtp_host or not smtp_user:
             return False
-        use_ssl = app.config.get('MAIL_USE_SSL', True)
-        msg = MIMEText(body_plain, 'plain', 'utf-8')
-        from email.header import Header
-        msg['Subject'] = Header(subject, 'utf-8')
         from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
+        msg = EmailMessage(policy=SMTPUTF8)
+        msg['Subject'] = subject
         msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
+        msg.set_content(body_plain, subtype='plain', charset='utf-8')
+        use_ssl = app.config.get('MAIL_USE_SSL', True)
         if use_ssl and smtp_port == 465:
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
                 if smtp_pass:
                     server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, [to_email], msg.as_string())
+                server.send_message(msg)
         else:
             with smtplib.SMTP(smtp_host, smtp_port) as server:
                 if smtp_port == 587:
                     server.starttls()
                 if smtp_pass:
                     server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, [to_email], msg.as_string())
+                server.send_message(msg)
         return True
     except Exception as e:
         import traceback
@@ -78,16 +79,14 @@ ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
 
 
 def send_order_notification_to_admin(order_id, jmeno_firma, tarif, amount_czk):
-    """Odešle na info@dokucheck.cz notifikaci o nové objednávce (UTF-8). Volá se po kliknutí na OBJEDNAT v adminu."""
+    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce (UTF-8). Volá se po kliknutí na OBJEDNAT v adminu."""
     to_email = 'info@dokucheck.cz'
-    subject = 'Nová objednávka v systému DokuCheck'
+    subject = 'Nová objednávka: {}'.format(order_id)
     body = (
-        'Nová objednávka v systému DokuCheck\n\n'
-        'ID objednávky: {}\n'
         'Jméno zákazníka: {}\n'
-        'Vybraný tarif: {}\n'
+        'Tarif: {}\n'
         'Částka: {} Kč\n'
-    ).format(order_id, jmeno_firma or '—', tarif or '—', amount_czk or '—')
+    ).format(jmeno_firma or '—', tarif or '—', amount_czk or '—')
     return send_email(to_email, subject, body, append_footer=False)
 
 

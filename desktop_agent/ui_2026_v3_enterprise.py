@@ -14,7 +14,7 @@ import time
 import customtkinter as ctk
 
 from ui import _count_errors_from_result, _session_summary_text
-from version import BUILD_VERSION
+from version import BUILD_VERSION, AGENT_VERSION
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -22,9 +22,8 @@ ctk.set_default_color_theme("blue")
 
 def _setup_high_dpi_v3():
     """
-    Pro V3: DPI awareness (Windows) kvůli ostrému vykreslení.
-    Škálování CTk ponecháme na 1.0, aby se okno a písmo po startu nejevily zmenšené.
-    Volat PŘED vytvořením root okna.
+    DPI Awareness (Windows) – okno se při přetažení na jiný monitor správně překreslí a nezprůhlední.
+    Volat PŘED vytvořením root okna. SetProcessDpiAwareness(1) = system DPI.
     """
     try:
         if sys.platform == "win32":
@@ -32,7 +31,7 @@ def _setup_high_dpi_v3():
                 ctypes = __import__("ctypes")
                 shcore = getattr(ctypes.windll, "shcore", None)
                 if shcore:
-                    shcore.SetProcessDpiAwareness(2)
+                    shcore.SetProcessDpiAwareness(1)
             except Exception:
                 try:
                     ctypes = __import__("ctypes")
@@ -41,7 +40,6 @@ def _setup_high_dpi_v3():
                     pass
     except Exception:
         pass
-    # Bez automatického škálování – vždy 1:1, aby nebylo vše „zmenšené“
     ctk.set_widget_scaling(1.0)
     ctk.set_window_scaling(1.0)
 
@@ -84,6 +82,45 @@ else:
 LOGO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.png")
 LOGO_ICO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.ico")
 NO_DETAIL_MSG = "Výsledky kontroly jednotlivých PDF se v této aplikaci nezobrazují.\nStav uvidíte po odeslání na server."
+
+SPLASH_DURATION_MS = 3000
+
+
+def _create_splash(master):
+    """Vytvoří dočasné okno bez okrajů (splash): logo, verze, copyright. Trvá SPLASH_DURATION_MS ms."""
+    splash = ctk.CTkToplevel(master)
+    splash.overrideredirect(True)
+    splash.configure(fg_color=BG_APP)
+    splash.attributes("-topmost", True)
+    w, h = 420, 300
+    splash.geometry(f"{w}x{h}")
+    splash.update_idletasks()
+    sw = splash.winfo_screenwidth()
+    sh = splash.winfo_screenheight()
+    x = (sw - w) // 2
+    y = (sh - h) // 2
+    splash.geometry(f"{w}x{h}+{x}+{y}")
+    try:
+        logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(200, 100))
+        ctk.CTkLabel(splash, text="", image=logo_img).pack(pady=(32, 16))
+    except Exception:
+        ctk.CTkLabel(splash, text="DokuCheck Agent", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack(pady=(32, 16))
+    ctk.CTkLabel(splash, text=AGENT_VERSION, font=(FONT_STACK[0], FS_16), text_color=TEXT).pack(pady=4)
+    ctk.CTkLabel(splash, text="© 2026 Ing. Martin Cieślar", font=(FONT_STACK[0], 10), text_color=TEXT_MUTED).pack(pady=(0, 24))
+    splash.update()
+    return splash
+
+
+def _close_splash_and_show_main(splash, root):
+    """Zavře splash a zobrazí hlavní okno (už maximalizované)."""
+    try:
+        splash.destroy()
+    except Exception:
+        pass
+    try:
+        root.deiconify()
+    except Exception:
+        pass
 
 
 class PDFCheckUI_2026_V3:
@@ -134,20 +171,8 @@ class PDFCheckUI_2026_V3:
         self._apply_dark_title_bar()
         self._setup_logo()
         self._show_session_summary()
-        self.root.after(50, self._maximize_window)
+        # Maximalizace se provádí v create_app před deiconify() – zde už ne, aby neprobliklo
         self.root.after(250, self._update_analyze_send_state)
-
-    def _maximize_window(self):
-        """Maximalizace okna po startu – celá plocha."""
-        try:
-            if sys.platform == "win32":
-                self.root.state("zoomed")
-            elif sys.platform == "darwin":
-                self.root.attributes("-zoomed", True)
-            else:
-                self.root.state("zoomed")
-        except tk.TclError:
-            pass
 
     def _center(self):
         self.root.update_idletasks()
@@ -846,7 +871,7 @@ class PDFCheckUI_2026_V3:
         header_right = ctk.CTkFrame(header, fg_color="transparent")
         header_right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         ctk.CTkLabel(header_right, text="DokuCheck PRO", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT_MAIN).pack(anchor=tk.W)
-        ctk.CTkLabel(header_right, text=f"Verze: {BUILD_VERSION} (Enterprise Edition)", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W)
+        ctk.CTkLabel(header_right, text=f"Verze: {AGENT_VERSION} (Enterprise Edition)", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W)
 
         # —— 2. Střed: účel aplikace ——
         desc = (
@@ -1495,9 +1520,9 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
                        on_after_login_callback=None, on_after_logout_callback=None, on_get_web_login_url=None,
                        on_send_batch_callback=None, on_has_login=None, on_get_remote_config=None, on_get_legal_config=None):
     """Vytvoří a vrátí (root, app) pro preview V3 Enterprise.
-    on_has_login: callable() -> bool; bez přihlášení (Vyzkoušet zdarma nebo e-mail) nelze analyzovat ani odesílat.
-    on_get_remote_config: callable() -> dict s disclaimer, vop_link, update_msg ze serveru.
-    on_get_legal_config: callable() -> dict s disclaimer, vop_url, gdpr_url pro patičku."""
+    Okno je během inicializace skryté (withdraw), po dokončení nastavení se zobrazí již maximalizované (bez probliknutí).
+    on_has_login: callable() -> bool; bez přihlášení nelze analyzovat ani odesílat.
+    on_get_remote_config: callable() -> dict; on_get_legal_config: callable() -> dict."""
     _setup_high_dpi_v3()
     if TKINTERDND_AVAILABLE:
         try:
@@ -1507,6 +1532,13 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
             root = ctk.CTk()
     else:
         root = ctk.CTk()
+    # Skrýt okno během celé inicializace (barvy, logo, layout) – zabrání probliknutí
+    root.withdraw()
+    # Průhlednost vždy 1.0; žádné měnění -alpha při pohybu okna (zákaz zprůhlednění na jiném monitoru)
+    try:
+        root.attributes("-alpha", 1.0)
+    except tk.TclError:
+        pass
     app = PDFCheckUI_2026_V3(
         root, on_check_callback, on_api_key_callback, api_url=api_url,
         on_login_password_callback=on_login_password_callback,
@@ -1520,4 +1552,17 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
         on_get_remote_config=on_get_remote_config,
         on_get_legal_config=on_get_legal_config,
     )
+    # Maximalizace před zobrazením – hlavní okno se zobrazí až po splashi
+    try:
+        if sys.platform == "win32":
+            root.state("zoomed")
+        elif sys.platform == "darwin":
+            root.attributes("-zoomed", True)
+        else:
+            root.state("zoomed")
+    except tk.TclError:
+        pass
+    # Splash 3 s: logo, verze, copyright; pak zavřít splash a zobrazit hlavní okno (maximalizované)
+    splash = _create_splash(root)
+    root.after(SPLASH_DURATION_MS, lambda: _close_splash_and_show_main(splash, root))
     return root, app

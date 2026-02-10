@@ -523,7 +523,7 @@
             </div>
         </div>
         <p class="footer-legal" style="font-size:0.75em;color:#9ca3af;margin:8px auto 0;max-width:720px;">Výsledky mají informativní charakter a nenahrazují Portál stavebníka.</p>
-        <div class="footer-bottom">© 2025 DokuCheck. Projektový Strážce pro Portál stavebníka. <span style="color:#9ca3af;">Web build {{ web_build }}</span></div>
+        <div class="footer-bottom">© 2025 DokuCheck. Projektový Strážce pro Portál stavebníka. <span style="color:#9ca3af;">{{ web_version|default(web_build)|default('w26.02.001') }}</span></div>
     </footer>
 
     <div id="cookie-bar" class="cookie-bar" style="display:none;">

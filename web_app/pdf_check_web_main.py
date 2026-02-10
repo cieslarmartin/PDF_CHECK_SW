@@ -29,7 +29,7 @@ except ImportError:
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp
-from version import WEB_BUILD
+from version import WEB_BUILD, WEB_VERSION
 
 # =============================================================================
 # AUTOMATICKÉ UVOLNĚNÍ PORTU
@@ -64,7 +64,10 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 @app.context_processor
 def inject_web_build():
     """Číslo buildu dostupné ve všech šablonách – malým šedým písmem na každé stránce."""
-    return {'web_build': getattr(WEB_BUILD, '__call__', lambda: WEB_BUILD)() if callable(getattr(WEB_BUILD, '__call__', None)) else WEB_BUILD}
+    return {
+        'web_build': getattr(WEB_BUILD, '__call__', lambda: WEB_BUILD)() if callable(getattr(WEB_BUILD, '__call__', None)) else WEB_BUILD,
+        'web_version': getattr(WEB_VERSION, '__call__', lambda: WEB_VERSION)() if callable(getattr(WEB_VERSION, '__call__', None)) else WEB_VERSION,
+    }
 
 
 # NOVÉ: Secret key pro sessions (admin panel)
@@ -3346,8 +3349,8 @@ def scan_folder():
 # =============================================================================
 @app.context_processor
 def inject_web_build():
-    """Do všech šablon přidá web_build (např. 44) pro zobrazení verze na webu."""
-    return {'web_build': WEB_BUILD}
+    """Do všech šablon přidá web_build a web_version (w26.02.XXX) pro zobrazení verze na webu."""
+    return {'web_build': WEB_BUILD, 'web_version': WEB_VERSION}
 
 # =============================================================================
 # REGISTRACE ADMIN BLUEPRINTU

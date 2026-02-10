@@ -152,6 +152,11 @@ def load_settings_for_views(db):
     out["coming_soon_path_items_list"] = [x.strip() for x in path_items if x.strip()]
     editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
     out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
+    try:
+        from version import WEB_VERSION
+        out["web_version"] = WEB_VERSION
+    except ImportError:
+        out["web_version"] = "w26.02.001"
     return out
 
 

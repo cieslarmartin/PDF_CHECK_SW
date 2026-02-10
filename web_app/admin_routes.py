@@ -610,7 +610,8 @@ def generate_invoice():
         db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
     try:
         from email_sender import send_order_notification_to_admin
-        send_order_notification_to_admin(order_id, order.get('jmeno_firma'), order.get('tarif'), amount_czk)
+        display_id = order.get('order_display_number') or order_id
+        send_order_notification_to_admin(display_id, order.get('jmeno_firma'), order.get('tarif'), amount_czk)
     except Exception:
         pass
     flash('Faktura vygenerována a uložena. Objednávka v sekci Čekající na platbu.', 'success')

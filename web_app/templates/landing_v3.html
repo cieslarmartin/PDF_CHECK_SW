@@ -314,7 +314,7 @@
 
         {# 7) Footer #}
         <footer class="pt-6 border-t" style="border-color:#e5e7eb;">
-            <p class="text-sm" style="color:#6b7280;">Kontakt: <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="lp-v3-link">{{ contact_email|default('info@dokucheck.app') }}</a> · <a href="/vop" class="lp-v3-link">VOP</a> · <a href="/gdpr" class="lp-v3-link">GDPR</a></p>
+            <p class="text-sm" style="color:#6b7280;">Kontakt: <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="lp-v3-link">{{ contact_email|default('info@dokucheck.app') }}</a> · <a href="/vop" class="lp-v3-link">VOP</a> · <a href="/gdpr" class="lp-v3-link">GDPR</a> <span style="color:#9ca3af;">· {{ web_version|default('w26.02.001') }}</span></p>
         </footer>
     </main>
 </body>
