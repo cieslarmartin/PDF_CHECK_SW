@@ -203,35 +203,22 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.set_auto_page_break(True, margin=28)
         pdf.set_font('DejaVu', '', 10)
 
-        # Dva sloupce: LEVÁ = Dodavatel, PRAVÁ = Odběratel (bez překrývání)
-        col_w = 88
-        gap = 12
-        x_left = 10
-        x_right = x_left + col_w + gap
-        y_start = pdf.get_y()
-
-        # Levý sloupec – Dodavatel
-        pdf.set_xy(x_left, y_start)
+        # Rozložení pod sebou: nejdřív Dodavatel, pak Odběratel (žádné překrývání)
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(col_w, 6, 'Dodavatel', 0, 1)
+        pdf.cell(0, 6, 'Dodavatel', 0, 1)
         pdf.set_font('DejaVu', '', 9)
-        pdf.set_x(x_left)
-        pdf.multi_cell(col_w, 5, '{}\n{}\nIČ: {}\n{}\n{}'.format(_name, _addr, _ico, zivnost, dph_text))
-        y_end_left = pdf.get_y()
+        pdf.multi_cell(0, 5, '{}\n{}\nIČ: {}\n{}\n{}'.format(_name, _addr, _ico, zivnost, dph_text))
+        pdf.ln(4)
 
-        # Pravý sloupec – Odběratel (začíná na stejné y_start)
-        pdf.set_xy(x_right, y_start)
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(col_w, 6, 'Odběratel', 0, 1)
+        pdf.cell(0, 6, 'Odběratel', 0, 1)
         pdf.set_font('DejaVu', '', 9)
-        pdf.set_x(x_right)
-        pdf.multi_cell(col_w, 5, '{}\nIČ: {}\nE-mail: {}'.format(
-            jmeno_firma or '—',
-            ico or '—',
-            email or '—'
+        pdf.multi_cell(0, 5, '{}\nIČ: {}\nE-mail: {}'.format(
+            (jmeno_firma or '—').strip(),
+            (ico or '—').strip(),
+            (email or '—').strip()
         ))
-        y_end_right = pdf.get_y()
-        pdf.set_y(max(y_end_left, y_end_right) + 8)
+        pdf.ln(6)
 
         # Platební blok: Banka, Číslo účtu, Variabilní symbol, Datum vystavení, Datum splatnosti
         pdf.set_font('DejaVu', 'B', 10)
