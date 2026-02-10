@@ -22,7 +22,7 @@
         </thead>
         <tbody>
             {% for t in tiers_list %}
-            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}">
+            <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}" data-checkout-features="{{ (t.checkout_features or '')|e }}">
                 <td><span class="badge badge-{{ t.name|lower }}">{{ t.name }}</span></td>
                 <td>{{ t.max_files_limit }}</td>
                 <td>{{ t.max_devices }}</td>
@@ -90,6 +90,11 @@
                 <input type="checkbox" id="edit_allow_filters" class="form-control" style="width:auto;">
                 <label class="small" for="edit_allow_filters">Pokročilé filtry (sloupce, PDF/A, podpis, razítko)</label>
             </div>
+            <div class="form-group">
+                <label class="small">Checkout body (jedna výhoda na řádek)</label>
+                <textarea id="edit_checkout_features" class="form-control" rows="6" placeholder="Prázdné = automaticky z limitu a zaškrtávek. Např.:&#10;Až 500000 souborů v dávce&#10;Kontrola elektronických podpisů&#10;Časová razítka&#10;Až 1 zařízení"></textarea>
+                <p class="small text-muted mt-1">Texty pod cenou na stránce objednávky (✓). Jeden řádek = jeden bod.</p>
+            </div>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="document.getElementById('tierEditModal').classList.remove('active')">Zrušit</button>
@@ -114,6 +119,8 @@ document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
         document.getElementById('edit_allow_ts').checked = tr.getAttribute('data-allow-ts') === '1';
         document.getElementById('edit_allow_excel').checked = tr.getAttribute('data-allow-excel') === '1';
         document.getElementById('edit_allow_filters').checked = tr.getAttribute('data-allow-filters') === '1';
+        var cf = tr.getAttribute('data-checkout-features') || '';
+        document.getElementById('edit_checkout_features').value = cf;
         document.getElementById('tierEditModal').classList.add('active');
     });
 });
@@ -130,6 +137,7 @@ document.getElementById('btnTierSave').onclick = function() {
     fd.append('allow_timestamp', document.getElementById('edit_allow_ts').checked ? '1' : '0');
     fd.append('allow_excel_export', document.getElementById('edit_allow_excel').checked ? '1' : '0');
     fd.append('allow_advanced_filters', document.getElementById('edit_allow_filters').checked ? '1' : '0');
+    fd.append('checkout_features', document.getElementById('edit_checkout_features').value || '');
     var url = '{{ url_for("admin.api_update_tier") }}';
     fetch(url, { method: 'POST', body: fd })
         .then(function(r) {

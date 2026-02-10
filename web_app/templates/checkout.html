@@ -38,14 +38,14 @@
           {% endif %}
         {% endwith %}
 
-        {# Rekapitulace: Vaše objednávka – zvýrazněný blok (modrá/šedá s hlavní stránkou) #}
+        {# Rekapitulace: nadpis a popisek období z Admin → Texty checkoutu #}
         <section class="checkout-panel p-6 mb-6 border-l-4 shadow-md" style="border-left-color:#1e5a8a; background:linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);">
-            <h2 class="text-lg font-semibold mb-4" style="color:#1e5a8a;">Vaše objednávka</h2>
+            <h2 class="text-lg font-semibold mb-4" style="color:#1e5a8a;">{{ checkout_order_title|default('Vaše objednávka') }}</h2>
             <div class="flex justify-between items-baseline mb-2">
                 <span class="font-semibold" style="color:#1f2937;">{{ (order_summary or {}).tier_label|default(tarif_label|default('PRO')) }}</span>
                 <span class="text-2xl font-bold" style="color:#1e5a8a;">{{ (order_summary or {}).amount_czk|default(1990) }} Kč</span>
             </div>
-            <p class="text-xs mb-4" style="color:#6b7280;">/ rok</p>
+            <p class="text-xs mb-4" style="color:#6b7280;">{{ checkout_period_label|default('/ rok') }}</p>
             {% if order_summary and order_summary.features %}
             <ul class="text-sm space-y-2 list-none pl-0" style="color:#4b5563;">
                 {% for f in order_summary.features %}

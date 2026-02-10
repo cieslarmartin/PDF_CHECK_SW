@@ -1,0 +1,37 @@
+{% extends "admin_base.html" %}
+{% block title %}Texty checkoutu – DokuCheck Admin{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Texty checkoutu</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Úpravy textů na stránce objednávky (checkout). Body pod tarifem (✓) upravíte v <a href="{{ url_for('admin.tiers') }}">Tier definice</a> u každého tarifu v poli „Checkout body“.</p>
+
+<form method="post" action="{{ url_for('admin.checkout_texts') }}">
+    <div class="admin-card" style="max-width:640px;">
+        <div class="card-header">Blok „Vaše objednávka“ na stránce checkout</div>
+        <div class="card-body">
+            <label class="admin-settings-label">Nadpis bloku objednávky</label>
+            <input type="text" name="checkout_order_title" class="form-control admin-settings-input" value="{{ checkout_order_title|e }}" placeholder="Vaše objednávka">
+            <p class="small text-muted mt-1">Zobrazí se nad názvem tarifu a částkou (např. „Vaše objednávka“).</p>
+            <label class="admin-settings-label">Popisek období (pod částkou)</label>
+            <input type="text" name="checkout_period_label" class="form-control admin-settings-input" value="{{ checkout_period_label|e }}" placeholder="/ rok">
+            <p class="small text-muted mt-1">Např. „/ rok“ nebo „/ měsíc“. Zobrazí se pod cenou.</p>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary btn-sm">Uložit texty checkoutu</button>
+        </div>
+    </div>
+</form>
+
+<div class="admin-card mt-4" style="max-width:640px;">
+    <div class="card-header">Body (✓) u tarifu</div>
+    <div class="card-body">
+        <p class="text-sm" style="color:#6b7280;">Výhody zobrazené pod cenou („Až 500000 souborů v dávce“, „Kontrola elektronických podpisů“, „Časová razítka“, „Až 1 zařízení“) upravíte v záložce <strong>Tier definice</strong>: u každého tieru otevřete Upravit a vyplňte pole <strong>Checkout body (jedna výhoda na řádek)</strong>. Prázdné pole = body se vygenerují automaticky z limitu a zaškrtávek tieru.</p>
+        <a href="{{ url_for('admin.tiers') }}" class="btn btn-secondary btn-sm mt-2">Přejít na Tier definice</a>
+    </div>
+</div>
+
+<style>
+.admin-settings-label { display:block; font-size:0.85em; color:#4b5563; margin-bottom:4px; margin-top:10px; }
+.admin-settings-label:first-of-type { margin-top:0; }
+.admin-settings-input { width:100%; padding:6px 8px; margin-bottom:4px; }
+</style>
+{% endblock %}

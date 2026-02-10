@@ -3030,9 +3030,14 @@ TARIF_LABELS_FALLBACK = {k: v.get("label", k.upper()) for k, v in DEFAULT_PRICIN
 
 
 def _checkout_tier_features(tier_row, tarif_key):
-    """Sestaví seznam hlavních funkcí licence z tabulky license_tiers pro rekapitulaci v checkoutu."""
+    """Sestaví seznam hlavních funkcí licence pro rekapitulaci v checkoutu. Pokud tier má checkout_features (text, řádky), použijí se; jinak z limitu a zaškrtávek."""
     if not tier_row:
         return ['Kontrola PDF/A a metadat', 'Kontrola podpisů', 'Z Agenta – soubory u vás'] if tarif_key == 'basic' else ['Vše z Basic', 'Export do Excel', 'Pokročilé filtry', 'Z Agenta – soubory u vás']
+    custom = (tier_row.get('checkout_features') or '').strip()
+    if custom:
+        features = [line.strip() for line in custom.splitlines() if line.strip()]
+        if features:
+            return features
     features = []
     max_files = tier_row.get('max_files_limit')
     if max_files is not None:
@@ -3171,11 +3176,15 @@ def checkout():
         'tier_id': tier_row.get('id') if tier_row else None,
         'features': _checkout_tier_features(tier_row, tarif),
     }
+    checkout_order_title = (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka'
+    checkout_period_label = (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok'
     return render_template('checkout.html',
         tarif=tarif,
         tarif_label=tier_label,
         payment_instructions=payment_instructions,
         order_summary=order_summary,
+        checkout_order_title=checkout_order_title,
+        checkout_period_label=checkout_period_label,
     )
 
 

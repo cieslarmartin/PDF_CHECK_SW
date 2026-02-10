@@ -335,6 +335,27 @@ def company_settings():
     return render_template('admin_company_settings.html', company=company, user=user, active_page='company_settings')
 
 
+# --- Texty checkoutu (nadpis, / rok) – editovatelné v Adminu ---
+@admin_bp.route('/admin/checkout-texts', methods=['GET', 'POST'])
+@admin_required
+def checkout_texts():
+    """Karta pro úpravu textů na stránce checkout: nadpis bloku objednávky, popisek období (/ rok)."""
+    db = get_db()
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    if request.method == 'POST':
+        db.set_global_setting('checkout_order_title', request.form.get('checkout_order_title', '').strip() or 'Vaše objednávka')
+        db.set_global_setting('checkout_period_label', request.form.get('checkout_period_label', '').strip() or '/ rok')
+        flash('Texty checkoutu byly uloženy.', 'success')
+        return redirect(url_for('admin.checkout_texts'))
+    checkout_order_title = (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka'
+    checkout_period_label = (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok'
+    return render_template('admin_checkout_texts.html', user=user, active_page='checkout_texts',
+                           checkout_order_title=checkout_order_title, checkout_period_label=checkout_period_label)
+
+
 # --- Správa FAQ (pouze pro přihlášeného administrátora) ---
 @admin_bp.route('/admin/faq', methods=['GET'])
 @admin_required
@@ -1284,6 +1305,7 @@ def api_update_tier():
             max_file_size_mb = int(raw_size)
         except ValueError:
             pass
+    checkout_features = (request.form.get('checkout_features') or '').strip()
 
     if not tier_id:
         return jsonify({'success': False, 'error': 'Chybí tier_id'}), 400
@@ -1300,6 +1322,7 @@ def api_update_tier():
         daily_files_limit=daily_files_limit,
         rate_limit_hour=rate_limit_hour,
         max_file_size_mb=max_file_size_mb,
+        checkout_features=checkout_features,
     )
     if ok:
         return jsonify({'success': True, 'message': 'Tier aktualizován'})

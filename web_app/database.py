@@ -414,6 +414,7 @@ class Database:
                 'rate_limit_hour': 'INTEGER DEFAULT 3',
                 'max_file_size_mb': 'INTEGER',
                 'allow_advanced_filters': 'INTEGER DEFAULT 0',
+                'checkout_features': 'TEXT',  # výhody na checkoutu (jeden text na řádek), prázdné = automaticky z limitu
             }
             for col_name, col_type in tier_new.items():
                 if col_name not in tier_columns:
@@ -2192,8 +2193,9 @@ class Database:
     def update_tier(self, tier_id: int, name=None, max_files_limit=None,
                     allow_signatures=None, allow_timestamp=None, allow_excel_export=None,
                     allow_advanced_filters=None, max_devices=None,
-                    daily_files_limit=None, rate_limit_hour=None, max_file_size_mb=None) -> bool:
-        """Aktualizuje globální tier (včetně denního limitu, rate limit, max velikost souboru)."""
+                    daily_files_limit=None, rate_limit_hour=None, max_file_size_mb=None,
+                    checkout_features=None) -> bool:
+        """Aktualizuje globální tier (včetně denního limitu, rate limit, max velikost souboru, texty checkoutu)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         updates, values = [], []
@@ -2227,6 +2229,9 @@ class Database:
         if max_file_size_mb is not None:
             updates.append('max_file_size_mb = ?')
             values.append(max_file_size_mb)
+        if checkout_features is not None:
+            updates.append('checkout_features = ?')
+            values.append(checkout_features if isinstance(checkout_features, str) else '')
         if not updates:
             conn.close()
             return True
