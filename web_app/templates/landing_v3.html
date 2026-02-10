@@ -139,20 +139,21 @@
             </div>
         </section>
 
-        {# 2c) Srovnávací workflow – SVG schéma #}
+        {# 2c) Srovnávací workflow – SVG schéma (Manuál vs. DokuCheck) #}
         <section id="workflow" class="py-16 bg-white">
             <div class="container mx-auto px-4 max-w-6xl">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl font-bold mb-4" style="color:#0f172a;">Automatizace vs. Manuální kontrola</h2>
-                    <p class="mt-4 text-lg" style="color:#6b7280;">Podívejte se, jak DokuCheck PRO zkracuje proces expedice z hodin na minuty.</p>
+                    <h2 class="text-3xl font-bold mb-4" style="color:#0f172a;">Kontrola dokumentace staveb – srovnání přístupů</h2>
+                    <p class="mt-4 text-lg" style="color:#6b7280;">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</p>
                 </div>
-                <div class="workflow-container overflow-x-auto shadow-2xl rounded-2xl border border-gray-100">
+                <div class="workflow-container overflow-x-auto overflow-y-auto shadow-2xl rounded-2xl border border-gray-100 bg-gray-50" style="max-height:85vh;">
                     <img src="{{ url_for('static', filename='assets/workflow_schema.svg') }}"
-                         alt="Workflow schéma – automatizace kontroly DokuCheck"
-                         class="w-full max-w-4xl mx-auto h-auto">
+                         alt="Workflow schéma – manuální kontrola vs. DokuCheck automatizace"
+                         class="block w-full min-w-[800px] max-w-full h-auto">
                 </div>
-                <div class="mt-6 text-center lg:hidden">
-                    <span class="text-sm" style="color:#9ca3af;">← Posuňte schéma stranou pro zobrazení detailů →</span>
+                <div class="mt-6 text-center text-sm" style="color:#9ca3af;">
+                    <span class="lg:hidden">← Posuňte schéma stranou nebo dolů pro zobrazení celého obsahu →</span>
+                    <span class="hidden lg:inline">Schéma zobrazuje levou větev (manuální proces) a pravou větev (DokuCheck).</span>
                 </div>
             </div>
         </section>
