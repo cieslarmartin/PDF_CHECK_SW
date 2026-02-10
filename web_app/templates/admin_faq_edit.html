@@ -1,0 +1,29 @@
+{% extends "admin_base.html" %}
+{% block title %}{% if faq %}Upravit dotaz{% else %}Přidat nový dotaz{% endif %} – DokuCheck Admin{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">{% if faq %}Upravit dotaz{% else %}Přidat nový dotaz{% endif %}</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Vyplňte otázku a odpověď. Odpověď může být víceřádková.</p>
+
+<form method="post" action="{% if faq %}{{ url_for('admin.faq_edit', faq_id=faq.id) }}{% else %}{{ url_for('admin.faq_add') }}{% endif %}">
+    <div class="admin-card" style="max-width:640px;">
+        <div class="card-body">
+            <div class="form-group">
+                <label for="question">Otázka *</label>
+                <input type="text" id="question" name="question" class="form-control" value="{{ question|e }}" required placeholder="Např. Co kontroluje DokuCheck?">
+            </div>
+            <div class="form-group">
+                <label for="answer">Odpověď *</label>
+                <textarea id="answer" name="answer" class="form-control" rows="6" required placeholder="Text odpovědi (může být delší, víceřádkový).">{{ answer|e }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="order_index">Pořadí (číslo pro řazení)</label>
+                <input type="number" id="order_index" name="order_index" class="form-control" value="{{ order_index }}" min="0" step="1" placeholder="0">
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">{% if faq %}Uložit změny{% else %}Přidat dotaz{% endif %}</button>
+            <a href="{{ url_for('admin.faq_list') }}" class="btn btn-secondary" style="margin-left:8px;">Zrušit</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

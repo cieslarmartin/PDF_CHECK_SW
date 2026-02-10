@@ -335,6 +335,102 @@ def company_settings():
     return render_template('admin_company_settings.html', company=company, user=user, active_page='company_settings')
 
 
+# --- Správa FAQ (pouze pro přihlášeného administrátora) ---
+@admin_bp.route('/admin/faq', methods=['GET'])
+@admin_required
+def faq_list():
+    """Zobrazení seznamu všech FAQ. Pouze přihlášený administrátor."""
+    db = get_db()
+    faq_items = db.get_all_faq()
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_faq.html', faq_items=faq_items, user=user, active_page='faq')
+
+
+@admin_bp.route('/admin/faq/add', methods=['GET', 'POST'])
+@admin_required
+def faq_add():
+    """Přidání nového FAQ. Pouze přihlášený administrátor."""
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    if request.method == 'POST':
+        question = request.form.get('question', '').strip()
+        answer = request.form.get('answer', '').strip()
+        try:
+            order_index = int(request.form.get('order_index') or 0)
+        except (TypeError, ValueError):
+            order_index = 0
+        if not question:
+            flash('Zadejte otázku.', 'error')
+            return render_template('admin_faq_edit.html', faq=None, user=user, active_page='faq',
+                                   question=question, answer=answer, order_index=order_index)
+        db = get_db()
+        faq_id = db.insert_faq(question, answer, order_index)
+        if faq_id:
+            flash('Dotaz byl přidán.', 'success')
+            return redirect(url_for('admin.faq_list'))
+        flash('Přidání se nezdařilo.', 'error')
+        return render_template('admin_faq_edit.html', faq=None, user=user, active_page='faq',
+                               question=question, answer=answer, order_index=order_index)
+    return render_template('admin_faq_edit.html', faq=None, user=user, active_page='faq',
+                           question='', answer='', order_index=0)
+
+
+@admin_bp.route('/admin/faq/<int:faq_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def faq_edit(faq_id):
+    """Úprava existujícího FAQ. Pouze přihlášený administrátor."""
+    db = get_db()
+    faq = db.get_faq_by_id(faq_id)
+    if not faq:
+        flash('Dotaz nebyl nalezen.', 'error')
+        return redirect(url_for('admin.faq_list'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    if request.method == 'POST':
+        question = request.form.get('question', '').strip()
+        answer = request.form.get('answer', '').strip()
+        try:
+            order_index = int(request.form.get('order_index') or 0)
+        except (TypeError, ValueError):
+            order_index = faq.get('order_index', 0)
+        if not question:
+            flash('Zadejte otázku.', 'error')
+            return render_template('admin_faq_edit.html', faq=faq, user=user, active_page='faq',
+                                   question=question, answer=answer, order_index=order_index)
+        if db.update_faq(faq_id, question, answer, order_index):
+            flash('Dotaz byl upraven.', 'success')
+            return redirect(url_for('admin.faq_list'))
+        flash('Úprava se nezdařila.', 'error')
+        return render_template('admin_faq_edit.html', faq=faq, user=user, active_page='faq',
+                               question=question, answer=answer, order_index=order_index)
+    return render_template('admin_faq_edit.html', faq=faq, user=user, active_page='faq',
+                           question=faq.get('question', ''), answer=faq.get('answer', ''),
+                           order_index=faq.get('order_index', 0))
+
+
+@admin_bp.route('/admin/faq/delete', methods=['POST'])
+@admin_required
+def faq_delete():
+    """Smazání FAQ. Pouze přihlášený administrátor. Očekává faq_id v POST."""
+    faq_id = request.form.get('faq_id')
+    if not faq_id:
+        flash('Chybí ID dotazu.', 'error')
+        return redirect(url_for('admin.faq_list'))
+    db = get_db()
+    if db.delete_faq(faq_id):
+        flash('Dotaz byl smazán.', 'success')
+    else:
+        flash('Smazání se nezdařilo.', 'error')
+    return redirect(url_for('admin.faq_list'))
+
+
 @admin_bp.route('/admin/marketing-emails', methods=['GET'])
 @admin_required
 def marketing_emails():
@@ -548,9 +644,11 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
     supplier_email = (db.get_global_setting('provider_email') or '').strip() or None
     bank_iban = db.get_global_setting('bank_iban', '') or ''
     bank_account = db.get_global_setting('bank_account', '') or ''
-    invoice_number = (order.get('invoice_number') or '').strip() or db.get_next_invoice_number()
-    if not (order.get('invoice_number') or '').strip():
-        db.update_pending_order_invoice_number(order_id, invoice_number)
+    # Číslo faktury = VS = order_display_number (sjednocené číslování)
+    invoice_number = (order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id)
+    vs = invoice_number
+    if not (order.get('invoice_number') or '').strip() and (order.get('order_display_number') or '').strip():
+        db.update_pending_order_invoice_number(order_id, order.get('order_display_number'))
     try:
         from invoice_generator import generate_invoice_pdf
         filepath = generate_invoice_pdf(
@@ -566,6 +664,7 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
             bank_iban=bank_iban,
             bank_account=bank_account,
             invoice_number=invoice_number,
+            vs=vs,
             supplier_trade_register=supplier_trade_register,
             output_dir=invoices_dir,
             supplier_bank_name=supplier_bank_name,

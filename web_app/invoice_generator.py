@@ -114,7 +114,7 @@ def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
 def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                          supplier_name, supplier_address, supplier_ico, bank_iban, bank_account,
                          invoice_number=None, supplier_trade_register=None, output_dir=None,
-                         supplier_bank_name=None, supplier_phone=None, supplier_email=None):
+                         supplier_bank_name=None, supplier_phone=None, supplier_email=None, vs=None):
     """
     Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH.
     Redesign: hlavička FAKTURA vlevo / DOKLAD Č. vpravo, sloupce Dodavatel|Odběratel,
@@ -149,6 +149,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         return None
 
     cislo_faktury = (invoice_number or str(order_id)).strip()
+    variabilni_symbol = (vs or cislo_faktury or str(order_id)).strip()
     today = datetime.now()
     datum_vystaveni = today.strftime('%d.%m.%Y')
     datum_splatnosti = (today + timedelta(days=14)).strftime('%d.%m.%Y')
@@ -158,7 +159,10 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         _addr = supplier_address or 'Porubská 1, 742 83 Klimkovice – Václavovice'
         _ico = supplier_ico or '04830661'
         _bank_name = (supplier_bank_name or '').strip() or 'ČSOB'
-        _account_display = (bank_account or bank_iban or '').strip()
+        # Zobrazení účtu: pouze český formát (předčíslí-číslo/kód_banky), bez IBAN/SWIFT
+        _account_display = (bank_account or '').strip()
+        if not _account_display and bank_iban:
+            _account_display = (bank_iban or '').strip()
         _phone = (supplier_phone or '').strip()
         _email = (supplier_email or '').strip()
         zivnost = (supplier_trade_register or '').strip() or 'Fyzická osoba zapsaná v Živnostenském rejstříku vedeném na Magistrátu města Ostrava.'
@@ -199,24 +203,35 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.set_auto_page_break(True, margin=28)
         pdf.set_font('DejaVu', '', 10)
 
-        # Dva sloupce: Dodavatel | Odběratel
-        col_w = 92
+        # Dva sloupce: LEVÁ = Dodavatel, PRAVÁ = Odběratel (bez překrývání)
+        col_w = 88
+        gap = 12
+        x_left = 10
+        x_right = x_left + col_w + gap
         y_start = pdf.get_y()
+
+        # Levý sloupec – Dodavatel
+        pdf.set_xy(x_left, y_start)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(col_w, 6, 'Dodavatel', 0, 1)
         pdf.set_font('DejaVu', '', 9)
+        pdf.set_x(x_left)
         pdf.multi_cell(col_w, 5, '{}\n{}\nIČ: {}\n{}\n{}'.format(_name, _addr, _ico, zivnost, dph_text))
         y_end_left = pdf.get_y()
-        pdf.set_xy(10 + col_w + 6, y_start)
+
+        # Pravý sloupec – Odběratel (začíná na stejné y_start)
+        pdf.set_xy(x_right, y_start)
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(col_w, 6, 'Odběratel', 0, 1)
         pdf.set_font('DejaVu', '', 9)
+        pdf.set_x(x_right)
         pdf.multi_cell(col_w, 5, '{}\nIČ: {}\nE-mail: {}'.format(
             jmeno_firma or '—',
             ico or '—',
             email or '—'
         ))
-        pdf.set_y(max(y_end_left, pdf.get_y()) + 6)
+        y_end_right = pdf.get_y()
+        pdf.set_y(max(y_end_left, y_end_right) + 8)
 
         # Platební blok: Banka, Číslo účtu, Variabilní symbol, Datum vystavení, Datum splatnosti
         pdf.set_font('DejaVu', 'B', 10)
@@ -224,7 +239,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.set_font('DejaVu', '', 9)
         pdf.cell(0, 5, 'Banka: {}'.format(_bank_name), 0, 1)
         pdf.cell(0, 5, 'Číslo účtu: {}'.format(_account_display or '—'), 0, 1)
-        pdf.cell(0, 5, 'Variabilní symbol: {}'.format(order_id), 0, 1)
+        pdf.cell(0, 5, 'Variabilní symbol: {}'.format(variabilni_symbol), 0, 1)
         pdf.cell(0, 5, 'Datum vystavení: {}   |   Datum splatnosti: {}'.format(datum_vystaveni, datum_splatnosti), 0, 1)
         pdf.ln(4)
 
@@ -245,7 +260,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.ln(8)
 
         # QR kód SPAYD (dolní část faktury)
-        spayd = _spayd_string(iban_for_qr, amount_czk, order_id, 'Faktura {}'.format(cislo_faktury))
+        spayd = _spayd_string(iban_for_qr, amount_czk, variabilni_symbol, 'Faktura {}'.format(cislo_faktury))
         if spayd:
             try:
                 import qrcode

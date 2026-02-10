@@ -299,17 +299,21 @@
         </section>
         {% endif %}
 
-        {# 6) FAQ – z landing_faq #}
+        {# 6) FAQ – dynamicky z databáze (tabulka faq), řazení podle order_index #}
         <section id="faq" class="mb-14">
             <h2 class="text-2xl font-bold mb-6" style="color:#1f2937;">Časté dotazy</h2>
+            {% if faq_list %}
             <div class="space-y-2">
-                {% for item in landing_faq|default([{"q":"Co kontroluje DokuCheck?","a":"PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka."},{"q":"Jaký je rozdíl mezi Z Agenta a Cloud?","a":"Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo)."},{"q":"Mohu zrušit předplatné?","a":"Ano, předplatné se neobnoví po ukončení období."},{"q":"Kde najdu Můj účet?","a":"Portál – historie a nastavení."}]) %}
+                {% for item in faq_list %}
                 <details class="group lp-v3-panel rounded-xl overflow-hidden shadow-sm">
-                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">{{ item.q }} <span class="group-open:rotate-180 transition">▼</span></summary>
-                    <p class="px-6 pb-4 text-sm" style="color:#6b7280;">{{ item.a|safe }}</p>
+                    <summary class="px-6 py-4 cursor-pointer list-none font-medium flex justify-between items-center" style="color:#1f2937;">{{ item.question }} <span class="group-open:rotate-180 transition">▼</span></summary>
+                    <div class="px-6 pb-4 text-sm whitespace-pre-wrap" style="color:#6b7280;">{{ item.answer|e }}</div>
                 </details>
                 {% endfor %}
             </div>
+            {% else %}
+            <p class="text-sm" style="color:#6b7280;">Sekci FAQ pro vás připravujeme.</p>
+            {% endif %}
         </section>
 
         {# 7) Footer #}

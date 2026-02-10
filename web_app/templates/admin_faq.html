@@ -1,0 +1,43 @@
+{% extends "admin_base.html" %}
+{% block title %}Správa FAQ – DokuCheck Admin{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Správa FAQ</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Časté dotazy zobrazené na webu. Řazení podle pole „Pořadí“. Úpravy jsou vidět na úvodní stránce v sekci Časté dotazy.</p>
+
+<div class="actions-bar" style="margin-bottom:16px;">
+    <a href="{{ url_for('admin.faq_add') }}" class="btn btn-primary">Přidat nový dotaz</a>
+</div>
+
+<div class="table-container">
+    <table class="table-dense">
+        <thead>
+            <tr>
+                <th style="width:60px;">Pořadí</th>
+                <th>Otázka</th>
+                <th>Odpověď (náhled)</th>
+                <th style="width:180px;">Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in faq_items %}
+            <tr>
+                <td>{{ item.order_index }}</td>
+                <td>{{ item.question|e }}</td>
+                <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ (item.answer or '')[:80] }}{% if (item.answer or '')|length > 80 %}…{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('admin.faq_edit', faq_id=item.id) }}" class="btn btn-outline-secondary btn-sm">Upravit</a>
+                    <form method="post" action="{{ url_for('admin.faq_delete') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat tento dotaz?');">
+                        <input type="hidden" name="faq_id" value="{{ item.id }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Smazat</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="padding:24px;text-align:center;color:#6b7280;">Žádné dotazy. Přidejte první pomocí tlačítka „Přidat nový dotaz“.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

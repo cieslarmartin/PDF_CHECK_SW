@@ -342,6 +342,17 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_one_time_tokens_expires ON one_time_login_tokens(expires_at)')
 
+        # FAQ – otázky a odpovědi pro web (řazení podle order_index)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS faq (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                order_index INTEGER NOT NULL DEFAULT 0
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_faq_order_index ON faq(order_index)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -1245,12 +1256,11 @@ class Database:
         return rows
 
     def get_next_order_number(self):
-        """Vrátí další číslo objednávky (Prefix + Pořadové číslo) a zvýší počítadlo v nastavení. Jediný zdroj: global_settings (order_number_prefix, order_number_next)."""
-        prefix = (self.get_global_setting('order_number_prefix', '') or '2026-').strip() or '2026-'
-        next_val = self.get_setting_int('order_number_next', 100)
-        display_number = prefix + str(next_val)
+        """Vrátí čistě číselné číslo objednávky = číslo faktury = VS (např. 2602001). Zvýší počítadlo. Jediný zdroj: order_number_next."""
+        next_val = self.get_setting_int('order_number_next', 2602001)
+        vs = str(next_val)
         self.set_global_setting('order_number_next', next_val + 1)
-        return display_number
+        return vs
 
     def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending', order_display_number=None):
         """Vloží čekající objednávku (fakturační formulář). order_display_number může být z get_next_order_number(). Vrátí id nebo None."""
@@ -1387,6 +1397,80 @@ class Database:
         cursor = conn.cursor()
         try:
             cursor.execute('DELETE FROM pending_orders WHERE id = ?', (order_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    # --- FAQ (pro web – Časté dotazy) ---
+    def get_all_faq(self):
+        """Vrátí seznam všech FAQ seřazený podle order_index, pak id."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, question, answer, order_index FROM faq ORDER BY order_index ASC, id ASC')
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_faq_by_id(self, faq_id):
+        """Vrátí jeden záznam FAQ podle id nebo None."""
+        if not faq_id:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, question, answer, order_index FROM faq WHERE id = ?', (int(faq_id),))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def insert_faq(self, question, answer, order_index=0):
+        """Vloží nový FAQ záznam. Vrátí id nebo None."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO faq (question, answer, order_index) VALUES (?, ?, ?)',
+                (str(question or '').strip(), str(answer or '').strip(), int(order_index) if order_index is not None else 0)
+            )
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    def update_faq(self, faq_id, question, answer, order_index=None):
+        """Aktualizuje FAQ záznam. Vrátí True při úspěchu."""
+        if not faq_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            if order_index is not None:
+                cursor.execute(
+                    'UPDATE faq SET question = ?, answer = ?, order_index = ? WHERE id = ?',
+                    (str(question or '').strip(), str(answer or '').strip(), int(order_index), int(faq_id))
+                )
+            else:
+                cursor.execute('UPDATE faq SET question = ?, answer = ? WHERE id = ?',
+                               (str(question or '').strip(), str(answer or '').strip(), int(faq_id)))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def delete_faq(self, faq_id):
+        """Smaže FAQ záznam. Vrátí True při úspěchu."""
+        if not faq_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM faq WHERE id = ?', (int(faq_id),))
             conn.commit()
             return cursor.rowcount > 0
         except Exception:

@@ -2892,9 +2892,10 @@ def count_pdfs_in_folder(folder_path):
 
 @app.route('/')
 def index():
-    """Landing page DokuCheck – verze V3. Texty a promo z global_settings (fallback v šabloně)."""
+    """Landing page DokuCheck – verze V3. Texty a promo z global_settings. FAQ dynamicky z tabulky faq."""
     db = Database()
     settings = load_settings_for_views(db) if load_settings_for_views else {}
+    settings['faq_list'] = db.get_all_faq()
     return render_template('landing_v3.html', **settings)
 
 
@@ -3075,14 +3076,12 @@ def checkout():
         if not souhlas:
             flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
+        # Číslo objednávky = číslo faktury = variabilní symbol (čistě číselné, např. 2602001)
         order_display_number = db.get_next_order_number()
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER', order_display_number=order_display_number)
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
-
-            # Číslo faktury (RRMMNNN) – přiřadíme hned po vytvoření objednávky
-            invoice_number = db.get_next_invoice_number()
-            db.update_pending_order_invoice_number(order_id, invoice_number)
+            db.update_pending_order_invoice_number(order_id, order_display_number)
 
             # 1. Notifikace na info@dokucheck.cz (UTF-8, send_message)
             try:
@@ -3117,7 +3116,8 @@ def checkout():
                     supplier_ico=supplier_ico,
                     bank_iban=bank_iban,
                     bank_account=bank_account,
-                    invoice_number=invoice_number,
+                    invoice_number=order_display_number,
+                    vs=order_display_number,
                     supplier_trade_register=supplier_trade_register or None,
                     output_dir=invoices_dir or None,
                     supplier_bank_name=supplier_bank_name,
@@ -3133,18 +3133,22 @@ def checkout():
                 db.update_pending_order_invoice_path(order_id, filepath)
             db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
 
-            # 3. E-mail zákazníkovi BEZ přílohy (faktura se odesílá manuálně z Adminu)
+            # 3. E-mail zákazníkovi S PŘÍLOHOU PDF faktury (šablona z Adminu: {order_number}, {vs}, {amount}, {jmeno}, {ucet})
             try:
-                from email_sender import send_email, get_email_templates, _apply_footer
-                ucet = (bank_iban or bank_account or '').strip() or 'bude uveden v dodatečné faktuře'
+                from email_sender import send_email_with_attachment, get_email_templates, _apply_footer
+                ucet = (bank_account or bank_iban or '').strip() or 'bude uveden v e-mailu'
                 templates = get_email_templates() if get_email_templates else {}
                 subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
-                body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {cena} Kč na účet, VS: {vs}.'
-                subject = subject_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
-                body = body_tpl.replace('{vs}', str(order_id)).replace('{cena}', str(amount_czk)).replace('{jmeno}', jmeno_firma)
+                body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {amount} Kč na účet, VS: {vs}.'
+                def repl(t):
+                    return (t.replace('{vs}', str(order_display_number)).replace('{order_number}', str(order_display_number))
+                subject = repl(subject_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or ''))
+                body = repl(body_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or '')).replace('{ucet}', ucet)
                 body = _apply_footer(body, templates.get('footer_text', ''))
-                body += '\n\nČástka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet: {}'.format(int(amount_czk), order_id, invoice_number, ucet)
-                send_email(email, subject, body, append_footer=False)
+                body += '\n\nČástka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet pro platbu (CZ): {}'.format(int(amount_czk), order_display_number, order_display_number, ucet)
+                attachment_path = filepath if filepath and os.path.isfile(filepath) else None
+                attachment_name = 'Faktura_{}.pdf'.format(order_display_number) if attachment_path else None
+                send_email_with_attachment(email, subject, body, attachment_path=attachment_path, attachment_filename=attachment_name, append_footer=False)
             except Exception:
                 pass
 
