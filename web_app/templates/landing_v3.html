@@ -230,23 +230,36 @@
                             </h3>
                         </div>
                     </div>
-                    {% set comparisons = [
-                        ("Chaos v expedicích, opakované vracení dokumentů", "Hromadná kontrola před odesláním"),
-                        ("Stres z chyb a vracení od investora", "Strojová přesnost kontroly PDF/A a razítek"),
-                        ("Žádný přehled, vše „od oka"", "Excel report, přehled podle složek")
-                    ] %}
-                    {% for neg, pos in comparisons %}
-                    <div class="grid grid-cols-2 {{ 'border-b border-gray-100' if not loop.last else '' }}">
+                    <div class="grid grid-cols-2 border-b border-gray-100">
                         <div class="px-6 py-4 text-sm text-red-600 flex items-start gap-2 bg-white">
                             <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-red-400"></span>
-                            {{ neg }}
+                            Chaos v expedicích, opakované vracení dokumentů
                         </div>
                         <div class="px-6 py-4 text-sm text-emerald-700 flex items-start gap-2 bg-emerald-50/30">
                             <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            {{ pos }}
+                            Hromadná kontrola před odesláním
                         </div>
                     </div>
-                    {% endfor %}
+                    <div class="grid grid-cols-2 border-b border-gray-100">
+                        <div class="px-6 py-4 text-sm text-red-600 flex items-start gap-2 bg-white">
+                            <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                            Stres z chyb a vracení od investora
+                        </div>
+                        <div class="px-6 py-4 text-sm text-emerald-700 flex items-start gap-2 bg-emerald-50/30">
+                            <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Strojová přesnost kontroly PDF/A a razítek
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2">
+                        <div class="px-6 py-4 text-sm text-red-600 flex items-start gap-2 bg-white">
+                            <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                            Žádný přehled, vše &bdquo;od oka&ldquo;
+                        </div>
+                        <div class="px-6 py-4 text-sm text-emerald-700 flex items-start gap-2 bg-emerald-50/30">
+                            <span class="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Excel report, přehled podle složek
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
