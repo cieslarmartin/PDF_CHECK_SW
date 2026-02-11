@@ -2,9 +2,10 @@
 {% block title %}PDF DokuCheck Admin – Logy a audit{% endblock %}
 {% block content %}
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Logy a audit</h2>
-<p class="text-muted small mb-3">Systémové logy (chyby serveru), uživatelské logy (přihlášení, nahrání) a platební logy (změny tarifů).</p>
+<p class="text-muted small mb-3">Sjednocený log aktivit (Web Trial + Agent + Registrovaný), systémové, uživatelské a platební logy.</p>
 
 <div class="admin-tabs">
+    <a href="{{ url_for('admin.logs', category='activity', user_id=user_id, date_from=date_from, date_to=date_to, level=level) }}" class="{{ 'active' if category == 'activity' else '' }}">Aktivita (sjednocený)</a>
     <a href="{{ url_for('admin.logs', category='system', user_id=user_id, date_from=date_from, date_to=date_to, level=level) }}" class="{{ 'active' if category == 'system' else '' }}">Systémové logy</a>
     <a href="{{ url_for('admin.logs', category='user', user_id=user_id, date_from=date_from, date_to=date_to, level=level) }}" class="{{ 'active' if category == 'user' else '' }}">Uživatelské logy</a>
     <a href="{{ url_for('admin.logs', category='payment', user_id=user_id, date_from=date_from, date_to=date_to, level=level) }}" class="{{ 'active' if category == 'payment' else '' }}">Platební logy</a>
@@ -29,7 +30,9 @@
 <div class="table-container">
     <table class="table-dense">
         <thead>
-            {% if category == 'system' %}
+            {% if category == 'activity' %}
+            <tr><th>IP adresa</th><th>Čas</th><th>Typ</th><th>Počet souborů</th><th>Akce</th></tr>
+            {% elif category == 'system' %}
             <tr><th>Čas</th><th>Úroveň</th><th>Zpráva</th><th>User</th></tr>
             {% elif category == 'payment' %}
             <tr><th>Čas</th><th>User</th><th>Akce</th><th>Detail</th></tr>
@@ -40,7 +43,13 @@
         <tbody>
             {% for log in logs_list %}
             <tr>
-                {% if category == 'system' %}
+                {% if category == 'activity' %}
+                <td><small style="font-family:monospace;">{{ log.ip_address or '—' }}</small></td>
+                <td><small>{{ (log.timestamp or '—')[:19] }}</small></td>
+                <td>{% if log.source_type == 'web_trial' %}Web Trial{% elif log.source_type == 'agent' %}Agent{% elif log.source_type == 'registered' %}Registrovaný{% else %}{{ log.source_type or '—' }}{% endif %}</td>
+                <td>{{ log.file_count }}</td>
+                <td>{% if log.source_type == 'web_trial' and log.ip_address %}<button type="button" class="btn btn-secondary btn-small reset-ip-btn" data-ip="{{ log.ip_address|e }}" title="Resetovat limit trial pro tuto IP">Resetovat IP</button>{% else %}—{% endif %}</td>
+                {% elif category == 'system' %}
                 <td>{{ log.timestamp[:19] if log.timestamp else '-' }}</td>
                 <td><span class="badge {% if log.level == 'INFO' %}badge-basic{% elif log.level == 'WARNING' %}badge-enterprise{% else %}badge-free{% endif %}" {% if log.level == 'ERROR' %}style="background:#dc2626;color:white;"{% endif %}>{{ log.level }}</span></td>
                 <td>{{ log.message or '-' }}</td>
@@ -64,4 +73,27 @@
         </tbody>
     </table>
 </div>
+{% if category == 'activity' %}
+<script>
+document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var ip = this.getAttribute('data-ip');
+        if (!ip) return;
+        var fd = new FormData();
+        fd.append('ip_address', ip);
+        fetch('{{ url_for("admin.api_web_trial_reset") }}', { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    alert(res.message || 'IP resetována');
+                    location.reload();
+                } else {
+                    alert(res.error || 'Chyba');
+                }
+            })
+            .catch(function() { alert('Chyba spojení'); });
+    });
+});
+</script>
+{% endif %}
 {% endblock %}

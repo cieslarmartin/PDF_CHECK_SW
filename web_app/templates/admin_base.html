@@ -265,7 +265,8 @@
             <span class="pdf">PDF</span><span class="doku">DokuCheck</span>
         </div>
         <ul class="sidebar-nav">
-            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Nástěnka</a></li>
+            <li><a href="{{ url_for('admin.dashboard') }}#users" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Uživatelé</a></li>
+            <li><a href="{{ url_for('admin.dashboard') }}#stats-logs" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Statistiky a Logy</a></li>
             <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Tier definice</a></li>
             <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">💰</span> {{ env_labels.label_menu_pending_orders|default('Čeká na platbu') }}</a></li>
             <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>

@@ -28,7 +28,12 @@ alwaysApply: true
 
 - Související změny provádět v rámci jednoho „Editu“, šetřit Fast Requests.
 
-## 5. Změny v kódu (závazné)
+## 5. Verze (závazné)
+
+- **Při každé změně webu:** v `web_app/version.py` zvýš `WEB_BUILD` o 1 a v `WEB_VERSION` poslední trojčíslí (XXX).
+- **Při každé změně agenta:** v `desktop_agent/version.py` zvýš `BUILD_VERSION` a v `AGENT_VERSION` poslední trojčíslí (XXX).
+
+## 6. Změny v kódu (závazné)
 
 - **Měnit pouze to, co uživatel výslovně požaduje.** Funkcionality, které uživatel nemění, se nemají měnit.
 - Pokud by bylo třeba změnit i něco dalšího (kvůli konzistenci, závislosti), **nejdřív se zeptat** – nic takového neměnit sám od sebe.

@@ -949,11 +949,11 @@ def trial():
 @admin_bp.route('/admin/logs')
 @admin_required
 def logs():
-    """Logy: Systémové / Uživatelské / Platební s filtry (datum, úroveň, uživatel)."""
+    """Logy: Systémové / Uživatelské / Platební / Aktivita (sjednocený log Web Trial + Agent)."""
     db = get_db()
-    category = request.args.get('category', 'user').strip() or 'user'
-    if category not in ('system', 'user', 'payment'):
-        category = 'user'
+    category = request.args.get('category', 'activity').strip() or 'activity'
+    if category not in ('system', 'user', 'payment', 'activity'):
+        category = 'activity'
     user_id = request.args.get('user_id', '').strip() or None
     date_from = request.args.get('date_from', '').strip() or None
     date_to = request.args.get('date_to', '').strip() or None
@@ -961,19 +961,49 @@ def logs():
     page = max(1, int(request.args.get('page', 1)))
     per_page = 100
     offset = (page - 1) * per_page
-    logs_list = db.get_logs_filtered(
-        category=category, user_id=user_id, date_from=date_from, date_to=date_to,
-        level=level, limit=per_page, offset=offset
-    )
-    # Pro platební a systémové logy doplnit zobrazené jméno (user_display) z api_keys
-    if category in ('payment', 'system') and logs_list:
-        user_ids = {log.get('user_id') for log in logs_list if log.get('user_id')}
-        display_map = {}
-        for uid in user_ids:
-            lic = db.get_user_license(uid) if uid else None
-            display_map[uid] = (lic.get('user_name') or lic.get('email') or uid) if lic else uid
-        for log in logs_list:
-            log['user_display'] = display_map.get(log.get('user_id'), log.get('user_id'))
+
+    if category == 'activity':
+        logs_list = db.get_activity_log(limit=500)
+        if date_from or date_to:
+            from datetime import datetime
+            def parse_dt(s):
+                try:
+                    return datetime.strptime(s[:10], '%Y-%m-%d').date()
+                except Exception:
+                    return None
+            start = parse_dt(date_from) if date_from else None
+            end = parse_dt(date_to) if date_to else None
+            filtered = []
+            for row in logs_list:
+                ts = row.get('timestamp') or ''
+                try:
+                    row_date = datetime.strptime(ts[:10], '%Y-%m-%d').date() if len(ts) >= 10 else None
+                except Exception:
+                    row_date = None
+                if not row_date:
+                    continue
+                if start and row_date < start:
+                    continue
+                if end and row_date > end:
+                    continue
+                filtered.append(row)
+            logs_list = filtered[offset:offset + per_page]
+        else:
+            logs_list = logs_list[offset:offset + per_page]
+    else:
+        logs_list = db.get_logs_filtered(
+            category=category, user_id=user_id, date_from=date_from, date_to=date_to,
+            level=level, limit=per_page, offset=offset
+        )
+        if category in ('payment', 'system') and logs_list:
+            user_ids = {log.get('user_id') for log in logs_list if log.get('user_id')}
+            display_map = {}
+            for uid in user_ids:
+                lic = db.get_user_license(uid) if uid else None
+                display_map[uid] = (lic.get('user_name') or lic.get('email') or uid) if lic else uid
+            for log in logs_list:
+                log['user_display'] = display_map.get(log.get('user_id'), log.get('user_id'))
+
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
