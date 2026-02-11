@@ -1547,14 +1547,16 @@ def api_welcome_package():
     base_url = request.host_url.rstrip('/') if request else 'https://www.dokucheck.cz'
     download_url = base_url + '/download'
     login_url = base_url + '/portal'
+    pwd_plain = db.get_license_password_plain(api_key)
+    pwd_line = f"Heslo: {pwd_plain}\n\n" if pwd_plain else "Heslo: (není uloženo – použijte tlačítko „Změnit heslo“ pro nastavení)\n\n"
     email_body = (
         f"Účet (e-mail): {email}\n"
         f"Jméno: {user_name or '—'}\n"
         f"Licence: {tier_name}\n"
         f"API klíč: {api_key}\n"
+        f"{pwd_line}"
         f"Odkaz na stažení: {download_url}\n"
         f"Odkaz na přihlášení: {login_url}\n\n"
-        "Heslo je nastaveno (z bezpečnostních důvodů se nezobrazuje).\n"
         "Pro změnu hesla použijte tlačítko „Změnit heslo“ v řádku uživatele."
     )
     return jsonify({

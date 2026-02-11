@@ -425,6 +425,15 @@ class Database:
         except Exception:
             pass
 
+        # api_keys: plain heslo pro zobrazení adminovi (když zapomenuté heslo)
+        try:
+            cursor.execute("PRAGMA table_info(api_keys)")
+            ak_cols = {row[1] for row in cursor.fetchall()}
+            if 'password_plain_stored' not in ak_cols:
+                cursor.execute('ALTER TABLE api_keys ADD COLUMN password_plain_stored TEXT')
+        except Exception:
+            pass
+
         # pending_orders: sloupec pro cestu k vygenerované fakturě (PDF), status a číslo faktury (RRMMNNN)
         try:
             cursor.execute("PRAGMA table_info(pending_orders)")
@@ -1012,15 +1021,25 @@ class Database:
                 max_batch_size = 5
 
             password_hash = self._hash_password(password) if password and str(password).strip() else None
+            pwd_plain = (password or '').strip() or None
 
             # Insert with feature flags (allow_signatures, allow_timestamp, allow_excel_export default 1)
-            cursor.execute('''
-                INSERT INTO api_keys (api_key, user_name, email, license_tier,
-                                     license_expires, max_devices, rate_limit_hour, password_hash,
-                                     max_batch_size, allow_signatures, allow_timestamp, allow_excel_export)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)
-            ''', (api_key, user_name, email, license_tier, license_expires,
-                  max_devices, rate_limit, password_hash, max_batch_size))
+            try:
+                cursor.execute('''
+                    INSERT INTO api_keys (api_key, user_name, email, license_tier,
+                                         license_expires, max_devices, rate_limit_hour, password_hash, password_plain_stored,
+                                         max_batch_size, allow_signatures, allow_timestamp, allow_excel_export)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)
+                ''', (api_key, user_name, email, license_tier, license_expires,
+                      max_devices, rate_limit, password_hash, pwd_plain, max_batch_size))
+            except sqlite3.OperationalError:
+                cursor.execute('''
+                    INSERT INTO api_keys (api_key, user_name, email, license_tier,
+                                         license_expires, max_devices, rate_limit_hour, password_hash,
+                                         max_batch_size, allow_signatures, allow_timestamp, allow_excel_export)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)
+                ''', (api_key, user_name, email, license_tier, license_expires,
+                      max_devices, rate_limit, password_hash, max_batch_size))
             try:
                 cursor.execute('UPDATE api_keys SET tier_id = ? WHERE api_key = ?', (license_tier + 1, api_key))
             except sqlite3.OperationalError:
@@ -1097,6 +1116,8 @@ class Database:
             return None
 
         result = dict(row)
+        # Neexponovat plain heslo přes get_user_license (používá se v API/portálu)
+        result.pop('password_plain_stored', None)
 
         # Přednost: globální tier (tier_id) před legacy license_tier (0–3)
         # Frontend očekává license_tier: 0=Trial/Free, 1=Basic (blokované filtry+export), 2=Pro, 3=Unlimited/God
@@ -2717,6 +2738,7 @@ class Database:
                     ak.allow_signatures,
                     ak.allow_timestamp,
                     ak.allow_excel_export,
+                    ak.password_plain_stored,
                     lt.name AS tier_name_override,
                     (SELECT COUNT(*) FROM device_activations da
                      WHERE da.api_key = ak.api_key AND da.is_active = 1) as active_devices,
@@ -2807,8 +2829,22 @@ class Database:
         finally:
             conn.close()
 
+    def get_license_password_plain(self, api_key: str):
+        """Vrátí uložené plain heslo uživatele (pouze pro admin zobrazení). Vrátí None pokud není."""
+        if not api_key or not str(api_key).strip():
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT password_plain_stored FROM api_keys WHERE api_key = ?', (api_key.strip(),))
+            row = cursor.fetchone()
+        except sqlite3.OperationalError:
+            row = None
+        conn.close()
+        return (row['password_plain_stored'] if row and row.get('password_plain_stored') else None)
+
     def admin_set_license_password(self, api_key: str, new_password: str) -> bool:
-        """Nastaví nebo změní heslo pro přihlášení uživatele v agentovi (e-mail + heslo)."""
+        """Nastaví nebo změní heslo pro přihlášení uživatele v agentovi (e-mail + heslo). Ukládá i plain pro zobrazení adminovi."""
         if not api_key or not str(api_key).strip():
             return False
         if not new_password or not str(new_password).strip():
@@ -2816,10 +2852,17 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
         password_hash = self._hash_password(new_password.strip())
-        cursor.execute(
-            'UPDATE api_keys SET password_hash = ? WHERE api_key = ?',
-            (password_hash, api_key.strip())
-        )
+        pwd_plain = new_password.strip()
+        try:
+            cursor.execute(
+                'UPDATE api_keys SET password_hash = ?, password_plain_stored = ? WHERE api_key = ?',
+                (password_hash, pwd_plain, api_key.strip())
+            )
+        except sqlite3.OperationalError:
+            cursor.execute(
+                'UPDATE api_keys SET password_hash = ? WHERE api_key = ?',
+                (password_hash, api_key.strip())
+            )
         success = cursor.rowcount > 0
         conn.commit()
         conn.close()
@@ -2855,18 +2898,33 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
+            pwd_plain = password_plain.strip() if password_plain else None
             if user_name is not None and password_hash is not None:
-                cursor.execute('''
-                    UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?, user_name = ?,
-                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
-                    WHERE api_key = ?
-                ''', (tier_id, license_expires, password_hash, user_name or '', max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+                try:
+                    cursor.execute('''
+                        UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?, password_plain_stored = ?, user_name = ?,
+                            max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                        WHERE api_key = ?
+                    ''', (tier_id, license_expires, password_hash, pwd_plain, user_name or '', max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+                except sqlite3.OperationalError:
+                    cursor.execute('''
+                        UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?, user_name = ?,
+                            max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                        WHERE api_key = ?
+                    ''', (tier_id, license_expires, password_hash, user_name or '', max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
             elif password_hash is not None:
-                cursor.execute('''
-                    UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?,
-                        max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
-                    WHERE api_key = ?
-                ''', (tier_id, license_expires, password_hash, max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+                try:
+                    cursor.execute('''
+                        UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?, password_plain_stored = ?,
+                            max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                        WHERE api_key = ?
+                    ''', (tier_id, license_expires, password_hash, pwd_plain, max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
+                except sqlite3.OperationalError:
+                    cursor.execute('''
+                        UPDATE api_keys SET tier_id = ?, license_expires = ?, password_hash = ?,
+                            max_batch_size = ?, max_devices = ?, allow_signatures = ?, allow_timestamp = ?, allow_excel_export = ?
+                        WHERE api_key = ?
+                    ''', (tier_id, license_expires, password_hash, max_files, max_devices, allow_sig, allow_ts, allow_excel, api_key.strip()))
             elif user_name is not None:
                 cursor.execute('''
                     UPDATE api_keys SET tier_id = ?, license_expires = ?, user_name = ?,
@@ -2948,6 +3006,7 @@ class Database:
         api_key = prefix + secrets.token_hex(16)
         license_expires = (datetime.now() + timedelta(days=days)).isoformat() if days and days > 0 else None
         password_hash = self._hash_password(password) if password and str(password).strip() else None
+        pwd_plain = (password or '').strip() or None
         max_files = tier_row.get('max_files_limit', 10)
         max_devices = tier_row.get('max_devices', 1)
         allow_sig = 1 if tier_row.get('allow_signatures') else 0
@@ -2956,13 +3015,22 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute('''
-                INSERT INTO api_keys (api_key, user_name, email, tier_id, license_expires,
-                    password_hash, max_batch_size, max_devices, rate_limit_hour,
-                    allow_signatures, allow_timestamp, allow_excel_export, license_tier, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10, ?, ?, ?, 0, 1)
-            ''', (api_key, user_name, email, tier_id, license_expires, password_hash,
-                  max_files, max_devices, allow_sig, allow_ts, allow_excel))
+            try:
+                cursor.execute('''
+                    INSERT INTO api_keys (api_key, user_name, email, tier_id, license_expires,
+                        password_hash, password_plain_stored, max_batch_size, max_devices, rate_limit_hour,
+                        allow_signatures, allow_timestamp, allow_excel_export, license_tier, is_active)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 10, ?, ?, ?, 0, 1)
+                ''', (api_key, user_name, email, tier_id, license_expires, password_hash, pwd_plain,
+                      max_files, max_devices, allow_sig, allow_ts, allow_excel))
+            except sqlite3.OperationalError:
+                cursor.execute('''
+                    INSERT INTO api_keys (api_key, user_name, email, tier_id, license_expires,
+                        password_hash, max_batch_size, max_devices, rate_limit_hour,
+                        allow_signatures, allow_timestamp, allow_excel_export, license_tier, is_active)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10, ?, ?, ?, 0, 1)
+                ''', (api_key, user_name, email, tier_id, license_expires, password_hash,
+                      max_files, max_devices, allow_sig, allow_ts, allow_excel))
             conn.commit()
             return api_key
         except sqlite3.IntegrityError:

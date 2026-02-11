@@ -114,12 +114,13 @@
                 <th>Poslední IP</th>
                 <th>Soubory</th>
                 <th>Platba</th>
+                <th>Heslo</th>
                 <th>Akce</th>
             </tr>
         </thead>
         <tbody>
             {% for license in licenses %}
-            <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}">
+            <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}">
                 <td>
                     <strong>{{ license.email or '—' }}</strong>
                     {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
@@ -130,6 +131,7 @@
                 <td><small style="font-family:monospace;font-size:0.85em;" title="Poslední přihlášení z IP">{{ license.last_ip or '—' }}</small></td>
                 <td>{{ license.total_checks }}</td>
                 <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
+                <td><small style="font-family:monospace;font-size:0.85em;" title="Heslo pro přihlášení v agentovi">{{ (license.get('password_plain_stored') or '—')|e }}</small></td>
                 <td>
                     <div class="actions-cell">
                         <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit uživatele (jméno, e-mail, tier, expirace, heslo)">Upravit</button>
@@ -138,12 +140,12 @@
                         <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat licenci">SMAZAT</button>
                         <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Zobrazit údaje licence (heslo se nemění)">INFO BALÍČEK</button>
                         <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="Audit">Audit</a>
-                        <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" onclick="openChangePasswordModal(this)" title="Změnit heslo ručně">Změnit heslo</button>
+                        <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)" title="Změnit heslo ručně">Změnit heslo</button>
                     </div>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence“.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence“.</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -312,9 +314,12 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>Stávající heslo</label>
+                <div id="edit_current_password_display" style="font-family:monospace;padding:8px;background:#f3f4f6;border-radius:6px;font-size:0.95em;margin-bottom:4px;">—</div>
+            </div>
+            <div class="form-group">
                 <label for="edit_new_password">Nové heslo (nevyplňovat = beze změny)</label>
                 <input type="text" id="edit_new_password" name="new_password" class="form-control" placeholder="Min. 6 znaků" autocomplete="off">
-                <small style="color:#6b7280;">Pro admina: heslo je při zadávání viditelné.</small>
             </div>
             <div class="form-group">
                 <label for="edit_payment_method">Způsob platby</label>
@@ -348,7 +353,11 @@
             <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
         </div>
         <p style="margin-bottom:16px;color:#6b7280;">Uzivatel: <strong id="changePasswordUserDisplay"></strong></p>
-        <p style="font-size:0.85em;color:#9ca3af;margin-bottom:16px;">Heslo slouží pro přihlášení v agentovi (e-mail + heslo). Aktuální heslo nelze zobrazit. <strong>Pro admina: heslo je při zadávání viditelné.</strong></p>
+        <p style="font-size:0.85em;color:#9ca3af;margin-bottom:8px;">Heslo slouží pro přihlášení v agentovi (e-mail + heslo).</p>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label>Stávající heslo</label>
+            <div id="changePasswordCurrentDisplay" style="font-family:monospace;padding:8px;background:#f3f4f6;border-radius:6px;font-size:0.95em;">—</div>
+        </div>
         <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
             <input type="hidden" id="changePasswordApiKey" name="api_key">
             <div class="form-group">
@@ -410,6 +419,7 @@ function openCreateModal() { document.getElementById('createForm').reset(); open
 function openEditModalFromRow(tr) {
     var apiKey = tr.getAttribute('data-api-key');
     var tierId = tr.getAttribute('data-tier-id') || '';
+    var pwdPlain = tr.getAttribute('data-password-plain') || '';
     document.getElementById('edit_api_key').value = apiKey;
     document.getElementById('edit_user_name').value = tr.getAttribute('data-user-name') || '';
     document.getElementById('edit_email').value = tr.getAttribute('data-email') || '';
@@ -417,6 +427,7 @@ function openEditModalFromRow(tr) {
     document.getElementById('edit_is_active').value = tr.getAttribute('data-is-active') === '1' ? '1' : '0';
     document.getElementById('edit_payment_method').value = tr.getAttribute('data-payment-method') || '';
     document.getElementById('edit_last_payment_date').value = (tr.getAttribute('data-last-payment-date') || '').substring(0, 10);
+    document.getElementById('edit_current_password_display').textContent = pwdPlain || '—';
     document.getElementById('edit_new_password').value = '';
     var sel = document.getElementById('edit_tier_id');
     if (tierId && tierId !== 'None') sel.value = tierId;
@@ -480,8 +491,10 @@ function copyWelcomePackageText() {
 function openChangePasswordModal(btn) {
     var apiKey = btn.getAttribute('data-api-key');
     var display = btn.getAttribute('data-user-display') || apiKey;
+    var pwdPlain = btn.getAttribute('data-password-plain') || '';
     document.getElementById('changePasswordApiKey').value = apiKey;
     document.getElementById('changePasswordUserDisplay').textContent = display;
+    document.getElementById('changePasswordCurrentDisplay').textContent = pwdPlain || '—';
     document.getElementById('changePasswordForm').reset();
     openModal('changePasswordModal');
 }
