@@ -2899,6 +2899,33 @@ def index():
     return render_template('landing_v3.html', **settings)
 
 
+@app.route('/design-a')
+def design_a():
+    """Landing page – design varianta A (Gradient Glass)."""
+    db = Database()
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    settings['faq_list'] = db.get_all_faq()
+    return render_template('landing_design_a.html', **settings)
+
+
+@app.route('/design-b')
+def design_b():
+    """Landing page – design varianta B (Clean Minimal)."""
+    db = Database()
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    settings['faq_list'] = db.get_all_faq()
+    return render_template('landing_design_b.html', **settings)
+
+
+@app.route('/design-c')
+def design_c():
+    """Landing page – design varianta C (Bold Cards)."""
+    db = Database()
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    settings['faq_list'] = db.get_all_faq()
+    return render_template('landing_design_c.html', **settings)
+
+
 @app.route('/vop')
 def vop():
     """Všeobecné obchodní podmínky. Obsah z global_settings (legal_vop_html) nebo výchozí šablona."""

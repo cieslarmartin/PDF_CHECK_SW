@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ seo_meta_title|default('DokuCheck – Dokumentace bez chyb | Portál stavebníka') }}</title>
+    <meta name="description" content="{{ seo_meta_description|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů pro Portál stavebníka.') }}">
+    {% if header_scripts %}{% for script in header_scripts %}{{ script|safe }}{% endfor %}{% endif %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *{font-family:'Inter',system-ui,sans-serif;}
+        /* ===== SPLASH – tmavý s plujícím čtvercem ===== */
+        #splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0f172a;overflow:hidden;transition:opacity .6s,visibility .6s;}
+        #splash.hide{opacity:0;visibility:hidden;}
+        #splash .logo-line{display:flex;align-items:baseline;gap:.35em;animation:bounceIn .7s cubic-bezier(.34,1.56,.64,1) both;}
+        #splash .sub-line{animation:bounceIn .7s cubic-bezier(.34,1.56,.64,1) .25s both;margin-top:.5rem;}
+        @keyframes bounceIn{from{opacity:0;transform:scale(.8) translateY(20px)}to{opacity:1;transform:none}}
+        .splash-dot{position:absolute;border-radius:50%;opacity:.12;animation:floatDot 6s ease-in-out infinite alternate;}
+        @keyframes floatDot{from{transform:translateY(0) scale(1)}to{transform:translateY(-40px) scale(1.15)}}
+
+        /* ===== SCROLL ANIM – bounce ===== */
+        .anim{opacity:0;transform:translateY(30px) scale(.97);transition:opacity .55s cubic-bezier(.34,1.56,.64,1),transform .55s cubic-bezier(.34,1.56,.64,1);}
+        .anim.show{opacity:1;transform:none;}
+
+        /* ===== NAV ===== */
+        .nav-glass{backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);background:rgba(255,255,255,.78);border-bottom:1px solid rgba(229,231,235,.6);}
+        .nav-glass.scrolled{box-shadow:0 1px 3px rgba(0,0,0,.06);}
+
+        /* ===== CARDS – bold shadow ===== */
+        .card{background:white;border:1px solid #e5e7eb;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 12px rgba(0,0,0,.06);transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;}
+        .card:hover{transform:translateY(-5px) scale(1.01);box-shadow:0 16px 40px rgba(0,0,0,.1);}
+
+        /* ===== ICON CIRCLES ===== */
+        .icon-circle{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+        /* ===== PRICE HIGHLIGHT – emerald accent ===== */
+        .price-pop{border:2px solid #059669;background:linear-gradient(180deg,#ecfdf5 0%,#fff 30%);}
+        .price-badge{background:linear-gradient(135deg,#059669,#0d9488);color:#fff;font-size:.65rem;padding:3px 10px;border-radius:0 0 8px 8px;font-weight:700;position:absolute;top:0;right:1.5rem;}
+
+        /* ===== FAQ ===== */
+        .faq details summary{list-style:none;cursor:pointer;}
+        .faq details summary::-webkit-details-marker{display:none;}
+        .faq .chev{transition:transform .25s;} .faq details[open] .chev{transform:rotate(180deg);}
+
+        /* ===== COMING SOON ===== */
+        .coming{border:1px dashed #94a3b8;position:relative;}
+        .coming-tag{position:absolute;top:.75rem;right:.75rem;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#b45309;letter-spacing:.03em;}
+    </style>
+</head>
+<body class="min-h-screen antialiased bg-gray-50 text-gray-800">
+
+{# ============ SPLASH SCREEN – particles ============ #}
+<div id="splash">
+    <div class="splash-dot" style="width:200px;height:200px;background:#3b82f6;top:10%;left:15%;animation-delay:0s;"></div>
+    <div class="splash-dot" style="width:120px;height:120px;background:#059669;bottom:15%;right:10%;animation-delay:1s;"></div>
+    <div class="splash-dot" style="width:80px;height:80px;background:#8b5cf6;top:50%;right:30%;animation-delay:2s;"></div>
+    <div class="text-center px-4 relative z-10">
+        <div class="logo-line justify-center">
+            <span class="text-4xl sm:text-5xl font-black text-emerald-400">PDF</span>
+            <span class="text-4xl sm:text-5xl font-extrabold text-white">DokuCheck</span>
+            <span class="text-4xl sm:text-5xl font-light text-emerald-300">PRO</span>
+        </div>
+        <p class="sub-line text-gray-400 text-base sm:text-lg tracking-wide">Státní správa má kontrolu PDF</p>
+    </div>
+</div>
+
+{# ============ NAVIGACE ============ #}
+<nav id="topnav" class="nav-glass fixed top-0 inset-x-0 z-50 transition-shadow">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-1.5 text-lg font-bold whitespace-nowrap">
+            <span style="color:#1e5a8a;">PDF</span>
+            <span class="text-gray-800">DokuCheck</span>
+            <span class="text-gray-400 font-normal text-base">PRO</span>
+            <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="" class="h-7 ml-1" onerror="this.style.display='none'">
+        </a>
+        <div class="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-500">
+            <a href="#jak" class="hover:text-blue-700 transition">Jak to funguje</a>
+            <a href="#problem-reseni" class="hover:text-blue-700 transition">Srovnání</a>
+            <a href="#pro-koho" class="hover:text-blue-700 transition">Pro koho</a>
+            <a href="#dva-rezimy" class="hover:text-blue-700 transition">Režimy</a>
+            <a href="#cenik" class="hover:text-blue-700 transition">Ceník</a>
+            <a href="#faq" class="hover:text-blue-700 transition">FAQ</a>
+            <span class="w-px h-5 bg-gray-200"></span>
+            <a href="/portal" class="hover:text-blue-700 transition">Můj&nbsp;účet</a>
+            <a href="/app" class="px-4 py-1.5 rounded-lg text-white font-semibold" style="background:#059669;">Vyzkoušet</a>
+        </div>
+        <button id="burger" class="lg:hidden p-2 rounded-lg hover:bg-gray-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    </div>
+</nav>
+{# Mobile overlay #}
+<div id="mob" class="fixed inset-y-0 right-0 w-64 bg-white shadow-xl z-[60] p-5 flex flex-col gap-2 text-sm font-medium text-gray-600 translate-x-full transition-transform duration-300">
+    <button id="mobClose" class="self-end p-1 mb-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    <a href="#jak" class="mobL py-2 hover:text-blue-700">Jak to funguje</a><a href="#problem-reseni" class="mobL py-2 hover:text-blue-700">Srovnání</a><a href="#pro-koho" class="mobL py-2 hover:text-blue-700">Pro koho</a><a href="#dva-rezimy" class="mobL py-2 hover:text-blue-700">Režimy</a><a href="#cenik" class="mobL py-2 hover:text-blue-700">Ceník</a><a href="#faq" class="mobL py-2 hover:text-blue-700">FAQ</a>
+    <hr class="my-1 border-gray-100"><a href="/portal" class="mobL py-2 hover:text-blue-700">Můj účet</a>
+    <a href="/app" class="mobL mt-2 block text-center py-2.5 rounded-lg text-white font-semibold" style="background:#059669;">Vyzkoušet</a>
+</div>
+<div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
+
+<main class="pt-14">
+
+    {# ============ HERO ============ #}
+    <section class="py-16 md:py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row md:items-center gap-10 anim">
+                <div class="flex-1">
+                    <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">{{ landing_hero_badge|default('ONLINE + Desktop') }}</span>
+                    <h1 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4" style="color:#0f172a;">{{ landing_hero_title|default('DokuCheck &ndash; Dokumentace bez chyb pro Port&aacute;l stavebn&iacute;ka') }}</h1>
+                    <p class="text-lg mb-6 max-w-xl text-gray-500 leading-relaxed">{{ landing_hero_subtitle|default('Rychl&aacute; kontrola PDF/PDF-A, podpisy a souladu dokument&uacute; b&ecaron;hem minut.') }}</p>
+                    <div class="flex items-center gap-2 mb-6 text-sm text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Kontrola za 2&ndash;5 min</div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="/app" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md hover:shadow-lg transition-all" style="background:linear-gradient(135deg,#059669,#0d9488);">{{ landing_cta_primary|default('Vyzkou&scaron;et ONLINE Check') }}</a>
+                        <a href="{{ download_url or url_for('download') }}" class="px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50" style="color:#1e5a8a;border-color:#1e5a8a;">{{ landing_cta_secondary|default('St&aacute;hnout aplikaci zdarma') }}</a>
+                        <a href="/portal" class="px-6 py-3 rounded-lg font-medium transition hover:underline" style="color:#059669;">M&#367;j &uacute;&#269;et</a>
+                    </div>
+                    {% if show_pilot_notice and pilot_notice_text %}
+                    <div class="mt-5 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 max-w-xl text-sm"><strong>Upozorn&#283;n&iacute;:</strong> <span class="whitespace-pre-line">{{ pilot_notice_text }}</span></div>
+                    {% endif %}
+                </div>
+                <div class="flex-shrink-0 w-full md:w-80">
+                    <div class="aspect-video rounded-2xl border flex items-center justify-center bg-gray-50" style="border-color:#e5e7eb;">
+                        <div class="text-center text-gray-300"><svg class="w-12 h-12 mx-auto mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span class="text-xs">Uk&aacute;zka 40&nbsp;s</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ============ JAK TO FUNGUJE ============ #}
+    <section id="jak" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">{{ landing_section_how_title|default('Jak to funguje') }}</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                {% set ic = ['M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12','M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4','M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'] %}
+                {% set bg = ['background:linear-gradient(135deg,#3b82f6,#1d4ed8)','background:linear-gradient(135deg,#8b5cf6,#6d28d9)','background:linear-gradient(135deg,#059669,#047857)'] %}
+                {% for step in landing_how_steps|default([{"title":"Nahraj / vyber slo\u017eku","text":"P\u0159et\u00e1hn\u011bte PDF nebo vyberte slo\u017eku s dokumenty."},{"title":"Prove\u010f kontrolu","text":"Automatick\u00e1 kontrola PDF/A, podpisy a \u010dasov\u00fdch raz\u00edtek."},{"title":"Exportuj v\u00fdsledky","text":"V\u00fdstupy do CSV/Excel, p\u0159ehled podle slo\u017eek."}]) %}
+                <div class="card text-center anim" style="transition-delay:{{ loop.index0 * 80 }}ms;">
+                    <div class="icon-circle mx-auto mb-4" style="{{ bg[loop.index0] if loop.index0 < 3 else bg[0] }}"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ ic[loop.index0] if loop.index0 < 3 else ic[0] }}"/></svg></div>
+                    <span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 leading-6 mb-2">{{ loop.index }}</span>
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ step.title }}</h3>
+                    <p class="text-sm text-gray-500">{{ step.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# ============ SROVN&Aacute;N&Iacute; ============ #}
+    <section id="problem-reseni" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-6 anim">
+            <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Jistota dokumentace p&#345;ed expedicí</h2>
+            <div class="overflow-hidden rounded-xl border shadow-sm" style="border-color:#e5e7eb;">
+                <table class="w-full text-sm"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ru&#269;n&iacute; kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck PRO</th></tr></thead>
+                <tbody>
+                    <tr class="border-b" style="border-color:#f3f4f6;"><td class="py-3 px-5 text-red-600">Chaos v expedicích, opakované vracení</td><td class="py-3 px-5 text-emerald-600">Hromadná kontrola před odesláním</td></tr>
+                    <tr class="border-b" style="border-color:#f3f4f6;"><td class="py-3 px-5 text-red-600">Stres z chyb a vracení od investora</td><td class="py-3 px-5 text-emerald-600">Strojová přesnost kontroly PDF/A</td></tr>
+                    <tr><td class="py-3 px-5 text-red-600">Žádný přehled, vše od oka</td><td class="py-3 px-5 text-emerald-600">Excel report, přehled podle složek</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+    </section>
+
+    {# ============ WORKFLOW ============ #}
+    <section id="workflow" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6 anim">
+            <h2 class="text-2xl font-bold mb-3 text-center" style="color:#0f172a;">Srovnání přístupů</h2>
+            <p class="text-center text-gray-500 mb-8">Manuální kontrola vs. DokuCheck automatizace.</p>
+            <div class="overflow-auto rounded-2xl shadow-lg border bg-white" style="max-height:85vh;border-color:#e5e7eb;">
+                <img src="{{ url_for('static', filename='assets/workflow_schema.svg') }}" alt="Workflow" class="block w-full min-w-[800px] h-auto">
+            </div>
+        </div>
+    </section>
+
+    {# ============ PRO KOHO ============ #}
+    <section id="pro-koho" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Pro koho</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                {% set pk=[("Projektanti","Expedice bez vracen&iacute;.","M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z","#3b82f6"),("Manažeři","Přehled o kvalitě dokumentace.","M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z","#8b5cf6"),("Investoři","Jistota splnění požadavků.","M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z","#059669")] %}
+                {% for name,desc,icon,col in pk %}
+                <div class="card anim" style="transition-delay:{{ loop.index0*80 }}ms;border-left:3px solid {{ col }};">
+                    <div class="icon-circle mb-3" style="background:{{ col }}15;"><svg class="w-5 h-5" style="color:{{ col }};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ icon }}"/></svg></div>
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ name }}</h3>
+                    <p class="text-sm text-gray-500">{{ desc }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# ============ DVA REŽIMY ============ #}
+    <section id="dva-rezimy" class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">{{ landing_section_modes_title|default('Dva režimy: Z Agenta vs Cloud') }}</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card anim">
+                    <div class="icon-circle mb-3" style="background:linear-gradient(135deg,#059669,#047857);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+                    <span class="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#d1fae5;color:#047857;">Soukromí</span>
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ landing_mode_agent_title|default('Z Agenta') }}</h3>
+                    <p class="text-sm text-gray-500">{{ landing_mode_agent_text|default('Soubory na disku, na server jen metadata.') }}</p>
+                </div>
+                <div class="card anim" style="transition-delay:80ms;">
+                    <div class="icon-circle mb-3" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg></div>
+                    <span class="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">Demo</span>
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ landing_mode_cloud_title|default('Cloud') }}</h3>
+                    <p class="text-sm text-gray-500">{{ landing_mode_cloud_text|default('Celé PDF na server. Rychlé vyzkoušení.') }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ============ CENÍK ============ #}
+    <section id="cenik" class="py-16 bg-white">
+        <div class="max-w-3xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Ceník</h2>
+            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card flex flex-col anim">
+                    <h3 class="font-bold text-gray-900">PROJEKTANT</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.basic.label|default('Basic') }}</p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
+                    <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola Z Agenta</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>PDF/A, podpisy, razítka</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Standardní UI</li></ul>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Zakoupit Basic</a>
+                </div>
+                <div class="card price-pop flex flex-col relative anim" style="transition-delay:80ms;">
+                    <span class="price-badge">DOPORUČUJEME</span>
+                    <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek.') }}</p>
+                    <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Export do Excelu</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Sofistikované filtry</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z Basic</li></ul>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg" style="background:linear-gradient(135deg,#059669,#0d9488);">Zakoupit Pro</a>
+                </div>
+            </div>
+            <p class="mt-6 py-3 px-4 rounded-lg text-center text-sm mx-auto" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f;max-width:540px;"><strong style="color:#1e5a8a;">10+ licencí =</strong> sleva <strong style="color:#1e5a8a;">10 %</strong></p>
+        </div>
+    </section>
+
+    {# ============ STAŽENÍ ============ #}
+    <section id="download" class="py-16 bg-gray-50">
+        <div class="max-w-3xl mx-auto px-6 text-center anim">
+            <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#1e5a8a,#1d4ed8);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></div>
+            <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení aplikace</h2>
+            <p class="text-sm text-gray-500 mb-6">Desktop Agent &ndash; kontrola na vašem PC, na server jen metadata.</p>
+            {% if show_pilot_notice and pilot_notice_text %}<div class="mb-6 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm text-left max-w-lg mx-auto"><strong>Info:</strong> {{ pilot_notice_text }}</div>{% endif %}
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="{{ download_url or url_for('download') }}" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md transition" style="background:linear-gradient(135deg,#059669,#0d9488);">Stáhnout pro Windows</a>
+                <a href="/download" class="px-6 py-3 rounded-lg border text-gray-600 hover:bg-gray-100 transition" style="border-color:#e5e7eb;">Stránka Stažení</a>
+            </div>
+        </div>
+    </section>
+
+    {# ============ PŘIPRAVUJEME ============ #}
+    <section id="pripravujeme" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-2 text-center anim" style="color:#0f172a;">Připravujeme</h2>
+            <p class="text-sm text-gray-500 text-center mb-10 anim">{{ coming_soon_intro|default('Rozšíření Agenta pro reálné potřeby projektantů.') }}</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card coming anim">
+                    <span class="coming-tag">COMING SOON</span>
+                    <div class="icon-circle mb-3" style="background:linear-gradient(135deg,#3b82f6,#6366f1);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg></div>
+                    <h3 class="font-semibold mb-1" style="color:#1e5a8a;">{{ coming_soon_path_title|default('Path Checker') }}</h3>
+                    <p class="text-sm text-gray-500 mb-3">{{ coming_soon_path_subtitle|default('Kontrola cest a logistika souborů') }}</p>
+                    {% for line in coming_soon_path_items_list|default([]) %}<p class="text-sm text-gray-600 flex gap-2 mb-1"><span style="color:#1e5a8a;font-weight:bold;">•</span>{{ line }}</p>{% endfor %}
+                    <p class="text-xs pt-3 mt-3 border-t font-semibold" style="color:#1e5a8a;border-color:#e2e8f0;">{{ coming_soon_path_benefit|default('Žádné neočekávané pády u velkých zakázek.') }}</p>
+                </div>
+                <div class="card coming anim" style="transition-delay:80ms;">
+                    <span class="coming-tag">COMING SOON</span>
+                    <div class="icon-circle mb-3" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></div>
+                    <h3 class="font-semibold mb-1" style="color:#1e5a8a;">{{ coming_soon_editor_title|default('Online editor a podpis PDF') }}</h3>
+                    <p class="text-sm text-gray-500 mb-3">{{ coming_soon_editor_subtitle|default('Úprava PDF a digitální schvalování') }}</p>
+                    {% for line in coming_soon_editor_items_list|default([]) %}<p class="text-sm text-gray-600 flex gap-2 mb-1"><span style="color:#8b5cf6;font-weight:bold;">•</span>{{ line }}</p>{% endfor %}
+                    <p class="text-xs pt-3 mt-3 border-t font-semibold" style="color:#8b5cf6;border-color:#e2e8f0;">{{ coming_soon_editor_benefit|default('Méně vrácení dokumentace.') }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ============ PARTNEŘI ============ #}
+    {% if partner_logos and partner_logos|length > 0 %}
+    <section class="py-12 bg-gray-50"><div class="max-w-6xl mx-auto px-6"><h2 class="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Důvěřují nám</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-3">{% for logo in partner_logos %}<div class="h-14 bg-white rounded-lg flex items-center justify-center border shadow-sm px-4" style="border-color:#e5e7eb;">{% if logo.url %}<a href="{{ logo.url }}" target="_blank" rel="noopener"><img src="{{ logo.src }}" alt="{{ logo.alt|default('Partner') }}" class="max-h-full object-contain"></a>{% else %}<img src="{{ logo.src }}" alt="{{ logo.alt|default('Partner') }}" class="max-h-full object-contain">{% endif %}</div>{% endfor %}</div></div></section>
+    {% endif %}
+
+    {# ============ FAQ ============ #}
+    <section id="faq" class="faq py-16 bg-white">
+        <div class="max-w-3xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-8 text-center anim" style="color:#0f172a;">Časté dotazy</h2>
+            {% if faq_list %}
+            <div class="space-y-1.5 anim">
+                {% for item in faq_list %}
+                <details class="bg-white rounded-xl border shadow-sm overflow-hidden" style="border-color:#e5e7eb;">
+                    <summary class="px-5 py-3 font-medium text-sm text-gray-900 flex justify-between items-center">{{ item.question }}<svg class="chev w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+                    <div class="px-5 pb-3 text-sm text-gray-500 whitespace-pre-wrap">{{ item.answer|e }}</div>
+                </details>
+                {% endfor %}
+            </div>
+            {% else %}<p class="text-center text-sm text-gray-400">FAQ připravujeme.</p>{% endif %}
+        </div>
+    </section>
+
+</main>
+
+{# ============ FOOTER ============ #}
+<footer class="bg-gray-900 text-gray-400 py-8">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm">
+        <div><span class="font-bold text-white">PDF</span> <span class="text-blue-400 font-bold">DokuCheck</span> <span class="text-gray-500">PRO</span></div>
+        <div class="flex flex-wrap gap-4"><a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="hover:text-white transition">{{ contact_email|default('info@dokucheck.app') }}</a><a href="/vop" class="hover:text-white transition">VOP</a><a href="/gdpr" class="hover:text-white transition">GDPR</a><span class="text-gray-600">{{ web_version|default('w26.02.004') }}</span></div>
+    </div>
+</footer>
+
+{# ============ DESIGN SWITCHER (dočasný) ============ #}
+<div style="position:fixed;bottom:1rem;left:1rem;z-index:9999;display:flex;gap:4px;">
+    <a href="/design-a" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#1e5a8a;color:#fff;">A</a>
+    <a href="/design-b" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#6366f1;color:#fff;">B</a>
+    <a href="/design-c" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#059669;color:#fff;">C</a>
+    <a href="/" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#e5e7eb;color:#374151;">Originál</a>
+</div>
+
+<script>
+// Splash dismiss
+setTimeout(()=>document.getElementById('splash').classList.add('hide'),1800);
+// Nav scroll
+const nav=document.getElementById('topnav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10),{passive:true});
+// Mobile menu
+const mob=document.getElementById('mob'),bg=document.getElementById('mobBg');
+document.getElementById('burger').onclick=()=>{mob.style.transform='translateX(0)';bg.classList.remove('hidden');};
+function closeMob(){mob.style.transform='';bg.classList.add('hidden');}
+document.getElementById('mobClose').onclick=closeMob;bg.onclick=closeMob;
+document.querySelectorAll('.mobL').forEach(a=>a.onclick=closeMob);
+// Scroll anim
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');obs.unobserve(e.target);}}),{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.anim').forEach(el=>obs.observe(el));
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t){const y=t.getBoundingClientRect().top+scrollY-70;window.scrollTo({top:y,behavior:'smooth'});}}));
+</script>
+</body>
+</html>
