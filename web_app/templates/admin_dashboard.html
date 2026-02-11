@@ -71,8 +71,8 @@
     </form>
 </section>
 
-<div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
-    <h2 style="font-size:1.1em;margin:0;">Uživatelé</h2>
+<div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;" id="users">
+    <h2 style="font-size:1.1em;margin:0;">1. Uživatelé</h2>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
             <input type="hidden" name="tier" value="{{ tier_filter }}">
@@ -151,32 +151,72 @@
     </table>
 </div>
 
-<div style="margin-top:32px;">
-    <h2 style="font-size:1.2em;font-weight:600;margin-bottom:12px;">Log Online Dema</h2>
-    <p style="color:#6b7280;font-size:0.9em;margin-bottom:12px;">Poslední použití stránky Online Check (IP adresa, čas, počet souborů).</p>
+<div style="margin-top:32px;" id="stats-logs">
+    <h2 style="font-size:1.2em;font-weight:600;margin-bottom:12px;">2. Statistiky a Logy</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+        <div class="admin-card" style="padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
+            <div style="font-size:0.85em;color:#0369a1;">Celkem kontrol dnes</div>
+            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.checks_today|default(0) }}</div>
+        </div>
+        <div class="admin-card" style="padding:16px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;">
+            <div style="font-size:0.85em;color:#b45309;">Trial batche dnes</div>
+            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.trial_batches_today|default(0) }}</div>
+        </div>
+        <div class="admin-card" style="padding:16px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;">
+            <div style="font-size:0.85em;color:#047857;">Aktivní licence</div>
+            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.active_licenses|default(0) }}</div>
+        </div>
+    </div>
+    <p style="color:#6b7280;font-size:0.9em;margin-bottom:12px;">Sjednocený log aktivit – 1 záznam = 1 nahraná dávka (IP, čas, typ, počet souborů).</p>
     <div class="table-container">
         <table class="table-dense">
             <thead>
                 <tr>
                     <th>IP adresa</th>
-                    <th>Počet souborů</th>
                     <th>Čas</th>
+                    <th>Typ</th>
+                    <th>Počet souborů</th>
+                    <th>Akce</th>
                 </tr>
             </thead>
             <tbody>
-                {% for row in online_demo_log %}
+                {% for row in activity_log %}
                 <tr>
-                    <td>{{ row.ip_address or '—' }}</td>
-                    <td>{{ row.file_count }}</td>
+                    <td><small style="font-family:monospace;">{{ row.ip_address or '—' }}</small></td>
                     <td><small>{{ (row.timestamp or '—')[:19] }}</small></td>
+                    <td>{% if row.source_type == 'web_trial' %}Web Trial{% elif row.source_type == 'agent' %}Agent{% elif row.source_type == 'registered' %}Registrovaný{% else %}{{ row.source_type or '—' }}{% endif %}</td>
+                    <td>{{ row.file_count }}</td>
+                    <td>{% if row.source_type == 'web_trial' and row.ip_address %}<button type="button" class="btn btn-secondary btn-small reset-ip-btn" data-ip="{{ row.ip_address|e }}" title="Resetovat limit trial pro tuto IP">Resetovat IP</button>{% else %}—{% endif %}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="3" class="text-center text-muted" style="padding:24px;">Zatím žádné záznamy.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted" style="padding:24px;">Zatím žádné záznamy.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var ip = this.getAttribute('data-ip');
+        if (!ip) return;
+        var fd = new FormData();
+        fd.append('ip_address', ip);
+        fetch('{{ url_for("admin.api_web_trial_reset") }}', { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    alert(res.message || 'IP resetována');
+                    location.reload();
+                } else {
+                    alert(res.error || 'Chyba');
+                }
+            })
+            .catch(function() { alert('Chyba spojení'); });
+    });
+});
+</script>
 
 <section class="admin-stats-section" style="margin-top:32px;">
     <h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Statistiky a grafy</h2>

@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONLINE Check – DokuCheck</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .btn-primary { background: #007ACC; }
         .btn-primary:hover { background: #2b6cb0; }
+        .filter-btn { transition: opacity 0.2s; }
+        .filter-btn.active { background: #007ACC; color: white; }
+        .result-row.filtered-out { display: none; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
@@ -21,22 +25,63 @@
             </div>
         </div>
     </nav>
-    <main class="max-w-2xl mx-auto px-6 py-12">
+    <main class="max-w-4xl mx-auto px-6 py-12">
         <h1 class="text-2xl font-bold text-white mb-2">ONLINE Check</h1>
-        <p class="text-slate-400 mb-4">Nahrajte až 3 PDF soubory (max. 2 MB každý). Kontrola proběhne na serveru.</p>
+        <p class="text-slate-400 mb-4">Nahrajte až 5 PDF souborů (max. 2 MB každý). Trial: 3 kontroly za 24 h (po 5 souborech). Export a filtry zdarma.</p>
         <div class="mb-6 p-4 rounded-lg bg-amber-900/40 border border-amber-600/60 text-amber-200 text-sm">
             <strong>Bezpečnost:</strong> Soubory jsou odesílány na náš server ke kontrole. Nepoužívejte pro důvěrné dokumenty. Pro lokální kontrolu bez odeslání doporučujeme Desktop aplikaci.
         </div>
         <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-12 text-center bg-slate-800/50 hover:border-[#007ACC] transition cursor-pointer">
             <p class="text-slate-400 mb-2">Přetáhněte PDF sem nebo klikněte pro výběr</p>
-            <p class="text-slate-500 text-sm">Max. 3 soubory, max. 2 MB na soubor, pouze PDF</p>
+            <p class="text-slate-500 text-sm">Max. 5 souborů, max. 2 MB na soubor, pouze PDF</p>
             <input type="file" id="file-input" accept=".pdf,application/pdf" multiple class="hidden">
         </div>
         <ul id="file-list" class="mt-6 space-y-2 text-slate-300"></ul>
         <button id="btn-check" disabled class="mt-6 w-full py-3 rounded-lg font-semibold text-white btn-primary disabled:opacity-50 disabled:cursor-not-allowed transition">
             Spustit kontrolu
         </button>
-        <div id="result" class="mt-6 p-4 rounded-lg bg-slate-800 hidden"></div>
+        <div id="result" class="mt-6 hidden"></div>
+        <!-- Filtry a Export (viditelné po kontrole) -->
+        <div id="filters-export" class="mt-6 hidden">
+            <div class="flex flex-wrap items-center gap-4 mb-4">
+                <span class="text-slate-400 text-sm">Filtry:</span>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="pdfa" data-value="all">PDF/A: Vše</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="pdfa" data-value="ok">PDF/A: OK</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="pdfa" data-value="fail">PDF/A: Problém</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="sig" data-value="all">Podpis: Vše</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="sig" data-value="ok">Podpis: OK</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="sig" data-value="fail">Podpis: Problém</button>
+                <button type="button" class="filter-btn px-3 py-1 rounded text-sm bg-slate-700 text-slate-300" data-filter="all">Zrušit filtry</button>
+                <span class="ml-4"></span>
+                <button type="button" id="btn-export-excel" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary text-sm">Export do Excelu</button>
+            </div>
+            <div id="results-table-wrapper" class="overflow-x-auto rounded-lg border border-slate-600">
+                <table id="results-table" class="w-full text-sm">
+                    <thead class="bg-slate-800 text-slate-300">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Soubor</th>
+                            <th class="px-4 py-3 text-left">PDF/A</th>
+                            <th class="px-4 py-3 text-left">Verze</th>
+                            <th class="px-4 py-3 text-left">Podpis</th>
+                            <th class="px-4 py-3 text-left">TSA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody" class="divide-y divide-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Modální okno při překročení limitu -->
+        <div id="modal-limit" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+            <div class="bg-slate-800 rounded-xl p-8 max-w-md mx-4 border border-slate-600 shadow-xl">
+                <h3 class="text-xl font-bold text-white mb-4">Limit trial verze dosažen</h3>
+                <p class="text-slate-300 mb-6">Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP adresy). Pro další kontroly se registrujte nebo si zakoupte licenci.</p>
+                <div class="flex gap-4">
+                    <a href="/#pricing" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary">Zakoupit licenci</a>
+                    <a href="/portal/login" class="px-4 py-2 rounded-lg font-semibold bg-slate-600 text-white hover:bg-slate-500">Přihlásit se</a>
+                    <button type="button" id="modal-close" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white">Zavřít</button>
+                </div>
+            </div>
+        </div>
         <!-- CTA Banner – Desktop aplikace -->
         <div class="mt-10 p-4 rounded-xl border border-slate-600 bg-slate-800/80 text-center">
             <p class="text-slate-300 text-sm mb-2">Pro neomezené lokální kontroly bez nahrávání na cloud použijte naši Desktop aplikaci.</p>
@@ -44,14 +89,18 @@
         </div>
     </main>
     <script>
-        const MAX_FILES = 3;
+        const MAX_FILES = 5;
         const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
         const btnCheck = document.getElementById('btn-check');
         const result = document.getElementById('result');
+        const filtersExport = document.getElementById('filters-export');
+        const resultsTbody = document.getElementById('results-tbody');
         let selectedFiles = [];
+        let lastResults = [];
+        let activeFilters = { pdfa: 'all', sig: 'all' };
 
         function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
@@ -81,6 +130,85 @@
             updateList();
         }
 
+        function showModalLimit() {
+            document.getElementById('modal-limit').classList.remove('hidden');
+        }
+        document.getElementById('modal-close').onclick = () => document.getElementById('modal-limit').classList.add('hidden');
+        document.getElementById('modal-limit').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); };
+
+        function renderResults(data) {
+            lastResults = data.results || [];
+            resultsTbody.innerHTML = '';
+            lastResults.forEach((r, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'result-row';
+                tr.dataset.idx = idx;
+                const pdfaOk = r.pdfaStatus === 'OK' || r.pdfaStatus === 'OK ';
+                const sigOk = r.sig === 'OK';
+                tr.dataset.pdfaOk = pdfaOk ? '1' : '0';
+                tr.dataset.sigOk = sigOk ? '1' : '0';
+                const fn = r.filename || r.name || ('soubor_' + (idx + 1) + '.pdf');
+                const err = r.error;
+                if (err) {
+                    tr.innerHTML = '<td colspan="5" class="px-4 py-3 text-amber-400">' + (r.filename || fn) + ': ' + err + '</td>';
+                } else {
+                    tr.innerHTML = '<td class="px-4 py-3">' + escapeHtml(fn) + '</td><td class="px-4 py-3">' + (pdfaOk ? '<span class="text-emerald-400">OK</span>' : '<span class="text-amber-400">Problém</span>') + '</td><td class="px-4 py-3">' + (r.pdfaLevel || r.pdfVersion || '—') + '</td><td class="px-4 py-3">' + (sigOk ? '<span class="text-emerald-400">OK</span>' : '<span class="text-amber-400">' + (r.sig || '—') + '</span>') + '</td><td class="px-4 py-3">' + (r.tsa || '—') + '</td>';
+                }
+                resultsTbody.appendChild(tr);
+            });
+            applyFilters();
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function applyFilters() {
+            document.querySelectorAll('.result-row').forEach(tr => {
+                const pdfaOk = tr.dataset.pdfaOk === '1';
+                const sigOk = tr.dataset.sigOk === '1';
+                let show = true;
+                if (activeFilters.pdfa === 'ok' && !pdfaOk) show = false;
+                if (activeFilters.pdfa === 'fail' && pdfaOk) show = false;
+                if (activeFilters.sig === 'ok' && !sigOk) show = false;
+                if (activeFilters.sig === 'fail' && sigOk) show = false;
+                tr.classList.toggle('filtered-out', !show);
+            });
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const f = btn.dataset.filter, v = btn.dataset.value;
+                if (f === 'all') return;
+                if (f === 'pdfa' && activeFilters.pdfa === v) btn.classList.add('active');
+                if (f === 'sig' && activeFilters.sig === v) btn.classList.add('active');
+            });
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.filter === 'all') {
+                    activeFilters = { pdfa: 'all', sig: 'all' };
+                } else {
+                    activeFilters[btn.dataset.filter] = btn.dataset.value;
+                }
+                applyFilters();
+            });
+        });
+
+        document.getElementById('btn-export-excel').addEventListener('click', () => {
+            if (lastResults.length === 0) return;
+            const rows = [['Soubor', 'PDF/A', 'Verze', 'Podpis', 'TSA']];
+            lastResults.forEach(r => {
+                if (r.error) rows.push([r.filename || '—', 'Chyba', '', '', r.error]);
+                else rows.push([r.filename || r.name || '—', r.pdfaStatus || '—', r.pdfaLevel || r.pdfVersion || '—', r.sig || '—', r.tsa || '—']);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'PDF Check');
+            XLSX.writeFile(wb, 'dokucheck_export.xlsx');
+        });
+
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-[#007ACC]'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-[#007ACC]'));
@@ -98,19 +226,26 @@
             }
             result.classList.remove('hidden');
             result.className = 'mt-6 p-4 rounded-lg bg-slate-800 text-slate-300';
-            result.textContent = 'Kontrola probíhá…';
+            result.innerHTML = 'Kontrola probíhá…';
+            filtersExport.classList.add('hidden');
             try {
-                let ok = 0;
-                let errMsg = '';
-                for (const f of selectedFiles) {
-                    const fd = new FormData();
-                    fd.append('file', f);
-                    const r = await fetch('/analyze', { method: 'POST', body: fd });
-                    const data = await r.json().catch(() => ({}));
-                    if (r.ok && !data.error) ok++;
-                    else if (data.error && data.error.includes('2 MB')) errMsg = ' Některé soubory přesahují 2 MB.';
+                const fd = new FormData();
+                selectedFiles.forEach(f => fd.append('files', f));
+                const r = await fetch('/analyze-batch', { method: 'POST', body: fd });
+                const data = await r.json().catch(() => ({}));
+                if (r.status === 429 && data.limit_exceeded) {
+                    showModalLimit();
+                    result.innerHTML = '<span class="text-amber-400">' + (data.error || 'Limit dosažen.') + '</span>';
+                    return;
                 }
-                result.innerHTML = 'Kontrola dokončena. Zkontrolováno souborů: <strong>' + ok + '</strong> z ' + selectedFiles.length + '. (Výsledky se neukládají – demo režim.)' + (errMsg ? '<span class="text-[#e53e3e]">' + errMsg + '</span>' : '');
+                if (!r.ok) {
+                    result.innerHTML = '<span class="text-[#e53e3e]">' + (data.error || 'Chyba požadavku') + '</span>';
+                    return;
+                }
+                const count = data.count || (data.results && data.results.length) || 0;
+                result.innerHTML = 'Kontrola dokončena. Zkontrolováno souborů: <strong>' + count + '</strong>.';
+                renderResults(data);
+                filtersExport.classList.remove('hidden');
             } catch (e) {
                 result.textContent = 'Chyba: ' + e.message;
                 result.classList.add('text-[#e53e3e]');

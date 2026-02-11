@@ -271,7 +271,8 @@ def dashboard():
     kpis = db.get_dashboard_kpis()
     user_ranking = db.get_user_activity_ranking(limit=10)
     trial_stats = db.get_trial_stats()
-    online_demo_log = db.get_online_demo_log(limit=200)
+    activity_log = db.get_activity_log(limit=200)
+    activity_stats = db.get_activity_stats_today()
 
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
@@ -289,7 +290,8 @@ def dashboard():
                           kpis=kpis,
                           user_ranking=user_ranking or [],
                           trial_stats=trial_stats or {},
-                          online_demo_log=online_demo_log or [],
+                          activity_log=activity_log or [],
+                          activity_stats=activity_stats or {},
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
@@ -1258,6 +1260,25 @@ def api_trial_reset():
         return jsonify({'success': False, 'error': 'Zařízení nenalezeno nebo již vynulováno'}), 404
     flash('Zařízení nenalezeno nebo již vynulováno', 'error')
     return redirect(url_for('admin.trial'))
+
+
+@admin_bp.route('/admin/api/web-trial/reset', methods=['POST'])
+@admin_required
+def api_web_trial_reset():
+    """Resetuje limit web trial pro danou IP adresu (umožní znovu testovat)."""
+    db = get_db()
+    ip_address = (request.form.get('ip_address') or request.args.get('ip_address') or '').strip()
+    if request.is_json:
+        try:
+            data = request.get_json(silent=True) or {}
+            ip_address = (data.get('ip_address') or '').strip()
+        except Exception:
+            pass
+    if not ip_address:
+        return jsonify({'success': False, 'error': 'Chybí ip_address'}), 400
+    if db.reset_web_trial_ip(ip_address):
+        return jsonify({'success': True, 'message': f'IP {ip_address} resetována'}), 200
+    return jsonify({'success': True, 'message': 'Žádné záznamy k odstranění'}), 200
 
 
 @admin_bp.route('/admin/api/tier/update', methods=['POST'])

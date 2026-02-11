@@ -3283,13 +3283,70 @@ def _portal_dashboard_with_message(message, error=True):
                            pw_message=message, pw_error=error)
 
 
-# Online Demo: max 3 soubory (vynuceno na frontendu), max 2 MB na soubor
+# Online Demo / Web Trial: max 5 souborů, max 2 MB na soubor, max 3 batche/IP/24h
 ONLINE_DEMO_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
+WEB_TRIAL_MAX_FILES = 5
+WEB_TRIAL_MAX_BATCHES_PER_24H = 3
+
+
+def _get_client_ip():
+    """Vrátí IP klienta (bere v úvahu proxy X-Forwarded-For)."""
+    return request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip() or request.remote_addr or ''
+
+
+@app.route('/analyze-batch', methods=['POST'])
+def analyze_batch():
+    """
+    Web Trial: kontrola až 5 PDF v jedné dávce.
+    Limit: max 3 batche na IP za 24 h.
+    Při překročení limitu vrací 429 + limit_exceeded.
+    """
+    ip = _get_client_ip()
+    files = request.files.getlist('files') or request.files.getlist('file') or []
+    if not files:
+        # fallback pro jednořádkové pole
+        f = request.files.get('file')
+        if f:
+            files = [f]
+
+    if not files:
+        return jsonify({'error': 'Žádné soubory'}), 400
+
+    if len(files) > WEB_TRIAL_MAX_FILES:
+        return jsonify({'error': f'Maximálně {WEB_TRIAL_MAX_FILES} souborů na jednu kontrolu.', 'limit_exceeded': False}), 400
+
+    try:
+        db = Database()
+        allowed, count = db.check_web_trial_limit(ip)
+        if not allowed:
+            return jsonify({
+                'error': f'Dosáhli jste limitu 3 kontrol za 24 hodin (IP). Pro další kontroly se registrujte nebo si zakoupte licenci.',
+                'limit_exceeded': True
+            }), 429
+
+        results = []
+        for file in files:
+            if not file.filename or not file.filename.lower().endswith('.pdf'):
+                continue
+            content = file.read()
+            if len(content) > ONLINE_DEMO_MAX_FILE_SIZE:
+                results.append({'error': f'{file.filename}: soubor je větší než 2 MB', 'filename': file.filename})
+                continue
+            r = analyze_pdf(content)
+            r['filename'] = file.filename
+            results.append(r)
+
+        db.record_web_trial_usage(ip)
+        db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=len(results))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    return jsonify({'results': results, 'count': len(results)})
 
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Kontrola jednoho PDF – serverové Body B (Online Demo). Max 2 MB, logování do online_demo_log."""
+    """Kontrola jednoho PDF – serverové Body B (Online Demo). Max 2 MB, logování do activity_log (kompatibilita)."""
     if 'file' not in request.files:
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
@@ -3297,12 +3354,16 @@ def analyze():
         content = file.read()
         if len(content) > ONLINE_DEMO_MAX_FILE_SIZE:
             return jsonify({'error': 'Soubor je větší než 2 MB. Pro větší soubory použijte Desktop aplikaci.'}), 400
-        # Log pro admin statistiku (IP, počet souborů = 1 per request)
-        try:
-            db = Database()
-            db.insert_online_demo_log(ip_address=request.remote_addr, file_count=1)
-        except Exception:
-            pass
+        ip = _get_client_ip()
+        db = Database()
+        allowed, _ = db.check_web_trial_limit(ip)
+        if not allowed:
+            return jsonify({
+                'error': 'Dosáhli jste limitu 3 kontrol za 24 hodin. Pro další kontroly se registrujte nebo si zakoupte licenci.',
+                'limit_exceeded': True
+            }), 429
+        db.record_web_trial_usage(ip)
+        db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         return jsonify(analyze_pdf(content))
     except Exception as e:
         return jsonify({'error': str(e)}), 500

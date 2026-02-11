@@ -303,7 +303,31 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_payment_logs_user ON payment_logs(user_id)')
 
-        # Log Online Dema (IP, čas, počet souborů) – pro admin statistiku
+        # Web Trial – limit podle IP: max 3 batche po 5 souborech za 24 h
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS web_trial_ip_usage (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT NOT NULL,
+                usage_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_web_trial_ip_usage ON web_trial_ip_usage(ip_address, usage_timestamp)')
+
+        # Sjednocený log aktivit: IP, čas, typ (web_trial/registered/agent), počet souborů (1 záznam = 1 dávka)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS activity_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                source_type TEXT NOT NULL,
+                file_count INTEGER NOT NULL DEFAULT 0,
+                api_key TEXT
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_activity_log_timestamp ON activity_log(timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_activity_log_ip ON activity_log(ip_address)')
+
+        # Starý online_demo_log – zachován pro zpětnou kompatibilitu, nově se používá activity_log
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS online_demo_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1557,6 +1581,91 @@ class Database:
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
+
+    def check_web_trial_limit(self, ip_address):
+        """Vrátí (allowed: bool, usage_count: int). Limit: max 3 batche za 24 h na IP."""
+        if not ip_address:
+            return True, 0
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(*) FROM web_trial_ip_usage
+            WHERE ip_address = ? AND usage_timestamp >= datetime('now', '-24 hours')
+        ''', (ip_address,))
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count < 3, count
+
+    def record_web_trial_usage(self, ip_address):
+        """Zaznamená jedno použití web trial pro IP (1 batch)."""
+        if not ip_address:
+            return
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO web_trial_ip_usage (ip_address) VALUES (?)', (ip_address,))
+        conn.commit()
+        conn.close()
+
+    def reset_web_trial_ip(self, ip_address):
+        """Smaže záznamy web trial pro danou IP (admin reset)."""
+        if not ip_address:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM web_trial_ip_usage WHERE ip_address = ?', (ip_address,))
+        conn.commit()
+        n = cursor.rowcount
+        conn.close()
+        return n > 0
+
+    def insert_activity_log(self, ip_address=None, source_type='web_trial', file_count=0, api_key=None):
+        """Zapíše záznam do sjednoceného logu aktivit (1 záznam = 1 dávka)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO activity_log (ip_address, source_type, file_count, api_key) VALUES (?, ?, ?, ?)',
+                (ip_address or '', source_type, max(0, int(file_count)), api_key or None)
+            )
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    def get_activity_log(self, limit=200):
+        """Vrátí sjednocený log aktivit pro admin: IP, čas, typ, počet souborů."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, ip_address, timestamp, source_type, file_count, api_key FROM activity_log ORDER BY timestamp DESC LIMIT ?',
+            (limit,)
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_activity_stats_today(self):
+        """Agregovaná data pro dashboard: kontroly dnes, trial batche dnes, aktivní licence."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(SUM(file_count), 0) FROM activity_log
+            WHERE date(timestamp) = date('now')
+        ''')
+        checks_today = cursor.fetchone()[0] or 0
+        cursor.execute('''
+            SELECT COUNT(*) FROM activity_log
+            WHERE date(timestamp) = date('now') AND source_type = 'web_trial'
+        ''')
+        trial_today = cursor.fetchone()[0] or 0
+        cursor.execute(
+            'SELECT COUNT(*) FROM api_keys WHERE is_active = 1 AND (license_expires IS NULL OR license_expires >= datetime(\'now\'))'
+        )
+        active_licenses = cursor.fetchone()[0] or 0
+        conn.close()
+        return {'checks_today': checks_today, 'trial_batches_today': trial_today, 'active_licenses': active_licenses}
 
     def update_license_tier(self, api_key, new_tier, license_days=None):
         """Aktualizuje licenční tier pro uživatele"""

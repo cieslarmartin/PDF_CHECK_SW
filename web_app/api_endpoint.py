@@ -260,6 +260,8 @@ def register_api_routes(app):
                 api_key, 'batch_upload', file_count=saved_count,
                 total_size_kb=total_size_kb, ip_address=ip_address, machine_id=machine_id, status='ok'
             )
+            # Sjednocený log aktivit pro Dashboard (1 záznam = 1 dávka)
+            db.insert_activity_log(ip_address=ip_address, source_type='agent', file_count=saved_count, api_key=api_key)
 
             is_partial = total_submitted > saved_count
 
