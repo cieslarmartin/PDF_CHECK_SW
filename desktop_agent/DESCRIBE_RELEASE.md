@@ -35,7 +35,7 @@ Instalátor desktopové aplikace DokuCheck PRO pro kontrolu PDF dokumentů (PDF/
 - Číslo buildu je vidět v aplikaci v levém panelu dole („Build 46“).
 
 ---
-© 2025 Ing. Martin Cieślar · [DokuCheck](https://cieslar.pythonanywhere.com)
+© 2025 Ing. Martin Cieślar · [DokuCheck](https://www.dokucheck.cz)
 ```
 
 ---

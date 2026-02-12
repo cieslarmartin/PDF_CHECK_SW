@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DokuCheck – Hero varianty (A / B / C)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Společný reset pro H1 */
+  h1 { line-height: 1.1; margin: 0; }
+  .green { color: #16A34A; }
+
+  /* Navigace mezi variantami */
+  .tab-bar { position:sticky; top:0; z-index:50; backdrop-filter:blur(12px); background:rgba(255,255,255,.85); border-bottom:1px solid #e5e7eb; }
+  .tab-bar a { padding:10px 20px; font-size:14px; font-weight:600; color:#64748b; text-decoration:none; transition:color .2s; }
+  .tab-bar a:hover, .tab-bar a.active { color:#0f172a; border-bottom:2px solid #16A34A; }
+  .variant-label { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:4px 12px; border-radius:999px; margin-bottom:24px; }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-900 antialiased">
+
+<!-- Tab bar -->
+<nav class="tab-bar flex justify-center gap-2 py-1">
+  <a href="#varianta-a" class="active">A – Produkt + Benefit</a>
+  <a href="#varianta-b">B – Kicker / Badge</a>
+  <a href="#varianta-c">C – Minimalistický akcent</a>
+</nav>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANTA A – Produkt + Benefit (Dvouřádková)              ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<section id="varianta-a" class="min-h-screen flex items-center bg-white py-20">
+  <div class="max-w-6xl mx-auto px-6 w-full">
+    <span class="variant-label" style="background:#eff6ff; color:#1e5a8a;">Varianta A</span>
+
+    <div class="flex flex-col md:flex-row md:items-center gap-10">
+      <div class="flex-1 max-w-2xl">
+        <!-- Badge -->
+        <span class="inline-block mb-5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide"
+              style="background:#f0fdf4; color:#16A34A;">ONLINE + Desktop</span>
+
+        <!-- H1: dva řádky -->
+        <h1 class="mb-5">
+          <span class="block text-4xl sm:text-5xl font-semibold" style="color:#0f172a;">Doku<span class="green">Check</span></span>
+          <span class="block text-2xl sm:text-3xl font-normal mt-3 text-gray-700">Dokumentace bez chyb pro Portál stavebníka</span>
+        </h1>
+
+        <p class="text-lg text-gray-500 leading-relaxed mb-8 max-w-xl">
+          Rychlá kontrola PDF/A, elektronických podpisů a souladu dokumentů během minut.
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <a href="#" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md hover:shadow-lg transition"
+             style="background:#1e5a8a;">Vyzkoušet ONLINE Check</a>
+          <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50"
+             style="color:#1e5a8a; border-color:#1e5a8a;">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+            Stáhnout pro Windows</a>
+        </div>
+      </div>
+
+      <!-- Placeholder obrázek -->
+      <div class="flex-shrink-0 w-full md:w-96">
+        <div class="w-full aspect-[4/3] rounded-2xl shadow-lg border flex items-center justify-center text-gray-300 text-sm"
+             style="background:#f8fafc; border-color:#e5e7eb;">[hero obrázek]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANTA B – Kicker / Badge (Dospělý styl)               ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<section id="varianta-b" class="min-h-screen flex items-center bg-gray-50 py-20">
+  <div class="max-w-6xl mx-auto px-6 w-full">
+    <span class="variant-label" style="background:#fef3c7; color:#92400e;">Varianta B</span>
+
+    <div class="flex flex-col md:flex-row md:items-center gap-10">
+      <div class="flex-1 max-w-2xl">
+        <!-- Kicker – název produktu -->
+        <p class="text-base font-semibold tracking-wide mb-3 green">DokuCheck</p>
+
+        <!-- H1: hlavní sdělení ve dvou řádcích -->
+        <h1 class="text-4xl sm:text-5xl font-bold mb-6" style="color:#0f172a;">
+          <span class="block">Dokumentace bez chyb</span>
+          <span class="block mt-1 text-gray-500 font-normal text-3xl sm:text-4xl">pro Portál stavebníka</span>
+        </h1>
+
+        <p class="text-lg text-gray-500 leading-relaxed mb-8 max-w-xl">
+          Automatická kontrola PDF/A, podpisů ČKAIT/ČKA a časových razítek ještě před nahráním na portál.
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <a href="#" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md hover:shadow-lg transition"
+             style="background:#1e5a8a;">Vyzkoušet ONLINE Check</a>
+          <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50"
+             style="color:#1e5a8a; border-color:#1e5a8a;">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+            Stáhnout pro Windows</a>
+        </div>
+      </div>
+
+      <div class="flex-shrink-0 w-full md:w-96">
+        <div class="w-full aspect-[4/3] rounded-2xl shadow-lg border flex items-center justify-center text-gray-300 text-sm"
+             style="background:#fff; border-color:#e5e7eb;">[hero obrázek]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  VARIANTA C – Minimalistický akcent                        ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<section id="varianta-c" class="min-h-screen flex items-center bg-white py-20">
+  <div class="max-w-6xl mx-auto px-6 w-full">
+    <span class="variant-label" style="background:#fce7f3; color:#9d174d;">Varianta C</span>
+
+    <div class="flex flex-col md:flex-row md:items-center gap-10">
+      <div class="flex-1 max-w-2xl">
+        <!-- Badge -->
+        <span class="inline-block mb-5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide"
+              style="background:#f0fdf4; color:#16A34A;">DokuCheck</span>
+
+        <!-- H1: plynulá věta s akcentem -->
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-normal mb-6" style="color:#0f172a;">
+          Zkontrolujte dokumentaci pro&nbsp;Portál stavebníka <span class="font-semibold green">bez&nbsp;chyb.</span>
+        </h1>
+
+        <p class="text-lg text-gray-500 leading-relaxed mb-8 max-w-xl">
+          PDF/A validace, ověření elektronických podpisů a autorizačních razítek ČKAIT/ČKA na jednom místě.
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <a href="#" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md hover:shadow-lg transition"
+             style="background:#1e5a8a;">Vyzkoušet ONLINE Check</a>
+          <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50"
+             style="color:#1e5a8a; border-color:#1e5a8a;">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+            Stáhnout pro Windows</a>
+        </div>
+      </div>
+
+      <div class="flex-shrink-0 w-full md:w-96">
+        <div class="w-full aspect-[4/3] rounded-2xl shadow-lg border flex items-center justify-center text-gray-300 text-sm"
+             style="background:#f8fafc; border-color:#e5e7eb;">[hero obrázek]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Scroll highlight -->
+<script>
+const tabs = document.querySelectorAll('.tab-bar a');
+const sections = document.querySelectorAll('section[id]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tabs.forEach(t => t.classList.remove('active'));
+      const match = document.querySelector(`.tab-bar a[href="#${e.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

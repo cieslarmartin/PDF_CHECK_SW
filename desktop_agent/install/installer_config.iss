@@ -7,7 +7,7 @@
 #define MyAppName "DokuCheck PRO"
 #define MyAppVersion "1.2.0"
 #define MyAppPublisher "Ing. Martin Cieślar"
-#define MyAppURL "https://cieslar.pythonanywhere.com"
+#define MyAppURL "https://www.dokucheck.cz"
 ; Složka z PyInstaller buildu (relativně k této složce install/): o úroveň výš, pak dist\DokuCheckPRO
 #define BuildDir "..\dist\DokuCheckPRO"
 

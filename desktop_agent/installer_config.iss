@@ -6,7 +6,7 @@
 #define MyAppName "DokuCheck PRO"
 #define MyAppVersion "1.2.0"
 #define MyAppPublisher "Ing. Martin Cieślar"
-#define MyAppURL "https://cieslar.pythonanywhere.com"
+#define MyAppURL "https://www.dokucheck.cz"
 #define BuildDir "dist\DokuCheckPRO"
 
 [Setup]

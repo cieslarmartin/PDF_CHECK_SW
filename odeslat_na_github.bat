@@ -1,4 +1,3 @@
-ok uprav
 @echo off
 setlocal enabledelayedexpansion
 echo ==========================================

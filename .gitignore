@@ -32,3 +32,6 @@ build/
 desktop_agent/agent.log
 web_app/*_result.txt
 *.bak
+
+# Instalační EXE soubory (nahrávají se přes GitHub Releases, ne do repo)
+desktop_agent/install/*.exe
