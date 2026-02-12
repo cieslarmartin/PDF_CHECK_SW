@@ -888,8 +888,8 @@ HTML_TEMPLATE = '''
                 </div>
 
                 <div class="sidebar-footer">
-                    <button class="btn btn-green" id="btn-export-excel" onclick="exportExcel()" title="Export do Excelu (Pro)">
-                        📑 Export Excel <span id="excel-lock" class="lock-icon" style="display:none;">🔒</span>
+                    <button class="btn btn-green" id="btn-export-excel" onclick="exportExcel()" title="Export výsledků kontroly">
+                        📑 XLS / CSV Export
                     </button>
                     <button class="btn btn-gray" onclick="clearAll()">🗑️ Vymazat vše</button>
                 </div>
@@ -1637,7 +1637,7 @@ function renderResults() {
         if (batch.batch_id) {
             html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchFromServer(\\'' + batch.batch_id + '\\')">Excel</button>';
         } else {
-            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">Stáhnout</button>';
+            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">CSV Export</button>';
         }
         html += '<button class="batch-btn delete" onclick="event.stopPropagation();deleteBatch(' + batch.id + ')">✕</button></div></div>';
         html += '<div class="batch-content' + (batch.collapsed ? '' : ' visible') + '" id="batch-content-' + batch.id + '">';
@@ -2361,13 +2361,13 @@ const TIER_CONFIG = {
     3: { name: 'Unlimited', icon: '🏢', class: 'enterprise' }
 };
 
-// Feature requirements: Free 5 | Basic 100 bez exportu | Pro vše
+// Feature requirements: Free = export CSV + filtry odemčené | Basic 100 | Pro vše
 const FEATURE_REQUIREMENTS = {
-    'export_excel': 2,      // jen Pro+
+    'export_excel': 2,      // Excel ze serveru jen Pro+
     'batch_upload': 1,      // Basic+
-    'tree_structure': 2,    // Pro+
-    'tsa_filter': 2,       // Pro+
-    'advanced_filters': 2,  // Pro+
+    'tree_structure': 0,    // Free+ (online check)
+    'tsa_filter': 0,        // Free+ (online check)
+    'advanced_filters': 0,  // Free+ (online check)
     'export_all': 2         // Pro+
 };
 
@@ -2426,40 +2426,36 @@ function checkFeatureAccess(featureName) {
 }
 
 function updateFeatureLocks() {
-    const hasExcel = hasFeature('export_excel');
-    const excelLock = document.getElementById('excel-lock');
-    if (excelLock) excelLock.style.display = hasExcel ? 'none' : 'inline';
+    // Export All – zůstává jen Pro+
     const exportAllBtn = document.getElementById('btn-export-all');
     if (exportAllBtn) {
         if (!hasFeature('export_all')) exportAllBtn.classList.add('feature-locked');
         else exportAllBtn.classList.remove('feature-locked');
     }
-    // BASIC: u sidebar filtrů jen vizuální zámeček (filter-section-locked), tlačítka zůstávají klikací → při kliku hláška
+    // Filtry – odemčené pro všechny (Free+), odstraníme případné zámečky
     const filterSections = document.querySelectorAll('.filter-section');
-    const hasFilters = hasFeature('advanced_filters');
     filterSections.forEach(el => {
         el.classList.remove('feature-locked', 'filter-section-locked');
-        if (!hasFilters) el.classList.add('filter-section-locked');
     });
     const tableHeaderFilters = document.getElementById('table-header-filters');
     if (tableHeaderFilters) {
-        if (!hasFilters) tableHeaderFilters.classList.add('feature-locked');
-        else tableHeaderFilters.classList.remove('feature-locked');
+        tableHeaderFilters.classList.remove('feature-locked');
     }
 }
 
-// Excel export – jen vlastní dávka (vyžaduje přihlášení)
+// Export – Pro: Excel ze serveru, Free/Basic: CSV z paměti
 function exportExcel() {
-    if (!checkFeatureAccess('export_excel')) return;
     if (batches.length === 0) {
         alert('Nejsou žádná data k exportu.');
         return;
     }
+    // Pokud má Pro licenci a batch je na serveru → Excel
     const batchId = batches[0].batch_id;
-    if (batchId && !batchId.startsWith('legacy_')) {
+    if (hasFeature('export_excel') && batchId && !batchId.startsWith('legacy_')) {
         fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=xlsx', 'batch.xlsx');
     } else {
-        alert('Pro Excel export je potřeba batch z agenta (ne legacy data).');
+        // Fallback: CSV export z lokálních dat (dostupný pro všechny)
+        exportBatchCSV(batches[0].id);
     }
 }
 

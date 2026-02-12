@@ -60,6 +60,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\DokuCheckPRO.exe"; Tasks: d
 [Run]
 Filename: "{app}\DokuCheckPRO.exe"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
+[InstallDelete]
+; Smazat starý config.yaml z AppData, aby agent při příštím startu vytvořil nový s aktuální URL (dokucheck.cz)
+Type: files; Name: "{userappdata}\PDF DokuCheck Agent\config.yaml"
+
 [Code]
 function InitializeSetup(): Boolean;
 begin

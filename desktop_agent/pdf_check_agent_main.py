@@ -58,6 +58,8 @@ def _ensure_config_in_exe_dir():
         return
     config_dest = _get_config_path()
     if os.path.exists(config_dest):
+        # Migrace: pokud config obsahuje starou URL pythonanywhere, opravit na dokucheck.cz
+        _migrate_config_url(config_dest)
         return
     try:
         import shutil
@@ -71,6 +73,28 @@ def _ensure_config_in_exe_dir():
             default_cfg = os.path.join(bundled, 'config.bez_klice.yaml')
             if os.path.exists(default_cfg):
                 shutil.copy2(default_cfg, config_dest)
+    except Exception:
+        pass
+
+
+def _migrate_config_url(config_path):
+    """Migrace: nahradí starou URL pythonanywhere za www.dokucheck.cz v config.yaml."""
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        if 'pythonanywhere' not in content:
+            return  # nic k migraci
+        new_content = content.replace(
+            'https://cieslar.pythonanywhere.com', 'https://www.dokucheck.cz'
+        ).replace(
+            'http://cieslar.pythonanywhere.com', 'https://www.dokucheck.cz'
+        ).replace(
+            'cieslar.pythonanywhere.com', 'www.dokucheck.cz'
+        )
+        if new_content != content:
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            logging.getLogger(__name__).info('Config migrace: pythonanywhere -> dokucheck.cz')
     except Exception:
         pass
 
