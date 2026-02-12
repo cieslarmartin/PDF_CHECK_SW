@@ -110,32 +110,36 @@
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
                 <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_waiting_payment|default('Čeká na platbu') }}</span></td>
-                <td style="white-space:nowrap;">
-                    <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU (PDF)</a>
-                    <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">GENEROVAT ZNOVU</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-primary btn-sm">{{ env_labels.label_btn_confirm_payment|default('POTVRDIT PLATBU') }}</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate|default('VYTVOŘIT UŽIVATELE A AKTIVOVAT') }}</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate_without_invoice|default('AKTIVOVAT BEZ FAKTURY') }}</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.delete_user_from_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu SMAZAT UŽIVATELE (licenci) pro e-mail {{ o.email }}? Objednávka zůstane.');">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže uživatele (licenci) z databáze. Objednávka zůstane.">🗑️ SMAZAT UŽIVATELE</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT OBJ.</button>
-                    </form>
+                <td style="min-width:260px;">
+                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;">
+                        <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">📄 Faktura</a>
+                        <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">🔄 Znovu</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-primary btn-sm">✅ {{ env_labels.label_btn_confirm_payment|default('Potvrdit platbu') }}</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">👤+ Vytvořit a aktivovat</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">⚡ Aktivovat bez faktury</button>
+                        </form>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;">
+                        <form method="post" action="{{ url_for('admin.delete_user_from_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu SMAZAT UŽIVATELE (licenci) pro e-mail {{ o.email }}? Objednávka zůstane.');">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže uživatele (licenci) z databáze. Objednávka zůstane.">🗑️ Smazat uživatele</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">🗑️ Smazat obj.</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             {% else %}
