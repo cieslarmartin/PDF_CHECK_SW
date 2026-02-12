@@ -64,7 +64,7 @@ class PDFCheckUI_2026_V2:
         self.on_after_logout_callback = on_after_logout_callback
         self.on_get_web_login_url = on_get_web_login_url
         self.on_send_batch_callback = on_send_batch_callback
-        self.api_url = api_url or "https://cieslar.pythonanywhere.com"
+        self.api_url = api_url or "https://www.dokucheck.cz"
 
         self.tasks = []
         self.queue_display = []

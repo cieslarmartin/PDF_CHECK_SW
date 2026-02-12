@@ -145,7 +145,7 @@ class PDFCheckUI_2026_V3:
         self.on_has_login = on_has_login  # callable() -> bool; bez přihlášení nelze analyzovat ani odesílat
         self.on_get_remote_config = on_get_remote_config  # callable() -> dict s disclaimer, vop_link, update_msg
         self.on_get_legal_config = on_get_legal_config  # callable() -> dict s disclaimer, vop_url, gdpr_url
-        self.api_url = api_url or "https://cieslar.pythonanywhere.com"
+        self.api_url = api_url or "https://www.dokucheck.cz"
 
         self.tasks = []
         self.queue_display = []
@@ -813,7 +813,7 @@ class PDFCheckUI_2026_V3:
                 return self.on_get_remote_config() or {}
             except Exception:
                 pass
-        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://cieslar.pythonanywhere.com/vop", "update_msg": "Používáte aktuální verzi."}
+        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://www.dokucheck.cz/vop", "update_msg": "Používáte aktuální verzi."}
 
     def _get_legal_config(self):
         """Vrátí právní konfiguraci (disclaimer, vop_url, gdpr_url) z fetch_legal_config() nebo výchozí."""
@@ -824,8 +824,8 @@ class PDFCheckUI_2026_V3:
                 pass
         return {
             "disclaimer": "Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem.",
-            "vop_url": "https://cieslar.pythonanywhere.com/vop",
-            "gdpr_url": "https://cieslar.pythonanywhere.com/gdpr",
+"vop_url": "https://www.dokucheck.cz/vop",
+                "gdpr_url": "https://www.dokucheck.cz/gdpr",
         }
 
     def _show_about(self):

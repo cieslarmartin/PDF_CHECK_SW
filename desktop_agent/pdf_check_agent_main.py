@@ -95,7 +95,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-PA_BASE_URL = "https://cieslar.pythonanywhere.com"
+PA_BASE_URL = "https://www.dokucheck.cz"
 LEGAL_CONFIG_URL = PA_BASE_URL + "/api/agent-config"
 
 LEGAL_CONFIG_FALLBACK = {

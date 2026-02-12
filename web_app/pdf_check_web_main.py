@@ -3025,6 +3025,17 @@ def app_main():
     )
 
 
+@app.route('/download/agent')
+def download_agent():
+    """Redirect na stažení .exe agenta – skrývá GitHub URL před uživatelem."""
+    db = Database()
+    download_url = db.get_global_setting('download_url', '') or ''
+    if download_url:
+        return redirect(download_url)
+    # Fallback – stránka stažení
+    return redirect(url_for('download'))
+
+
 @app.route('/download')
 def download():
     """Stránka stažení desktop agenta na doméně (PA). Kontakt a pilotní upozornění z global_settings."""

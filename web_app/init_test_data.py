@@ -107,7 +107,7 @@ def init_test_data():
     print("  ADMIN PŘIHLÁŠENÍ:")
     print(f"    Email:    {results.get('admin_email', 'N/A')}")
     print(f"    Heslo:    {results.get('admin_password', 'N/A')}")
-    print(f"    URL:      https://cieslar.pythonanywhere.com/login")
+    print(f"    URL:      https://www.dokucheck.cz/login")
     print()
     print("  TESTOVACÍ LICENCE:")
     print()

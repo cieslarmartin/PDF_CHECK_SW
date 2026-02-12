@@ -224,7 +224,7 @@ class PDFCheckUI:
         self.on_after_logout_callback = on_after_logout_callback
         self.on_get_web_login_url = on_get_web_login_url
         self.on_send_batch_callback = on_send_batch_callback
-        self.api_url = api_url or "https://cieslar.pythonanywhere.com"
+        self.api_url = api_url or "https://www.dokucheck.cz"
 
         # Tasks: list of {type: 'folder'|'file', path, name, file_paths: [str]}
         self.tasks = []
@@ -273,7 +273,7 @@ class PDFCheckUI:
                 url = self.on_get_web_login_url()
             except Exception:
                 pass
-        webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
+        webbrowser.open(url or self.api_url or "https://www.dokucheck.cz")
 
     def set_export_xls_enabled(self, enabled):
         """Žádné tlačítko Export Excel v agentovi – metoda ponechána kvůli kompatibilitě s pdf_check_agent_main."""
@@ -327,7 +327,7 @@ class PDFCheckUI:
                 url = self.on_get_web_login_url() if self.on_get_web_login_url else None
             except Exception:
                 url = None
-            webbrowser.open(url or self.api_url or "https://cieslar.pythonanywhere.com")
+            webbrowser.open(url or self.api_url or "https://www.dokucheck.cz")
         ctk.CTkButton(sidebar_frame, text="Otevřít Web", command=_open_web, corner_radius=8, fg_color=self.ACCENT, width=200, font=(FONT_FAMILY, FONT_SIZE)).pack(pady=6, padx=16, fill=tk.X)
         # Spodní sekce: Admin, Log out
         self.sidebar_settings_btn = ctk.CTkButton(sidebar_frame, text="Admin", command=self._show_settings, corner_radius=8, fg_color=self.BORDER, width=200, font=(FONT_FAMILY, FONT_SIZE))

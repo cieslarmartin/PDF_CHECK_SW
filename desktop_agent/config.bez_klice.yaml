@@ -8,5 +8,5 @@ agent:
   show_results_window: true
 
 api:
-  url: https://cieslar.pythonanywhere.com
+  url: https://www.dokucheck.cz
   key: ""

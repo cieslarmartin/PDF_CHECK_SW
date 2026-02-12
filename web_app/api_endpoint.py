@@ -1284,7 +1284,7 @@ def register_api_routes(app):
                 vop_link = url_for('vop', _external=True)
                 gdpr_link = url_for('gdpr', _external=True)
             except Exception:
-                base = request.url_root.rstrip('/') if request.url_root else 'https://cieslar.pythonanywhere.com'
+                base = request.url_root.rstrip('/') if request.url_root else 'https://www.dokucheck.cz'
                 vop_link = base + '/vop'
                 gdpr_link = base + '/gdpr'
             update_msg = db.get_global_setting('agent_update_msg', 'Používáte aktuální verzi.')
@@ -1305,7 +1305,7 @@ def register_api_routes(app):
             return jsonify(out), 200
         except Exception as e:
             logger.exception(f"Agent config error: {e}")
-            base = request.url_root.rstrip('/') if request.url_root else 'https://cieslar.pythonanywhere.com'
+            base = request.url_root.rstrip('/') if request.url_root else 'https://www.dokucheck.cz'
             return jsonify({
                 'disclaimer': 'Výsledek kontroly je informativní. Za finální správnost dokumentace odpovídá autorizovaná osoba dle platných norem.',
                 'vop_link': base + '/vop',

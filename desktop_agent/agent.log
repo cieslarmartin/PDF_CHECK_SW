@@ -4438,3 +4438,36 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-10 12:50:13,674 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
 2026-02-10 12:50:13,674 - INFO - Agent běží
 2026-02-10 12:50:22,775 - INFO - Agent ukončen
+2026-02-12 15:03:33,174 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 15:03:33,175 - INFO - Spouštím GUI...
+2026-02-12 15:03:34,121 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 15:03:34,121 - INFO - Agent běží
+2026-02-12 15:04:44,336 - INFO - Přihlášení e-mailem a heslem...
+2026-02-12 15:04:45,360 - WARNING - Přihlášení selhalo: Licence vypršela
+2026-02-12 15:05:49,094 - INFO - Přihlášení e-mailem a heslem...
+2026-02-12 15:05:50,239 - WARNING - Přihlášení selhalo: Licence vypršela
+2026-02-12 15:07:46,234 - INFO - Agent ukončen
+2026-02-12 15:11:42,898 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 15:11:42,898 - INFO - Spouštím GUI...
+2026-02-12 15:11:43,886 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 15:11:43,887 - INFO - Agent běží
+2026-02-12 15:12:23,494 - INFO - Agent ukončen
+2026-02-12 15:12:56,526 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 15:12:56,527 - INFO - Spouštím GUI...
+2026-02-12 15:12:57,870 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 15:12:57,871 - INFO - Agent běží
+2026-02-12 15:25:35,522 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 15:25:35,523 - INFO - Spouštím GUI...
+2026-02-12 15:25:36,237 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 15:25:36,238 - INFO - Agent běží
+2026-02-12 15:25:54,886 - INFO - Přihlášení e-mailem a heslem...
+2026-02-12 15:25:55,871 - WARNING - Přihlášení selhalo: Licence vypršela
+2026-02-12 15:27:09,007 - INFO - Agent ukončen
+2026-02-12 15:27:12,010 - INFO - Agent ukončen
+2026-02-12 15:27:19,548 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 15:27:19,549 - INFO - Spouštím GUI...
+2026-02-12 15:27:20,255 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 15:27:20,255 - INFO - Agent běží
+2026-02-12 15:27:24,355 - INFO - Přihlášení e-mailem a heslem...
+2026-02-12 15:27:25,551 - INFO - Přihlášeno.
+2026-02-12 15:27:30,611 - INFO - Agent ukončen

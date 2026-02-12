@@ -87,9 +87,9 @@
             <a href="#cenik" class="hover:text-blue-700 transition">Ceník</a>
             <a href="#pripravujeme" class="hover:text-blue-700 transition">Připravujeme</a>
             <a href="#faq" class="hover:text-blue-700 transition">FAQ</a>
+            <a href="#kontakt" class="hover:text-blue-700 transition">Kontakt</a>
             <span class="w-px h-5 bg-gray-200"></span>
             <a href="/portal" class="hover:text-blue-700 transition">Můj&nbsp;účet</a>
-            <a href="/app" class="px-4 py-1.5 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Vyzkoušet</a>
         </div>
         <button id="burger" class="lg:hidden p-2 rounded-lg hover:bg-gray-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     </div>
@@ -104,8 +104,8 @@
     <a href="#cenik" class="mobL py-2 hover:text-blue-700">Ceník</a>
     <a href="#faq" class="mobL py-2 hover:text-blue-700">FAQ</a>
     <hr class="my-1 border-gray-100">
+    <a href="#kontakt" class="mobL py-2 hover:text-blue-700">Kontakt</a>
     <a href="/portal" class="mobL py-2 hover:text-blue-700">Můj účet</a>
-    <a href="/app" class="mobL mt-2 block text-center py-2.5 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Vyzkoušet</a>
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
@@ -124,7 +124,7 @@
                     </div>
                     <div class="flex flex-wrap gap-3">
                         <a href="/app" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md hover:shadow-lg transition-all" style="background:#1e5a8a;">{{ landing_cta_primary|default('Vyzkoušet ONLINE Check') }}</a>
-                        <a href="{{ download_url or url_for('download') }}" class="px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50" style="color:#1e5a8a;border-color:#1e5a8a;">{{ landing_cta_secondary|default('Stáhnout aplikaci zdarma') }}</a>
+                        <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border transition hover:bg-blue-50" style="color:#1e5a8a;border-color:#1e5a8a;"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>{{ landing_cta_secondary|default('Stáhnout aplikaci zdarma') }}</a>
                         <a href="/portal" class="px-6 py-3 rounded-lg font-medium transition hover:underline" style="color:#059669;">Můj účet</a>
                     </div>
                     {% if show_pilot_notice and pilot_notice_text %}
@@ -274,7 +274,7 @@
             <div class="mb-6 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm text-left max-w-lg mx-auto"><strong>Info:</strong> {{ pilot_notice_text }}</div>
             {% endif %}
             <div class="flex flex-wrap justify-center gap-3">
-                <a href="{{ download_url or url_for('download') }}" class="px-6 py-3 rounded-lg text-white font-semibold shadow-md transition" style="background:#1e5a8a;">🪟 Stáhnout pro Windows (.exe)</a>
+                <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>Stáhnout pro Windows</a>
                 <a href="/download" class="px-6 py-3 rounded-lg border text-gray-600 hover:bg-gray-100 transition" style="border-color:#e5e7eb;">Stránka Stažení</a>
             </div>
         </div>
@@ -327,21 +327,50 @@
     {% endif %}
 
     {# ============ FAQ ============ #}
-    <section id="faq" class="faq py-16 bg-white">
+    <section id="faq" class="faq py-10 bg-white">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-8 text-center anim" style="color:#0f172a;">Časté dotazy</h2>
             {% if faq_list %}
-            <div class="space-y-1.5 anim">
+            <div class="space-y-1 anim">
                 {% for item in faq_list %}
-                <details class="bg-white rounded-xl border shadow-sm overflow-hidden" style="border-color:#e5e7eb;">
-                    <summary class="px-5 py-3 font-medium text-sm text-gray-900 flex justify-between items-center">{{ item.question }}<svg class="chev w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
-                    <div class="px-5 pb-3 text-sm text-gray-500 whitespace-pre-wrap">{{ item.answer|e }}</div>
+                <details class="bg-white rounded-lg border shadow-sm overflow-hidden" style="border-color:#e5e7eb;">
+                    <summary class="px-4 py-1.5 font-medium text-sm text-gray-900 flex justify-between items-center">{{ item.question }}<svg class="chev w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+                    <div class="px-4 pb-1.5 text-sm text-gray-500 whitespace-pre-wrap">{{ item.answer|e }}</div>
                 </details>
                 {% endfor %}
             </div>
             {% else %}
             <p class="text-center text-sm text-gray-400">Sekci FAQ pro vás připravujeme.</p>
             {% endif %}
+        </div>
+    </section>
+
+    {# ============ KONTAKT ============ #}
+    <section id="kontakt" class="py-16 bg-gray-50">
+        <div class="max-w-3xl mx-auto px-6">
+            <h2 class="text-2xl font-bold mb-8 text-center anim" style="color:#0f172a;">Kontakt</h2>
+            <div class="card anim">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-3">Provozovatel</h3>
+                        <p class="text-sm text-gray-600 mb-1"><strong>Ing. Martin Cieślar</strong></p>
+                        <p class="text-sm text-gray-500 mb-1">Porubská 1, 742 83 Klimkovice – Václavovice</p>
+                        <p class="text-sm text-gray-500 mb-1">IČO: 04830661</p>
+                        <p class="text-sm text-gray-500">Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-3">Napište nám</h3>
+                        <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="flex items-center gap-2 text-sm mb-3 hover:underline" style="color:#1e5a8a;">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            {{ contact_email|default('info@dokucheck.app') }}
+                        </a>
+                        <div class="flex gap-3 mt-4">
+                            <a href="/vop" class="text-xs font-medium px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition" style="color:#6b7280;border-color:#e5e7eb;">VOP</a>
+                            <a href="/gdpr" class="text-xs font-medium px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition" style="color:#6b7280;border-color:#e5e7eb;">GDPR</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -361,8 +390,12 @@
 </footer>
 
 <script>
-// Splash auto-dismiss po 4s (nebo klik na tlačítko)
-setTimeout(()=>document.getElementById('splash-overlay').classList.add('hide'),4000);
+// Splash – zobrazit jen poprvé v relaci (sessionStorage)
+(function(){
+    const so=document.getElementById('splash-overlay');
+    if(sessionStorage.getItem('dokucheck_splash_seen')){so.classList.add('hide');}
+    else{sessionStorage.setItem('dokucheck_splash_seen','1');setTimeout(()=>so.classList.add('hide'),4000);}
+})();
 // Nav scroll shadow
 const nav=document.getElementById('topnav');
 window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10),{passive:true});

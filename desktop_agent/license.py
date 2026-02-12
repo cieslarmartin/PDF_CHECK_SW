@@ -111,7 +111,7 @@ class LicenseManager:
         """Záložní texty, pokud vypadne internet."""
         return {
             "disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.",
-            "vop_link": "https://cieslar.pythonanywhere.com/vop",
+            "vop_link": "https://www.dokucheck.cz/vop",
             "update_msg": "Používáte aktuální verzi.",
             "allowed_extensions": [".pdf"],
             "analysis_timeout_seconds": 300,
