@@ -131,6 +131,7 @@ HTML_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DokuCheck</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -888,8 +889,8 @@ HTML_TEMPLATE = '''
                 </div>
 
                 <div class="sidebar-footer">
-                    <button class="btn btn-green" id="btn-export-excel" onclick="exportExcel()" title="Export výsledků kontroly">
-                        📑 XLS / CSV Export
+                    <button class="btn btn-green" id="btn-export-excel" onclick="exportExcel()" title="Export výsledků do Excelu">
+                        📑 Export do Excelu
                     </button>
                     <button class="btn btn-gray" onclick="clearAll()">🗑️ Vymazat vše</button>
                 </div>
@@ -1161,7 +1162,7 @@ HTML_TEMPLATE = '''
                 <p><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-weight:600;">Zelené</span> = v pořádku · <span style="background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:4px;font-weight:600;">Žluté</span> = varování (starší PDF/A, LOK razítko) · <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-weight:600;">Červené</span> = problém (chybí podpis, není PDF/A).</p>
 
                 <h4>6. EXPORT A HISTORIE</h4>
-                <p>Export do CSV je dostupný v základním režimu. <span class="help-pro">PRO</span> <strong>Export do Excelu</strong> – jedna dávka nebo všechny vaše kontroly. <span class="help-pro">PRO</span> <strong>Historie</strong> – zobrazení a načtení dříve nahraných dávek z vašeho účtu.</p>
+                <p>Export do Excelu (.xlsx) je dostupný v režimu Trial i PRO. <span class="help-pro">PRO</span> <strong>Export všech kontrol</strong> – hromadný export ze serveru. <span class="help-pro">PRO</span> <strong>Historie</strong> – zobrazení a načtení dříve nahraných dávek z vašeho účtu.</p>
 
                 <div class="help-legal">
                     <strong>PRÁVNÍ OCHRANA</strong><br>
@@ -1633,11 +1634,11 @@ function renderResults() {
         html += '</div>';
         html += '<div class="batch-header-right"><span class="batch-stat">A-3: ' + stats.pdfaOk + '✓</span>';
         html += '<span class="batch-stat">Podpis: ' + stats.sigOk + '✓</span><span class="batch-count">(' + batch.files.length + ')</span>';
-        // Export – server = Excel (Pro), lokální = CSV z paměti
+        // Export – server = Excel (Pro), lokální = Excel z SheetJS
         if (batch.batch_id) {
             html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchFromServer(\\'' + batch.batch_id + '\\')">Excel</button>';
         } else {
-            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">CSV Export</button>';
+            html += '<button class="batch-btn" onclick="event.stopPropagation();exportBatchCSV(' + batch.id + ')">Excel</button>';
         }
         html += '<button class="batch-btn delete" onclick="event.stopPropagation();deleteBatch(' + batch.id + ')">✕</button></div></div>';
         html += '<div class="batch-content' + (batch.collapsed ? '' : ' visible') + '" id="batch-content-' + batch.id + '">';
@@ -2067,18 +2068,51 @@ async function fetchWithAuthAndDownload(url, defaultFilename) {
 
 // ===== EXCEL EXPORT (Pro+) =====
 function exportBatchCSV(id) {
-    // Lokální batch (bez batch_id) – stažení jako CSV z paměti
+    // Lokální batch – stažení jako Excel (.xlsx) z paměti prohlížeče (SheetJS)
     const b = batches.find(b => b.id === id);
-    if (b) downloadLocalCSV(b.files, b.name + '.csv');
+    if (b) downloadLocalExcel(b.files, b.name);
 }
-function downloadLocalCSV(files, filename) {
-    const BOM = '\\uFEFF';
-    const header = 'Cesta;Název;PDF/A;PDF verze;Podpis;Jméno;ČKAIT;Čas.razítko\\n';
+function downloadLocalExcel(files, batchName) {
+    if (typeof XLSX === 'undefined') {
+        alert('Chyba: knihovna pro Excel export se nenačetla. Zkuste obnovit stránku.');
+        return;
+    }
     const pdfaCol = f => (f.pdfaLevel || (f.pdfaVersion ? 'A-' + f.pdfaVersion : '') || 'NE');
     const pdfVerCol = f => (f.pdfVersion || '');
-    const rows = files.map(f => f.path + ';' + f.name + ';' + pdfaCol(f) + ';' + pdfVerCol(f) + ';' + f.sig + ';' + f.signer + ';' + f.ckait + ';' + f.tsa).join('\\n');
-    const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+
+    // Data: hlavička + řádky
+    const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'ČKAIT/ČKA', 'Čas. razítko'];
+    const rows = files.map(f => [
+        f.path || '.',
+        f.name || '',
+        pdfaCol(f),
+        pdfVerCol(f),
+        f.sig || '—',
+        f.signer || '—',
+        f.ckait || '—',
+        f.tsa || '—'
+    ]);
+
+    const wsData = [header, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Šířky sloupců (automaticky podle obsahu)
+    const colWidths = header.map((h, i) => {
+        let max = h.length;
+        rows.forEach(r => { if (r[i] && String(r[i]).length > max) max = String(r[i]).length; });
+        return { wch: Math.min(max + 2, 50) };
+    });
+    ws['!cols'] = colWidths;
+
+    // Autofiltr na hlavičku
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: {r:0, c:0}, e: {r: rows.length, c: header.length - 1} }) };
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'PDF Check');
+
+    // Stáhnout jako .xlsx
+    const safeName = (batchName || 'export').replace(/[^a-zA-Z0-9_\\-]/g, '_');
+    XLSX.writeFile(wb, safeName + '.xlsx');
 }
 
 // ===== MODAL =====
@@ -2362,7 +2396,7 @@ const TIER_CONFIG = {
 };
 
 // Feature requirements:
-//   Trial/Free (0) = export CSV + filtry ODEMČENÉ (demo, aby viděl co získá)
+//   Trial/Free (0) = export Excel + filtry ODEMČENÉ (demo, aby viděl co získá)
 //   Basic (1) = export + filtry ZAMČENÉ (motivace k upgradu na Pro)
 //   Pro (2+) = vše odemčené
 const FEATURE_REQUIREMENTS = {
@@ -2456,7 +2490,7 @@ function updateFeatureLocks() {
     }
 }
 
-// Export – Trial(0): CSV volně | Basic(1): zamčeno | Pro(2+): Excel ze serveru nebo CSV
+// Export – Trial(0): Excel lokálně | Basic(1): zamčeno | Pro(2+): Excel ze serveru
 function exportExcel() {
     if (batches.length === 0) {
         alert('Nejsou žádná data k exportu.');
@@ -2472,7 +2506,7 @@ function exportExcel() {
     if (hasFeature('export_excel') && batchId && !batchId.startsWith('legacy_')) {
         fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=xlsx', 'batch.xlsx');
     } else {
-        // Trial (0) nebo Pro bez server batche → CSV z lokálních dat
+        // Trial (0) nebo Pro bez server batche → Excel z lokálních dat (SheetJS)
         exportBatchCSV(batches[0].id);
     }
 }
