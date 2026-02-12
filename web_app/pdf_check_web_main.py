@@ -2373,6 +2373,9 @@ function doLogout() {
     clearStoredUser();
     clearResultsView();
     updateLoggedInUI();
+    setMode('local');
+    // Smazat i server-side session (portal_user), aby se po F5 neobnovilo přihlášení
+    fetch('/app/logout', { method: 'POST' }).catch(function(){});
 }
 
 // Aktuální stav licence (default: FREE)
@@ -3035,6 +3038,13 @@ def auth_from_agent_token():
     }
     session.permanent = True
     return redirect(url_for('app_main'))
+
+
+@app.route('/app/logout', methods=['POST'])
+def app_logout():
+    """Odhlášení z online checku – smaže portal_user ze session, aby se po F5 neobnovilo přihlášení."""
+    session.pop('portal_user', None)
+    return jsonify({'ok': True})
 
 
 @app.route('/app')
