@@ -128,9 +128,13 @@
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate_without_invoice|default('AKTIVOVAT BEZ FAKTURY') }}</button>
                     </form>
+                    <form method="post" action="{{ url_for('admin.delete_user_from_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu SMAZAT UŽIVATELE (licenci) pro e-mail {{ o.email }}? Objednávka zůstane.');">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže uživatele (licenci) z databáze. Objednávka zůstane.">🗑️ SMAZAT UŽIVATELE</button>
+                    </form>
                     <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
+                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT OBJ.</button>
                     </form>
                 </td>
             </tr>

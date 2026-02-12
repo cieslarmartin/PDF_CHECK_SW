@@ -686,6 +686,33 @@ def delete_pending_order():
     return redirect(url_for('admin.pending_orders'))
 
 
+@admin_bp.route('/admin/delete-user-from-order', methods=['POST'])
+@admin_required
+def delete_user_from_order():
+    """Smaže uživatele (licenci) přiřazeného k objednávce podle e-mailu. Objednávka zůstane."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    email = (order.get('email') or '').strip()
+    if not email:
+        flash('Objednávka nemá e-mail – nelze určit uživatele.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    deleted_key = db.delete_user_by_email(email)
+    if deleted_key:
+        # Vrátit objednávku do stavu čekající (aby šla znovu aktivovat)
+        db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
+        flash('Uživatel {} byl smazán (api_key: {}). Objednávka vrácena do stavu Čekající na platbu.'.format(email, deleted_key[:12] + '...'), 'success')
+    else:
+        flash('Uživatel s e-mailem {} nebyl nalezen v databázi licencí.'.format(email), 'error')
+    return redirect(url_for('admin.pending_orders'))
+
+
 def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
     """Pomocná: vygeneruje PDF fakturu pro objednávku a vrátí (filepath nebo None, chybová zpráva)."""
     import logging

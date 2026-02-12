@@ -1501,6 +1501,37 @@ class Database:
         finally:
             conn.close()
 
+    def delete_user_by_email(self, email):
+        """Smaže uživatele (licenci) z api_keys podle e-mailu + související záznamy.
+        Vrací api_key smazaného uživatele nebo None."""
+        if not email:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT api_key FROM api_keys WHERE email = ?', (email.strip(),))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            api_key = row['api_key']
+            # Smazat související záznamy
+            cursor.execute('DELETE FROM device_activations WHERE api_key = ?', (api_key,))
+            cursor.execute('DELETE FROM user_devices WHERE user_id = ?', (api_key,))
+            cursor.execute('DELETE FROM user_logs WHERE user_id = ?', (api_key,))
+            cursor.execute('DELETE FROM check_history WHERE user_id = ?', (api_key,))
+            cursor.execute('DELETE FROM billing_history WHERE api_key = ?', (api_key,))
+            cursor.execute('DELETE FROM check_results WHERE api_key = ?', (api_key,))
+            cursor.execute('DELETE FROM batches WHERE api_key = ?', (api_key,))
+            cursor.execute('DELETE FROM payment_logs WHERE user_id = ?', (api_key,))
+            # Smazat samotného uživatele
+            cursor.execute('DELETE FROM api_keys WHERE api_key = ?', (api_key,))
+            conn.commit()
+            return api_key
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
     # --- FAQ (pro web – Časté dotazy) ---
     def get_all_faq(self):
         """Vrátí seznam všech FAQ seřazený podle order_index, pak id."""
