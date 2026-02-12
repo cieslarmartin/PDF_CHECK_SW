@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Workflow SVG – 4 barevné varianty</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif; background: #f8fafc; color: #0f172a; }
+
+  /* Sticky nav */
+  nav { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 12px 24px; display: flex; gap: 16px; align-items: center; }
+  nav a { font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: all 0.2s; }
+  nav a:hover, nav a.active { background: #f0f9ff; color: #0369a1; }
+  nav .brand { font-size: 18px; font-weight: 800; color: #0f172a; margin-right: auto; }
+  nav .brand span { color: #16A34A; }
+
+  .variant-section { padding: 48px 24px; max-width: 1460px; margin: 0 auto; }
+  .variant-section h2 { font-size: 1.4em; font-weight: 700; margin-bottom: 6px; }
+  .variant-section p { color: #64748b; font-size: 0.9em; margin-bottom: 20px; }
+
+  /* Simulace landing page kontextu */
+  .landing-context { background: #f9fafb; border-radius: 16px; padding: 32px; border: 1px solid #e5e7eb; }
+  .landing-context h3 { font-size: 1.5em; font-weight: 700; text-align: center; margin-bottom: 6px; color: #0f172a; }
+  .landing-context .sub { text-align: center; color: #64748b; font-size: 0.9em; margin-bottom: 20px; }
+  .svg-frame { overflow: auto; border-radius: 12px; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .svg-frame svg { display: block; width: 100%; min-width: 900px; height: auto; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">Doku<span>Check</span></div>
+  <a href="#v1">Varianta A</a>
+  <a href="#v2">Varianta B</a>
+  <a href="#v3">Varianta C</a>
+  <a href="#v4">Varianta D</a>
+</nav>
+
+<!-- ================ VARIANTA A: Teplá červená + svěží zelená ================ -->
+<div class="variant-section" id="v1">
+  <h2>Varianta A – Teplá červená + svěží zelená</h2>
+  <p>Levá: #DC2626 / #FCA5A5 / #FEF2F2 &bull; Pravá: #16A34A / #86EFAC / #F0FDF4 &bull; Neutrální: #1E40AF / #BFDBFE / #EFF6FF</p>
+  <div class="landing-context">
+    <h3>Kontrola dokumentace staveb – srovnání přístupů</h3>
+    <div class="sub">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</div>
+    <div class="svg-frame">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img">
+  <defs>
+    <style>
+      text { font-family: "Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif; }
+      .bg { fill: #ffffff; }
+      .title { font-size: 24px; font-weight: 700; fill:#0f172a; }
+      .subtitle { font-size: 14px; font-weight: 500; fill:#64748b; }
+      .laneTitle { font-size: 15px; font-weight: 700; }
+      .cardText { font-size: 13px; font-weight: 600; fill:#0f172a; }
+      .smallText { font-size: 12px; font-weight: 500; fill:#64748b; }
+      .badgeText { font-size: 11.5px; font-weight: 700; }
+      .metricText { font-size: 16px; font-weight: 700; }
+    </style>
+    <marker id="a-arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/></marker>
+    <marker id="a-arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16A34A"/></marker>
+    <marker id="a-arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E40AF"/></marker>
+    <filter id="a-shadow"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-opacity="0.06"/></filter>
+  </defs>
+  <rect class="bg" width="1400" height="950"/>
+  <text class="title" x="48" y="50">Kontrola dokumentace staveb – Srovnání přístupů</text>
+  <text class="subtitle" x="48" y="75">Manuální kontrola vs DokuCheck automatizace | PDF/A-3 • Autorizační razítka • Časová razítka</text>
+
+  <g transform="translate(48,105)">
+    <!-- Lane A Header -->
+    <rect fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.2" rx="16" width="1304" height="40"/>
+    <text class="laneTitle" x="20" y="26" fill="#DC2626">❌ A) MANUÁLNÍ KONTROLA – každý soubor zvlášť, opakované cykly</text>
+
+    <g filter="url(#a-shadow)">
+      <!-- Subdodavatelé -->
+      <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.2" rx="16" x="0" y="60" width="240" height="140"/>
+      <text class="cardText" x="16" y="88">10 subdodavatelů</text>
+      <text class="smallText" x="16" y="108">Každý dodavatel exportuje</text>
+      <text class="smallText" x="16" y="125">své výkresy a zprávy</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="16" y="142" width="200" height="24"/>
+      <text class="badgeText" x="28" y="160" fill="#1E40AF">📁 Vytvoří PDF dokumentaci</text>
+
+      <!-- Vedoucí manuál -->
+      <rect fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5" rx="16" x="280" y="60" width="280" height="140"/>
+      <text class="cardText" x="296" y="88">👤 Vedoucí projektu</text>
+      <text class="smallText" x="296" y="108">Musí RUČNĚ zkontrolovat:</text>
+      <rect fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1" rx="999" x="296" y="122" width="250" height="24"/>
+      <text class="badgeText" x="308" y="140" fill="#DC2626">🐌 Každý soubor jednotlivě</text>
+      <text class="smallText" x="296" y="165">2-3 min/soubor • 3-5 hodin celkem</text>
+      <text class="smallText" x="296" y="182">Adobe Acrobat: 4-5 kliků/soubor</text>
+
+      <!-- Ruční zápis -->
+      <rect fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5" rx="16" x="600" y="60" width="260" height="140"/>
+      <text class="cardText" x="616" y="88">❌ Ruční zápis chyb</text>
+      <text class="smallText" x="616" y="108">Do Excelu:</text>
+      <text class="smallText" x="616" y="125">• Který soubor, jaká chyba</text>
+      <text class="smallText" x="616" y="142">• Manuální rozeslání mailem</text>
+      <rect fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1" rx="999" x="616" y="156" width="220" height="24"/>
+      <text class="badgeText" x="628" y="174" fill="#DC2626">⚠️ Riziko lidské chyby</text>
+
+      <!-- Opakování -->
+      <rect fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5" rx="16" x="900" y="60" width="200" height="140"/>
+      <text class="cardText" x="916" y="88">🔁 Opakovaná kontrola</text>
+      <text class="smallText" x="916" y="108">Celý proces se opakuje</text>
+      <text class="smallText" x="916" y="125">po každé opravě</text>
+      <rect fill="#FFEDD5" stroke="#FDBA74" stroke-width="1" rx="999" x="916" y="142" width="160" height="24"/>
+      <text class="badgeText" x="928" y="160" fill="#C2410C">Další hodiny práce</text>
+
+      <!-- Expedice -->
+      <rect fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" rx="16" x="1140" y="60" width="164" height="140"/>
+      <text class="cardText" x="1156" y="88">✅ Expedice</text>
+      <text class="smallText" x="1156" y="108">Na Portál</text>
+      <text class="smallText" x="1156" y="125">stavebníka</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="1156" y="142" width="120" height="24"/>
+      <text class="badgeText" x="1168" y="160" fill="#16A34A">Pokud OK...</text>
+    </g>
+
+    <!-- Arrows A -->
+    <path fill="none" stroke="#1E40AF" stroke-width="2" d="M240,130 L280,130" marker-end="url(#a-arrowBlue)"/>
+    <path fill="none" stroke="#DC2626" stroke-width="2" d="M560,130 L600,130" marker-end="url(#a-arrowRed)"/>
+    <path fill="none" stroke="#DC2626" stroke-width="2" d="M860,130 L900,130" marker-end="url(#a-arrowRed)"/>
+    <path fill="none" stroke="#DC2626" stroke-width="2" d="M1100,130 L1140,130" marker-end="url(#a-arrowRed)"/>
+    <path fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="6 6" d="M1000,205 C1000,240 420,240 420,205" marker-end="url(#a-arrowRed)"/>
+    <text class="smallText" x="450" y="258" fill="#B91C1C">Vrácení k opravě → nové verze → znovu ruční kontrola</text>
+
+    <!-- Summary A -->
+    <rect fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5" rx="16" x="0" y="280" width="1304" height="65"/>
+    <text class="metricText" x="20" y="308" fill="#DC2626">⏱️ CELKOVÝ ČAS: 6-10 HODIN</text>
+    <text class="smallText" x="20" y="330" fill="#B91C1C">⚠️ Riziko: Lidská chyba, přehlédnutí, zpoždění projektu, opakované cykly kontroly</text>
+
+    <!-- Lane B Header -->
+    <rect fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.2" rx="16" x="0" y="375" width="1304" height="40"/>
+    <text class="laneTitle" x="20" y="401" fill="#16A34A">✅ B) DOKUCHECK AUTOMATIZACE – soubor / dávka / složka / celá projektová struktura</text>
+
+    <g filter="url(#a-shadow)">
+      <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.2" rx="16" x="0" y="435" width="240" height="155"/>
+      <text class="cardText" x="16" y="463">10 subdodavatelů</text>
+      <text class="smallText" x="16" y="483">Stejný výchozí stav</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="16" y="499" width="200" height="24"/>
+      <text class="badgeText" x="28" y="517" fill="#1E40AF">📁 Vytvoří PDF dokumentaci</text>
+      <rect fill="#EFF6FF" stroke="#93C5FD" stroke-width="1" rx="999" x="16" y="529" width="200" height="24"/>
+      <text class="badgeText" x="28" y="547" fill="#1E40AF">Možná kontrola i u nich</text>
+
+      <rect fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" rx="16" x="280" y="435" width="360" height="155"/>
+      <text class="cardText" x="296" y="463">🖥️ DokuCheck Agent</text>
+      <text class="smallText" x="296" y="483">Jediný krok místo ručního „klikání"</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="296" y="499" width="330" height="24"/>
+      <text class="badgeText" x="308" y="517" fill="#16A34A">⚡ Kontrola: soubor/dávka/složka/struktura</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="296" y="529" width="320" height="24"/>
+      <text class="badgeText" x="308" y="547" fill="#16A34A">✅ PDF/A-3 + podpis + razítka automaticky</text>
+      <text class="smallText" x="296" y="575">⏱️ 2-5 minut pro 100 souborů!</text>
+
+      <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.2" rx="16" x="680" y="435" width="280" height="155"/>
+      <text class="cardText" x="696" y="463">📊 Automatický report</text>
+      <text class="smallText" x="696" y="483">Excel export</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="696" y="499" width="240" height="24"/>
+      <text class="badgeText" x="708" y="517" fill="#1E40AF">📋 Přehled všech souborů (OK/Chyba)</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="696" y="529" width="240" height="24"/>
+      <text class="badgeText" x="708" y="547" fill="#1E40AF">📧 Filtr podle dodavatele</text>
+      <text class="smallText" x="696" y="575">Připraveno k rozeslání mailem</text>
+
+      <rect fill="#ffffff" stroke="#e5e7eb" stroke-width="1.2" rx="16" x="1000" y="435" width="220" height="155"/>
+      <text class="cardText" x="1016" y="463">👤 Vedoucí projektu</text>
+      <text class="smallText" x="1016" y="483">Řízení podle reportu</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="1016" y="499" width="180" height="24"/>
+      <text class="badgeText" x="1028" y="517" fill="#16A34A">🔁 Rychlá re-kontrola</text>
+      <text class="smallText" x="1016" y="545">Přetáhnout → kliknout → 2 min</text>
+
+      <rect fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" rx="16" x="1260" y="435" width="44" height="155"/>
+      <text class="cardText" x="1282" y="520" transform="rotate(90 1282 520)" text-anchor="middle" fill="#16A34A">✅ OK</text>
+    </g>
+
+    <path fill="none" stroke="#1E40AF" stroke-width="2" d="M240,515 L280,515" marker-end="url(#a-arrowBlue)"/>
+    <path fill="none" stroke="#16A34A" stroke-width="2" d="M640,515 L680,515" marker-end="url(#a-arrowGreen)"/>
+    <path fill="none" stroke="#1E40AF" stroke-width="2" d="M960,515 L1000,515" marker-end="url(#a-arrowBlue)"/>
+    <path fill="none" stroke="#16A34A" stroke-width="2" d="M1220,515 L1260,515" marker-end="url(#a-arrowGreen)"/>
+    <path fill="none" stroke="#16A34A" stroke-width="2" stroke-dasharray="6 6" d="M800,595 C800,630 460,630 460,595" marker-end="url(#a-arrowGreen)"/>
+    <text class="smallText" x="470" y="655" fill="#15803D">Iterace oprav je rychlá: report → oprava → re-kontrola</text>
+
+    <rect fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" rx="16" x="0" y="680" width="1304" height="65"/>
+    <text class="metricText" x="20" y="708" fill="#16A34A">⏱️ CELKOVÝ ČAS: 15-30 MINUT</text>
+    <text class="smallText" x="20" y="730" fill="#15803D">✅ Přesnost: 100% (automatizace) • 🔒 Bezpečnost: Data zůstávají lokálně • ⚡ Rychlá iterace oprav</text>
+
+    <!-- Bottom -->
+    <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5" rx="16" x="0" y="770" width="420" height="75"/>
+    <text class="cardText" x="20" y="796">⏱️ ÚSPORA ČASU</text>
+    <text class="metricText" x="20" y="822" fill="#16A34A">95% úspora! 🚀</text>
+    <text class="smallText" x="210" y="822" fill="#64748b">6-10h → 15-30 min</text>
+
+    <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5" rx="16" x="442" y="770" width="420" height="75"/>
+    <text class="cardText" x="462" y="796">⚠️ ELIMINACE RIZIK</text>
+    <text class="metricText" x="462" y="822" fill="#16A34A">Bez lidské chyby! ✅</text>
+
+    <rect fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5" rx="16" x="884" y="770" width="420" height="75"/>
+    <text class="cardText" x="904" y="796">✅ KVALITA</text>
+    <text class="metricText" x="904" y="822" fill="#16A34A">100% přesnost! 🔒</text>
+  </g>
+</svg>
+    </div>
+  </div>
+</div>
+
+<!-- ================ VARIANTA B: Tlumená červená + mátová zelená ================ -->
+<div class="variant-section" id="v2">
+  <h2>Varianta B – Tlumená červená + mátová zelená</h2>
+  <p>Levá: #B91C1C / #FECACA / #FFF5F5 &bull; Pravá: #059669 / #A7F3D0 / #ECFDF5 &bull; Neutrální: #1D4ED8 / #C7D2FE / #EEF2FF</p>
+  <div class="landing-context">
+    <h3>Kontrola dokumentace staveb – srovnání přístupů</h3>
+    <div class="sub">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</div>
+    <div class="svg-frame">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img">
+  <defs>
+    <style>text { font-family: "Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif; }</style>
+    <marker id="b-arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B91C1C"/></marker>
+    <marker id="b-arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="b-arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1D4ED8"/></marker>
+    <filter id="b-shadow"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-opacity="0.06"/></filter>
+  </defs>
+  <rect width="1400" height="950" fill="#ffffff"/>
+  <text x="48" y="50" font-size="24" font-weight="700" fill="#0f172a">Kontrola dokumentace staveb – Srovnání přístupů</text>
+  <text x="48" y="75" font-size="14" font-weight="500" fill="#64748b">Manuální kontrola vs DokuCheck automatizace | PDF/A-3 • Autorizační razítka • Časová razítka</text>
+
+  <g transform="translate(48,105)">
+    <rect fill="#FFF5F5" stroke="#FECACA" stroke-width="1.2" rx="16" width="1304" height="40"/>
+    <text x="20" y="26" font-size="15" font-weight="700" fill="#B91C1C">❌ A) MANUÁLNÍ KONTROLA – každý soubor zvlášť, opakované cykly</text>
+
+    <g filter="url(#b-shadow)">
+      <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.2" rx="16" x="0" y="60" width="240" height="140"/>
+      <text x="16" y="88" font-size="13" font-weight="600" fill="#0f172a">10 subdodavatelů</text>
+      <text x="16" y="108" font-size="12" font-weight="500" fill="#64748b">Každý dodavatel exportuje</text>
+      <text x="16" y="125" font-size="12" font-weight="500" fill="#64748b">své výkresy a zprávy</text>
+      <rect fill="#E0E7FF" stroke="#A5B4FC" stroke-width="1" rx="999" x="16" y="142" width="200" height="24"/>
+      <text x="28" y="160" font-size="11.5" font-weight="700" fill="#1D4ED8">📁 Vytvoří PDF dokumentaci</text>
+
+      <rect fill="#FFF5F5" stroke="#FECACA" stroke-width="1.5" rx="16" x="280" y="60" width="280" height="140"/>
+      <text x="296" y="88" font-size="13" font-weight="600" fill="#0f172a">👤 Vedoucí projektu</text>
+      <text x="296" y="108" font-size="12" font-weight="500" fill="#64748b">Musí RUČNĚ zkontrolovat:</text>
+      <rect fill="#FECACA" stroke="#FCA5A5" stroke-width="1" rx="999" x="296" y="122" width="250" height="24"/>
+      <text x="308" y="140" font-size="11.5" font-weight="700" fill="#B91C1C">🐌 Každý soubor jednotlivě</text>
+      <text x="296" y="165" font-size="12" font-weight="500" fill="#64748b">2-3 min/soubor • 3-5 hodin celkem</text>
+      <text x="296" y="182" font-size="12" font-weight="500" fill="#64748b">Adobe Acrobat: 4-5 kliků/soubor</text>
+
+      <rect fill="#FFF5F5" stroke="#FECACA" stroke-width="1.5" rx="16" x="600" y="60" width="260" height="140"/>
+      <text x="616" y="88" font-size="13" font-weight="600" fill="#0f172a">❌ Ruční zápis chyb</text>
+      <text x="616" y="108" font-size="12" font-weight="500" fill="#64748b">Do Excelu:</text>
+      <text x="616" y="125" font-size="12" font-weight="500" fill="#64748b">• Který soubor, jaká chyba</text>
+      <text x="616" y="142" font-size="12" font-weight="500" fill="#64748b">• Manuální rozeslání mailem</text>
+      <rect fill="#FECACA" stroke="#FCA5A5" stroke-width="1" rx="999" x="616" y="156" width="220" height="24"/>
+      <text x="628" y="174" font-size="11.5" font-weight="700" fill="#B91C1C">⚠️ Riziko lidské chyby</text>
+
+      <rect fill="#FFF7ED" stroke="#FED7AA" stroke-width="1.5" rx="16" x="900" y="60" width="200" height="140"/>
+      <text x="916" y="88" font-size="13" font-weight="600" fill="#0f172a">🔁 Opakovaná kontrola</text>
+      <text x="916" y="108" font-size="12" font-weight="500" fill="#64748b">Celý proces se opakuje</text>
+      <text x="916" y="125" font-size="12" font-weight="500" fill="#64748b">po každé opravě</text>
+      <rect fill="#FFEDD5" stroke="#FDBA74" stroke-width="1" rx="999" x="916" y="142" width="160" height="24"/>
+      <text x="928" y="160" font-size="11.5" font-weight="700" fill="#C2410C">Další hodiny práce</text>
+
+      <rect fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.5" rx="16" x="1140" y="60" width="164" height="140"/>
+      <text x="1156" y="88" font-size="13" font-weight="600" fill="#0f172a">✅ Expedice</text>
+      <text x="1156" y="108" font-size="12" font-weight="500" fill="#64748b">Na Portál stavebníka</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="1156" y="142" width="120" height="24"/>
+      <text x="1168" y="160" font-size="11.5" font-weight="700" fill="#059669">Pokud OK...</text>
+    </g>
+
+    <path fill="none" stroke="#1D4ED8" stroke-width="2" d="M240,130 L280,130" marker-end="url(#b-arrowBlue)"/>
+    <path fill="none" stroke="#B91C1C" stroke-width="2" d="M560,130 L600,130" marker-end="url(#b-arrowRed)"/>
+    <path fill="none" stroke="#B91C1C" stroke-width="2" d="M860,130 L900,130" marker-end="url(#b-arrowRed)"/>
+    <path fill="none" stroke="#B91C1C" stroke-width="2" d="M1100,130 L1140,130" marker-end="url(#b-arrowRed)"/>
+    <path fill="none" stroke="#B91C1C" stroke-width="2" stroke-dasharray="6 6" d="M1000,205 C1000,240 420,240 420,205" marker-end="url(#b-arrowRed)"/>
+    <text x="450" y="258" font-size="12" font-weight="500" fill="#991B1B">Vrácení k opravě → nové verze → znovu ruční kontrola</text>
+
+    <rect fill="#FFF5F5" stroke="#FECACA" stroke-width="1.5" rx="16" x="0" y="280" width="1304" height="65"/>
+    <text x="20" y="308" font-size="16" font-weight="700" fill="#B91C1C">⏱️ CELKOVÝ ČAS: 6-10 HODIN</text>
+    <text x="20" y="330" font-size="12" font-weight="500" fill="#991B1B">⚠️ Riziko: Lidská chyba, přehlédnutí, zpoždění projektu</text>
+
+    <rect fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.2" rx="16" x="0" y="375" width="1304" height="40"/>
+    <text x="20" y="401" font-size="15" font-weight="700" fill="#059669">✅ B) DOKUCHECK AUTOMATIZACE – soubor / dávka / složka / celá projektová struktura</text>
+
+    <g filter="url(#b-shadow)">
+      <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.2" rx="16" x="0" y="435" width="240" height="155"/>
+      <text x="16" y="463" font-size="13" font-weight="600" fill="#0f172a">10 subdodavatelů</text>
+      <text x="16" y="483" font-size="12" font-weight="500" fill="#64748b">Stejný výchozí stav</text>
+      <rect fill="#E0E7FF" stroke="#A5B4FC" stroke-width="1" rx="999" x="16" y="499" width="200" height="24"/>
+      <text x="28" y="517" font-size="11.5" font-weight="700" fill="#1D4ED8">📁 Vytvoří PDF dokumentaci</text>
+      <rect fill="#EEF2FF" stroke="#A5B4FC" stroke-width="1" rx="999" x="16" y="529" width="200" height="24"/>
+      <text x="28" y="547" font-size="11.5" font-weight="700" fill="#1D4ED8">Možná kontrola i u nich</text>
+
+      <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="280" y="435" width="360" height="155"/>
+      <text x="296" y="463" font-size="13" font-weight="600" fill="#0f172a">🖥️ DokuCheck Agent</text>
+      <text x="296" y="483" font-size="12" font-weight="500" fill="#64748b">Jediný krok místo ručního „klikání"</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="296" y="499" width="330" height="24"/>
+      <text x="308" y="517" font-size="11.5" font-weight="700" fill="#059669">⚡ Kontrola: soubor/dávka/složka/struktura</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="296" y="529" width="320" height="24"/>
+      <text x="308" y="547" font-size="11.5" font-weight="700" fill="#059669">✅ PDF/A-3 + podpis + razítka automaticky</text>
+      <text x="296" y="575" font-size="12" font-weight="500" fill="#64748b">⏱️ 2-5 minut pro 100 souborů!</text>
+
+      <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.2" rx="16" x="680" y="435" width="280" height="155"/>
+      <text x="696" y="463" font-size="13" font-weight="600" fill="#0f172a">📊 Automatický report</text>
+      <text x="696" y="483" font-size="12" font-weight="500" fill="#64748b">Excel export</text>
+      <rect fill="#E0E7FF" stroke="#A5B4FC" stroke-width="1" rx="999" x="696" y="499" width="240" height="24"/>
+      <text x="708" y="517" font-size="11.5" font-weight="700" fill="#1D4ED8">📋 Přehled všech souborů (OK/Chyba)</text>
+      <rect fill="#E0E7FF" stroke="#A5B4FC" stroke-width="1" rx="999" x="696" y="529" width="240" height="24"/>
+      <text x="708" y="547" font-size="11.5" font-weight="700" fill="#1D4ED8">📧 Filtr podle dodavatele</text>
+      <text x="696" y="575" font-size="12" font-weight="500" fill="#64748b">Připraveno k rozeslání mailem</text>
+
+      <rect fill="#ffffff" stroke="#e5e7eb" stroke-width="1.2" rx="16" x="1000" y="435" width="220" height="155"/>
+      <text x="1016" y="463" font-size="13" font-weight="600" fill="#0f172a">👤 Vedoucí projektu</text>
+      <text x="1016" y="483" font-size="12" font-weight="500" fill="#64748b">Řízení podle reportu</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="1016" y="499" width="180" height="24"/>
+      <text x="1028" y="517" font-size="11.5" font-weight="700" fill="#059669">🔁 Rychlá re-kontrola</text>
+      <text x="1016" y="545" font-size="12" font-weight="500" fill="#64748b">Přetáhnout → kliknout → 2 min</text>
+
+      <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="1260" y="435" width="44" height="155"/>
+      <text x="1282" y="520" font-size="13" font-weight="600" fill="#059669" transform="rotate(90 1282 520)" text-anchor="middle">✅ OK</text>
+    </g>
+
+    <path fill="none" stroke="#1D4ED8" stroke-width="2" d="M240,515 L280,515" marker-end="url(#b-arrowBlue)"/>
+    <path fill="none" stroke="#059669" stroke-width="2" d="M640,515 L680,515" marker-end="url(#b-arrowGreen)"/>
+    <path fill="none" stroke="#1D4ED8" stroke-width="2" d="M960,515 L1000,515" marker-end="url(#b-arrowBlue)"/>
+    <path fill="none" stroke="#059669" stroke-width="2" d="M1220,515 L1260,515" marker-end="url(#b-arrowGreen)"/>
+    <path fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="6 6" d="M800,595 C800,630 460,630 460,595" marker-end="url(#b-arrowGreen)"/>
+    <text x="470" y="655" font-size="12" font-weight="500" fill="#047857">Iterace oprav je rychlá: report → oprava → re-kontrola</text>
+
+    <rect fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1.5" rx="16" x="0" y="680" width="1304" height="65"/>
+    <text x="20" y="708" font-size="16" font-weight="700" fill="#059669">⏱️ CELKOVÝ ČAS: 15-30 MINUT</text>
+    <text x="20" y="730" font-size="12" font-weight="500" fill="#047857">✅ Přesnost: 100% • 🔒 Data lokálně • ⚡ Rychlá iterace oprav</text>
+
+    <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5" rx="16" x="0" y="770" width="420" height="75"/>
+    <text x="20" y="796" font-size="13" font-weight="600" fill="#0f172a">⏱️ ÚSPORA ČASU</text>
+    <text x="20" y="822" font-size="16" font-weight="700" fill="#059669">95% úspora!</text>
+    <text x="210" y="822" font-size="12" font-weight="500" fill="#64748b">6-10h → 15-30 min</text>
+
+    <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5" rx="16" x="442" y="770" width="420" height="75"/>
+    <text x="462" y="796" font-size="13" font-weight="600" fill="#0f172a">⚠️ ELIMINACE RIZIK</text>
+    <text x="462" y="822" font-size="16" font-weight="700" fill="#059669">Bez lidské chyby!</text>
+
+    <rect fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5" rx="16" x="884" y="770" width="420" height="75"/>
+    <text x="904" y="796" font-size="13" font-weight="600" fill="#0f172a">✅ KVALITA</text>
+    <text x="904" y="822" font-size="16" font-weight="700" fill="#059669">100% přesnost!</text>
+  </g>
+</svg>
+    </div>
+  </div>
+</div>
+
+<!-- ================ VARIANTA C: Korálová červená + limetková zelená ================ -->
+<div class="variant-section" id="v3">
+  <h2>Varianta C – Korálová / lososová + smaragdová zelená</h2>
+  <p>Levá: #E11D48 / #FDA4AF / #FFF1F2 &bull; Oranžová: #EA580C / #FDBA74 / #FFF7ED &bull; Pravá: #047857 / #6EE7B7 / #ECFDF5 &bull; Neutrální: #0F5A8A / #BAE6FD / #F0F9FF</p>
+  <div class="landing-context">
+    <h3>Kontrola dokumentace staveb – srovnání přístupů</h3>
+    <div class="sub">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</div>
+    <div class="svg-frame">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img">
+  <defs>
+    <style>text { font-family: "Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif; }</style>
+    <marker id="c-arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#E11D48"/></marker>
+    <marker id="c-arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#047857"/></marker>
+    <marker id="c-arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0F5A8A"/></marker>
+    <filter id="c-shadow"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-opacity="0.06"/></filter>
+  </defs>
+  <rect width="1400" height="950" fill="#ffffff"/>
+  <text x="48" y="50" font-size="24" font-weight="700" fill="#0f172a">Kontrola dokumentace staveb – Srovnání přístupů</text>
+  <text x="48" y="75" font-size="14" font-weight="500" fill="#64748b">Manuální kontrola vs DokuCheck automatizace | PDF/A-3 • Autorizační razítka • Časová razítka</text>
+
+  <g transform="translate(48,105)">
+    <rect fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.2" rx="16" width="1304" height="40"/>
+    <text x="20" y="26" font-size="15" font-weight="700" fill="#E11D48">❌ A) MANUÁLNÍ KONTROLA – každý soubor zvlášť, opakované cykly</text>
+
+    <g filter="url(#c-shadow)">
+      <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.2" rx="16" x="0" y="60" width="240" height="140"/>
+      <text x="16" y="88" font-size="13" font-weight="600" fill="#0f172a">10 subdodavatelů</text>
+      <text x="16" y="108" font-size="12" font-weight="500" fill="#64748b">Každý dodavatel exportuje</text>
+      <text x="16" y="125" font-size="12" font-weight="500" fill="#64748b">své výkresy a zprávy</text>
+      <rect fill="#E0F2FE" stroke="#7DD3FC" stroke-width="1" rx="999" x="16" y="142" width="200" height="24"/>
+      <text x="28" y="160" font-size="11.5" font-weight="700" fill="#0F5A8A">📁 Vytvoří PDF dokumentaci</text>
+
+      <rect fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5" rx="16" x="280" y="60" width="280" height="140"/>
+      <text x="296" y="88" font-size="13" font-weight="600" fill="#0f172a">👤 Vedoucí projektu</text>
+      <text x="296" y="108" font-size="12" font-weight="500" fill="#64748b">Musí RUČNĚ zkontrolovat:</text>
+      <rect fill="#FFE4E6" stroke="#FDA4AF" stroke-width="1" rx="999" x="296" y="122" width="250" height="24"/>
+      <text x="308" y="140" font-size="11.5" font-weight="700" fill="#E11D48">🐌 Každý soubor jednotlivě</text>
+      <text x="296" y="165" font-size="12" font-weight="500" fill="#64748b">2-3 min/soubor • 3-5 hodin celkem</text>
+      <text x="296" y="182" font-size="12" font-weight="500" fill="#64748b">Adobe Acrobat: 4-5 kliků/soubor</text>
+
+      <rect fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5" rx="16" x="600" y="60" width="260" height="140"/>
+      <text x="616" y="88" font-size="13" font-weight="600" fill="#0f172a">❌ Ruční zápis chyb</text>
+      <text x="616" y="108" font-size="12" font-weight="500" fill="#64748b">Do Excelu:</text>
+      <text x="616" y="125" font-size="12" font-weight="500" fill="#64748b">• Který soubor, jaká chyba</text>
+      <text x="616" y="142" font-size="12" font-weight="500" fill="#64748b">• Manuální rozeslání mailem</text>
+      <rect fill="#FFE4E6" stroke="#FDA4AF" stroke-width="1" rx="999" x="616" y="156" width="220" height="24"/>
+      <text x="628" y="174" font-size="11.5" font-weight="700" fill="#E11D48">⚠️ Riziko lidské chyby</text>
+
+      <rect fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5" rx="16" x="900" y="60" width="200" height="140"/>
+      <text x="916" y="88" font-size="13" font-weight="600" fill="#0f172a">🔁 Opakovaná kontrola</text>
+      <text x="916" y="108" font-size="12" font-weight="500" fill="#64748b">Celý proces se opakuje</text>
+      <text x="916" y="125" font-size="12" font-weight="500" fill="#64748b">po každé opravě</text>
+      <rect fill="#FFEDD5" stroke="#FDBA74" stroke-width="1" rx="999" x="916" y="142" width="160" height="24"/>
+      <text x="928" y="160" font-size="11.5" font-weight="700" fill="#EA580C">Další hodiny práce</text>
+
+      <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="1140" y="60" width="164" height="140"/>
+      <text x="1156" y="88" font-size="13" font-weight="600" fill="#0f172a">✅ Expedice</text>
+      <text x="1156" y="108" font-size="12" font-weight="500" fill="#64748b">Na Portál stavebníka</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="1156" y="142" width="120" height="24"/>
+      <text x="1168" y="160" font-size="11.5" font-weight="700" fill="#047857">Pokud OK...</text>
+    </g>
+
+    <path fill="none" stroke="#0F5A8A" stroke-width="2" d="M240,130 L280,130" marker-end="url(#c-arrowBlue)"/>
+    <path fill="none" stroke="#E11D48" stroke-width="2" d="M560,130 L600,130" marker-end="url(#c-arrowRed)"/>
+    <path fill="none" stroke="#E11D48" stroke-width="2" d="M860,130 L900,130" marker-end="url(#c-arrowRed)"/>
+    <path fill="none" stroke="#E11D48" stroke-width="2" d="M1100,130 L1140,130" marker-end="url(#c-arrowRed)"/>
+    <path fill="none" stroke="#E11D48" stroke-width="2" stroke-dasharray="6 6" d="M1000,205 C1000,240 420,240 420,205" marker-end="url(#c-arrowRed)"/>
+    <text x="450" y="258" font-size="12" font-weight="500" fill="#BE123C">Vrácení k opravě → nové verze → znovu ruční kontrola</text>
+
+    <rect fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.5" rx="16" x="0" y="280" width="1304" height="65"/>
+    <text x="20" y="308" font-size="16" font-weight="700" fill="#E11D48">⏱️ CELKOVÝ ČAS: 6-10 HODIN</text>
+    <text x="20" y="330" font-size="12" font-weight="500" fill="#BE123C">⚠️ Riziko: Lidská chyba, přehlédnutí, zpoždění projektu</text>
+
+    <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.2" rx="16" x="0" y="375" width="1304" height="40"/>
+    <text x="20" y="401" font-size="15" font-weight="700" fill="#047857">✅ B) DOKUCHECK AUTOMATIZACE – soubor / dávka / složka / celá projektová struktura</text>
+
+    <g filter="url(#c-shadow)">
+      <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.2" rx="16" x="0" y="435" width="240" height="155"/>
+      <text x="16" y="463" font-size="13" font-weight="600" fill="#0f172a">10 subdodavatelů</text>
+      <text x="16" y="483" font-size="12" font-weight="500" fill="#64748b">Stejný výchozí stav</text>
+      <rect fill="#E0F2FE" stroke="#7DD3FC" stroke-width="1" rx="999" x="16" y="499" width="200" height="24"/>
+      <text x="28" y="517" font-size="11.5" font-weight="700" fill="#0F5A8A">📁 Vytvoří PDF dokumentaci</text>
+      <rect fill="#F0F9FF" stroke="#7DD3FC" stroke-width="1" rx="999" x="16" y="529" width="200" height="24"/>
+      <text x="28" y="547" font-size="11.5" font-weight="700" fill="#0F5A8A">Možná kontrola i u nich</text>
+
+      <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="280" y="435" width="360" height="155"/>
+      <text x="296" y="463" font-size="13" font-weight="600" fill="#0f172a">🖥️ DokuCheck Agent</text>
+      <text x="296" y="483" font-size="12" font-weight="500" fill="#64748b">Jediný krok místo ručního „klikání"</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="296" y="499" width="330" height="24"/>
+      <text x="308" y="517" font-size="11.5" font-weight="700" fill="#047857">⚡ Kontrola: soubor/dávka/složka/struktura</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="296" y="529" width="320" height="24"/>
+      <text x="308" y="547" font-size="11.5" font-weight="700" fill="#047857">✅ PDF/A-3 + podpis + razítka automaticky</text>
+      <text x="296" y="575" font-size="12" font-weight="500" fill="#64748b">⏱️ 2-5 minut pro 100 souborů!</text>
+
+      <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.2" rx="16" x="680" y="435" width="280" height="155"/>
+      <text x="696" y="463" font-size="13" font-weight="600" fill="#0f172a">📊 Automatický report</text>
+      <text x="696" y="483" font-size="12" font-weight="500" fill="#64748b">Excel export</text>
+      <rect fill="#E0F2FE" stroke="#7DD3FC" stroke-width="1" rx="999" x="696" y="499" width="240" height="24"/>
+      <text x="708" y="517" font-size="11.5" font-weight="700" fill="#0F5A8A">📋 Přehled všech souborů (OK/Chyba)</text>
+      <rect fill="#E0F2FE" stroke="#7DD3FC" stroke-width="1" rx="999" x="696" y="529" width="240" height="24"/>
+      <text x="708" y="547" font-size="11.5" font-weight="700" fill="#0F5A8A">📧 Filtr podle dodavatele</text>
+      <text x="696" y="575" font-size="12" font-weight="500" fill="#64748b">Připraveno k rozeslání mailem</text>
+
+      <rect fill="#ffffff" stroke="#e5e7eb" stroke-width="1.2" rx="16" x="1000" y="435" width="220" height="155"/>
+      <text x="1016" y="463" font-size="13" font-weight="600" fill="#0f172a">👤 Vedoucí projektu</text>
+      <text x="1016" y="483" font-size="12" font-weight="500" fill="#64748b">Řízení podle reportu</text>
+      <rect fill="#D1FAE5" stroke="#6EE7B7" stroke-width="1" rx="999" x="1016" y="499" width="180" height="24"/>
+      <text x="1028" y="517" font-size="11.5" font-weight="700" fill="#047857">🔁 Rychlá re-kontrola</text>
+      <text x="1016" y="545" font-size="12" font-weight="500" fill="#64748b">Přetáhnout → kliknout → 2 min</text>
+
+      <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="1260" y="435" width="44" height="155"/>
+      <text x="1282" y="520" font-size="13" font-weight="600" fill="#047857" transform="rotate(90 1282 520)" text-anchor="middle">✅ OK</text>
+    </g>
+
+    <path fill="none" stroke="#0F5A8A" stroke-width="2" d="M240,515 L280,515" marker-end="url(#c-arrowBlue)"/>
+    <path fill="none" stroke="#047857" stroke-width="2" d="M640,515 L680,515" marker-end="url(#c-arrowGreen)"/>
+    <path fill="none" stroke="#0F5A8A" stroke-width="2" d="M960,515 L1000,515" marker-end="url(#c-arrowBlue)"/>
+    <path fill="none" stroke="#047857" stroke-width="2" d="M1220,515 L1260,515" marker-end="url(#c-arrowGreen)"/>
+    <path fill="none" stroke="#047857" stroke-width="2" stroke-dasharray="6 6" d="M800,595 C800,630 460,630 460,595" marker-end="url(#c-arrowGreen)"/>
+    <text x="470" y="655" font-size="12" font-weight="500" fill="#065F46">Iterace oprav je rychlá: report → oprava → re-kontrola</text>
+
+    <rect fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5" rx="16" x="0" y="680" width="1304" height="65"/>
+    <text x="20" y="708" font-size="16" font-weight="700" fill="#047857">⏱️ CELKOVÝ ČAS: 15-30 MINUT</text>
+    <text x="20" y="730" font-size="12" font-weight="500" fill="#065F46">✅ Přesnost: 100% • 🔒 Data lokálně • ⚡ Rychlá iterace oprav</text>
+
+    <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.5" rx="16" x="0" y="770" width="420" height="75"/>
+    <text x="20" y="796" font-size="13" font-weight="600" fill="#0f172a">⏱️ ÚSPORA ČASU</text>
+    <text x="20" y="822" font-size="16" font-weight="700" fill="#047857">95% úspora!</text>
+    <text x="210" y="822" font-size="12" font-weight="500" fill="#64748b">6-10h → 15-30 min</text>
+
+    <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.5" rx="16" x="442" y="770" width="420" height="75"/>
+    <text x="462" y="796" font-size="13" font-weight="600" fill="#0f172a">⚠️ ELIMINACE RIZIK</text>
+    <text x="462" y="822" font-size="16" font-weight="700" fill="#047857">Bez lidské chyby!</text>
+
+    <rect fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1.5" rx="16" x="884" y="770" width="420" height="75"/>
+    <text x="904" y="796" font-size="13" font-weight="600" fill="#0f172a">✅ KVALITA</text>
+    <text x="904" y="822" font-size="16" font-weight="700" fill="#047857">100% přesnost!</text>
+  </g>
+</svg>
+    </div>
+  </div>
+</div>
+
+<!-- ================ VARIANTA D: Minimalistická – šedá + červená/zelená akcenty ================ -->
+<div class="variant-section" id="v4">
+  <h2>Varianta D – Minimalistická (šedé karty, barevné jen akcenty)</h2>
+  <p>Základ: #F8FAFC / #E2E8F0 / #CBD5E1 &bull; Červené akcenty: #EF4444 / #FEE2E2 &bull; Zelené akcenty: #22C55E / #DCFCE7 &bull; Modré akcenty: #3B82F6 / #DBEAFE</p>
+  <div class="landing-context">
+    <h3>Kontrola dokumentace staveb – srovnání přístupů</h3>
+    <div class="sub">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</div>
+    <div class="svg-frame">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img">
+  <defs>
+    <style>text { font-family: "Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif; }</style>
+    <marker id="d-arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#EF4444"/></marker>
+    <marker id="d-arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#22C55E"/></marker>
+    <marker id="d-arrowGray" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/></marker>
+    <filter id="d-shadow"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.05"/></filter>
+  </defs>
+  <rect width="1400" height="950" fill="#ffffff"/>
+  <text x="48" y="50" font-size="24" font-weight="700" fill="#0f172a">Kontrola dokumentace staveb – Srovnání přístupů</text>
+  <text x="48" y="75" font-size="14" font-weight="500" fill="#94A3B8">Manuální kontrola vs DokuCheck automatizace | PDF/A-3 • Autorizační razítka • Časová razítka</text>
+
+  <g transform="translate(48,105)">
+    <rect fill="#FEF2F2" stroke="#FECACA" stroke-width="1" rx="16" width="1304" height="40"/>
+    <text x="20" y="26" font-size="15" font-weight="700" fill="#EF4444">❌ A) MANUÁLNÍ KONTROLA – každý soubor zvlášť, opakované cykly</text>
+
+    <g filter="url(#d-shadow)">
+      <rect fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="16" x="0" y="60" width="240" height="140"/>
+      <text x="16" y="88" font-size="13" font-weight="600" fill="#334155">10 subdodavatelů</text>
+      <text x="16" y="108" font-size="12" font-weight="500" fill="#94A3B8">Každý dodavatel exportuje</text>
+      <text x="16" y="125" font-size="12" font-weight="500" fill="#94A3B8">své výkresy a zprávy</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="16" y="142" width="200" height="24"/>
+      <text x="28" y="160" font-size="11.5" font-weight="700" fill="#3B82F6">📁 Vytvoří PDF dokumentaci</text>
+
+      <rect fill="#F8FAFC" stroke="#FECACA" stroke-width="1.5" rx="16" x="280" y="60" width="280" height="140"/>
+      <text x="296" y="88" font-size="13" font-weight="600" fill="#334155">👤 Vedoucí projektu</text>
+      <text x="296" y="108" font-size="12" font-weight="500" fill="#94A3B8">Musí RUČNĚ zkontrolovat:</text>
+      <rect fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1" rx="999" x="296" y="122" width="250" height="24"/>
+      <text x="308" y="140" font-size="11.5" font-weight="700" fill="#EF4444">🐌 Každý soubor jednotlivě</text>
+      <text x="296" y="165" font-size="12" font-weight="500" fill="#94A3B8">2-3 min/soubor • 3-5 hodin celkem</text>
+      <text x="296" y="182" font-size="12" font-weight="500" fill="#94A3B8">Adobe Acrobat: 4-5 kliků/soubor</text>
+
+      <rect fill="#F8FAFC" stroke="#FECACA" stroke-width="1.5" rx="16" x="600" y="60" width="260" height="140"/>
+      <text x="616" y="88" font-size="13" font-weight="600" fill="#334155">❌ Ruční zápis chyb</text>
+      <text x="616" y="108" font-size="12" font-weight="500" fill="#94A3B8">Do Excelu:</text>
+      <text x="616" y="125" font-size="12" font-weight="500" fill="#94A3B8">• Který soubor, jaká chyba</text>
+      <text x="616" y="142" font-size="12" font-weight="500" fill="#94A3B8">• Manuální rozeslání mailem</text>
+      <rect fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1" rx="999" x="616" y="156" width="220" height="24"/>
+      <text x="628" y="174" font-size="11.5" font-weight="700" fill="#EF4444">⚠️ Riziko lidské chyby</text>
+
+      <rect fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="16" x="900" y="60" width="200" height="140"/>
+      <text x="916" y="88" font-size="13" font-weight="600" fill="#334155">🔁 Opakovaná kontrola</text>
+      <text x="916" y="108" font-size="12" font-weight="500" fill="#94A3B8">Celý proces se opakuje</text>
+      <text x="916" y="125" font-size="12" font-weight="500" fill="#94A3B8">po každé opravě</text>
+      <rect fill="#FEE2E2" stroke="#FCA5A5" stroke-width="1" rx="999" x="916" y="142" width="160" height="24"/>
+      <text x="928" y="160" font-size="11.5" font-weight="700" fill="#EF4444">Další hodiny práce</text>
+
+      <rect fill="#F8FAFC" stroke="#DCFCE7" stroke-width="1.5" rx="16" x="1140" y="60" width="164" height="140"/>
+      <text x="1156" y="88" font-size="13" font-weight="600" fill="#334155">✅ Expedice</text>
+      <text x="1156" y="108" font-size="12" font-weight="500" fill="#94A3B8">Na Portál stavebníka</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="1156" y="142" width="120" height="24"/>
+      <text x="1168" y="160" font-size="11.5" font-weight="700" fill="#22C55E">Pokud OK...</text>
+    </g>
+
+    <path fill="none" stroke="#94A3B8" stroke-width="2" d="M240,130 L280,130" marker-end="url(#d-arrowGray)"/>
+    <path fill="none" stroke="#EF4444" stroke-width="2" d="M560,130 L600,130" marker-end="url(#d-arrowRed)"/>
+    <path fill="none" stroke="#EF4444" stroke-width="2" d="M860,130 L900,130" marker-end="url(#d-arrowRed)"/>
+    <path fill="none" stroke="#EF4444" stroke-width="2" d="M1100,130 L1140,130" marker-end="url(#d-arrowRed)"/>
+    <path fill="none" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="6 6" d="M1000,205 C1000,240 420,240 420,205" marker-end="url(#d-arrowRed)"/>
+    <text x="450" y="258" font-size="12" font-weight="500" fill="#DC2626">Vrácení k opravě → nové verze → znovu ruční kontrola</text>
+
+    <rect fill="#FEF2F2" stroke="#FECACA" stroke-width="1.5" rx="16" x="0" y="280" width="1304" height="65"/>
+    <text x="20" y="308" font-size="16" font-weight="700" fill="#EF4444">⏱️ CELKOVÝ ČAS: 6-10 HODIN</text>
+    <text x="20" y="330" font-size="12" font-weight="500" fill="#DC2626">⚠️ Riziko: Lidská chyba, přehlédnutí, zpoždění projektu</text>
+
+    <rect fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1" rx="16" x="0" y="375" width="1304" height="40"/>
+    <text x="20" y="401" font-size="15" font-weight="700" fill="#22C55E">✅ B) DOKUCHECK AUTOMATIZACE – soubor / dávka / složka / celá projektová struktura</text>
+
+    <g filter="url(#d-shadow)">
+      <rect fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="16" x="0" y="435" width="240" height="155"/>
+      <text x="16" y="463" font-size="13" font-weight="600" fill="#334155">10 subdodavatelů</text>
+      <text x="16" y="483" font-size="12" font-weight="500" fill="#94A3B8">Stejný výchozí stav</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="16" y="499" width="200" height="24"/>
+      <text x="28" y="517" font-size="11.5" font-weight="700" fill="#3B82F6">📁 Vytvoří PDF dokumentaci</text>
+      <rect fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1" rx="999" x="16" y="529" width="200" height="24"/>
+      <text x="28" y="547" font-size="11.5" font-weight="700" fill="#3B82F6">Možná kontrola i u nich</text>
+
+      <rect fill="#F8FAFC" stroke="#BBF7D0" stroke-width="1.5" rx="16" x="280" y="435" width="360" height="155"/>
+      <text x="296" y="463" font-size="13" font-weight="600" fill="#334155">🖥️ DokuCheck Agent</text>
+      <text x="296" y="483" font-size="12" font-weight="500" fill="#94A3B8">Jediný krok místo ručního „klikání"</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="296" y="499" width="330" height="24"/>
+      <text x="308" y="517" font-size="11.5" font-weight="700" fill="#22C55E">⚡ Kontrola: soubor/dávka/složka/struktura</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="296" y="529" width="320" height="24"/>
+      <text x="308" y="547" font-size="11.5" font-weight="700" fill="#22C55E">✅ PDF/A-3 + podpis + razítka automaticky</text>
+      <text x="296" y="575" font-size="12" font-weight="500" fill="#94A3B8">⏱️ 2-5 minut pro 100 souborů!</text>
+
+      <rect fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="16" x="680" y="435" width="280" height="155"/>
+      <text x="696" y="463" font-size="13" font-weight="600" fill="#334155">📊 Automatický report</text>
+      <text x="696" y="483" font-size="12" font-weight="500" fill="#94A3B8">Excel export</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="696" y="499" width="240" height="24"/>
+      <text x="708" y="517" font-size="11.5" font-weight="700" fill="#3B82F6">📋 Přehled všech souborů (OK/Chyba)</text>
+      <rect fill="#DBEAFE" stroke="#93C5FD" stroke-width="1" rx="999" x="696" y="529" width="240" height="24"/>
+      <text x="708" y="547" font-size="11.5" font-weight="700" fill="#3B82F6">📧 Filtr podle dodavatele</text>
+      <text x="696" y="575" font-size="12" font-weight="500" fill="#94A3B8">Připraveno k rozeslání mailem</text>
+
+      <rect fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="16" x="1000" y="435" width="220" height="155"/>
+      <text x="1016" y="463" font-size="13" font-weight="600" fill="#334155">👤 Vedoucí projektu</text>
+      <text x="1016" y="483" font-size="12" font-weight="500" fill="#94A3B8">Řízení podle reportu</text>
+      <rect fill="#DCFCE7" stroke="#86EFAC" stroke-width="1" rx="999" x="1016" y="499" width="180" height="24"/>
+      <text x="1028" y="517" font-size="11.5" font-weight="700" fill="#22C55E">🔁 Rychlá re-kontrola</text>
+      <text x="1016" y="545" font-size="12" font-weight="500" fill="#94A3B8">Přetáhnout → kliknout → 2 min</text>
+
+      <rect fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1.5" rx="16" x="1260" y="435" width="44" height="155"/>
+      <text x="1282" y="520" font-size="13" font-weight="600" fill="#22C55E" transform="rotate(90 1282 520)" text-anchor="middle">✅ OK</text>
+    </g>
+
+    <path fill="none" stroke="#94A3B8" stroke-width="2" d="M240,515 L280,515" marker-end="url(#d-arrowGray)"/>
+    <path fill="none" stroke="#22C55E" stroke-width="2" d="M640,515 L680,515" marker-end="url(#d-arrowGreen)"/>
+    <path fill="none" stroke="#94A3B8" stroke-width="2" d="M960,515 L1000,515" marker-end="url(#d-arrowGray)"/>
+    <path fill="none" stroke="#22C55E" stroke-width="2" d="M1220,515 L1260,515" marker-end="url(#d-arrowGreen)"/>
+    <path fill="none" stroke="#22C55E" stroke-width="1.5" stroke-dasharray="6 6" d="M800,595 C800,630 460,630 460,595" marker-end="url(#d-arrowGreen)"/>
+    <text x="470" y="655" font-size="12" font-weight="500" fill="#16A34A">Iterace oprav je rychlá: report → oprava → re-kontrola</text>
+
+    <rect fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1.5" rx="16" x="0" y="680" width="1304" height="65"/>
+    <text x="20" y="708" font-size="16" font-weight="700" fill="#22C55E">⏱️ CELKOVÝ ČAS: 15-30 MINUT</text>
+    <text x="20" y="730" font-size="12" font-weight="500" fill="#16A34A">✅ Přesnost: 100% • 🔒 Data lokálně • ⚡ Rychlá iterace oprav</text>
+
+    <rect fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1" rx="16" x="0" y="770" width="420" height="75"/>
+    <text x="20" y="796" font-size="13" font-weight="600" fill="#334155">⏱️ ÚSPORA ČASU</text>
+    <text x="20" y="822" font-size="16" font-weight="700" fill="#22C55E">95% úspora!</text>
+    <text x="210" y="822" font-size="12" font-weight="500" fill="#94A3B8">6-10h → 15-30 min</text>
+
+    <rect fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1" rx="16" x="442" y="770" width="420" height="75"/>
+    <text x="462" y="796" font-size="13" font-weight="600" fill="#334155">⚠️ ELIMINACE RIZIK</text>
+    <text x="462" y="822" font-size="16" font-weight="700" fill="#22C55E">Bez lidské chyby!</text>
+
+    <rect fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1" rx="16" x="884" y="770" width="420" height="75"/>
+    <text x="904" y="796" font-size="13" font-weight="600" fill="#334155">✅ KVALITA</text>
+    <text x="904" y="822" font-size="16" font-weight="700" fill="#22C55E">100% přesnost!</text>
+  </g>
+</svg>
+    </div>
+  </div>
+</div>
+
+<script>
+// Scroll highlight
+document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+    });
+});
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            const id = e.target.id;
+            const link = document.querySelector('nav a[href="#'+id+'"]');
+            if (link) link.classList.add('active');
+        }
+    });
+}, {threshold: 0.3});
+document.querySelectorAll('.variant-section').forEach(s => obs.observe(s));
+</script>
+
+</body>
+</html>

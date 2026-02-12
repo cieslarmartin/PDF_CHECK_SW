@@ -327,7 +327,8 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         else:
             pdf.cell(0, 6, 'Pro QR platbu vyplňte v Nastavení firmy Číslo účtu a kód banky (např. 172912882/0300) nebo IBAN.', 0, 1)
 
-        filename = 'faktura_{}.pdf'.format(order_id)
+        # Název souboru = číslo faktury (order_display_number), fallback na order_id
+        filename = 'faktura_{}.pdf'.format(cislo_faktury or order_id)
         filepath = os.path.join(save_dir, filename)
         pdf.output(filepath)
         return filepath

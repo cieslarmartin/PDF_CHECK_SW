@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PDF DokuCheck Admin{% endblock %}</title>
+    <title>{% block title %}DokuCheck Admin{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -29,8 +31,8 @@
             border-bottom: 1px solid #34495e;
             margin-bottom: 16px;
         }
-        .sidebar .logo-text .pdf { color: #3498DB; }
-        .sidebar .logo-text .doku { color: #ecf0f1; }
+        .sidebar .logo-text .doku-part { color: #ecf0f1; font-family: 'Inter', sans-serif; font-weight: 900; letter-spacing: -0.06em; }
+        .sidebar .logo-text .check-part { color: #16A34A; font-family: 'Inter', sans-serif; font-weight: 900; letter-spacing: -0.06em; }
         .sidebar-nav { list-style: none; }
         .sidebar-nav a {
             display: block;
@@ -261,21 +263,38 @@
 </head>
 <body>
     <aside class="sidebar">
-        <div class="logo-text">
-            <span class="pdf">PDF</span><span class="doku">DokuCheck</span>
+        <div class="logo-text" style="display:flex;align-items:center;gap:8px;">
+            <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" style="height:24px;width:24px;">
+            <span><span class="doku-part">Doku</span><span class="check-part">Check</span></span>
         </div>
         <ul class="sidebar-nav">
-            <li><a href="{{ url_for('admin.dashboard') }}#users" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Uživatelé</a></li>
-            <li><a href="{{ url_for('admin.dashboard') }}#stats-logs" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Statistiky a Logy</a></li>
-            <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Tier definice</a></li>
-            <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">💰</span> {{ env_labels.label_menu_pending_orders|default('Čeká na platbu') }}</a></li>
+            {# ── Přehled ── #}
+            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Přehled</a></li>
+
+            {# ── Obchod ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obchod</li>
+            <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">💰</span> Objednávky</a></li>
+            <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Ceník / Tarify</a></li>
+            <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🛒</span> Texty checkoutu</a></li>
+
+            {# ── Uživatelé ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Uživatelé</li>
+            <li><a href="{{ url_for('admin.users') }}" class="{{ 'active' if active_page == 'users' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Seznam uživatelů</a></li>
             <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>
             <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📜</span> Logy</a></li>
-            <li><a href="{{ url_for('admin.marketing_emails') }}" class="{{ 'active' if active_page == 'marketing_emails' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📧</span> MARKETING / E-MAILY</a></li>
+
+            {# ── Komunikace ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Komunikace</li>
+            <li><a href="{{ url_for('admin.marketing_emails') }}" class="{{ 'active' if active_page == 'marketing_emails' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📧</span> E-maily / Marketing</a></li>
+
+            {# ── Firma ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Firma</li>
             <li><a href="{{ url_for('admin.company_settings') }}" class="{{ 'active' if active_page == 'company_settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🏢</span> Nastavení firmy</a></li>
-            <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">❓</span> Správa FAQ</a></li>
-            <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🛒</span> Texty checkoutu</a></li>
+
+            {# ── Systém ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Systém</li>
             <li><a href="{{ url_for('admin.settings') }}" class="{{ 'active' if active_page == 'settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">⚙️</span> Nastavení</a></li>
+            <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">❓</span> Správa FAQ</a></li>
         </ul>
         <div class="user-info">
             {{ user.display_name if user else 'Admin' }}<br>

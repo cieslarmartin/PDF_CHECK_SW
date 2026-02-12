@@ -1,295 +1,224 @@
 {% extends "admin_base.html" %}
-{% block title %}PDF DokuCheck - Admin Dashboard{% endblock %}
+{% block title %}DokuCheck – Přehled{% endblock %}
 {% block header_right %}
-<button type="button" class="btn btn-secondary btn-small" id="btn-git-pull" onclick="doGitPull()" title="Stáhnout z GitHubu">&#128260; Stáhnout z GitHubu</button>
-<a href="{{ url_for('admin.settings') }}" class="btn btn-secondary btn-small">Global Config</a>
+<button type="button" class="btn btn-secondary btn-small" id="btn-git-pull" onclick="doGitPull()" title="Stáhnout z GitHubu">&#128260; Git Pull</button>
 {% endblock %}
 {% block content %}
-<section class="admin-links-section" style="margin-bottom:24px;">
-    <h2 style="font-size:1.1em;font-weight:600;margin-bottom:12px;">Odkazy na web</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-        <div class="table-container" style="margin:0;">
-            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f0f9ff;border-bottom:1px solid #e5e7eb;">Agent</h3>
-            <table class="table-dense">
-                <tbody>
-                    <tr><td style="padding:8px 16px;"><strong>API konfigurace pro agenta</strong><br><small style="color:#6b7280;">Disclaimer, VOP/GDPR odkazy, update_msg</small></td><td style="padding:8px 16px;white-space:nowrap;"><a href="{{ url_for('agent_config', _external=True) }}" target="_blank" rel="noopener">/api/agent-config</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Kde upravit texty pro agenta</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.settings', _external=True) }}">Nastavení → Právní info / Základní</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Stránka VOP (agent na ni odkazuje)</td><td style="padding:8px 16px;"><a href="{{ url_for('vop', _external=True) }}" target="_blank" rel="noopener">{{ url_for('vop', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Stránka GDPR (agent na ni odkazuje)</td><td style="padding:8px 16px;"><a href="{{ url_for('gdpr', _external=True) }}" target="_blank" rel="noopener">{{ url_for('gdpr', _external=True) }}</a></td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="table-container" style="margin:0;">
-            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f9fafb;border-bottom:1px solid #e5e7eb;">Ostatní stránky</h3>
-            <table class="table-dense">
-                <tbody>
-                    <tr><td style="padding:8px 16px;">Landing (hlavní stránka)</td><td style="padding:8px 16px;"><a href="{{ url_for('index', _external=True) }}" target="_blank" rel="noopener">{{ url_for('index', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Aplikace (webová)</td><td style="padding:8px 16px;"><a href="{{ url_for('app_main', _external=True) }}" target="_blank" rel="noopener">/app</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Stáhnout (download)</td><td style="padding:8px 16px;"><a href="{{ url_for('download', _external=True) }}" target="_blank" rel="noopener">{{ url_for('download', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Portál (Můj účet)</td><td style="padding:8px 16px;"><a href="{{ url_for('portal', _external=True) }}" target="_blank" rel="noopener">{{ url_for('portal', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Online Check</td><td style="padding:8px 16px;"><a href="{{ url_for('online_check', _external=True) }}" target="_blank" rel="noopener">{{ url_for('online_check', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Checkout (objednávka)</td><td style="padding:8px 16px;"><a href="{{ url_for('checkout', _external=True) }}" target="_blank" rel="noopener">{{ url_for('checkout', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Admin přihlášení</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.login', _external=True) }}" target="_blank" rel="noopener">{{ url_for('admin.login', _external=True) }}</a></td></tr>
-                    <tr><td style="padding:8px 16px;">Admin Nastavení</td><td style="padding:8px 16px;"><a href="{{ url_for('admin.settings', _external=True) }}">{{ url_for('admin.settings', _external=True) }}</a></td></tr>
-                </tbody>
-            </table>
-        </div>
+
+{# ============ KPI DLAŽDICE ============ #}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+    <div class="admin-card" style="padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
+        <div style="font-size:0.85em;color:#0369a1;">Celkem kontrol dnes</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.checks_today|default(0) }}</div>
     </div>
-</section>
-
-<section id="email-templates" class="admin-card" style="margin-bottom:24px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-    <h2 style="font-size:1.1em;font-weight:600;margin:0;padding:12px 16px;background:#f0f9ff;border-bottom:1px solid #e5e7eb;">E-mailové šablony</h2>
-    <p style="padding:8px 16px;margin:0;color:#6b7280;font-size:0.9em;">Texty odcházejících e-mailů (potvrzení objednávky, aktivace). Placeholdery: {jmeno}, {cena}, {vs} (objednávka); {email}, {heslo}, {download_url} (aktivace). Patička se připojí ke každému e-mailu.</p>
-    <form method="post" action="{{ url_for('admin.save_email_templates_route') }}" style="padding:16px;">
-        <div style="margin-bottom:12px;">
-            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Patička (footer_text) – připojí se ke každému e-mailu</label>
-            <textarea name="footer_text" class="form-control" rows="3" style="width:100%;">{{ (email_templates or {}).get('footer_text', '')|e }}</textarea>
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Potvrzení objednávky – předmět (order_confirmation_subject)</label>
-            <input type="text" name="order_confirmation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('order_confirmation_subject', '')|e }}" placeholder="{vs}, {cena}, {jmeno}">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Potvrzení objednávky – tělo (order_confirmation_body)</label>
-            <textarea name="order_confirmation_body" class="form-control" rows="5" style="width:100%;">{{ (email_templates or {}).get('order_confirmation_body', '')|e }}</textarea>
-        </div>
-        <div style="margin-bottom:12px;">
-            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Aktivační e-mail – předmět (activation_subject)</label>
-            <input type="text" name="activation_subject" class="form-control" style="width:100%;" value="{{ (email_templates or {}).get('activation_subject', '')|e }}">
-        </div>
-        <div style="margin-bottom:16px;">
-            <label class="admin-settings-label" style="display:block;margin-bottom:4px;">Aktivační e-mail – tělo (activation_body)</label>
-            <textarea name="activation_body" class="form-control" rows="5" style="width:100%;">{{ (email_templates or {}).get('activation_body', '')|e }}</textarea>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button type="submit" class="btn btn-primary btn-sm">Uložit šablony</button>
-        </div>
-    </form>
-    <form method="post" action="{{ url_for('admin.send_test_email_route') }}" style="padding:0 16px 16px;margin:0;">
-        <input type="hidden" name="test_email_to" value="info@dokucheck.cz">
-        <button type="submit" class="btn btn-secondary btn-sm">Odeslat testovací e-mail na info@dokucheck.cz</button>
-    </form>
-</section>
-
-<div class="actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;" id="users">
-    <h2 style="font-size:1.1em;margin:0;">1. Uživatelé</h2>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
-            <input type="hidden" name="tier" value="{{ tier_filter }}">
-            <input type="hidden" name="status" value="{{ status_filter }}">
-            <input type="text" name="q" class="form-control" style="width:160px;" placeholder="Vyhledat (e-mail, jméno)…" value="{{ search }}">
-            <button type="submit" class="btn btn-sm btn-secondary">Hledat</button>
-        </form>
-        <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
-            <input type="hidden" name="q" value="{{ search }}">
-            <input type="hidden" name="status" value="{{ status_filter }}">
-            <select name="tier" class="form-control form-select" style="width:120px;" onchange="this.form.submit()">
-                <option value="">Všechny tarify</option>
-                {% for t in tiers_list %}
-                <option value="{{ t.name }}" {{ 'selected' if tier_filter == t.name else '' }}>{{ t.name }}</option>
-                {% endfor %}
-            </select>
-        </form>
-        <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
-            <input type="hidden" name="q" value="{{ search }}">
-            <input type="hidden" name="tier" value="{{ tier_filter }}">
-            <select name="status" class="form-control form-select" style="width:110px;" onchange="this.form.submit()">
-                <option value="">Stav účtu</option>
-                <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Aktivní</option>
-                <option value="blocked" {{ 'selected' if status_filter == 'blocked' else '' }}>Blokovaný</option>
-            </select>
-        </form>
-        <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Nová licence</button>
+    <div class="admin-card" style="padding:16px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;">
+        <div style="font-size:0.85em;color:#b45309;">Trial batche dnes</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.trial_batches_today|default(0) }}</div>
+    </div>
+    <div class="admin-card" style="padding:16px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;">
+        <div style="font-size:0.85em;color:#047857;">Aktivní licence</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.active_licenses|default(0) }}</div>
+    </div>
+    <div class="admin-card" style="padding:16px;background:#fce7f3;border:1px solid #f9a8d4;border-radius:8px;">
+        <div style="font-size:0.85em;color:#9d174d;">Čeká na platbu</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.pending_orders|default(0) }}</div>
     </div>
 </div>
 
-<div class="table-container">
-    <table class="table-dense">
-        <thead>
-            <tr>
-                <th>E-mail / Jméno</th>
-                <th>Tarif</th>
-                <th>Zařízení</th>
-                <th>Poslední aktivita</th>
-                <th>Poslední IP</th>
-                <th>Soubory</th>
-                <th>Platba</th>
-                <th>Heslo</th>
-                <th>Akce</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for license in licenses %}
-            <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}">
-                <td>
-                    <strong>{{ license.email or '—' }}</strong>
-                    {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
-                </td>
-                <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
-                <td title="{% if license.device_names %}Stanice: {{ license.device_names|e }}{% else %}Počet aktivních zařízení{% endif %}">{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}{% if license.device_names %} <small style="color:#6b7280;" title="Stanice: {{ license.device_names|e }}">({{ license.device_names|truncate(30, True) }})</small>{% endif %}</td>
-                <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
-                <td><small style="font-family:monospace;font-size:0.85em;" title="Poslední přihlášení z IP">{{ license.last_ip or '—' }}</small></td>
-                <td>{{ license.total_checks }}</td>
-                <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
-                <td><small style="font-family:monospace;font-size:0.85em;" title="Heslo pro přihlášení v agentovi">{{ (license.get('password_plain_stored') or '—')|e }}</small></td>
-                <td>
-                    <div class="actions-cell">
-                        <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit uživatele (jméno, e-mail, tier, expirace, heslo)">Upravit</button>
-                        <button class="action-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Prodloužit licenci">PRODLOUŽIT</button>
-                        <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})" title="{{ 'Deaktivovat licenci' if license.is_active else 'Aktivovat' }}">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
-                        <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')" title="Smazat licenci">SMAZAT</button>
-                        <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)" title="Zobrazit údaje licence (heslo se nemění)">INFO BALÍČEK</button>
-                        <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn" title="Audit">Audit</a>
-                        <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)" title="Změnit heslo ručně">Změnit heslo</button>
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence“.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div style="margin-top:32px;" id="stats-logs">
-    <h2 style="font-size:1.2em;font-weight:600;margin-bottom:12px;">2. Statistiky a Logy</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
-        <div class="admin-card" style="padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
-            <div style="font-size:0.85em;color:#0369a1;">Celkem kontrol dnes</div>
-            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.checks_today|default(0) }}</div>
-        </div>
-        <div class="admin-card" style="padding:16px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;">
-            <div style="font-size:0.85em;color:#b45309;">Trial batche dnes</div>
-            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.trial_batches_today|default(0) }}</div>
-        </div>
-        <div class="admin-card" style="padding:16px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;">
-            <div style="font-size:0.85em;color:#047857;">Aktivní licence</div>
-            <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.active_licenses|default(0) }}</div>
-        </div>
+{# ============ GRAFY ============ #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Aktivita – soubory za den (30 dní)</h3>
+        <div style="height:220px;"><canvas id="chartActivity30"></canvas></div>
     </div>
-    <p style="color:#6b7280;font-size:0.9em;margin-bottom:12px;">Sjednocený log aktivit – 1 záznam = 1 nahraná dávka (IP, čas, typ, počet souborů).</p>
-    <div class="table-container">
-        <table class="table-dense">
-            <thead>
-                <tr>
-                    <th>IP adresa</th>
-                    <th>Čas</th>
-                    <th>Typ</th>
-                    <th>Počet souborů</th>
-                    <th>Akce</th>
-                </tr>
-            </thead>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Rozložení tarifů (počet licencí)</h3>
+        <div style="height:220px;"><canvas id="chartTiersPie"></canvas></div>
+    </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – úspěšné vs. chybné</h3>
+        <div style="height:220px;"><canvas id="chartChecksBar"></canvas></div>
+    </div>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">KPI – přehled</h3>
+        <table class="table-dense" style="width:100%;">
             <tbody>
-                {% for row in activity_log %}
+                <tr><td>Aktivní licence</td><td><strong>{{ (kpis or {}).get('active_licenses', 0) }}</strong></td></tr>
+                <tr><td>Free / Trial</td><td>{{ (kpis or {}).get('free_licenses', 0) }}</td></tr>
+                <tr><td>Placené</td><td>{{ (kpis or {}).get('paid_licenses', 0) }}</td></tr>
+                <tr><td>Celkem kontrol (souborů)</td><td><strong>{{ (kpis or {}).get('total_checks', 0) }}</strong></td></tr>
+                <tr><td>Úspěšné</td><td style="color:#16a34a;">{{ (kpis or {}).get('success_checks', 0) }}</td></tr>
+                <tr><td>Chybné</td><td style="color:#dc2626;">{{ (kpis or {}).get('error_checks', 0) }}</td></tr>
+                <tr><td>Chybovost</td><td>{{ (kpis or {}).get('error_rate_percent', 0) }} %</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ============ ŽEBŘÍČEK + POSLEDNÍ AKTIVITA ============ #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Žebříček uživatelů (30 dní)</h3>
+        <table class="table-dense" style="width:100%;">
+            <thead><tr><th>#</th><th>Uživatel</th><th>Souborů</th></tr></thead>
+            <tbody>
+                {% for r in user_ranking %}
+                <tr><td>{{ loop.index }}</td><td>{{ r.email or r.user_name or (r.user_id or '')[:20] }}</td><td><strong>{{ r.total_files }}</strong></td></tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted" style="padding:12px;">Zatím žádná aktivita.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Poslední aktivita</h3>
+        <table class="table-dense" style="width:100%;">
+            <thead><tr><th>IP</th><th>Čas</th><th>Typ</th><th>Souborů</th></tr></thead>
+            <tbody>
+                {% for row in activity_log[:10] %}
                 <tr>
                     <td><small style="font-family:monospace;">{{ row.ip_address or '—' }}</small></td>
-                    <td><small>{{ (row.timestamp or '—')[:19] }}</small></td>
-                    <td>{% if row.source_type == 'web_trial' %}Web Trial{% elif row.source_type == 'agent' %}Agent{% elif row.source_type == 'registered' %}Registrovaný{% else %}{{ row.source_type or '—' }}{% endif %}</td>
+                    <td><small>{{ (row.timestamp or '—')[:16] }}</small></td>
+                    <td>{% if row.source_type == 'web_trial' %}Trial{% elif row.source_type == 'agent' %}Agent{% else %}{{ row.source_type or '—' }}{% endif %}</td>
                     <td>{{ row.file_count }}</td>
-                    <td>{% if row.source_type == 'web_trial' and row.ip_address %}<button type="button" class="btn btn-secondary btn-small reset-ip-btn" data-ip="{{ row.ip_address|e }}" title="Resetovat limit trial pro tuto IP">Resetovat IP</button>{% else %}—{% endif %}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center text-muted" style="padding:24px;">Zatím žádné záznamy.</td></tr>
+                <tr><td colspan="4" class="text-center text-muted" style="padding:12px;">Zatím žádné záznamy.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
 
-<script>
-document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var ip = this.getAttribute('data-ip');
-        if (!ip) return;
-        var fd = new FormData();
-        fd.append('ip_address', ip);
-        fetch('{{ url_for("admin.api_web_trial_reset") }}', { method: 'POST', body: fd })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                if (res.success) {
-                    alert(res.message || 'IP resetována');
-                    location.reload();
-                } else {
-                    alert(res.error || 'Chyba');
-                }
-            })
-            .catch(function() { alert('Chyba spojení'); });
-    });
-});
-</script>
-
-<section class="admin-stats-section" style="margin-top:32px;">
-    <h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Statistiky a grafy</h2>
-    <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
-        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Aktivita – soubory za den (30 dní)</h3>
-            <div style="height:220px;"><canvas id="chartActivity30"></canvas></div>
-        </div>
-        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Rozložení tarifů (počet licencí)</h3>
-            <div style="height:220px;"><canvas id="chartTiersPie"></canvas></div>
-        </div>
-    </div>
-    <div class="admin-charts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
-        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – úspěšné vs. chybné</h3>
-            <div style="height:220px;"><canvas id="chartChecksBar"></canvas></div>
-        </div>
-        <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-            <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">KPI – přehled</h3>
-            <table class="table-dense" style="width:100%;">
-                <tbody>
-                    <tr><td>Aktivní licence</td><td><strong>{{ (kpis or {}).get('active_licenses', 0) }}</strong></td></tr>
-                    <tr><td>Free / Trial</td><td>{{ (kpis or {}).get('free_licenses', 0) }}</td></tr>
-                    <tr><td>Placené</td><td>{{ (kpis or {}).get('paid_licenses', 0) }}</td></tr>
-                    <tr><td>Celkem kontrol (souborů)</td><td><strong>{{ (kpis or {}).get('total_checks', 0) }}</strong></td></tr>
-                    <tr><td>Úspěšné</td><td style="color:#16a34a;">{{ (kpis or {}).get('success_checks', 0) }}</td></tr>
-                    <tr><td>Chybné</td><td style="color:#dc2626;">{{ (kpis or {}).get('error_checks', 0) }}</td></tr>
-                    <tr><td>Chybovost</td><td>{{ (kpis or {}).get('error_rate_percent', 0) }} %</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);max-width:520px;">
-        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Žebříček uživatelů – aktivita (30 dní)</h3>
-        <div class="table-container">
+{# ============ ODKAZY NA WEB (sbalitelné) ============ #}
+<details style="margin-bottom:24px;">
+    <summary style="cursor:pointer;font-size:1em;font-weight:600;color:#374151;padding:8px 0;">Odkazy na web</summary>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px;">
+        <div class="table-container" style="margin:0;">
+            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f0f9ff;border-bottom:1px solid #e5e7eb;">Agent</h3>
             <table class="table-dense">
-                <thead>
-                    <tr><th>#</th><th>Uživatel</th><th>Počet souborů</th></tr>
-                </thead>
                 <tbody>
-                    {% for r in user_ranking %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td>{{ r.email or r.user_name or (r.user_id or '')[:20] }}</td>
-                        <td><strong>{{ r.total_files }}</strong></td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="3" class="text-center text-muted" style="padding:12px;">Zatím žádná aktivita.</td></tr>
-                    {% endfor %}
+                    <tr><td style="padding:8px 16px;"><strong>API konfigurace</strong></td><td style="padding:8px 16px;"><a href="{{ url_for('agent_config', _external=True) }}" target="_blank">/api/agent-config</a></td></tr>
+                    <tr><td style="padding:8px 16px;">VOP</td><td style="padding:8px 16px;"><a href="{{ url_for('vop', _external=True) }}" target="_blank">{{ url_for('vop', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">GDPR</td><td style="padding:8px 16px;"><a href="{{ url_for('gdpr', _external=True) }}" target="_blank">{{ url_for('gdpr', _external=True) }}</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container" style="margin:0;">
+            <h3 style="font-size:0.95em;padding:12px 16px;margin:0;background:#f9fafb;border-bottom:1px solid #e5e7eb;">Web</h3>
+            <table class="table-dense">
+                <tbody>
+                    <tr><td style="padding:8px 16px;">Landing</td><td style="padding:8px 16px;"><a href="{{ url_for('index', _external=True) }}" target="_blank">{{ url_for('index', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Aplikace</td><td style="padding:8px 16px;"><a href="{{ url_for('app_main', _external=True) }}" target="_blank">/app</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Portál</td><td style="padding:8px 16px;"><a href="{{ url_for('portal', _external=True) }}" target="_blank">{{ url_for('portal', _external=True) }}</a></td></tr>
+                    <tr><td style="padding:8px 16px;">Checkout</td><td style="padding:8px 16px;"><a href="{{ url_for('checkout', _external=True) }}" target="_blank">{{ url_for('checkout', _external=True) }}</a></td></tr>
                 </tbody>
             </table>
         </div>
     </div>
-</section>
+</details>
 
+{# ============ UŽIVATELÉ (tabulka) ============ #}
+<div id="users" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
+        <h2 style="font-size:1.1em;margin:0;">Uživatelé a licence</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="tier" value="{{ tier_filter }}">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="text" name="q" class="form-control" style="width:160px;" placeholder="Vyhledat…" value="{{ search }}">
+                <button type="submit" class="btn btn-sm btn-secondary">Hledat</button>
+            </form>
+            <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="q" value="{{ search }}">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <select name="tier" class="form-control form-select" style="width:120px;" onchange="this.form.submit()">
+                    <option value="">Všechny tarify</option>
+                    {% for t in tiers_list %}
+                    <option value="{{ t.name }}" {{ 'selected' if tier_filter == t.name else '' }}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <form method="get" action="{{ url_for('admin.dashboard') }}" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="q" value="{{ search }}">
+                <input type="hidden" name="tier" value="{{ tier_filter }}">
+                <select name="status" class="form-control form-select" style="width:110px;" onchange="this.form.submit()">
+                    <option value="">Stav účtu</option>
+                    <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Aktivní</option>
+                    <option value="blocked" {{ 'selected' if status_filter == 'blocked' else '' }}>Blokovaný</option>
+                </select>
+            </form>
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Nová licence</button>
+        </div>
+    </div>
+    <div class="table-container">
+        <table class="table-dense">
+            <thead>
+                <tr>
+                    <th>E-mail / Jméno</th>
+                    <th>Tarif</th>
+                    <th>Zařízení</th>
+                    <th>Poslední aktivita</th>
+                    <th>Poslední IP</th>
+                    <th>Soubory</th>
+                    <th>Platba</th>
+                    <th>Heslo</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for license in licenses %}
+                <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}">
+                    <td>
+                        <strong>{{ license.email or '—' }}</strong>
+                        {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
+                    </td>
+                    <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
+                    <td title="{% if license.device_names %}Stanice: {{ license.device_names|e }}{% else %}Počet aktivních zařízení{% endif %}">{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}{% if license.device_names %} <small style="color:#6b7280;" title="Stanice: {{ license.device_names|e }}">({{ license.device_names|truncate(30, True) }})</small>{% endif %}</td>
+                    <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
+                    <td><small style="font-family:monospace;font-size:0.85em;">{{ license.last_ip or '—' }}</small></td>
+                    <td>{{ license.total_checks }}</td>
+                    <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
+                    <td><small style="font-family:monospace;font-size:0.85em;">{{ (license.get('password_plain_stored') or '—')|e }}</small></td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit">Upravit</button>
+                            <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
+                            <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')">SMAZAT</button>
+                            <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)">INFO</button>
+                            <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn">Audit</a>
+                            <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)">Heslo</button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ============ MODÁLY ============ #}
 <div class="modal-overlay" id="createModal">
     <div class="modal">
         <div class="modal-header">
-            <h3>Vytvorit novou licenci</h3>
+            <h3>Vytvořit novou licenci</h3>
             <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
         </div>
         <form id="createForm" onsubmit="submitCreateForm(event)">
             <div class="form-group">
-                <label for="create_user_name">Jmeno uzivatele</label>
+                <label for="create_user_name">Jméno uživatele</label>
                 <input type="text" id="create_user_name" name="user_name" required>
             </div>
             <div class="form-group">
-                <label for="create_email">Email</label>
+                <label for="create_email">E-mail</label>
                 <input type="email" id="create_email" name="email" required>
             </div>
             <div class="form-group">
-                <label for="create_tier_id">Tier</label>
+                <label for="create_tier_id">Tarif</label>
                 <select id="create_tier_id" name="tier_id">
                     {% for t in product_tiers or tiers_list %}
                     <option value="{{ t.id }}">{{ t.name }}</option>
@@ -300,16 +229,16 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
                 </select>
             </div>
             <div class="form-group">
-                <label for="create_password">Heslo pro uzivatele (pro prihlaseni e-mailem v agentovi – bez hesla prihlaseni v agentovi nefunguje)</label>
+                <label for="create_password">Heslo (pro přihlášení e-mailem v agentovi)</label>
                 <input type="password" id="create_password" name="password" placeholder="Doporučeno vyplnit">
             </div>
             <div class="form-group">
-                <label for="create_days">Platnost (dni, prazdne = neomezeno)</label>
+                <label for="create_days">Platnost (dní, prázdné = neomezeno)</label>
                 <input type="number" id="create_days" name="days" value="365" min="1">
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Zrusit</button>
-                <button type="submit" class="btn btn-primary">Vytvorit</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Zrušit</button>
+                <button type="submit" class="btn btn-primary">Vytvořit</button>
             </div>
         </form>
     </div>
@@ -332,7 +261,7 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
                 <input type="email" id="edit_email" name="email" class="form-control">
             </div>
             <div class="form-group">
-                <label for="edit_tier_id">Tarif (Tier)</label>
+                <label for="edit_tier_id">Tarif</label>
                 <select id="edit_tier_id" name="tier_id">
                     {% for t in product_tiers or tiers_list %}
                     <option value="{{ t.id }}">{{ t.name }}</option>
@@ -389,11 +318,10 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
 <div class="modal-overlay" id="changePasswordModal">
     <div class="modal">
         <div class="modal-header">
-            <h3>Zmenit heslo uzivatele</h3>
+            <h3>Změnit heslo uživatele</h3>
             <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
         </div>
-        <p style="margin-bottom:16px;color:#6b7280;">Uzivatel: <strong id="changePasswordUserDisplay"></strong></p>
-        <p style="font-size:0.85em;color:#9ca3af;margin-bottom:8px;">Heslo slouží pro přihlášení v agentovi (e-mail + heslo).</p>
+        <p style="margin-bottom:16px;color:#6b7280;">Uživatel: <strong id="changePasswordUserDisplay"></strong></p>
         <div class="form-group" style="margin-bottom:16px;">
             <label>Stávající heslo</label>
             <div id="changePasswordCurrentDisplay" style="font-family:monospace;padding:8px;background:#f3f4f6;border-radius:6px;font-size:0.95em;">—</div>
@@ -409,8 +337,8 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
                 <input type="text" id="changePasswordNew2" name="new_password2" required minlength="6" autocomplete="off">
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Zrusit</button>
-                <button type="submit" class="btn btn-primary">Ulozit heslo</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Zrušit</button>
+                <button type="submit" class="btn btn-primary">Uložit heslo</button>
             </div>
         </form>
     </div>
@@ -422,7 +350,7 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
             <h3>Údaje licence</h3>
             <button class="modal-close" onclick="closeModal('welcomePackageModal')">&times;</button>
         </div>
-        <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Pouze zobrazení údajů licence. Heslo se negeneruje ani nemění – pro změnu hesla použijte tlačítko „Změnit heslo“.</p>
+        <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Pouze zobrazení údajů licence. Heslo se negeneruje ani nemění.</p>
         <div id="welcomePackageContent" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:0.85em;white-space:pre-wrap;word-break:break-all;max-height:280px;overflow-y:auto;"></div>
         <div class="modal-actions" style="margin-top:16px;">
             <button type="button" class="btn btn-secondary" onclick="closeModal('welcomePackageModal')">Zavřít</button>
@@ -434,7 +362,7 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
 <div class="modal-overlay" id="resultModal">
     <div class="modal">
         <div class="modal-header">
-            <h3>Vysledek</h3>
+            <h3>Výsledek</h3>
             <button class="modal-close" onclick="closeModal('resultModal')">&times;</button>
         </div>
         <div id="resultContent"></div>
@@ -447,7 +375,6 @@ document.querySelectorAll('.reset-ip-btn').forEach(function(btn) {
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-// Data pro grafy (z backendu)
 var _activity30 = {{ (activity_30 or []) | tojson }};
 var _byTierCounts = {{ (by_tier_counts or {}) | tojson }};
 var _kpis = {{ (kpis or {}) | tojson }};
@@ -543,8 +470,8 @@ async function submitChangePassword(e) {
     var apiKey = document.getElementById('changePasswordApiKey').value;
     var newPass = document.getElementById('changePasswordNew').value;
     var newPass2 = document.getElementById('changePasswordNew2').value;
-    if (newPass !== newPass2) { showResult('Hesla se neshoduji', true); return; }
-    if (newPass.length < 6) { showResult('Heslo musi mit alespon 6 znaku', true); return; }
+    if (newPass !== newPass2) { showResult('Hesla se neshodují', true); return; }
+    if (newPass.length < 6) { showResult('Heslo musí mít alespoň 6 znaků', true); return; }
     var data = new FormData();
     data.append('api_key', apiKey);
     data.append('new_password', newPass);
@@ -562,7 +489,7 @@ function showResult(message, isError) {
     openModal('resultModal');
 }
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() { alert('API klic zkopirovan do schranky'); });
+    navigator.clipboard.writeText(text).then(function() { alert('API klíč zkopírován do schránky'); });
 }
 async function doGitPull() {
     var btn = document.getElementById('btn-git-pull');
@@ -580,9 +507,9 @@ async function doGitPull() {
         }
         var log = (data.log || []).join('\n');
         alert(data.success ? 'Hotovo.\n\n' + log : 'Chyba:\n\n' + log);
-    } catch (e) { alert('Chyba pri volani: ' + e.message); }
+    } catch (e) { alert('Chyba: ' + e.message); }
     btn.disabled = false;
-    btn.textContent = '🔄 Stáhnout z GitHubu';
+    btn.innerHTML = '&#128260; Git Pull';
 }
 async function submitCreateForm(e) {
     e.preventDefault();
@@ -593,8 +520,8 @@ async function submitCreateForm(e) {
         var result = await response.json();
         if (result.success) {
             closeModal('createModal');
-            showResult('<p><strong>Licence vytvorena!</strong></p><p style="margin-top:12px;">API klic:</p><div style="background:#f3f4f6;padding:12px;border-radius:8px;font-family:monospace;word-break:break-all;margin-top:8px;">' + result.api_key + '</div><button class="btn btn-secondary btn-small" style="margin-top:12px;" onclick="copyToClipboard(\'' + result.api_key + '\')">Kopirovat</button>', false);
-        } else { showResult(result.error || 'Chyba pri vytvareni', true); }
+            showResult('<p><strong>Licence vytvořena!</strong></p><p style="margin-top:12px;">API klíč:</p><div style="background:#f3f4f6;padding:12px;border-radius:8px;font-family:monospace;word-break:break-all;margin-top:8px;">' + result.api_key + '</div><button class="btn btn-secondary btn-small" style="margin-top:12px;" onclick="copyToClipboard(\'' + result.api_key + '\')">Kopírovat</button>', false);
+        } else { showResult(result.error || 'Chyba při vytváření', true); }
     } catch (err) { showResult('Chyba: ' + err.message, true); }
 }
 async function submitEditForm(e) {
@@ -622,8 +549,8 @@ async function toggleLicense(apiKey, activate) {
     } catch (err) { showResult('Chyba: ' + err.message, true); }
 }
 async function deleteLicense(apiKey) {
-    if (!confirm('VAROVANI: Opravdu chcete SMAZAT tuto licenci? Tato akce je nevratna!')) return;
-    if (!confirm('Potvrzujete smazani licence?')) return;
+    if (!confirm('Opravdu chcete SMAZAT tuto licenci? Tato akce je nevratná!')) return;
+    if (!confirm('Potvrzujete smazání licence?')) return;
     var data = new FormData();
     data.append('api_key', apiKey);
     try {
@@ -643,13 +570,12 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Grafy (Chart.js) – inicializace po načtení stránky
+// Grafy (Chart.js)
 (function initCharts() {
     if (typeof Chart === 'undefined') return;
     var colors = { blue: 'rgb(52, 152, 219)', green: 'rgb(46, 204, 113)', red: 'rgb(231, 76, 60)', orange: 'rgb(230, 126, 34)', gray: 'rgb(149, 165, 166)', purple: 'rgb(155, 89, 182)' };
     var tierColors = [colors.blue, colors.green, colors.orange, colors.purple, colors.gray];
 
-    // Sloupcový: aktivita 30 dní
     var ctxActivity = document.getElementById('chartActivity30');
     if (ctxActivity && _activity30 && _activity30.length) {
         new Chart(ctxActivity, {
@@ -662,7 +588,6 @@ document.addEventListener('keydown', function(e) {
         });
     }
 
-    // Koláč: tarify
     var ctxPie = document.getElementById('chartTiersPie');
     if (ctxPie && _byTierCounts && typeof _byTierCounts === 'object') {
         var tierLabels = Object.keys(_byTierCounts);
@@ -676,7 +601,6 @@ document.addEventListener('keydown', function(e) {
         }
     }
 
-    // Sloupcový: úspěšné vs chybné kontroly
     var ctxChecks = document.getElementById('chartChecksBar');
     if (ctxChecks && _kpis) {
         var ok = _kpis.success_checks || 0, err = _kpis.error_checks || 0;

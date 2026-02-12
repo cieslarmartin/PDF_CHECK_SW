@@ -818,18 +818,23 @@ def download_invoice(order_id):
     if not order:
         flash('Objednávka nenalezena', 'error')
         return redirect(url_for('admin.pending_orders'))
+    # Číslo faktury pro download_name (= order_display_number)
+    display_num = (order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id)
+    dl_name = 'faktura_{}.pdf'.format(display_num)
+    # 1. Uložená cesta v DB
     path = (order.get('invoice_path') or '').strip()
     if path and os.path.isfile(path):
-        return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
-    invoices_dir = (db.get_global_setting('invoices_dir') or '').strip()
-    if invoices_dir:
-        path = os.path.join(invoices_dir, 'faktura_{}.pdf'.format(order_id))
-        if os.path.isfile(path):
-            return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
+        return send_file(path, as_attachment=True, download_name=dl_name)
+    # 2. Hledej ve složce faktur -- nejprve pod display_num, pak pod order_id (zpětná kompatibilita)
     from invoice_generator import INVOICES_DIR
-    path = os.path.join(INVOICES_DIR, 'faktura_{}.pdf'.format(order_id))
-    if os.path.isfile(path):
-        return send_file(path, as_attachment=True, download_name='faktura_{}.pdf'.format(order_id))
+    invoices_dir = (db.get_global_setting('invoices_dir') or '').strip()
+    for search_dir in [invoices_dir, INVOICES_DIR]:
+        if not search_dir:
+            continue
+        for candidate in [display_num, str(order_id)]:
+            path = os.path.join(search_dir, 'faktura_{}.pdf'.format(candidate))
+            if os.path.isfile(path):
+                return send_file(path, as_attachment=True, download_name=dl_name)
     flash('Faktura k objednávce #{} nebyla nalezena. Vygenerujte ji tlačítkem „VYGENEROVAT FAKTURU“ nebo „GENEROVAT ZNOVU“.'.format(order_id), 'error')
     return redirect(url_for('admin.pending_orders'))
 

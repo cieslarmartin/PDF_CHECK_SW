@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fakturační údaje – DokuCheck</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -20,8 +22,9 @@
 <body class="min-h-screen antialiased">
     <header class="checkout-header">
         <div class="max-w-4xl mx-auto px-4 py-3">
-            <a href="/" class="text-xl font-bold">
-                <span class="logo-pdf">PDF</span><span class="logo-doku">DokuCheck</span>
+            <a href="/" class="flex items-center gap-2 text-xl">
+                <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
+                <span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;"><span style="color:#020617;">Doku</span><span style="color:#16A34A;">Check</span></span>
             </a>
         </div>
     </header>

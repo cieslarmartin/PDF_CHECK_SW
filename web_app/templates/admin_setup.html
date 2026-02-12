@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF DokuCheck - Admin Setup</title>
+    <title>DokuCheck - Admin Setup</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -137,8 +139,9 @@
 <body>
     <div class="setup-container">
         <div class="logo">
-            <div class="logo-text">
-                <span class="pdf">PDF</span><span class="doku">DokuCheck</span>
+            <div class="logo-text" style="display:flex;align-items:center;gap:8px;justify-content:center;">
+                <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" style="height:28px;width:28px;">
+                <span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;"><span style="color:#ecf0f1;">Doku</span><span style="color:#16A34A;">Check</span></span>
             </div>
             <div class="logo-subtitle">Initial Setup</div>
         </div>

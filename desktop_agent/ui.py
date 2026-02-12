@@ -1,5 +1,5 @@
 # ui.py
-# PDF DokuCheck Agent – Dashboard layout, Sidebar + Main, celoplošný DnD, moderní Treeview.
+# DokuCheck Agent – Dashboard layout, Sidebar + Main, celoplošný DnD, moderní Treeview.
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -245,7 +245,7 @@ class PDFCheckUI:
         self.cancel_requested = False
         self.is_running = False
 
-        self.root.title("PDF DokuCheck Agent")
+        self.root.title("DokuCheck")
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
         try:
@@ -311,7 +311,11 @@ class PDFCheckUI:
         sidebar_frame.grid(row=0, column=0, sticky="nswe", padx=0, pady=0)
         sidebar_frame.grid_propagate(False)
         # Account Info
-        ctk.CTkLabel(sidebar_frame, text="DokuCheck", font=(FONT_FAMILY, 20, "bold"), text_color=self.BUTTON_TEXT).pack(pady=(20, 0))
+        # Logo: „DokuCheck" (Doku bílá, Check zelená)
+        _logo_row = ctk.CTkFrame(sidebar_frame, fg_color="transparent")
+        _logo_row.pack(pady=(20, 0))
+        ctk.CTkLabel(_logo_row, text="Doku", font=("Inter", 20, "bold"), text_color=self.BUTTON_TEXT).pack(side=tk.LEFT)
+        ctk.CTkLabel(_logo_row, text="Check", font=("Inter", 20, "bold"), text_color="#16A34A").pack(side=tk.LEFT)
         ctk.CTkLabel(sidebar_frame, text=f"Build {BUILD_VERSION}", font=(FONT_FAMILY, FONT_SIZE - 2), text_color=self.TEXT_MUTED).pack(pady=(0, 16))
         ctk.CTkLabel(sidebar_frame, text="Můj účet", font=(FONT_FAMILY, FONT_SIZE, "bold"), text_color=self.TEXT_DARK).pack(anchor=tk.W, padx=16, pady=(8, 4))
         self.sidebar_account = ctk.CTkLabel(sidebar_frame, text="Nepřihlášen", font=(FONT_FAMILY, FONT_SIZE - 1), text_color=self.TEXT_MUTED, wraplength=SIDEBAR_WIDTH - 32)

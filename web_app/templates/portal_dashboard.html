@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Můj účet – DokuCheck</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
     <nav class="border-b border-slate-700/50 bg-slate-900/95">
         <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-white">DokuCheck</a>
+            <a href="/" class="flex items-center gap-2 text-xl font-bold text-white"><img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-6 w-6"><span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span></a>
             <a href="/portal/logout" class="text-slate-400 hover:text-white text-sm">Odhlásit se</a>
         </div>
     </nav>

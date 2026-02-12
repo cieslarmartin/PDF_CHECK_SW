@@ -131,6 +131,8 @@ HTML_TEMPLATE = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DokuCheck</title>
+    <link rel="icon" type="image/svg+xml" href="/static/logo/dokucheck-icon.svg">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" sizes="16x16 32x32 48x48">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -727,21 +729,10 @@ HTML_TEMPLATE = '''
     <div id="main-app">
         <header id="header">
             <div class="header-logo">
-                <svg width="36" height="45" viewBox="0 0 64 80" fill="none">
-                    <path d="M8 8H48L56 16V72C56 74.2 54.2 76 52 76H12C9.8 76 8 74.2 8 72V8Z" fill="#E5E7EB"/>
-                    <path d="M4 4H44L52 12V68C52 70.2 50.2 72 48 72H8C5.8 72 4 70.2 4 68V4Z" fill="white" stroke="#9CA3AF" stroke-width="2"/>
-                    <path d="M44 4V12H52" stroke="#9CA3AF" stroke-width="2" fill="#F3F4F6"/>
-                    <rect x="8" y="10" width="28" height="14" rx="3" fill="#1e5a8a"/>
-                    <text x="22" y="21" text-anchor="middle" fill="white" font-size="9" font-weight="bold">PDF</text>
-                    <g fill="#22c55e" font-size="14" font-weight="bold">
-                        <text x="12" y="42">✓</text><text x="26" y="42">✓</text>
-                        <text x="12" y="54">✓</text><text x="26" y="54">✓</text>
-                        <text x="12" y="66">✓</text><text x="26" y="66">✓</text>
-                    </g>
-                </svg>
+                <img src="/static/logo/dokucheck-icon.svg" alt="" style="height:32px;width:32px;">
                 <div class="header-logo-text">
-                    <div class="header-logo-title">
-                        <span class="pdf">PDF</span> <span class="doku">DokuCheck</span> <span class="pro">PRO</span>
+                    <div class="header-logo-title" style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;">
+                        <span style="color:#020617;">Doku</span><span style="color:#16A34A;">Check</span>
                     </div>
                     <div class="header-logo-subtitle">Kontrola projektové dokumentace</div>
                 </div>

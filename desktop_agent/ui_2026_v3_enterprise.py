@@ -87,12 +87,12 @@ SPLASH_DURATION_MS = 3000
 
 
 def _create_splash(master):
-    """Vytvoří dočasné okno bez okrajů (splash): logo, verze, copyright. Trvá SPLASH_DURATION_MS ms."""
+    """Vytvoří splash screen: ikona + „DokuCheck" (Inter Black, Doku tmavá / Check zelená), verze, copyright. Trvá SPLASH_DURATION_MS ms."""
     splash = ctk.CTkToplevel(master)
     splash.overrideredirect(True)
     splash.configure(fg_color=BG_APP)
     splash.attributes("-topmost", True)
-    w, h = 420, 300
+    w, h = 460, 320
     splash.geometry(f"{w}x{h}")
     splash.update_idletasks()
     sw = splash.winfo_screenwidth()
@@ -100,14 +100,29 @@ def _create_splash(master):
     x = (sw - w) // 2
     y = (sh - h) // 2
     splash.geometry(f"{w}x{h}+{x}+{y}")
+
+    # Ikona aplikace (logo.png = squircle ikona)
+    _splash_images = []  # reference aby GC nesmazal
     try:
-        logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(200, 100))
-        ctk.CTkLabel(splash, text="", image=logo_img).pack(pady=(32, 16))
+        from PIL import Image as PILImage
+        pil_img = PILImage.open(LOGO_PATH)
+        logo_ctk = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(72, 72))
+        _splash_images.append(logo_ctk)
+        ctk.CTkLabel(splash, text="", image=logo_ctk).pack(pady=(40, 12))
     except Exception:
-        ctk.CTkLabel(splash, text="DokuCheck Agent", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack(pady=(32, 16))
-    ctk.CTkLabel(splash, text=AGENT_VERSION, font=(FONT_STACK[0], FS_16), text_color=TEXT).pack(pady=4)
+        # Fallback: jen text
+        ctk.CTkLabel(splash, text="⬛", font=(FONT_STACK[0], 48), text_color="#1E293B").pack(pady=(40, 12))
+
+    # Název: „DokuCheck" – Inter Black, Doku bílá (#E5E7EB), Check zelená (#16A34A)
+    name_frame = ctk.CTkFrame(splash, fg_color="transparent")
+    name_frame.pack(pady=(0, 4))
+    ctk.CTkLabel(name_frame, text="Doku", font=("Inter", FS_32, "bold"), text_color="#E5E7EB").pack(side=tk.LEFT)
+    ctk.CTkLabel(name_frame, text="Check", font=("Inter", FS_32, "bold"), text_color="#16A34A").pack(side=tk.LEFT)
+
+    ctk.CTkLabel(splash, text=AGENT_VERSION, font=(FONT_STACK[0], FS_14), text_color=TEXT_MUTED).pack(pady=(8, 4))
     ctk.CTkLabel(splash, text="© 2026 Ing. Martin Cieślar", font=(FONT_STACK[0], 10), text_color=TEXT_MUTED).pack(pady=(0, 24))
     splash.update()
+    splash._splash_images = _splash_images  # prevent GC
     return splash
 
 
@@ -158,7 +173,7 @@ class PDFCheckUI_2026_V3:
         self.is_running = False
         self.selected_qidx = None
 
-        self.root.title("DokuCheck Agent")
+        self.root.title("DokuCheck")
         self.root.minsize(1200, 750)
         self.root.geometry("1680x1000")
         try:
@@ -221,17 +236,22 @@ class PDFCheckUI_2026_V3:
         sidebar = ctk.CTkFrame(self.root, fg_color=BG_HEADER, width=SIDEBAR_W, corner_radius=0)
         sidebar.grid(row=0, column=0, sticky="nswe")
         sidebar.grid_propagate(False)
-        # Logo (vyměnitelné – nahraďte soubor desktop_agent/logo/logo.png)
+        # Logo: ikona + „DokuCheck" (Doku bílá, Check zelená)
         self._logo_container = ctk.CTkFrame(sidebar, fg_color="transparent")
         self._logo_container.pack(pady=(16, 0))
-        if os.path.isfile(LOGO_PATH):
-            try:
-                logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(140, 36))
-                ctk.CTkLabel(self._logo_container, text="", image=logo_img).pack()
-            except Exception:
-                ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
-        else:
-            ctk.CTkLabel(self._logo_container, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack()
+        _logo_row = ctk.CTkFrame(self._logo_container, fg_color="transparent")
+        _logo_row.pack()
+        self._sidebar_logo_refs = []  # prevent GC
+        try:
+            from PIL import Image as PILImage
+            pil_img = PILImage.open(LOGO_PATH)
+            logo_ctk = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(28, 28))
+            self._sidebar_logo_refs.append(logo_ctk)
+            ctk.CTkLabel(_logo_row, text="", image=logo_ctk).pack(side=tk.LEFT, padx=(0, 6))
+        except Exception:
+            pass
+        ctk.CTkLabel(_logo_row, text="Doku", font=("Inter", FS_20, "bold"), text_color="#E5E7EB").pack(side=tk.LEFT)
+        ctk.CTkLabel(_logo_row, text="Check", font=("Inter", FS_20, "bold"), text_color="#16A34A").pack(side=tk.LEFT)
         # Blok „Účet“ – zobrazen když přihlášen
         self._account_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         self._account_frame.pack(fill=tk.X, pady=(0, 4))
@@ -832,7 +852,7 @@ class PDFCheckUI_2026_V3:
         """O programu – styl PDF-XChange: záhlaví (logo, verze), popis, právní doložka, komponenty, spodní banner. Modální."""
         from datetime import datetime
         top = ctk.CTkToplevel(self.root)
-        top.title("O programu DokuCheck")
+        top.title("O programu")
         top.geometry("650x500")
         top.configure(fg_color=BG_APP)
         top.transient(self.root)
@@ -859,19 +879,26 @@ class PDFCheckUI_2026_V3:
         main = ctk.CTkFrame(top, fg_color=BG_APP)
         main.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
 
-        # —— 1. Záhlaví: logo vlevo, název + verze + datum vpravo ——
+        # —— 1. Záhlaví: ikona + „DokuCheck" (Doku bílá, Check zelená) + verze ——
         header = ctk.CTkFrame(main, fg_color="transparent")
         header.pack(fill=tk.X, pady=(0, 12))
-        if os.path.isfile(LOGO_PATH):
-            try:
-                logo_img = ctk.CTkImage(light_image=LOGO_PATH, dark_image=LOGO_PATH, size=(140, 72))
-                ctk.CTkLabel(header, text="", image=logo_img).pack(side=tk.LEFT, padx=(0, 20))
-            except Exception:
-                pass
+        _about_img_refs = []
+        try:
+            from PIL import Image as PILImage
+            pil_img = PILImage.open(LOGO_PATH)
+            logo_ctk = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(56, 56))
+            _about_img_refs.append(logo_ctk)
+            ctk.CTkLabel(header, text="", image=logo_ctk).pack(side=tk.LEFT, padx=(0, 16))
+        except Exception:
+            pass
         header_right = ctk.CTkFrame(header, fg_color="transparent")
         header_right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        ctk.CTkLabel(header_right, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT_MAIN).pack(anchor=tk.W)
+        _name_row = ctk.CTkFrame(header_right, fg_color="transparent")
+        _name_row.pack(anchor=tk.W)
+        ctk.CTkLabel(_name_row, text="Doku", font=("Inter", FS_20, "bold"), text_color="#E5E7EB").pack(side=tk.LEFT)
+        ctk.CTkLabel(_name_row, text="Check", font=("Inter", FS_20, "bold"), text_color="#16A34A").pack(side=tk.LEFT)
         ctk.CTkLabel(header_right, text=f"Verze: {AGENT_VERSION} (Enterprise Edition)", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W)
+        top._about_img_refs = _about_img_refs  # prevent GC
 
         # —— 2. Střed: účel aplikace ——
         desc = (
