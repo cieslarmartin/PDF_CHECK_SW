@@ -16,6 +16,8 @@
                 <th>IČ</th>
                 <th>E-mail</th>
                 <th>Tarif</th>
+                <th>Cena</th>
+                <th>Sleva</th>
                 <th>Stav</th>
                 <th>Akce</th>
             </tr>
@@ -25,13 +27,25 @@
             <tr>
                 <td>{{ o.order_display_number or o.id }}</td>
                 <td>{{ (o.created_at or '')[:16] }}</td>
-                <td>{{ o.jmeno_firma or '—' }}</td>
-                <td>{{ o.ico or '—' }}</td>
+                <td>{{ o.jmeno_firma or '—' }}{% if o.ulice or o.mesto %}<br><small style="color:#9ca3af;">{{ o.ulice or '' }} {{ o.mesto or '' }} {{ o.psc or '' }}</small>{% endif %}</td>
+                <td>{{ o.ico or '—' }}{% if o.dic %}<br><small>DIČ: {{ o.dic }}</small>{% endif %}</td>
                 <td>{{ o.email or '—' }}</td>
                 <td>{{ (o.tarif or '—')|upper }}</td>
+                <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
+                <td>
+                    {% if o.discount_applied %}<span style="background:#d1fae5;color:#047857;padding:2px 6px;border-radius:4px;font-size:0.8em;">-{{ o.discount_percent|int }}%</span>
+                    {% elif o.discount_requested %}<span style="background:#fef3c7;color:#b45309;padding:2px 6px;border-radius:4px;font-size:0.8em;">Žádost</span>
+                    {% else %}—{% endif %}
+                </td>
                 <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_new|default('Nová') }}</span></td>
                 <td style="white-space:nowrap;">
                     <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU (PDF)</a>
+                    {% if o.discount_requested and not o.discount_applied %}
+                    <form method="post" action="{{ url_for('admin.apply_discount') }}" style="display:inline;margin-left:6px;">
+                        <input type="hidden" name="order_id" value="{{ o.id }}">
+                        <button type="submit" class="btn btn-sm" style="background:#059669;color:#fff;" onclick="return confirm('Uplatnit slevu 20% na objednávku #{{ o.order_display_number or o.id }}?');">UPLATNIT SLEVU</button>
+                    </form>
+                    {% endif %}
                     <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;margin-left:6px;">
                         <input type="hidden" name="order_id" value="{{ o.id }}">
                         <button type="submit" class="btn btn-primary btn-sm">{{ env_labels.label_btn_obednat|default('OBJEDNAT') }}</button>
@@ -51,7 +65,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
+            <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
             {% endfor %}
         </tbody>
     </table>

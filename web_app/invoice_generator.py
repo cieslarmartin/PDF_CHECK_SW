@@ -114,7 +114,8 @@ def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
 def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                          supplier_name, supplier_address, supplier_ico, bank_iban, bank_account,
                          invoice_number=None, supplier_trade_register=None, output_dir=None,
-                         supplier_bank_name=None, supplier_phone=None, supplier_email=None, vs=None):
+                         supplier_bank_name=None, supplier_phone=None, supplier_email=None, vs=None,
+                         buyer_ulice=None, buyer_mesto=None, buyer_psc=None, buyer_dic=None):
     """
     Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH.
     Redesign: hlavička FAKTURA vlevo / DOKLAD Č. vpravo, sloupce Dodavatel|Odběratel,
@@ -213,11 +214,16 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 6, 'Odběratel', 0, 1)
         pdf.set_font('DejaVu', '', 9)
-        pdf.multi_cell(0, 5, '{}\nIČ: {}\nE-mail: {}'.format(
-            (jmeno_firma or '—').strip(),
-            (ico or '—').strip(),
-            (email or '—').strip()
-        ))
+        buyer_lines = [(jmeno_firma or '—').strip()]
+        _b_addr_parts = []
+        if buyer_ulice: _b_addr_parts.append(buyer_ulice.strip())
+        if buyer_mesto or buyer_psc:
+            _b_addr_parts.append('{} {}'.format((buyer_psc or '').strip(), (buyer_mesto or '').strip()).strip())
+        if _b_addr_parts: buyer_lines.append(', '.join(_b_addr_parts))
+        buyer_lines.append('IČO: {}'.format((ico or '—').strip()))
+        if buyer_dic: buyer_lines.append('DIČ: {}'.format(buyer_dic.strip()))
+        buyer_lines.append('E-mail: {}'.format((email or '—').strip()))
+        pdf.multi_cell(0, 5, '\n'.join(buyer_lines))
         pdf.ln(6)
 
         # Platební blok: Banka, Číslo účtu, Variabilní symbol, Datum vystavení, Datum splatnosti

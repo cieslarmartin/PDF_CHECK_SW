@@ -3113,6 +3113,11 @@ def checkout():
         email = (request.form.get('email') or '').strip()
         tarif = (request.form.get('tarif') or 'standard').strip().lower()
         souhlas = request.form.get('souhlas_vop_gdpr')
+        ulice = (request.form.get('ulice') or '').strip()
+        mesto = (request.form.get('mesto') or '').strip()
+        psc = (request.form.get('psc') or '').strip()
+        dic = (request.form.get('dic') or '').strip()
+        discount_request = 1 if request.form.get('discount_request') else 0
         if not jmeno_firma or not email:
             flash('Vyplňte jméno/firmu a e-mail', 'error')
             return redirect(url_for('checkout', tarif=tarif))
@@ -3121,7 +3126,11 @@ def checkout():
             return redirect(url_for('checkout', tarif=tarif))
         # Číslo objednávky = číslo faktury = variabilní symbol (čistě číselné, např. 2602001)
         order_display_number = db.get_next_order_number()
-        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER', order_display_number=order_display_number)
+        amount_czk_initial = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+        order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER',
+                                           order_display_number=order_display_number,
+                                           ulice=ulice, mesto=mesto, psc=psc, dic=dic,
+                                           discount_requested=discount_request, amount_czk=amount_czk_initial)
         if order_id:
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
             db.update_pending_order_invoice_number(order_id, order_display_number)
@@ -3166,6 +3175,7 @@ def checkout():
                     supplier_bank_name=supplier_bank_name,
                     supplier_phone=supplier_phone,
                     supplier_email=supplier_email,
+                    buyer_ulice=ulice, buyer_mesto=mesto, buyer_psc=psc, buyer_dic=dic,
                 )
             except Exception as e:
                 if current_app and getattr(current_app, 'logger', None):

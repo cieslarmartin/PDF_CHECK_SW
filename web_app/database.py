@@ -470,6 +470,26 @@ class Database:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN invoice_number TEXT')
             if 'order_display_number' not in po_cols:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN order_display_number TEXT')
+            # B2B fakturační údaje
+            if 'ulice' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN ulice TEXT')
+            if 'mesto' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN mesto TEXT')
+            if 'psc' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN psc TEXT')
+            if 'dic' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN dic TEXT')
+            # Množstevní sleva
+            if 'discount_requested' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN discount_requested INTEGER DEFAULT 0')
+            if 'discount_applied' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN discount_applied INTEGER DEFAULT 0')
+            if 'discount_percent' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN discount_percent REAL DEFAULT 0')
+            if 'amount_czk' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN amount_czk REAL')
+            if 'amount_czk_final' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN amount_czk_final REAL')
         except Exception:
             pass
 
@@ -1324,23 +1344,20 @@ class Database:
         self.set_global_setting('order_number_next', next_val + 1)
         return vs
 
-    def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending', order_display_number=None):
-        """Vloží čekající objednávku (fakturační formulář). order_display_number může být z get_next_order_number(). Vrátí id nebo None."""
+    def insert_pending_order(self, jmeno_firma, ico, email, tarif, status='pending', order_display_number=None,
+                             ulice=None, mesto=None, psc=None, dic=None,
+                             discount_requested=0, amount_czk=None):
+        """Vloží čekající objednávku (fakturační formulář) včetně B2B údajů. Vrátí id nebo None."""
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute("PRAGMA table_info(pending_orders)")
-            po_cols = {row[1] for row in cursor.fetchall()}
-            if 'order_display_number' in po_cols:
-                cursor.execute('''
-                    INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status, order_display_number)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status, order_display_number or ''))
-            else:
-                cursor.execute('''
-                    INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status))
+            cursor.execute('''
+                INSERT INTO pending_orders (jmeno_firma, ico, email, tarif, status, order_display_number,
+                                            ulice, mesto, psc, dic, discount_requested, amount_czk, amount_czk_final)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (jmeno_firma or '', ico or '', email or '', tarif or '', status, order_display_number or '',
+                  ulice or '', mesto or '', psc or '', dic or '', 1 if discount_requested else 0,
+                  amount_czk, amount_czk))
             conn.commit()
             return cursor.lastrowid
         except Exception:
@@ -1376,6 +1393,24 @@ class Database:
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
+
+    def apply_discount_to_order(self, order_id, discount_percent=20):
+        """Uplatní množstevní slevu na objednávku. Přepočítá amount_czk_final. Vrátí True při úspěchu."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT amount_czk FROM pending_orders WHERE id = ?', (order_id,))
+            row = cursor.fetchone()
+            if not row or not row[0]:
+                return False
+            original = float(row[0])
+            final = round(original * (1 - discount_percent / 100))
+            cursor.execute('''UPDATE pending_orders SET discount_applied = 1, discount_percent = ?,
+                              amount_czk_final = ? WHERE id = ?''', (discount_percent, final, order_id))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
 
     def update_pending_order_status(self, order_id, new_status):
         """Aktualizuje status objednávky (NEW_ORDER, WAITING_PAYMENT, ACTIVE). Vrátí True při úspěchu."""

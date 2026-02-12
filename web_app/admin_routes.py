@@ -630,6 +630,38 @@ def pending_orders():
         user=user, active_page='pending_orders')
 
 
+@admin_bp.route('/admin/apply-discount', methods=['POST'])
+@admin_required
+def apply_discount():
+    """Uplatní množstevní slevu 20 % na objednávku a přegeneruje fakturu se sníženou cenou."""
+    order_id = request.form.get('order_id', '').strip()
+    if not order_id:
+        flash('Chybí ID objednávky', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    ok = db.apply_discount_to_order(order_id, discount_percent=20)
+    if not ok:
+        flash('Slevu se nepodařilo uplatnit.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    # Přegenerovat fakturu s novou cenou
+    try:
+        order_updated = db.get_pending_order_by_id(order_id)
+        new_amount = order_updated.get('amount_czk_final') or order_updated.get('amount_czk') or 1990
+        tarif = order_updated.get('tarif') or 'standard'
+        from admin_routes import _admin_generate_invoice_for_order
+        filepath, err = _admin_generate_invoice_for_order(db, order_id, order_updated, new_amount, tarif)
+        if filepath and os.path.isfile(filepath):
+            db.update_pending_order_invoice_path(order_id, filepath)
+    except Exception:
+        pass
+    flash('Sleva 20 % uplatněna na objednávku #{}. Faktura přegenerována.'.format(order.get('order_display_number') or order_id), 'success')
+    return redirect(url_for('admin.pending_orders'))
+
+
 @admin_bp.route('/admin/delete-pending-order', methods=['POST'])
 @admin_required
 def delete_pending_order():
@@ -693,6 +725,10 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
             supplier_bank_name=supplier_bank_name,
             supplier_phone=supplier_phone,
             supplier_email=supplier_email,
+            buyer_ulice=order.get('ulice') or None,
+            buyer_mesto=order.get('mesto') or None,
+            buyer_psc=order.get('psc') or None,
+            buyer_dic=order.get('dic') or None,
         )
         return (filepath, None)
     except Exception as e:
