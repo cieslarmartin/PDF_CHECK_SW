@@ -4481,3 +4481,8 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-12 16:30:29,197 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
 2026-02-12 16:30:29,198 - INFO - Agent běží
 2026-02-12 16:30:34,493 - INFO - Agent ukončen
+2026-02-12 19:24:12,168 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-12 19:24:12,169 - INFO - Spouštím GUI...
+2026-02-12 19:24:12,838 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-12 19:24:12,838 - INFO - Agent běží
+2026-02-12 19:24:21,817 - INFO - Agent ukončen

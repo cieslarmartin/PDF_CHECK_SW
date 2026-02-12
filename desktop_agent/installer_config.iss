@@ -22,8 +22,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=Output
 OutputBaseFilename=DokuCheckPRO_Setup_{#MyAppVersion}
-; Ikona instalátoru (odkomentujte, až máte logo\logo.ico nebo app_icon.ico):
-; SetupIconFile=logo\logo.ico
+SetupIconFile=logo\logo.ico
 UninstallDisplayIcon={app}\DokuCheckPRO.exe
 Compression=lzma2/ultra64
 SolidCompression=yes
