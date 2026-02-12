@@ -91,6 +91,33 @@ def _cz_account_to_iban(account_with_code):
     return 'CZ' + str(check).zfill(2) + bban
 
 
+def _format_czk(amount):
+    """Formátuje částku jako '1 690 Kč' (celé číslo, mezery po tisících, přípona Kč)."""
+    try:
+        val = int(round(float(amount)))
+    except (ValueError, TypeError):
+        return '0 Kč'
+    s = '{:,}'.format(val).replace(',', ' ')
+    return '{} Kč'.format(s)
+
+
+def _format_date_cz(dt):
+    """Vrátí datum ve formátu dd.mm.yyyy. Přijímá datetime, date nebo string."""
+    if dt is None:
+        return ''
+    if isinstance(dt, str):
+        dt = dt.strip()
+        for fmt in ('%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y'):
+            try:
+                dt = datetime.strptime(dt, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            return dt  # nelze parsovat, vrátíme jak je
+    return dt.strftime('%d.%m.%Y')
+
+
 def _spayd_string(iban, amount_czk, vs, message='Faktura DokuCheck'):
     """SPAYD řetězec pro QR platbu. iban může být CZ IBAN nebo None (pak vrátí None)."""
     acc = (iban or '').replace(' ', '').strip()
@@ -115,7 +142,8 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                          supplier_name, supplier_address, supplier_ico, bank_iban, bank_account,
                          invoice_number=None, supplier_trade_register=None, output_dir=None,
                          supplier_bank_name=None, supplier_phone=None, supplier_email=None, vs=None,
-                         buyer_ulice=None, buyer_mesto=None, buyer_psc=None, buyer_dic=None):
+                         buyer_ulice=None, buyer_mesto=None, buyer_psc=None, buyer_dic=None,
+                         duzp=None):
     """
     Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH.
     Redesign: hlavička FAKTURA vlevo / DOKLAD Č. vpravo, sloupce Dodavatel|Odběratel,
@@ -152,8 +180,10 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
     cislo_faktury = (invoice_number or str(order_id)).strip()
     variabilni_symbol = (vs or cislo_faktury or str(order_id)).strip()
     today = datetime.now()
-    datum_vystaveni = today.strftime('%d.%m.%Y')
-    datum_splatnosti = (today + timedelta(days=14)).strftime('%d.%m.%Y')
+    datum_vystaveni = _format_date_cz(today)
+    datum_splatnosti = _format_date_cz(today + timedelta(days=14))
+    # DUZP: z parametru (duzp / dateOfSupply / taxDate), fallback = datum vystavení
+    datum_duzp = _format_date_cz(duzp) if duzp else datum_vystaveni
 
     try:
         _name = supplier_name or 'Ing. Martin Cieślar'
@@ -226,29 +256,47 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.multi_cell(0, 5, '\n'.join(buyer_lines))
         pdf.ln(6)
 
-        # Platební blok: Banka, Číslo účtu, Variabilní symbol, Datum vystavení, Datum splatnosti
+        # Platební blok: Banka, Číslo účtu, Variabilní symbol
         pdf.set_font('DejaVu', 'B', 10)
         pdf.cell(0, 6, 'Platební údaje', 0, 1)
         pdf.set_font('DejaVu', '', 9)
         pdf.cell(0, 5, 'Banka: {}'.format(_bank_name), 0, 1)
         pdf.cell(0, 5, 'Číslo účtu: {}'.format(_account_display or '—'), 0, 1)
         pdf.cell(0, 5, 'Variabilní symbol: {}'.format(variabilni_symbol), 0, 1)
-        pdf.cell(0, 5, 'Datum vystavení: {}   |   Datum splatnosti: {}'.format(datum_vystaveni, datum_splatnosti), 0, 1)
+        pdf.ln(3)
+
+        # Datumový blok: Datum vystavení, DUZP, Datum splatnosti
+        pdf.cell(0, 5, 'Datum vystavení: {}'.format(datum_vystaveni), 0, 1)
+        pdf.cell(0, 5, 'Datum uskutečnění plnění: {}'.format(datum_duzp), 0, 1)
+        pdf.cell(0, 5, 'Datum splatnosti: {}'.format(datum_splatnosti), 0, 1)
         pdf.ln(4)
 
-        # Tabulka: Fakturujeme Vám za: / Množství / Cena
+        # Tabulka: Fakturujeme Vám za: | Množství | Cena za jednotku (Kč) | Celkem (Kč)
+        _unit_price = _format_czk(amount_czk)
+        _total_price = _format_czk(amount_czk)
+        col_desc = 75   # popis položky
+        col_qty = 25    # množství
+        col_unit = 35   # cena za jednotku
+        col_total = 35  # celkem
+        row_h_header = 7
+        row_h_item = 8
+        row_h_sum = 9
+
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(110, 7, 'Fakturujeme Vám za:', 1, 0)
-        pdf.cell(25, 7, 'Množství', 1, 0)
-        pdf.cell(35, 7, 'Cena (Kč)', 1, 1, 'R')
+        pdf.cell(col_desc, row_h_header, 'Fakturujeme Vám za:', 1, 0)
+        pdf.cell(col_qty, row_h_header, 'Množství', 1, 0, 'C')
+        pdf.cell(col_unit, row_h_header, 'Cena za jedn. (Kč)', 1, 0, 'R')
+        pdf.cell(col_total, row_h_header, 'Celkem (Kč)', 1, 1, 'R')
+
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(110, 8, 'Licence DokuCheck PRO', 1, 0)
-        pdf.cell(25, 8, '1', 1, 0)
-        pdf.cell(35, 8, str(int(amount_czk)), 1, 1, 'R')
+        pdf.cell(col_desc, row_h_item, 'Licence DokuCheck PRO', 1, 0)
+        pdf.cell(col_qty, row_h_item, '1 ks', 1, 0, 'C')
+        pdf.cell(col_unit, row_h_item, _unit_price, 1, 0, 'R')
+        pdf.cell(col_total, row_h_item, _total_price, 1, 1, 'R')
+
         pdf.set_font('DejaVu', 'B', 11)
-        pdf.cell(110, 9, 'CELKEM K ÚHRADĚ', 1, 0)
-        pdf.cell(25, 9, '1', 1, 0)
-        pdf.cell(35, 9, str(int(amount_czk)), 1, 1, 'R')
+        pdf.cell(col_desc + col_qty, row_h_sum, 'Celkem k úhradě:', 1, 0, 'R')
+        pdf.cell(col_unit + col_total, row_h_sum, _total_price, 1, 1, 'R')
         pdf.set_font('DejaVu', '', 10)
         pdf.ln(8)
 

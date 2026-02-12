@@ -56,7 +56,7 @@
 {# ============ SPLASH – okno s about info ============ #}
 <div id="splash-overlay">
     <div id="splash-box">
-        <div class="mb-4"><span class="title text-2xl sm:text-3xl font-black" style="color:#0f172a;">PDF <span style="color:#1e5a8a;">DokuCheck</span> PRO</span></div>
+        <div class="mb-4"><span class="title text-2xl sm:text-3xl font-black" style="color:#0f172a;">Doku<span style="color:#16A34A;">Check</span></span></div>
         <div class="about">
             <p class="text-gray-500 text-sm mb-3">Kontrola PDF pro stavební dokumentaci</p>
             <div class="flex flex-wrap justify-center gap-3 text-xs text-gray-400 mb-4">
@@ -73,10 +73,8 @@
 {# ============ NAVIGACE ============ #}
 <nav id="topnav" class="nav-glass fixed top-0 inset-x-0 z-50 transition-shadow">
     <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <a href="/" class="flex items-center gap-1.5 text-lg font-bold whitespace-nowrap">
-            <span style="color:#1e5a8a;">PDF</span>
-            <span class="text-gray-800">DokuCheck</span>
-            <span class="text-gray-400 font-normal text-base">PRO</span>
+        <a href="/" class="flex items-center gap-1 text-lg font-bold whitespace-nowrap">
+            <span class="text-gray-800">Doku</span><span style="color:#16A34A;">Check</span>
             <img src="{{ url_for('static', filename='logo/logo.png') }}" alt="" class="h-7 ml-1" onerror="this.style.display='none'">
         </a>
         <div class="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-500">
@@ -118,7 +116,10 @@
             <div class="flex flex-col md:flex-row md:items-center gap-10 anim">
                 <div class="flex-1">
                     <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">{{ landing_hero_badge|default('ONLINE + Desktop') }}</span>
-                    <h1 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4" style="color:#0f172a;">{{ landing_hero_title|default('DokuCheck – Dokumentace bez chyb pro Portál stavebníka') }}</h1>
+                    <h1 class="mb-4" style="line-height:1.1;">
+                        <span class="block text-4xl md:text-5xl font-semibold" style="color:#0f172a;">Doku<span style="color:#16A34A;">Check</span></span>
+                        <span class="block text-2xl md:text-3xl font-normal mt-2" style="color:#0f172a;">Dokumentace bez chyb pro Portál stavebníka</span>
+                    </h1>
                     <p class="text-lg mb-6 max-w-xl text-gray-500 leading-relaxed">{{ landing_hero_subtitle|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.') }}</p>
                     <div class="flex items-center gap-2 mb-6 text-sm text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Kontrola za 2–5 min
@@ -163,7 +164,7 @@
         <div class="max-w-4xl mx-auto px-6 anim">
             <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Jistota dokumentace před expedicí</h2>
             <div class="overflow-hidden rounded-xl border shadow-sm" style="border-color:#e5e7eb;">
-                <table class="w-full text-sm"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck PRO</th></tr></thead>
+                <table class="w-full text-sm"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck</th></tr></thead>
                 <tbody>
                     <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Chaos v expedicích, opakované vracení dokumentů</td><td class="py-3 px-5 text-emerald-600">Hromadná kontrola před odesláním</td></tr>
                     <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Stres z chyb a vracení od investora</td><td class="py-3 px-5 text-emerald-600">Strojová přesnost kontroly PDF/A a razítek</td></tr>
@@ -380,7 +381,7 @@
 {# ============ FOOTER ============ #}
 <footer class="bg-gray-900 text-gray-400 py-8">
     <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm">
-        <div><span class="font-bold text-white">PDF</span> <span class="text-blue-400 font-bold">DokuCheck</span> <span class="text-gray-500">PRO</span></div>
+        <div><span class="font-bold text-white">Doku</span><span class="font-bold" style="color:#16A34A;">Check</span></div>
         <div class="flex flex-wrap gap-4">
             <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="hover:text-white transition">{{ contact_email|default('info@dokucheck.app') }}</a>
             <a href="/vop" class="hover:text-white transition">VOP</a>

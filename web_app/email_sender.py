@@ -170,7 +170,7 @@ def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_cz
     templates = get_email_templates()
     subject_tpl = templates.get("order_confirmation_subject") or "DokuCheck – potvrzení objednávky č. {vs}"
     body_tpl = templates.get("order_confirmation_body") or (
-        "Děkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
+        "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
     )
     subject = subject_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
     body = body_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
@@ -187,9 +187,9 @@ def send_activation_email(user_email, password_plain, download_url=None, login_u
     heslo_text = (password_plain if (password_plain is not None and str(password_plain).strip()) else
                  'Vaše stávající heslo (použijte heslo z předchozí aktivace).')
     templates = get_email_templates()
-    subject_tpl = templates.get("activation_subject") or "DokuCheck PRO – přístup aktivní"
+    subject_tpl = templates.get("activation_subject") or "DokuCheck – přístup aktivní"
     body_tpl = templates.get("activation_body") or (
-        "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\n"
+        "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
         "Přihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\n"
         "Odkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}"
     )

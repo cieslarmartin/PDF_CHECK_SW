@@ -1,5 +1,5 @@
 # pdf_dokucheck_pro_v41_with_api.py
-# PDF DokuCheck PRO - Build 41 (Flask verze s API + Agent data)
+# DokuCheck - Build 41 (Flask verze s API + Agent data)
 # AKTUALIZACE 41: Excel export, TSA filtr, příprava pro licenční systém
 # Režimy: "Z Agenta" (primární) | "Serverová / Cloudová kontrola" (upload/disk)
 #
@@ -130,7 +130,7 @@ HTML_TEMPLATE = '''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF DokuCheck PRO</title>
+    <title>DokuCheck</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -1008,8 +1008,8 @@ HTML_TEMPLATE = '''
             </div>
             <div class="modal-content">
                 <div id="tab-about">
-                    <h4>📝 O aplikaci PDF DokuCheck PRO</h4>
-                    <p>PDF DokuCheck PRO je nástroj pro <strong>projektanty, autorizované osoby, stavební firmy a veřejnou správu</strong>.</p>
+                    <h4>📝 O aplikaci DokuCheck</h4>
+                    <p>DokuCheck je nástroj pro <strong>projektanty, autorizované osoby, stavební firmy a veřejnou správu</strong>.</p>
                     <p style="margin-top:12px;"><strong>Aplikace kontroluje:</strong></p>
                     <ul>
                         <li>✓ Formát <strong>PDF/A-3</strong> (vyžadovaný Portálem stavebníka)</li>
@@ -1022,7 +1022,7 @@ HTML_TEMPLATE = '''
                 <div id="tab-pdfa" class="hidden">
                     <h4>📌 Proč PDF/A-3?</h4>
                     <p>Podle <strong>vyhlášky č. 190/2024 Sb.</strong> musí být projektová dokumentace ve formátu PDF/A-3.</p>
-                    <div class="info-box blue">PDF DokuCheck PRO ověří formát ještě před nahráním na Portál stavebníka.</div>
+                    <div class="info-box blue">DokuCheck ověří formát ještě před nahráním na Portál stavebníka.</div>
                     <p style="margin-top:12px;"><strong>Verze PDF/A:</strong></p>
                     <ul>
                         <li><span style="color:#16a34a;font-weight:bold;">PDF/A-3</span> — Aktuální standard, podporuje přílohy</li>
@@ -1033,7 +1033,7 @@ HTML_TEMPLATE = '''
                 <div id="tab-ckait" class="hidden">
                     <h4>🏛️ Proč ČKAIT?</h4>
                     <p>Podle <strong>zákona č. 360/1992 Sb.</strong> musí být projektová dokumentace opatřena autorizovaným razítkem.</p>
-                    <div class="info-box yellow">PDF DokuCheck PRO ověří přítomnost čísla ČKAIT/ČKA v certifikátu elektronického podpisu.</div>
+                    <div class="info-box yellow">DokuCheck ověří přítomnost čísla ČKAIT/ČKA v certifikátu elektronického podpisu.</div>
                     <p style="margin-top:12px;">Číslo ČKAIT je 7místné číslo (např. 0012345) uložené v poli OU certifikátu.</p>
                 </div>
                 <div id="tab-contact" class="hidden">
@@ -3517,7 +3517,7 @@ register_api_routes(app)
 if __name__ == '__main__':
     print("")
     print("=" * 60)
-    print("  PDF DokuCheck PRO")
+    print("  DokuCheck")
     print("  Web build", WEB_BUILD, "| © Ing. Martin Cieślar")
     print("  API endpointy: AKTIVNI")
     print("  Admin panel: AKTIVNI")

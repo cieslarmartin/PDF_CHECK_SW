@@ -832,7 +832,7 @@ class PDFCheckUI_2026_V3:
         """O programu – styl PDF-XChange: záhlaví (logo, verze), popis, právní doložka, komponenty, spodní banner. Modální."""
         from datetime import datetime
         top = ctk.CTkToplevel(self.root)
-        top.title("O programu DokuCheck PRO")
+        top.title("O programu DokuCheck")
         top.geometry("650x500")
         top.configure(fg_color=BG_APP)
         top.transient(self.root)
@@ -870,7 +870,7 @@ class PDFCheckUI_2026_V3:
                 pass
         header_right = ctk.CTkFrame(header, fg_color="transparent")
         header_right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        ctk.CTkLabel(header_right, text="DokuCheck PRO", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT_MAIN).pack(anchor=tk.W)
+        ctk.CTkLabel(header_right, text="DokuCheck", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT_MAIN).pack(anchor=tk.W)
         ctk.CTkLabel(header_right, text=f"Verze: {AGENT_VERSION} (Enterprise Edition)", font=(FONT_STACK[0], FS_12), text_color=TEXT_MAIN).pack(anchor=tk.W)
 
         # —— 2. Střed: účel aplikace ——

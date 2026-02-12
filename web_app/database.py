@@ -225,9 +225,9 @@ class Database:
             cursor.execute('''
                 INSERT INTO email_templates (name, subject, body) VALUES
                 ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
-                 'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
-                ('activation', 'DokuCheck PRO – přístup aktivní',
-                 'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
+                 'Dobrý den,\n\nDěkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
+                ('activation', 'DokuCheck – přístup aktivní',
+                 'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
                 ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
             ''')
 
@@ -509,9 +509,9 @@ class Database:
                 cursor.execute('''
                     INSERT INTO email_templates (name, subject, body) VALUES
                     ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
-                     'Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
-                    ('activation', 'DokuCheck PRO – přístup aktivní',
-                     'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
+                     'Dobrý den,\n\nDěkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
+                    ('activation', 'DokuCheck – přístup aktivní',
+                     'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
                     ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
                 ''')
         except Exception:

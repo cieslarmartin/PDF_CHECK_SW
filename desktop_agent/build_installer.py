@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Automatický build Windows instalátoru DokuCheck PRO.
+Automatický build Windows instalátoru DokuCheck.
 Spouštění z kořene desktop_agent: python build_installer.py
 
 1. Detekuje BUILD_VERSION / VERSION z ui.py (nebo pdf_check_agent_main.py).
@@ -154,7 +154,7 @@ def clean_build_dirs():
 
 def main():
     os.chdir(SCRIPT_DIR)
-    print("=== Build instalátoru DokuCheck PRO ===\n")
+    print("=== Build instalátoru DokuCheck ===\n")
     print("Kontrola závislostí…")
     check_pyinstaller()
     iscc_path = find_iscc()

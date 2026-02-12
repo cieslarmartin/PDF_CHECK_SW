@@ -8,9 +8,9 @@ SITE_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'site_config.json')
 DEFAULT_EMAIL_TEMPLATES = {
     "footer_text": "---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.",
     "order_confirmation_subject": "DokuCheck – potvrzení objednávky č. {vs}",
-    "order_confirmation_body": "Dobrý den,\n\nDěkujeme za objednávku DokuCheck PRO.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}",
-    "activation_subject": "DokuCheck PRO – přístup aktivní",
-    "activation_body": "Vaše platba byla přijata!\n\nPřístup k DokuCheck PRO je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}",
+    "order_confirmation_body": "Dobrý den,\n\nDěkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}",
+    "activation_subject": "DokuCheck – přístup aktivní",
+    "activation_body": "Vaše platba byla přijata!\n\nPřístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}",
 }
 
 
