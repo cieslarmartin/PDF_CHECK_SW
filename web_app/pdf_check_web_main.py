@@ -2361,13 +2361,16 @@ const TIER_CONFIG = {
     3: { name: 'Unlimited', icon: '🏢', class: 'enterprise' }
 };
 
-// Feature requirements: Free = export CSV + filtry odemčené | Basic 100 | Pro vše
+// Feature requirements:
+//   Trial/Free (0) = export CSV + filtry ODEMČENÉ (demo, aby viděl co získá)
+//   Basic (1) = export + filtry ZAMČENÉ (motivace k upgradu na Pro)
+//   Pro (2+) = vše odemčené
 const FEATURE_REQUIREMENTS = {
     'export_excel': 2,      // Excel ze serveru jen Pro+
     'batch_upload': 1,      // Basic+
-    'tree_structure': 0,    // Free+ (online check)
-    'tsa_filter': 0,        // Free+ (online check)
-    'advanced_filters': 0,  // Free+ (online check)
+    'tree_structure': 'trial_and_pro',  // Trial + Pro (ne Basic)
+    'tsa_filter': 'trial_and_pro',      // Trial + Pro (ne Basic)
+    'advanced_filters': 'trial_and_pro', // Trial + Pro (ne Basic)
     'export_all': 2         // Pro+
 };
 
@@ -2402,15 +2405,22 @@ function updateDailyQuotaDisplay() {
 }
 
 function hasFeature(featureName) {
-    // Pokud je feature v seznamu dostupných features
+    // Pokud je feature v seznamu dostupných features ze serveru
     if (licenseState.features && licenseState.features.includes(featureName)) {
         return true;
     }
 
-    // Nebo zkontroluj podle tier requirements
-    const requiredTier = FEATURE_REQUIREMENTS[featureName];
-    if (requiredTier === undefined) return true; // Neomezená funkce
-    return licenseState.tier >= requiredTier;
+    // Zkontroluj podle tier requirements
+    const req = FEATURE_REQUIREMENTS[featureName];
+    if (req === undefined) return true; // Neomezená funkce
+
+    // Speciální pravidlo: 'trial_and_pro' = odemčeno pro Trial/Free (0) a Pro+ (2+), zamčeno pro Basic (1)
+    if (req === 'trial_and_pro') {
+        return licenseState.tier === 0 || licenseState.tier >= 2;
+    }
+
+    // Standardní: číslo = minimální tier
+    return licenseState.tier >= req;
 }
 
 function checkFeatureAccess(featureName) {
@@ -2426,35 +2436,43 @@ function checkFeatureAccess(featureName) {
 }
 
 function updateFeatureLocks() {
-    // Export All – zůstává jen Pro+
+    // Export All – jen Pro+
     const exportAllBtn = document.getElementById('btn-export-all');
     if (exportAllBtn) {
         if (!hasFeature('export_all')) exportAllBtn.classList.add('feature-locked');
         else exportAllBtn.classList.remove('feature-locked');
     }
-    // Filtry – odemčené pro všechny (Free+), odstraníme případné zámečky
+    // Filtry – odemčené pro Trial (0) a Pro+ (2+), zamčené pro Basic (1)
     const filterSections = document.querySelectorAll('.filter-section');
+    const hasFilters = hasFeature('advanced_filters');
     filterSections.forEach(el => {
         el.classList.remove('feature-locked', 'filter-section-locked');
+        if (!hasFilters) el.classList.add('filter-section-locked');
     });
     const tableHeaderFilters = document.getElementById('table-header-filters');
     if (tableHeaderFilters) {
-        tableHeaderFilters.classList.remove('feature-locked');
+        if (!hasFilters) tableHeaderFilters.classList.add('feature-locked');
+        else tableHeaderFilters.classList.remove('feature-locked');
     }
 }
 
-// Export – Pro: Excel ze serveru, Free/Basic: CSV z paměti
+// Export – Trial(0): CSV volně | Basic(1): zamčeno | Pro(2+): Excel ze serveru nebo CSV
 function exportExcel() {
     if (batches.length === 0) {
         alert('Nejsou žádná data k exportu.');
         return;
     }
-    // Pokud má Pro licenci a batch je na serveru → Excel
+    // Basic (tier 1) = zamčeno, zobrazí výzvu k upgradu
+    if (licenseState.tier === 1 && !hasFeature('export_excel')) {
+        checkFeatureAccess('export_excel');
+        return;
+    }
+    // Pro+ a batch na serveru → Excel
     const batchId = batches[0].batch_id;
     if (hasFeature('export_excel') && batchId && !batchId.startsWith('legacy_')) {
         fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=xlsx', 'batch.xlsx');
     } else {
-        // Fallback: CSV export z lokálních dat (dostupný pro všechny)
+        // Trial (0) nebo Pro bez server batche → CSV z lokálních dat
         exportBatchCSV(batches[0].id);
     }
 }
