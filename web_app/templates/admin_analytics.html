@@ -1,0 +1,133 @@
+{% extends "admin_base.html" %}
+{% block title %}DokuCheck Admin – Návštěvnost{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Návštěvnost webu</h2>
+
+{# Období #}
+<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;">
+    <span style="font-size:0.85em;color:#6b7280;">Období:</span>
+    {% for d in [7, 14, 30, 90] %}
+    <a href="?days={{ d }}" style="padding:4px 12px;border-radius:6px;font-size:0.85em;text-decoration:none;
+        {% if days == d %}background:#1d4ed8;color:white;{% else %}background:#f3f4f6;color:#374151;{% endif %}">{{ d }} dní</a>
+    {% endfor %}
+</div>
+
+{# KPI karty #}
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Dnes</div>
+        <div style="font-size:1.5em;font-weight:700;color:#1d4ed8;">{{ stats.today }}</div>
+        <div style="font-size:0.8em;color:#6b7280;">{{ stats.today_unique }} unikátních</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">7 dní</div>
+        <div style="font-size:1.5em;font-weight:700;color:#047857;">{{ stats.week }}</div>
+        <div style="font-size:0.8em;color:#6b7280;">{{ stats.week_unique }} unikátních</div>
+    </div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">30 dní</div>
+        <div style="font-size:1.5em;font-weight:700;color:#b45309;">{{ stats.month }}</div>
+        <div style="font-size:0.8em;color:#6b7280;">{{ stats.month_unique }} unikátních</div>
+    </div>
+    <div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Celkem</div>
+        <div style="font-size:1.5em;font-weight:700;color:#374151;">{{ stats.total }}</div>
+        <div style="font-size:0.8em;color:#6b7280;">{{ stats.total_unique }} unikátních</div>
+    </div>
+</div>
+
+{# Denní graf #}
+{% if daily %}
+<h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Denní návštěvnost ({{ days }} dní)</h3>
+<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;overflow-x:auto;">
+    <div style="display:flex;align-items:flex-end;gap:2px;height:120px;min-width:{{ daily|length * 18 }}px;">
+        {% set max_views = daily|map(attribute='views')|max %}
+        {% for d in daily %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:14px;">
+            <div style="background:#3b82f6;border-radius:2px 2px 0 0;width:100%;max-width:24px;
+                height:{{ (d.views / max_views * 100)|int if max_views > 0 else 0 }}px;min-height:2px;" title="{{ d.day }}: {{ d.views }} views / {{ d.unique_visitors }} unik."></div>
+        </div>
+        {% endfor %}
+    </div>
+    <div style="display:flex;gap:2px;margin-top:4px;min-width:{{ daily|length * 18 }}px;">
+        {% for d in daily %}
+        <div style="flex:1;text-align:center;font-size:0.55em;color:#9ca3af;min-width:14px;{% if loop.index0 % 3 != 0 and daily|length > 14 %}visibility:hidden;{% endif %}">{{ d.day[5:] }}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    {# Top stránky #}
+    <div>
+        <h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Nejnavštěvovanější stránky</h3>
+        <div class="table-container">
+            <table class="table-dense">
+                <thead><tr><th>Stránka</th><th>Views</th><th>Unikátní</th></tr></thead>
+                <tbody>
+                {% for r in by_page %}
+                <tr>
+                    <td style="font-family:monospace;font-size:0.85em;">{{ r.path }}</td>
+                    <td>{{ r.views }}</td>
+                    <td>{{ r.unique_visitors }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádná data</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Referrery #}
+    <div>
+        <h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Odkud přicházejí (Referrer)</h3>
+        <div class="table-container">
+            <table class="table-dense">
+                <thead><tr><th>Zdroj</th><th>Views</th><th>Unikátní</th></tr></thead>
+                <tbody>
+                {% for r in by_referrer %}
+                <tr>
+                    <td style="font-size:0.85em;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ r.referrer }}">{{ r.referrer }}</td>
+                    <td>{{ r.views }}</td>
+                    <td>{{ r.unique_visitors }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádná data</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# UTM zdroje #}
+{% if by_utm and by_utm|selectattr('source', 'ne', '(bez UTM)')|list %}
+<h3 style="font-size:1em;margin:20px 0 8px;color:#1f2937;">UTM kampaně</h3>
+<p class="text-muted small mb-2">Přidejte <code>?utm_source=google&utm_medium=cpc&utm_campaign=jaro2026</code> k odkazům pro trackování kampaní.</p>
+<div class="table-container">
+    <table class="table-dense">
+        <thead><tr><th>Zdroj</th><th>Médium</th><th>Kampaň</th><th>Views</th><th>Unikátní</th></tr></thead>
+        <tbody>
+        {% for r in by_utm %}
+        {% if r.source != '(bez UTM)' %}
+        <tr>
+            <td>{{ r.source }}</td>
+            <td>{{ r.medium }}</td>
+            <td>{{ r.campaign }}</td>
+            <td>{{ r.views }}</td>
+            <td>{{ r.unique_visitors }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="margin-top:20px;padding:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
+    <p style="font-size:0.9em;color:#6b7280;">💡 <strong>Tip:</strong> Přidejte UTM parametry k odkazům pro sledování kampaní:</p>
+    <code style="font-size:0.8em;color:#374151;background:#e5e7eb;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">https://www.dokucheck.cz/?utm_source=facebook&utm_medium=post&utm_campaign=launch</code>
+</div>
+{% endif %}
+
+{% endblock %}

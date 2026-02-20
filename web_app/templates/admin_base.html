@@ -270,6 +270,7 @@
         <ul class="sidebar-nav">
             {# ── Přehled ── #}
             <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Přehled</a></li>
+            <li><a href="{{ url_for('admin.analytics') }}" class="{{ 'active' if active_page == 'analytics' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👁️</span> Návštěvnost</a></li>
 
             {# ── Obchod ── #}
             <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obchod</li>

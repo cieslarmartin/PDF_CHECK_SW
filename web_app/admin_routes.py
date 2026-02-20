@@ -1004,14 +1004,38 @@ def activate_without_invoice():
 @admin_bp.route('/admin/trial')
 @admin_required
 def trial():
-    """Správa Trial použití: Machine-ID | Celkem souborů | Poslední aktivita | Reset."""
+    """Správa Trial použití: Desktop Agent (Machine-ID) + Web Trial (IP)."""
     db = get_db()
     trial_list = db.list_trial_usage()
+    web_trial_list = db.list_web_trial_usage()
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
-    return render_template('admin_trial.html', trial_list=trial_list or [], user=user, active_page='trial')
+    return render_template('admin_trial.html', trial_list=trial_list or [], web_trial_list=web_trial_list or [], user=user, active_page='trial')
+
+
+@admin_bp.route('/admin/analytics')
+@admin_required
+def analytics():
+    """Návštěvnost stránek: statistiky, top stránky, referrery, UTM zdroje, denní graf."""
+    db = get_db()
+    days = int(request.args.get('days', 30))
+    if days not in (7, 14, 30, 90):
+        days = 30
+    stats = db.get_page_views_stats()
+    by_page = db.get_page_views_by_page(days=days)
+    by_referrer = db.get_page_views_by_referrer(days=days)
+    by_utm = db.get_page_views_by_utm(days=days)
+    daily = db.get_page_views_daily(days=days)
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_analytics.html',
+                           stats=stats, by_page=by_page, by_referrer=by_referrer,
+                           by_utm=by_utm, daily=daily, days=days,
+                           user=user, active_page='analytics')
 
 
 @admin_bp.route('/admin/logs')
@@ -1373,10 +1397,19 @@ def api_web_trial_reset():
         except Exception:
             pass
     if not ip_address:
-        return jsonify({'success': False, 'error': 'Chybí ip_address'}), 400
+        if request.is_json:
+            return jsonify({'success': False, 'error': 'Chybí ip_address'}), 400
+        flash('Chybí IP adresa', 'error')
+        return redirect(url_for('admin.trial'))
     if db.reset_web_trial_ip(ip_address):
-        return jsonify({'success': True, 'message': f'IP {ip_address} resetována'}), 200
-    return jsonify({'success': True, 'message': 'Žádné záznamy k odstranění'}), 200
+        if request.is_json:
+            return jsonify({'success': True, 'message': f'IP {ip_address} resetována'}), 200
+        flash(f'Limit pro IP {ip_address} resetován.', 'success')
+        return redirect(url_for('admin.trial'))
+    if request.is_json:
+        return jsonify({'success': True, 'message': 'Žádné záznamy k odstranění'}), 200
+    flash('Žádné záznamy k odstranění.', 'info')
+    return redirect(url_for('admin.trial'))
 
 
 @admin_bp.route('/admin/api/tier/update', methods=['POST'])

@@ -89,6 +89,40 @@ def enforce_https_and_www():
         return redirect(target, code=301)
 
 
+_TRACK_PATHS = {'/', '/app', '/checkout', '/portal', '/portal/dashboard', '/online-check', '/download/agent'}
+_SKIP_PREFIXES = ('/static/', '/admin/', '/api/', '/favicon')
+
+@app.after_request
+def track_page_view(response):
+    """Zaznamenává návštěvy stránek (jen HTML stránky, ne API/statika/admin)."""
+    if response.status_code >= 300:
+        return response
+    path = request.path or '/'
+    if any(path.startswith(p) for p in _SKIP_PREFIXES):
+        return response
+    if path not in _TRACK_PATHS and not path.startswith('/checkout'):
+        return response
+    try:
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+        referrer = (request.referrer or '')[:500]
+        # Odstranit interní referrer (vlastní doména)
+        if referrer and ('dokucheck.cz' in referrer or '127.0.0.1' in referrer):
+            referrer = ''
+        ua = (request.headers.get('User-Agent') or '')[:300]
+        utm_source = request.args.get('utm_source', '')[:100]
+        utm_medium = request.args.get('utm_medium', '')[:100]
+        utm_campaign = request.args.get('utm_campaign', '')[:100]
+        db = Database()
+        db.record_page_view(ip, path, referrer=referrer or None,
+                            utm_source=utm_source or None,
+                            utm_medium=utm_medium or None,
+                            utm_campaign=utm_campaign or None,
+                            user_agent=ua or None)
+    except Exception:
+        pass
+    return response
+
+
 @app.context_processor
 def inject_web_build():
     """Číslo buildu dostupné ve všech šablonách – malým šedým písmem na každé stránce."""

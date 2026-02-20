@@ -393,6 +393,25 @@ class Database:
             for q, a, idx in _default_faq:
                 cursor.execute('INSERT INTO faq (question, answer, order_index) VALUES (?, ?, ?)', (q, a, idx))
 
+        # Návštěvnost stránek (page views) – IP, cesta, referrer, UTM zdroj
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS page_views (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ip_address TEXT,
+                path TEXT NOT NULL,
+                referrer TEXT,
+                utm_source TEXT,
+                utm_medium TEXT,
+                utm_campaign TEXT,
+                user_agent TEXT,
+                country TEXT
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_timestamp ON page_views(timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_ip ON page_views(ip_address)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -1684,6 +1703,22 @@ class Database:
         conn.close()
         return n > 0
 
+    def list_web_trial_usage(self):
+        """Vrátí web trial použití seskupené podle IP: [{ip_address, total_batches, last_used}, ...]."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT ip_address,
+                   COUNT(*) AS total_batches,
+                   MAX(usage_timestamp) AS last_used
+            FROM web_trial_ip_usage
+            GROUP BY ip_address
+            ORDER BY last_used DESC
+        ''')
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
     def insert_activity_log(self, ip_address=None, source_type='web_trial', file_count=0, api_key=None):
         """Zapíše záznam do sjednoceného logu aktivit (1 záznam = 1 dávka)."""
         conn = self.get_connection()
@@ -1699,6 +1734,115 @@ class Database:
             return None
         finally:
             conn.close()
+
+    # =========================================================================
+    # PAGE VIEWS (návštěvnost stránek)
+    # =========================================================================
+
+    def record_page_view(self, ip_address, path, referrer=None, utm_source=None,
+                         utm_medium=None, utm_campaign=None, user_agent=None):
+        """Zaznamená návštěvu stránky."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO page_views (ip_address, path, referrer, utm_source, utm_medium, utm_campaign, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (ip_address or '', path or '/', referrer, utm_source, utm_medium, utm_campaign,
+                  (user_agent or '')[:300]))
+            conn.commit()
+        except Exception:
+            pass
+        finally:
+            conn.close()
+
+    def get_page_views_stats(self):
+        """Souhrnné statistiky návštěvnosti: dnes, 7 dní, 30 dní, unikátní IP."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM page_views WHERE date(timestamp) = date('now')")
+        today = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE date(timestamp) = date('now')")
+        today_unique = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM page_views WHERE timestamp >= datetime('now', '-7 days')")
+        week = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE timestamp >= datetime('now', '-7 days')")
+        week_unique = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM page_views WHERE timestamp >= datetime('now', '-30 days')")
+        month = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE timestamp >= datetime('now', '-30 days')")
+        month_unique = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM page_views")
+        total = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views")
+        total_unique = cursor.fetchone()[0]
+        conn.close()
+        return {
+            'today': today, 'today_unique': today_unique,
+            'week': week, 'week_unique': week_unique,
+            'month': month, 'month_unique': month_unique,
+            'total': total, 'total_unique': total_unique,
+        }
+
+    def get_page_views_by_page(self, days=30, limit=20):
+        """Nejnavštěvovanější stránky za posledních N dní."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT path, COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            FROM page_views
+            WHERE timestamp >= datetime('now', ? || ' days')
+            GROUP BY path ORDER BY views DESC LIMIT ?
+        ''', (str(-days), limit))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_page_views_by_referrer(self, days=30, limit=20):
+        """Top referrery za posledních N dní."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(NULLIF(referrer, ''), '(přímý přístup)') AS referrer,
+                   COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            FROM page_views
+            WHERE timestamp >= datetime('now', ? || ' days')
+            GROUP BY referrer ORDER BY views DESC LIMIT ?
+        ''', (str(-days), limit))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_page_views_by_utm(self, days=30, limit=20):
+        """Top UTM zdroje za posledních N dní."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(NULLIF(utm_source, ''), '(bez UTM)') AS source,
+                   COALESCE(NULLIF(utm_medium, ''), '-') AS medium,
+                   COALESCE(NULLIF(utm_campaign, ''), '-') AS campaign,
+                   COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            FROM page_views
+            WHERE timestamp >= datetime('now', ? || ' days')
+            GROUP BY utm_source, utm_medium, utm_campaign ORDER BY views DESC LIMIT ?
+        ''', (str(-days), limit))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_page_views_daily(self, days=30):
+        """Denní počet views za posledních N dní (pro graf)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT date(timestamp) AS day, COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            FROM page_views
+            WHERE timestamp >= datetime('now', ? || ' days')
+            GROUP BY day ORDER BY day ASC
+        ''', (str(-days),))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
 
     def get_activity_log(self, limit=200):
         """Vrátí sjednocený log aktivit pro admin: IP, čas, typ, počet souborů."""
