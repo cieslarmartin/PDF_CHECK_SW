@@ -51,9 +51,23 @@
         /* ===== COMING SOON ===== */
         .coming{border:1px dashed #94a3b8;position:relative;}
         .coming-tag{position:absolute;top:.75rem;right:.75rem;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#b45309;letter-spacing:.03em;}
+        /* ===== ANNOUNCEMENT BAR ===== */
+        .announce-bar{background:linear-gradient(90deg,#1e3a5f 0%,#1e5a8a 50%,#174a6e 100%);color:#fff;text-align:center;padding:10px 16px;font-size:0.875rem;font-weight:500;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;}
+        .announce-bar a{color:#fff;text-decoration:underline;margin-left:8px;}
+        .announce-bar a:hover{color:#93c5fd;}
+        /* ===== HERO VERSION BADGE (ping) ===== */
+        .hero-version-badge{display:inline-block;background:#dcfce7;color:#166534;padding:6px 14px;border-radius:9999px;font-size:0.8rem;font-weight:600;margin-bottom:1rem;position:relative;}
+        .hero-version-badge::before{content:'';position:absolute;inset:-2px;border-radius:9999px;background:#22c55e;opacity:.4;animation:ping 2s cubic-bezier(0,0,.2,1) infinite;}
+        @keyframes ping{75%,100%{transform:scale(1.5);opacity:0;}}
     </style>
 </head>
 <body class="min-h-screen antialiased bg-gray-50 text-gray-800">
+
+{# ============ TOP ANNOUNCEMENT BAR ============ #}
+<div class="announce-bar">
+    🔥 UPDATE: Optimalizováno pro nejnovější validace Portálu stavebníka (PDF/A-3 a časová razítka).
+    <a href="#cenik" class="scroll-to">Zjistit více</a>
+</div>
 
 {# ============ SPLASH – okno s about info ============ #}
 <div id="splash-overlay">
@@ -73,7 +87,7 @@
 </div>
 
 {# ============ NAVIGACE ============ #}
-<nav id="topnav" class="nav-glass fixed top-0 inset-x-0 z-50 transition-shadow">
+<nav id="topnav" class="nav-glass fixed inset-x-0 z-50 transition-shadow" style="top:42px;">
     <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <a href="/" class="flex items-center gap-1.5 whitespace-nowrap">
             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
@@ -110,13 +124,15 @@
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
-<main class="pt-14">
+<main style="padding-top:98px;">
 
     {# ============ HERO ============ #}
     <section class="py-16 md:py-24 bg-white">
         <div class="max-w-6xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-center gap-10 anim">
                 <div class="flex-1">
+                    <span class="hero-version-badge">Verze 2.4 – Únor 2026</span>
+                    <div class="mb-6"></div>
                     <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">{{ landing_hero_badge|default('ONLINE + Desktop') }}</span>
                     <h1 class="mb-4" style="line-height:1.1;">
                         <span class="flex items-center gap-3">
@@ -176,6 +192,7 @@
                     <tr><td class="py-3 px-5 text-red-600">Žádný přehled, vše „od oka"</td><td class="py-3 px-5 text-emerald-600">Excel report, přehled podle složek</td></tr>
                 </tbody></table>
             </div>
+            <p class="mt-6 py-4 px-5 rounded-xl text-center text-sm font-medium max-w-2xl mx-auto" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;">Plná shoda s B2B standardy – nově s podporou IČO/DIČ a automatizovanou fakturací pro firmy.</p>
         </div>
     </section>
 

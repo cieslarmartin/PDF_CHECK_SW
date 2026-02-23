@@ -1028,54 +1028,8 @@ HTML_TEMPLATE = '''
                 <h3>📘 Informace o aplikaci</h3>
                 <button class="modal-close" onclick="hideInfoModal()">×</button>
             </div>
-            <div class="modal-tabs">
-                <button class="modal-tab active" onclick="setInfoTab('about',this)">O aplikaci</button>
-                <button class="modal-tab" onclick="setInfoTab('pdfa',this)">Proč PDF/A?</button>
-                <button class="modal-tab" onclick="setInfoTab('ckait',this)">Proč ČKAIT?</button>
-                <button class="modal-tab" onclick="setInfoTab('contact',this)">Kontakt</button>
-            </div>
             <div class="modal-content">
-                <div id="tab-about">
-                    <h4>📝 O aplikaci DokuCheck</h4>
-                    <p>DokuCheck je nástroj pro <strong>projektanty, autorizované osoby, stavební firmy a veřejnou správu</strong>.</p>
-                    <p style="margin-top:12px;"><strong>Aplikace kontroluje:</strong></p>
-                    <ul>
-                        <li>✓ Formát <strong>PDF/A-3</strong> (vyžadovaný Portálem stavebníka)</li>
-                        <li>✓ Autorizované razítko <strong>ČKAIT/ČKA</strong></li>
-                        <li>✓ Elektronický podpis</li>
-                        <li>✓ Časové razítko (VČR / LOK / bez razítka)</li>
-                    </ul>
-                    <div class="info-box green"><strong>Cíl:</strong> Odstranit problémy při elektronickém podání dokumentace.</div>
-                </div>
-                <div id="tab-pdfa" class="hidden">
-                    <h4>📌 Proč PDF/A-3?</h4>
-                    <p>Podle <strong>vyhlášky č. 190/2024 Sb.</strong> musí být projektová dokumentace ve formátu PDF/A-3.</p>
-                    <div class="info-box blue">DokuCheck ověří formát ještě před nahráním na Portál stavebníka.</div>
-                    <p style="margin-top:12px;"><strong>Verze PDF/A:</strong></p>
-                    <ul>
-                        <li><span style="color:#16a34a;font-weight:bold;">PDF/A-3</span> — Aktuální standard, podporuje přílohy</li>
-                        <li><span style="color:#ca8a04;font-weight:bold;">PDF/A-2</span> — Starší verze, může být odmítnuta</li>
-                        <li><span style="color:#ea580c;font-weight:bold;">PDF/A-1</span> — Nejstarší, pravděpodobně bude odmítnuta</li>
-                    </ul>
-                </div>
-                <div id="tab-ckait" class="hidden">
-                    <h4>🏛️ Proč ČKAIT?</h4>
-                    <p>Podle <strong>zákona č. 360/1992 Sb.</strong> musí být projektová dokumentace opatřena autorizovaným razítkem.</p>
-                    <div class="info-box yellow">DokuCheck ověří přítomnost čísla ČKAIT/ČKA v certifikátu elektronického podpisu.</div>
-                    <p style="margin-top:12px;">Číslo ČKAIT je 7místné číslo (např. 0012345) uložené v poli OU certifikátu.</p>
-                </div>
-                <div id="tab-contact" class="hidden">
-                    <h4>📧 Kontakt</h4>
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:12px 0;">
-                        <p style="font-size:1.1em;font-weight:bold;color:#374151;">{{ provider_name }}</p>
-                        <p style="margin:6px 0 0;color:#4b5563;">Sídlo: {{ provider_address }}</p>
-                        <p style="margin:4px 0 0;color:#4b5563;">IČO: {{ provider_ico }}</p>
-                        <p style="margin:4px 0 0;font-size:0.9em;color:#6b7280;">{{ provider_legal_note }}</p>
-                        <p style="margin:10px 0 0;"><a href="mailto:{{ contact_email }}" style="color:#1e5a8a;">{{ contact_email }}</a></p>
-                    </div>
-                    <p style="font-size:0.8em;color:#9ca3af;margin-top:16px;">Build {{ web_build }}</p>
-                    {% if build_notes %}<p style="font-size:0.8em;color:#6b7280;margin-top:6px;">Novinky: {{ build_notes }}</p>{% endif %}
-                </div>
+                <div id="info-card-content" class="info-card-body" style="line-height:1.6;">Načítám…</div>
             </div>
             <div class="modal-footer">
                 <strong>⚖️ Právní upozornění:</strong> {{ app_legal_notice }}
@@ -1168,34 +1122,7 @@ HTML_TEMPLATE = '''
                 <button class="modal-close" onclick="hideHelpModal()">×</button>
             </div>
             <div class="modal-content">
-                <h4>1. REŽIMY: Z Agenta vs. Serverová / Cloudová kontrola</h4>
-                <p><strong>Z Agenta (soukromý mód):</strong> Výsledky pocházejí z Desktop aplikace. PDF soubory zůstávají na vašem disku; na server odcházejí pouze metadata (výsledky kontroly). Maximální ochrana dat, vhodné pro citlivou firemní dokumentaci.</p>
-                <p><strong>Serverová / Cloudová kontrola:</strong> PDF soubory nahráváte přímo do prohlížeče. Soubory se odesílají a zpracovávají na serveru v RAM paměti. Vhodné pro rychlou ukázku (Demo); počet a velikost souborů jsou omezeny.</p>
-
-                <h4>2. NAHRÁNÍ SOUBORŮ</h4>
-                <p>Přetáhněte PDF nebo složku do šedé zóny, nebo použijte <strong>„Vybrat soubory"</strong> / <strong>„Vybrat složku"</strong>. Po náhledu potvrďte <strong>„Spustit analýzu"</strong>.</p>
-
-                <h4>3. CO SE KONTROLUJE</h4>
-                <ul>
-                    <li><strong>PDF/A-3</strong> – formát vyžadovaný Portálem stavebníka. Rozlišujeme verze <strong>PDF/A-3a</strong>, <strong>3b</strong>, <strong>3u</strong>, <strong>3y</strong> (úroveň shody); 3b je běžná a akceptovaná.</li>
-                    <li><strong>Elektronický podpis</strong> – přítomnost, platnost certifikátu a integrita dokumentu.</li>
-                    <li><strong>ČKAIT/ČKA certifikáty</strong> – číslo autorizace (7místné ČKAIT nebo 5místné ČKA) v poli OU certifikátu. Kontrola ověřuje, že podpis patří autorizované osobě.</li>
-                    <li><strong>Časové razítko:</strong> <strong>VČR</strong> (vložené časové razítko, TSA) = doporučené; <strong>LOK</strong> (z hodin PC) nebo bez razítka = nedostatečné pro oficiální podání.</li>
-                </ul>
-
-                <h4>4. STROMOVÁ STRUKTURA (Tree View) A VÍCE PODPISŮ</h4>
-                <p>Výsledky lze zobrazit ve stromové struktuře (složky a soubory). U každého souboru s více podpisy se zobrazí <strong>„▶ X podpisy"</strong>. Kliknutím řádek rozbalíte a uvidíte detail každého podpisu (jméno, ČKAIT, razítko). Rozbalování funguje i u více souborů najednou.</p>
-
-                <h4>5. VÝSLEDKY A BARVY</h4>
-                <p><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-weight:600;">Zelené</span> = v pořádku · <span style="background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:4px;font-weight:600;">Žluté</span> = varování (starší PDF/A, LOK razítko) · <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-weight:600;">Červené</span> = problém (chybí podpis, není PDF/A).</p>
-
-                <h4>6. EXPORT A HISTORIE</h4>
-                <p>Export do Excelu (.xlsx) je dostupný v režimu Trial i PRO. <span class="help-pro">PRO</span> <strong>Export všech kontrol</strong> – hromadný export ze serveru. <span class="help-pro">PRO</span> <strong>Historie</strong> – zobrazení a načtení dříve nahraných dávek z vašeho účtu.</p>
-
-                <div class="help-legal">
-                    <strong>PRÁVNÍ OCHRANA</strong><br>
-                    Aplikace je pomocný validátor. Konečná odpovědnost za podání na Portál stavebníka leží na autorizované osobě. Výsledky mají informativní charakter a nenahrazují oficiální validaci.
-                </div>
+                <div id="help-card-content" class="help-card-body" style="line-height:1.6;">Načítám…</div>
             </div>
         </div>
     </div>
@@ -2156,11 +2083,18 @@ function showInfoModal() { document.getElementById('info-modal').classList.add('
 function hideInfoModal() { document.getElementById('info-modal').classList.remove('visible'); }
 function showHelpModal() { document.getElementById('help-modal').classList.add('visible'); }
 function hideHelpModal() { document.getElementById('help-modal').classList.remove('visible'); }
-function setInfoTab(tabId, btn) {
-    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.modal-content > div').forEach(c => c.classList.add('hidden'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + tabId).classList.remove('hidden');
+function setInfoTab(tabId, btn) { /* Tabs nahrazeny dynamickým obsahem z CMS */ }
+
+async function loadSiteSettings() {
+    try {
+        var r = await fetch('/api/settings');
+        if (!r.ok) return;
+        var data = await r.json();
+        var infoEl = document.getElementById('info-card-content');
+        var helpEl = document.getElementById('help-card-content');
+        if (infoEl && data.info_card_content !== undefined) infoEl.innerHTML = data.info_card_content || '<p>Obsah není k dispozici.</p>';
+        if (helpEl && data.help_card_content !== undefined) helpEl.innerHTML = data.help_card_content || '<p>Obsah není k dispozici.</p>';
+    } catch (e) { console.warn('loadSiteSettings:', e); }
 }
 // Listenery pro modaly se registrují v DOMContentLoaded (až je DOM připraven)
 
@@ -2561,6 +2495,7 @@ function exportAllExcel() {
 // Automaticky načíst data při startu: bez přihlášení defaultně Serverová/Cloudová (free trial), s přihlášením Z Agenta
 document.addEventListener('DOMContentLoaded', function() {
     try {
+        loadSiteSettings();
         var im = document.getElementById('info-modal');
         if (im) im.addEventListener('click', function(e) { if (e.target === this) hideInfoModal(); });
         var hm = document.getElementById('help-modal');
@@ -3691,6 +3626,36 @@ def select_folder_route():
         return jsonify({'path': '', 'pdf_count': 0})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def api_settings():
+    """GET: veřejné čtení obsahu karet Info a Nápověda. POST: uložení (pouze admin)."""
+    if request.method == 'GET':
+        try:
+            db = Database()
+            return jsonify({
+                'info_card_content': db.get_site_setting('info_card_content', ''),
+                'help_card_content': db.get_site_setting('help_card_content', ''),
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    # POST
+    if not session.get('admin_user'):
+        return jsonify({'error': 'Přihlášení vyžadováno'}), 401
+    try:
+        data = request.get_json(force=True, silent=True) or request.form
+        db = Database()
+        def _clean(v):
+            return (v or '').replace('\u200b', '')  # odstranit zero-width z admin textarea
+        if data.get('info_card_content') is not None:
+            db.set_site_setting('info_card_content', _clean(data.get('info_card_content', '')))
+        if data.get('help_card_content') is not None:
+            db.set_site_setting('help_card_content', _clean(data.get('help_card_content', '')))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/scan-folder-stream')
 def scan_folder_stream():

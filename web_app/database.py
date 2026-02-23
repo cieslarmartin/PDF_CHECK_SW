@@ -393,6 +393,20 @@ class Database:
             for q, a, idx in _default_faq:
                 cursor.execute('INSERT INTO faq (question, answer, order_index) VALUES (?, ?, ?)', (q, a, idx))
 
+        # CMS: obsah karet Info a Nápověda (editovatelné z Adminu)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS site_settings (
+                key TEXT PRIMARY KEY,
+                value_text TEXT NOT NULL DEFAULT ''
+            )
+        ''')
+        cursor.execute('SELECT COUNT(*) FROM site_settings')
+        if cursor.fetchone()[0] == 0:
+            _default_info = '''<div id="tab-about"><h4>📝 O aplikaci DokuCheck</h4><p>DokuCheck je nástroj pro <strong>projektanty, autorizované osoby, stavební firmy a veřejnou správu</strong>.</p><p style="margin-top:12px;"><strong>Aplikace kontroluje:</strong></p><ul><li>✓ Formát <strong>PDF/A-3</strong> (vyžadovaný Portálem stavebníka)</li><li>✓ Autorizované razítko <strong>ČKAIT/ČKA</strong></li><li>✓ Elektronický podpis</li><li>✓ Časové razítko (VČR / LOK / bez razítka)</li><li>✓ <strong>ISSŘ kompatibilita</strong> (dokument nesmí být uzamčen DocMDP Level 1)</li></ul><div class="info-box green"><strong>Cíl:</strong> Odstranit problémy při elektronickém podání dokumentace.</div></div>'''
+            _default_help = '''<h4>1. REŽIMY: Z Agenta vs. Serverová / Cloudová kontrola</h4><p><strong>Z Agenta (soukromý mód):</strong> Výsledky pocházejí z Desktop aplikace. PDF soubory zůstávají na vašem disku; na server odcházejí pouze metadata. Maximální ochrana dat.</p><p><strong>Serverová / Cloudová kontrola:</strong> PDF nahráváte přímo do prohlížeče. Vhodné pro rychlou ukázku; počet a velikost souborů jsou omezeny.</p><h4>2. NAHRÁNÍ SOUBORŮ</h4><p>Přetáhněte PDF nebo složku do šedé zóny, nebo použijte „Vybrat soubory" / „Vybrat složku". Po náhledu potvrďte „Spustit analýzu".</p><h4>3. CO SE KONTROLUJE</h4><ul><li><strong>PDF/A-3</strong> – formát vyžadovaný Portálem stavebníka.</li><li><strong>Elektronický podpis</strong> – přítomnost, platnost certifikátu a integrita.</li><li><strong>ČKAIT/ČKA</strong> – číslo autorizace v certifikátu.</li><li><strong>Časové razítko:</strong> VČR (TSA) = doporučené; LOK nebo bez razítka = nedostatečné.</li><li><strong>ISSŘ kompatibilita</strong> – viz níže.</li></ul><h4>4. ISSŘ KONTROLA (metodika MMR)</h4><p><strong>ISSŘ OK (zelená):</strong> Dokument splňuje technické parametry metodiky MMR pro vkládání úředních metadat. Soubor není uzamčen.</p><p><strong>ISSŘ CHYBA (červená):</strong> POZOR: Dokument je digitálně uzamčen (DocMDP Level 1). Úřední systém ISSŘ do něj nedokáže vložit podací razítko. <strong>ŘEŠENÍ:</strong> Podepište soubor znovu a v nastavení podpisu (např. v Adobe Acrobat) odškrtněte volbu „Zamknout dokument po podepsání".</p><h4>5. STROMOVÁ STRUKTURA A VÍCE PODPISŮ</h4><p>Výsledky lze zobrazit ve stromové struktuře. U souboru s více podpisy rozbalte řádek pro detail každého podpisu.</p><h4>6. VÝSLEDKY A BARVY</h4><p><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-weight:600;">Zelené</span> = v pořádku · <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;font-weight:600;">Červené</span> = problém.</p><div class="help-legal"><strong>PRÁVNÍ OCHRANA</strong><br>Aplikace je pomocný validátor. Konečná odpovědnost za podání na Portál stavebníka leží na autorizované osobě.</div>'''
+            cursor.execute('INSERT OR REPLACE INTO site_settings (key, value_text) VALUES (?, ?)', ('info_card_content', _default_info))
+            cursor.execute('INSERT OR REPLACE INTO site_settings (key, value_text) VALUES (?, ?)', ('help_card_content', _default_help))
+
         # Návštěvnost stránek (page views) – IP, cesta, referrer, UTM zdroj
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS page_views (
@@ -2698,6 +2712,30 @@ class Database:
         cursor.execute(
             'INSERT OR REPLACE INTO global_settings (key, value) VALUES (?, ?)',
             (key, v)
+        )
+        conn.commit()
+        conn.close()
+
+    # =========================================================================
+    # SITE SETTINGS (CMS – obsah karet Info a Nápověda)
+    # =========================================================================
+
+    def get_site_setting(self, key: str, default: str = '') -> str:
+        """Vrátí hodnotu z site_settings (např. info_card_content, help_card_content)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT value_text FROM site_settings WHERE key = ?', (key,))
+        row = cursor.fetchone()
+        conn.close()
+        return (row['value_text'] or default) if row else default
+
+    def set_site_setting(self, key: str, value_text: str) -> None:
+        """Uloží hodnotu do site_settings."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT OR REPLACE INTO site_settings (key, value_text) VALUES (?, ?)',
+            (key, value_text or '')
         )
         conn.commit()
         conn.close()

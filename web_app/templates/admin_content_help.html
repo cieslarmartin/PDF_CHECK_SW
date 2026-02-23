@@ -1,0 +1,63 @@
+{% extends "admin_base.html" %}
+{% block title %}PDF DokuCheck Admin – Správa obsahu nápovědy{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Správa obsahu nápovědy</h2>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:20px;">Úprava textů v kartách <strong>Info</strong> a <strong>Nápověda</strong> v hlavní aplikaci (/app). Lze používat HTML (např. &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;h4&gt;) nebo jednoduchý text s odřádkováním.</p>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Obsah karty Info</div>
+    <div class="card-body" style="padding:20px;">
+        <label class="admin-settings-label" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:6px;">Text zobrazený v modálním okně „📘 Info“</label>
+        <textarea id="info_card_content" class="admin-content-textarea" rows="14" style="width:100%;padding:12px;font-family:inherit;font-size:14px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;">{{ info_card_content|safe }}</textarea>
+    </div>
+</div>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Obsah karty Nápověda</div>
+    <div class="card-body" style="padding:20px;">
+        <label class="admin-settings-label" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:6px;">Text zobrazený v modálním okně „❓ Nápověda“ (včetně textu k ISSŘ kontrole)</label>
+        <textarea id="help_card_content" class="admin-content-textarea" rows="18" style="width:100%;padding:12px;font-family:inherit;font-size:14px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;">{{ help_card_content|safe }}</textarea>
+    </div>
+</div>
+
+<div style="margin-bottom:24px;">
+    <button type="button" id="btn-save-content" class="btn btn-primary">Uložit změny</button>
+    <span id="save-status" style="margin-left:12px;font-size:0.9em;color:#6b7280;"></span>
+</div>
+
+<script>
+(function() {
+    var btn = document.getElementById('btn-save-content');
+    var status = document.getElementById('save-status');
+    btn.addEventListener('click', function() {
+        btn.disabled = true;
+        status.textContent = 'Ukládám…';
+        status.style.color = '#6b7280';
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                info_card_content: document.getElementById('info_card_content').value,
+                help_card_content: document.getElementById('help_card_content').value
+            })
+        })
+        .then(function(r) {
+            if (!r.ok) throw new Error(r.status === 401 ? 'Přihlášení vyžadováno' : 'Chyba serveru');
+            return r.json();
+        })
+        .then(function(data) {
+            status.textContent = 'Změny uloženy.';
+            status.style.color = '#16a34a';
+        })
+        .catch(function(err) {
+            status.textContent = err.message || 'Uložení se nezdařilo.';
+            status.style.color = '#dc2626';
+        })
+        .finally(function() {
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

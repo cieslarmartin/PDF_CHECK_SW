@@ -454,6 +454,33 @@ def faq_delete():
     return redirect(url_for('admin.faq_list'))
 
 
+def _safe_for_textarea(s):
+    """Zabrání uzavření tagu </textarea> v obsahu při výstupu do <textarea>."""
+    if not s:
+        return ''
+    return s.replace('</textarea>', '</\u200btextarea>').replace('</TEXTAREA>', '</\u200bTEXTAREA>')
+
+
+@admin_bp.route('/admin/content-help', methods=['GET'])
+@admin_required
+def content_help():
+    """Správa obsahu nápovědy – karty Info a Nápověda v aplikaci (/app)."""
+    db = get_db()
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    info_raw = db.get_site_setting('info_card_content', '')
+    help_raw = db.get_site_setting('help_card_content', '')
+    return render_template(
+        'admin_content_help.html',
+        info_card_content=_safe_for_textarea(info_raw),
+        help_card_content=_safe_for_textarea(help_raw),
+        user=user,
+        active_page='content_help',
+    )
+
+
 @admin_bp.route('/admin/marketing-emails', methods=['GET'])
 @admin_required
 def marketing_emails():
