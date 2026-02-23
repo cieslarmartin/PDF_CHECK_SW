@@ -5,3 +5,6 @@
 WEB_VERSION = "w26.02.004"
 # Číselný build (zpětná kompatibilita)
 WEB_BUILD = 48
+
+# Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
+BUILD_NOTES = "Rozpoznání zamčeného PDF (DocMDP Level 1) – sloupec ISSŘ kompatibilita (úřad nemůže vložit podací razítko)."

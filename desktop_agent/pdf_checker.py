@@ -252,9 +252,96 @@ def get_file_hash(filepath):
         return None
 
 
+def _resolve_obj(obj, reader):
+    """Rozbalí indirect reference na reálný objekt (pypdf)."""
+    if obj is None:
+        return None
+    try:
+        if hasattr(obj, 'get_object'):
+            return obj.get_object()
+        if hasattr(reader, 'get_object') and hasattr(obj, 'indirect_reference'):
+            return reader.get_object(obj.indirect_reference)
+    except Exception:
+        pass
+    return obj
+
+
+def is_pdf_locked_for_issr(reader):
+    """
+    Hloubková inspekce podpisových objektů: zjistí, zda je PDF zamčeno pro ISSŘ.
+    DocMDP Level 1 (/P 1) = žádné další změny → úřad nemůže vložit podací razítko.
+    Prochází všechna pole /Sig v /AcroForm/Fields a kontroluje /Lock a /V -> /Reference -> /TransformParams.
+    """
+    try:
+        catalog = reader.trailer.get("/Root") or getattr(reader, "root_object", None)
+        if catalog is None:
+            return False
+        catalog = _resolve_obj(catalog, reader)
+        if not catalog or "/AcroForm" not in catalog:
+            return False
+        acro = catalog["/AcroForm"]
+        acro = _resolve_obj(acro, reader)
+        if not acro or "/Fields" not in acro:
+            return False
+        fields = acro["/Fields"] or []
+        for f_ref in fields:
+            f = _resolve_obj(f_ref, reader)
+            ft = f.get("/FT")
+            if not f or (str(ft) if ft is not None else "") != "/Sig":
+                continue
+            # Přímý zámek pole
+            lock = f.get("/Lock")
+            if lock is not None:
+                lock = _resolve_obj(lock, reader)
+            if lock is not None:
+                try:
+                    p = lock.get("/P")
+                    if p is not None and int(p) == 1:
+                        return True
+                except (TypeError, ValueError):
+                    pass
+            # TransformParams v referencích podpisu (/V -> /Reference -> /TransformParams)
+            v = f.get("/V")
+            if v is None:
+                continue
+            v_dict = _resolve_obj(v, reader)
+            if not v_dict or "/Reference" not in v_dict:
+                continue
+            refs = v_dict.get("/Reference") or []
+            for r in refs:
+                r_obj = _resolve_obj(r, reader)
+                if not r_obj or "/TransformParams" not in r_obj:
+                    continue
+                params = r_obj.get("/TransformParams")
+                if params is None:
+                    continue
+                params = _resolve_obj(params, reader)
+                try:
+                    if params is not None and params.get("/P") is not None and int(params.get("/P")) == 1:
+                        return True
+                except (TypeError, ValueError):
+                    pass
+        return False
+    except Exception:
+        return False
+
+
+def detect_docmdp_lock_via_reader(reader):
+    """
+    Detekce DocMDP přes strukturu PDF (AcroForm / Sig / Lock, TransformParams).
+    Vrací {'locked': bool, 'level': int|None}. Použít preferenčně před byte-scanem.
+    """
+    try:
+        if is_pdf_locked_for_issr(reader):
+            return {'locked': True, 'level': 1}
+        return {'locked': False, 'level': None}
+    except Exception:
+        return {'locked': False, 'level': None}
+
+
 def detect_docmdp_lock(content):
     """
-    Detekuje DocMDP zámek (přístupová práva po podpisu).
+    Detekuje DocMDP zámek (přístupová práva po podpisu) – byte-scan fallback.
     Level 1 = žádné změny (ISSŘ nemůže vložit podací razítko) → nekompatibilní.
     Level 2/3 = povolené úpravy → kompatibilní.
     Vrací {'locked': bool, 'level': int|None}. locked=True znamená ISSŘ nekompatibilní.
@@ -324,6 +411,15 @@ def analyze_pdf_file(filepath):
                 f.seek(-1024 * 1024, 2)
                 content += f.read()
         analysis = analyze_pdf(content)
+        # Preferenční detekce DocMDP přes strukturu PDF (AcroForm / Sig / Lock, TransformParams)
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(filepath)
+            docmdp_reader = detect_docmdp_lock_via_reader(reader)
+            analysis['docmdp_level'] = docmdp_reader['level']
+            analysis['issr_compatible'] = not docmdp_reader['locked']
+        except Exception:
+            pass
         pdf_format = {
             'is_pdf_a3': analysis['pdfaVersion'] == 3,
             'exact_version': f"PDF/A-{analysis['pdfaVersion']}" if analysis['pdfaVersion'] else "PDF (ne PDF/A)",

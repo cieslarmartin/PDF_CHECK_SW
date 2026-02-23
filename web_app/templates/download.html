@@ -38,9 +38,12 @@
     <main class="max-w-2xl mx-auto px-6 py-12">
         <section class="lp-panel rounded-2xl p-8 shadow-sm">
             <h1 class="text-2xl font-bold mb-4" style="color:#1f2937;">Stáhnout DokuCheck Agent</h1>
-            <p class="text-gray-600 mb-6">
-                Desktop aplikace DokuCheck Agent slouží ke kontrole PDF dokumentů (PDF/A-3, podpisy, časová razítka) 
+            <p class="text-gray-600 mb-4">
+                Stáhnete si nejnovější verzi programu Agenta. Desktop aplikace slouží ke kontrole PDF dokumentů (PDF/A-3, podpisy, časová razítka) 
                 a odesílání výsledků na tento portál. Po stažení a instalaci se přihlaste pomocí e-mailu a hesla nebo API klíče.
+            </p>
+            <p class="text-gray-600 mb-6">
+                <strong>Aktuální verze obsahuje rozpoznání zamčeného souboru</strong> (DocMDP Level 1) – upozorní vás, pokud úřad (ISSŘ) do dokumentu nemůže vložit podací razítko.
             </p>
             {% if show_pilot_notice and pilot_notice_text %}
             <div class="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900" role="alert">

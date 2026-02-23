@@ -4486,3 +4486,37 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-12 19:24:12,838 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
 2026-02-12 19:24:12,838 - INFO - Agent běží
 2026-02-12 19:24:21,817 - INFO - Agent ukončen
+2026-02-23 23:31:43,743 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-23 23:31:43,743 - INFO - Spouštím GUI...
+2026-02-23 23:31:44,890 - INFO - První spuštění – licence není aktivována (přihlášení přes tlačítko v sidebaru)
+2026-02-23 23:31:44,890 - INFO - Agent běží
+2026-02-23 23:32:10,289 - INFO - Přihlášení e-mailem a heslem...
+2026-02-23 23:32:11,268 - INFO - Přihlášeno.
+2026-02-23 23:33:35,472 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251218_jedna_slozka_3a/4_05_01_00_SEZ.pdf
+2026-02-23 23:33:35,515 - INFO - Analýza dokončena: 4_05_01_00_SEZ.pdf
+2026-02-23 23:33:35,516 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251218_jedna_slozka_3a/4_05_01_00_TL.pdf
+2026-02-23 23:33:35,538 - INFO - Analýza dokončena: 4_05_01_00_TL.pdf
+2026-02-23 23:33:35,538 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251218_jedna_slozka_3a/4_05_01_01_TZ.pdf
+2026-02-23 23:33:35,563 - INFO - Analýza dokončena: 4_05_01_01_TZ.pdf
+2026-02-23 23:33:35,563 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251218_jedna_slozka_3a/4_05_01_02_SIT.pdf
+2026-02-23 23:33:35,592 - INFO - Analýza dokončena: 4_05_01_02_SIT.pdf
+2026-02-23 23:33:35,592 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251218_jedna_slozka_3a/4_05_01_03_vzor.pdf
+2026-02-23 23:33:35,617 - INFO - Analýza dokončena: 4_05_01_03_vzor.pdf
+2026-02-23 23:33:38,362 - INFO - Odesílám 5 výsledků na server (jeden request)...
+2026-02-23 23:33:39,385 - INFO - Batch úspěšně odeslán: batch_20260223_223338_7dcbe93e - Uloženo 5 souborů
+2026-02-23 23:35:36,728 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251219_DSP_3a/D_Dokumentace_MZ/SO-01_MZ/01.1.10-ASR/01.10_PDF_3a/D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-02-23 23:35:36,787 - INFO - Analýza dokončena: D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-02-23 23:35:36,788 - INFO - Kontrola souboru: C:/Users/cieslar/CHVA/Zakázky - Dokumenty/24-027 NKCM_FM/04_DSP/04_01_DSP/FAZE_II_MZ/02_Expedice_MZ/250825_podani_na_SU/251219_DSP_3a/D_Dokumentace_MZ/SO-01_MZ/01.1.10-ASR/01.10_PDF_3a/D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-02-23 23:35:36,828 - INFO - Analýza dokončena: D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-02-23 23:35:37,853 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-02-23 23:35:38,812 - INFO - Batch úspěšně odeslán: batch_20260223_223538_3d01ae74 - Uloženo 2 souborů
+2026-02-23 23:39:59,511 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/A_pruvodni_zprava_240610.pdf
+2026-02-23 23:39:59,526 - INFO - Analýza dokončena: A_pruvodni_zprava_240610.pdf
+2026-02-23 23:39:59,532 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/A_pruvodni_zprava_240610_nezamceny.pdf
+2026-02-23 23:39:59,559 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_nezamceny.pdf
+2026-02-23 23:39:59,560 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/A_pruvodni_zprava_240610_zamceny.pdf
+2026-02-23 23:39:59,586 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_zamceny.pdf
+2026-02-23 23:39:59,588 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/Predavaci_protokol.pdf
+2026-02-23 23:39:59,609 - INFO - Analýza dokončena: Predavaci_protokol.pdf
+2026-02-23 23:40:00,204 - INFO - Odesílám 4 výsledků na server (jeden request)...
+2026-02-23 23:40:01,487 - INFO - Batch úspěšně odeslán: batch_20260223_224000_47ce1239 - Uloženo 4 souborů
