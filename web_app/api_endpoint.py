@@ -800,7 +800,7 @@ def register_api_routes(app):
 
                 results_inner = parsed.get('results', {})
                 issr = results_inner.get('issr_compatible')
-                issr_label = 'Zamčeno (P1)' if issr is False else ('OK' if issr is True else '—')
+                issr_label = 'Zamčeno (Level 1)' if issr is False else ('OK' if issr is True else '—')
                 row_data = [
                     r.get('folder_path', '.'),
                     r.get('file_name', ''),

@@ -268,16 +268,38 @@ def _resolve_obj(obj, reader):
 
 def is_pdf_locked_for_issr(reader):
     """
-    Hloubková inspekce podpisových objektů: zjistí, zda je PDF zamčeno pro ISSŘ.
-    DocMDP Level 1 (/P 1) = žádné další změny → úřad nemůže vložit podací razítko.
-    Prochází všechna pole /Sig v /AcroForm/Fields a kontroluje /Lock a /V -> /Reference -> /TransformParams.
+    Hloubková inspekce: zjistí, zda je PDF zamčeno pro ISSŘ (DocMDP Level 1).
+    Kontroluje: 1) /Root/Perms/DocMDP, 2) /AcroForm/Fields /Sig: /Lock a /V -> /Reference -> /TransformParams.
     """
     try:
         catalog = reader.trailer.get("/Root") or getattr(reader, "root_object", None)
         if catalog is None:
             return False
         catalog = _resolve_obj(catalog, reader)
-        if not catalog or "/AcroForm" not in catalog:
+        if not catalog:
+            return False
+
+        # 1) Root check: /Perms/DocMDP – některá PDF definují zámek jen zde
+        if "/Perms" in catalog:
+            perms = _resolve_obj(catalog["/Perms"], reader)
+            if perms and "/DocMDP" in perms:
+                docmdp_ref = _resolve_obj(perms["/DocMDP"], reader)
+                if docmdp_ref is not None:
+                    params = docmdp_ref.get("/TransformParams")
+                    if params is not None:
+                        params = _resolve_obj(params, reader)
+                        try:
+                            if params is not None and params.get("/P") is not None and int(params.get("/P")) == 1:
+                                return True
+                        except (TypeError, ValueError):
+                            pass
+                    try:
+                        if docmdp_ref.get("/P") is not None and int(docmdp_ref.get("/P")) == 1:
+                            return True
+                    except (TypeError, ValueError):
+                        pass
+
+        if "/AcroForm" not in catalog:
             return False
         acro = catalog["/AcroForm"]
         acro = _resolve_obj(acro, reader)
@@ -308,14 +330,14 @@ def is_pdf_locked_for_issr(reader):
             if not v_dict or "/Reference" not in v_dict:
                 continue
             refs = v_dict.get("/Reference") or []
-            for r in refs:
-                r_obj = _resolve_obj(r, reader)
-                if not r_obj or "/TransformParams" not in r_obj:
+            for r_ref in refs:
+                r_obj = _resolve_obj(r_ref, reader)
+                if not r_obj:
                     continue
-                params = r_obj.get("/TransformParams")
-                if params is None:
+                tp = r_obj.get("/TransformParams")
+                if tp is None:
                     continue
-                params = _resolve_obj(params, reader)
+                params = _resolve_obj(tp, reader)
                 try:
                     if params is not None and params.get("/P") is not None and int(params.get("/P")) == 1:
                         return True
@@ -341,28 +363,29 @@ def detect_docmdp_lock_via_reader(reader):
 
 def detect_docmdp_lock(content):
     """
-    Detekuje DocMDP zámek (přístupová práva po podpisu) – byte-scan fallback.
-    Level 1 = žádné změny (ISSŘ nemůže vložit podací razítko) → nekompatibilní.
-    Level 2/3 = povolené úpravy → kompatibilní.
-    Vrací {'locked': bool, 'level': int|None}. locked=True znamená ISSŘ nekompatibilní.
+    Byte-scan fallback: prohledá min. 10 kB od každého výskytu /DocMDP.
+    Vrací {'locked': bool, 'level': int|None}. Level 1 = nekompatibilní s ISSŘ.
     """
     try:
         if not content or b'/DocMDP' not in content:
             return {'locked': False, 'level': None}
-        idx = content.find(b'/DocMDP')
-        # Okno za /DocMDP (Signature dict + Reference + TransformParams bývají do ~3 KB)
-        window = content[idx:idx + 3500]
-        # /P 1 = Level 1 (žádné změny), /P 2 = Level 2, /P 3 = Level 3
-        m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
-        m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
-        m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
-        if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
-            return {'locked': True, 'level': 1}
-        if m2:
-            return {'locked': False, 'level': 2}
-        if m3:
-            return {'locked': False, 'level': 3}
-        # DocMDP přítomen, ale /P nenalezen (např. indirect ref) – neoznačovat jako locked
+        window_size = 10 * 1024  # 10 kB od každého /DocMDP
+        start = 0
+        while True:
+            idx = content.find(b'/DocMDP', start)
+            if idx < 0:
+                break
+            window = content[idx:idx + window_size]
+            m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
+            m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
+            m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
+            if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
+                return {'locked': True, 'level': 1}
+            if m2:
+                return {'locked': False, 'level': 2}
+            if m3:
+                return {'locked': False, 'level': 3}
+            start = idx + 1
         return {'locked': False, 'level': None}
     except Exception:
         return {'locked': False, 'level': None}

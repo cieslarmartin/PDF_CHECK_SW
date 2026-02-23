@@ -4538,3 +4538,9 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-23 23:50:22,578 - INFO - Analýza dokončena: Predavaci_protokol.pdf
 2026-02-23 23:50:27,470 - INFO - Odesílám 6 výsledků na server (jeden request)...
 2026-02-23 23:50:28,485 - INFO - Batch úspěšně odeslán: batch_20260223_225027_b79097a8 - Uloženo 6 souborů
+2026-02-23 23:59:49,119 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-23 23:59:49,119 - INFO - Spouštím GUI...
+2026-02-23 23:59:49,872 - INFO - Ověřuji licenci se serverem...
+2026-02-23 23:59:50,377 - INFO - Agent ukončen
+2026-02-23 23:59:51,316 - INFO - Agent běží
+2026-02-23 23:59:52,089 - INFO - Agent ukončen

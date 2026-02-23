@@ -1951,7 +1951,7 @@ function getTsaBadge(f) {
     return '<span class="badge badge-red">Bez razítka</span>';
 }
 function getIssrBadge(f) {
-    if (f.issr_compatible === false) return '<span class="badge badge-red" title="DocMDP Level 1 – úřad nemůže vložit podací razítko">🔒 P1</span>';
+    if (f.issr_compatible === false) return '<span class="badge badge-red" title="Zamčeno (Level 1) – úřad nemůže vložit podací razítko">🔒 Zamčeno (Level 1)</span>';
     if (f.issr_compatible === true) return '<span class="badge badge-green" title="Kompatibilní s ISSŘ">✅</span>';
     return '<span class="badge" style="background:#e5e7eb;color:#6b7280;">—</span>';
 }
@@ -2116,7 +2116,7 @@ function downloadLocalExcel(files, batchName) {
 
     // Data: hlavička + řádky
     const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'ČKAIT/ČKA', 'Čas. razítko', 'ISSŘ'];
-    const issrCol = f => (f.issr_compatible === false ? 'Zamčeno (P1)' : (f.issr_compatible === true ? 'OK' : '—'));
+    const issrCol = f => (f.issr_compatible === false ? 'Zamčeno (Level 1)' : (f.issr_compatible === true ? 'OK' : '—'));
     const rows = files.map(f => [
         f.path || '.',
         f.name || '',
@@ -2242,7 +2242,7 @@ async function loadAgentResults() {
                     }
                     const filePath = (folderPath && folderPath !== '.') ? (folderPath + '/' + r.file_name) : r.file_name;
 
-                    const issr = (r.results && r.results.issr_compatible) !== false && (!r.display || r.display.issr_compatible !== false);
+                    const isCompatible = r.parsed_results?.results?.issr_compatible ?? r.results?.issr_compatible ?? r.parsed_results?.display?.issr_compatible ?? r.display?.issr_compatible ?? true;
                     return {
                         name: r.file_name,
                         path: filePath,
@@ -2252,7 +2252,7 @@ async function loadAgentResults() {
                         signer: signatures.map(s => s.name).filter(n => n && n !== '—').join(', ') || '—',
                         ckait: signatures.map(s => s.ckait_number).filter(n => n && n !== '—').join(', ') || '—',
                         tsa: signatures.some(s => s.timestamp_valid) ? 'TSA' : (signatures.length > 0 ? 'LOCAL' : 'NONE'),
-                        issr_compatible: issr,
+                        issr_compatible: isCompatible,
                         sig_count: signatures.length,
                         signatures: signatures.map((s, idx) => ({
                             index: idx + 1,
@@ -2926,16 +2926,40 @@ def _resolve_obj(obj, reader):
 
 def is_pdf_locked_for_issr(reader):
     """
-    Hloubková inspekce podpisových objektů: zjistí, zda je PDF zamčeno pro ISSŘ.
-    DocMDP Level 1 (/P 1) = žádné další změny → úřad nemůže vložit podací razítko.
-    Prochází všechna pole /Sig v /AcroForm/Fields a kontroluje /Lock a /V -> /Reference -> /TransformParams.
+    Hloubková inspekce: zjistí, zda je PDF zamčeno pro ISSŘ (DocMDP Level 1).
+    Kontroluje: 1) /Root/Perms/DocMDP, 2) /AcroForm/Fields /Sig: /Lock a /V -> /Reference -> /TransformParams.
     """
     try:
         catalog = reader.trailer.get("/Root") or getattr(reader, "root_object", None)
         if catalog is None:
             return False
         catalog = _resolve_obj(catalog, reader)
-        if not catalog or "/AcroForm" not in catalog:
+        if not catalog:
+            return False
+
+        # 1) Root check: /Perms/DocMDP – některá PDF definují zámek jen zde
+        if "/Perms" in catalog:
+            perms = _resolve_obj(catalog["/Perms"], reader)
+            if perms and "/DocMDP" in perms:
+                docmdp_ref = _resolve_obj(perms["/DocMDP"], reader)
+                if docmdp_ref is not None:
+                    # DocMDP ref může být signature reference s /TransformParams
+                    params = docmdp_ref.get("/TransformParams")
+                    if params is not None:
+                        params = _resolve_obj(params, reader)
+                        try:
+                            if params is not None and params.get("/P") is not None and int(params.get("/P")) == 1:
+                                return True
+                        except (TypeError, ValueError):
+                            pass
+                    # nebo přímo /P na objektu
+                    try:
+                        if docmdp_ref.get("/P") is not None and int(docmdp_ref.get("/P")) == 1:
+                            return True
+                    except (TypeError, ValueError):
+                        pass
+
+        if "/AcroForm" not in catalog:
             return False
         acro = catalog["/AcroForm"]
         acro = _resolve_obj(acro, reader)
@@ -2961,14 +2985,15 @@ def is_pdf_locked_for_issr(reader):
             v_dict = _resolve_obj(v, reader)
             if not v_dict or "/Reference" not in v_dict:
                 continue
-            for r in (v_dict.get("/Reference") or []):
-                r_obj = _resolve_obj(r, reader)
-                if not r_obj or "/TransformParams" not in r_obj:
+            refs = v_dict.get("/Reference") or []
+            for r_ref in refs:
+                r_obj = _resolve_obj(r_ref, reader)
+                if not r_obj:
                     continue
-                params = r_obj.get("/TransformParams")
-                if params is None:
+                tp = r_obj.get("/TransformParams")
+                if tp is None:
                     continue
-                params = _resolve_obj(params, reader)
+                params = _resolve_obj(tp, reader)
                 try:
                     if params is not None and params.get("/P") is not None and int(params.get("/P")) == 1:
                         return True
@@ -2991,24 +3016,29 @@ def detect_docmdp_lock_via_reader(reader):
 
 def detect_docmdp_lock(content):
     """
-    Detekuje DocMDP zámek (přístupová práva po podpisu) – byte-scan fallback.
-    Level 1 = žádné změny (ISSŘ nemůže vložit podací razítko) → nekompatibilní.
-    Vrací {'locked': bool, 'level': int|None}.
+    Byte-scan fallback: prohledá min. 10 kB od každého výskytu /DocMDP.
+    Vrací {'locked': bool, 'level': int|None}. Level 1 = nekompatibilní s ISSŘ.
     """
     try:
         if not content or b'/DocMDP' not in content:
             return {'locked': False, 'level': None}
-        idx = content.find(b'/DocMDP')
-        window = content[idx:idx + 3500]
-        m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
-        m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
-        m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
-        if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
-            return {'locked': True, 'level': 1}
-        if m2:
-            return {'locked': False, 'level': 2}
-        if m3:
-            return {'locked': False, 'level': 3}
+        window_size = 10 * 1024  # 10 kB od každého /DocMDP
+        start = 0
+        while True:
+            idx = content.find(b'/DocMDP', start)
+            if idx < 0:
+                break
+            window = content[idx:idx + window_size]
+            m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
+            m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
+            m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
+            if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
+                return {'locked': True, 'level': 1}
+            if m2:
+                return {'locked': False, 'level': 2}
+            if m3:
+                return {'locked': False, 'level': 3}
+            start = idx + 1
         return {'locked': False, 'level': None}
     except Exception:
         return {'locked': False, 'level': None}
