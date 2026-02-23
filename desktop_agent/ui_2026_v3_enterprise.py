@@ -393,13 +393,15 @@ class PDFCheckUI_2026_V3:
             fieldbackground=[("selected", BORDER), ("!selected", TREEVIEW_BG)],
         )
         self.queue_tree = ttk.Treeview(
-            self._tree_container, columns=("status",), show="tree headings", height=18,
+            self._tree_container, columns=("status", "issr"), show="tree headings", height=18,
             style="Queue.Treeview", selectmode="browse",
         )
         self.queue_tree.heading("#0", text="Položka")
         self.queue_tree.heading("status", text="Stav")
+        self.queue_tree.heading("issr", text="ISSŘ")
         self.queue_tree.column("#0", minwidth=200, stretch=True)
         self.queue_tree.column("status", width=52, minwidth=52)
+        self.queue_tree.column("issr", width=56, minwidth=56)
         self.queue_tree.tag_configure("ok", foreground=SUCCESS)
         self.queue_tree.tag_configure("error", foreground=ERROR)
         self.queue_tree.tag_configure("pending", foreground=TEXT_MUTED)
@@ -735,6 +737,20 @@ class PDFCheckUI_2026_V3:
             return "✓", SUCCESS
         return "✗", ERROR
 
+    def _issr_text(self, item):
+        """Vrátí text sloupce ISSŘ: ✅ kompatibilní / 🔒 P1 zamčeno / — neznámo."""
+        r = item.get("result")
+        if not r or not isinstance(r, dict) or not r.get("success"):
+            return "—"
+        display = r.get("display") or {}
+        results = r.get("results") or {}
+        issr = display.get("issr_compatible") if "issr_compatible" in display else results.get("issr_compatible")
+        if issr is False:
+            return "🔒 P1"
+        if issr is True:
+            return "✅"
+        return "—"
+
     def _item_passes_filter(self, item):
         if self._queue_filter == "all":
             return True
@@ -1010,7 +1026,7 @@ class PDFCheckUI_2026_V3:
         qidx_end = batch["qidx_end"]
         root_iid = "batch-%d-%d" % (qidx_start, qidx_end)
         batch["root_iid"] = root_iid
-        self.queue_tree.insert("", "end", iid=root_iid, text="📦 " + batch["label"], values=("",))
+        self.queue_tree.insert("", "end", iid=root_iid, text="📦 " + batch["label"], values=("", ""))
         self._tree_iid_to_task_ix[root_iid] = None
 
         path_to_iid = {}  # relativní prefix (v rámci dávky) -> iid, aby se složky neduplikovaly
@@ -1037,13 +1053,14 @@ class PDFCheckUI_2026_V3:
                 folder_iid = "path-" + safe
                 path_to_iid[prefix] = folder_iid
                 display_name = parts[-1] if parts else prefix
-                self.queue_tree.insert(parent_iid, "end", iid=folder_iid, text="📁 " + display_name, values=("",))
+                self.queue_tree.insert(parent_iid, "end", iid=folder_iid, text="📁 " + display_name, values=("", ""))
             parent_iid = path_to_iid.get(dirname, root_iid) if dirname else root_iid
             chk = "☑" if item.get("checked", True) else "☐"
             badge_text, _ = self._badge_text(item)
+            issr_text = self._issr_text(item)
             display_name = "%s  📄 %s" % (chk, item.get("filename", ""))
             file_iid = "file-%d" % qidx
-            self.queue_tree.insert(parent_iid, "end", iid=file_iid, text=display_name, values=(badge_text,))
+            self.queue_tree.insert(parent_iid, "end", iid=file_iid, text=display_name, values=(badge_text, issr_text))
             self._tree_iid_to_qidx[file_iid] = qidx
             self._qidx_to_tree_iid[qidx] = file_iid
             if badge_text == "✓":
@@ -1069,8 +1086,9 @@ class PDFCheckUI_2026_V3:
                 continue
             chk = "☑" if item.get("checked", True) else "☐"
             badge_text, _ = self._badge_text(item)
+            issr_text = self._issr_text(item)
             name = item.get("filename", "")
-            self.queue_tree.item(file_iid, text="%s  📄 %s" % (chk, name), values=(badge_text,))
+            self.queue_tree.item(file_iid, text="%s  📄 %s" % (chk, name), values=(badge_text, issr_text))
             if badge_text == "✓":
                 self.queue_tree.item(file_iid, tags=("ok",))
             elif badge_text == "✗":

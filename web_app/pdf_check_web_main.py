@@ -449,7 +449,7 @@ HTML_TEMPLATE = '''
             color: white;
             border-radius: 8px 8px 0 0;
             display: grid;
-            grid-template-columns: 3fr 1fr 1fr 2.5fr 1.5fr 1.5fr;
+            grid-template-columns: 3fr 1fr 1fr 2.5fr 1.5fr 1.5fr 0.8fr;
             gap: 4px;
             font-size: 0.75em;
             font-weight: 600;
@@ -574,7 +574,7 @@ HTML_TEMPLATE = '''
         .file-row-wrapper:last-child { border-bottom: none; }
         .file-row {
             display: grid;
-            grid-template-columns: 3fr 1fr 1fr 2.5fr 1.5fr 1.5fr;
+            grid-template-columns: 3fr 1fr 1fr 2.5fr 1.5fr 1.5fr 0.8fr;
             gap: 4px;
             padding: 8px;
             align-items: center;
@@ -994,6 +994,7 @@ HTML_TEMPLATE = '''
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('tsa','NONE')"><span class="filter-dot" style="background:#ef4444"></span>Bez razítka</button>
                         </div>
                     </div>
+                    <div class="table-header-cell" title="ISSŘ: dokument nesmí být zamčen DocMDP Level 1 (podací razítko)">ISSŘ</div>
                 </div>
 
                 <div class="results-container" id="results-container">
@@ -1842,7 +1843,8 @@ function renderFileRow(file, batchId, indent = 0) {
     }
 
     html += '<div class="file-cell file-ckait">' + (hasMultipleSigs ? '—' : (file.ckait || '—')) + '</div>';
-    html += '<div class="file-cell">' + getTsaBadge(file) + '</div></div>';
+    html += '<div class="file-cell">' + getTsaBadge(file) + '</div>';
+    html += '<div class="file-cell">' + getIssrBadge(file) + '</div></div>';
 
     if (hasMultipleSigs && file.signatures) {
         html += '<div class="signatures-detail" id="' + fileId + '">';
@@ -1945,6 +1947,11 @@ function getTsaBadge(f) {
     if (f.tsa === 'PARTIAL') return '<span class="badge badge-red">MIX</span>';
     if (f.tsa === 'LOCAL') return '<span class="badge badge-red">LOK</span>';
     return '<span class="badge badge-red">Bez razítka</span>';
+}
+function getIssrBadge(f) {
+    if (f.issr_compatible === false) return '<span class="badge badge-red" title="DocMDP Level 1 – úřad nemůže vložit podací razítko">🔒 P1</span>';
+    if (f.issr_compatible === true) return '<span class="badge badge-green" title="Kompatibilní s ISSŘ">✅</span>';
+    return '<span class="badge" style="background:#e5e7eb;color:#6b7280;">—</span>';
 }
 function getTsaBadgeForSig(tsa) {
     if (tsa === 'TSA') return '<span class="badge badge-green">VČR</span>';
@@ -2106,7 +2113,8 @@ function downloadLocalExcel(files, batchName) {
     const pdfVerCol = f => (f.pdfVersion || '');
 
     // Data: hlavička + řádky
-    const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'ČKAIT/ČKA', 'Čas. razítko'];
+    const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'ČKAIT/ČKA', 'Čas. razítko', 'ISSŘ'];
+    const issrCol = f => (f.issr_compatible === false ? 'Zamčeno (P1)' : (f.issr_compatible === true ? 'OK' : '—'));
     const rows = files.map(f => [
         f.path || '.',
         f.name || '',
@@ -2115,7 +2123,8 @@ function downloadLocalExcel(files, batchName) {
         f.sig || '—',
         f.signer || '—',
         f.ckait || '—',
-        f.tsa || '—'
+        f.tsa || '—',
+        issrCol(f)
     ]);
 
     const wsData = [header, ...rows];
@@ -2231,6 +2240,7 @@ async function loadAgentResults() {
                     }
                     const filePath = (folderPath && folderPath !== '.') ? (folderPath + '/' + r.file_name) : r.file_name;
 
+                    const issr = (r.results && r.results.issr_compatible) !== false && (!r.display || r.display.issr_compatible !== false);
                     return {
                         name: r.file_name,
                         path: filePath,
@@ -2240,6 +2250,7 @@ async function loadAgentResults() {
                         signer: signatures.map(s => s.name).filter(n => n && n !== '—').join(', ') || '—',
                         ckait: signatures.map(s => s.ckait_number).filter(n => n && n !== '—').join(', ') || '—',
                         tsa: signatures.some(s => s.timestamp_valid) ? 'TSA' : (signatures.length > 0 ? 'LOCAL' : 'NONE'),
+                        issr_compatible: issr,
                         sig_count: signatures.length,
                         signatures: signatures.map((s, idx) => ({
                             index: idx + 1,
@@ -2896,6 +2907,32 @@ def check_timestamp(content):
     except:
         return 'NONE'
 
+
+def detect_docmdp_lock(content):
+    """
+    Detekuje DocMDP zámek (přístupová práva po podpisu).
+    Level 1 = žádné změny (ISSŘ nemůže vložit podací razítko) → nekompatibilní.
+    Vrací {'locked': bool, 'level': int|None}.
+    """
+    try:
+        if not content or b'/DocMDP' not in content:
+            return {'locked': False, 'level': None}
+        idx = content.find(b'/DocMDP')
+        window = content[idx:idx + 3500]
+        m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
+        m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
+        m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
+        if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
+            return {'locked': True, 'level': 1}
+        if m2:
+            return {'locked': False, 'level': 2}
+        if m3:
+            return {'locked': False, 'level': 3}
+        return {'locked': False, 'level': None}
+    except Exception:
+        return {'locked': False, 'level': None}
+
+
 def analyze_pdf(content):
     """Kompletní analýza"""
     pdfa_version, pdfa_status, pdf_version, pdfa_conformance = check_pdfa_version(content)
@@ -2924,6 +2961,7 @@ def analyze_pdf(content):
         pdfa_level = f'A-3{pdfa_conformance}'
     elif pdfa_version:
         pdfa_level = f'A-{pdfa_version}'
+    docmdp = detect_docmdp_lock(content)
     return {
         'pdfaVersion': pdfa_version,
         'pdfaStatus': pdfa_status,
@@ -2935,7 +2973,9 @@ def analyze_pdf(content):
         'ckait': sig_data['ckait_number'],
         'tsa': tsa,
         'sig_count': sig_data.get('sig_count', 0),
-        'signatures': sig_data.get('signatures', [])
+        'signatures': sig_data.get('signatures', []),
+        'docmdp_level': docmdp['level'],
+        'issr_compatible': not docmdp['locked'],
     }
 
 def analyze_pdf_file(filepath):
@@ -2953,7 +2993,7 @@ def analyze_pdf_file(filepath):
         result['name'] = os.path.basename(filepath)
         return result
     except Exception as e:
-        return {'name': os.path.basename(filepath), 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'error': str(e)}
+        return {'name': os.path.basename(filepath), 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'issr_compatible': True, 'error': str(e)}
 
 def count_pdfs_in_folder(folder_path):
     """Spočítá PDF"""

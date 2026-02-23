@@ -769,7 +769,7 @@ def register_api_routes(app):
             )
 
             # Header
-            headers = ['Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'ČKAIT/ČKA', 'TSA', 'Datum kontroly']
+            headers = ['Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'ČKAIT/ČKA', 'TSA', 'ISSŘ', 'Datum kontroly']
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
                 cell.font = header_font
@@ -798,6 +798,9 @@ def register_api_routes(app):
                     if len(parts) >= 2:
                         processed_at = ':'.join(parts[:2])
 
+                results_inner = parsed.get('results', {})
+                issr = results_inner.get('issr_compatible')
+                issr_label = 'Zamčeno (P1)' if issr is False else ('OK' if issr is True else '—')
                 row_data = [
                     r.get('folder_path', '.'),
                     r.get('file_name', ''),
@@ -807,6 +810,7 @@ def register_api_routes(app):
                     signer,
                     ckait,
                     tsa,
+                    issr_label,
                     processed_at
                 ]
 

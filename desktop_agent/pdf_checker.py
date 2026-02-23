@@ -252,11 +252,41 @@ def get_file_hash(filepath):
         return None
 
 
+def detect_docmdp_lock(content):
+    """
+    Detekuje DocMDP zámek (přístupová práva po podpisu).
+    Level 1 = žádné změny (ISSŘ nemůže vložit podací razítko) → nekompatibilní.
+    Level 2/3 = povolené úpravy → kompatibilní.
+    Vrací {'locked': bool, 'level': int|None}. locked=True znamená ISSŘ nekompatibilní.
+    """
+    try:
+        if not content or b'/DocMDP' not in content:
+            return {'locked': False, 'level': None}
+        idx = content.find(b'/DocMDP')
+        # Okno za /DocMDP (Signature dict + Reference + TransformParams bývají do ~3 KB)
+        window = content[idx:idx + 3500]
+        # /P 1 = Level 1 (žádné změny), /P 2 = Level 2, /P 3 = Level 3
+        m1 = re.search(rb'/P\s+1(?:\s|>|\))', window)
+        m2 = re.search(rb'/P\s+2(?:\s|>|\))', window)
+        m3 = re.search(rb'/P\s+3(?:\s|>|\))', window)
+        if m1 and (not m2 or m1.start() < m2.start()) and (not m3 or m1.start() < m3.start()):
+            return {'locked': True, 'level': 1}
+        if m2:
+            return {'locked': False, 'level': 2}
+        if m3:
+            return {'locked': False, 'level': 3}
+        # DocMDP přítomen, ale /P nenalezen (např. indirect ref) – neoznačovat jako locked
+        return {'locked': False, 'level': None}
+    except Exception:
+        return {'locked': False, 'level': None}
+
+
 def analyze_pdf(content):
     """Kompletní analýza PDF"""
     pdfa_version, pdfa_status = check_pdfa_version(content)
     sig_data = check_signature_data(content)
     tsa = check_timestamp(content)
+    docmdp = detect_docmdp_lock(content)
     if sig_data['has_signature']:
         if sig_data['sig_count'] > 0:
             all_have_ckait = all(s['ckait'] != '—' for s in sig_data['signatures'])
@@ -274,7 +304,9 @@ def analyze_pdf(content):
         'ckait': sig_data['ckait_number'],
         'tsa': tsa,
         'sig_count': sig_data.get('sig_count', 0),
-        'signatures': sig_data.get('signatures', [])
+        'signatures': sig_data.get('signatures', []),
+        'docmdp_level': docmdp['level'],
+        'issr_compatible': not docmdp['locked'],
     }
 
 
@@ -308,6 +340,8 @@ def analyze_pdf_file(filepath):
                 'certificate_valid': sig.get('certificate_valid', False),
                 'date': sig.get('date', '—')
             })
+        docmdp_level = analysis.get('docmdp_level')
+        issr_compatible = analysis.get('issr_compatible', True)
         return {
             'success': True,
             'file_name': filename,
@@ -317,13 +351,17 @@ def analyze_pdf_file(filepath):
             'results': {
                 'pdf_format': pdf_format,
                 'signatures': signatures,
-                'file_info': {'filename': filename, 'size': file_size, 'hash': file_hash}
+                'file_info': {'filename': filename, 'size': file_size, 'hash': file_hash},
+                'docmdp_level': docmdp_level,
+                'issr_compatible': issr_compatible,
             },
             'display': {
                 'pdf_version': pdf_format['exact_version'],
                 'is_pdf_a3': pdf_format['is_pdf_a3'],
                 'signature_count': len(signatures),
-                'signatures': signatures
+                'signatures': signatures,
+                'docmdp_level': docmdp_level,
+                'issr_compatible': issr_compatible,
             }
         }
     except Exception as e:
