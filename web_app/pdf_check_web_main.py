@@ -3059,6 +3059,24 @@ def analyze_pdf(content):
         'issr_compatible': not docmdp['locked'],
     }
 
+
+def analyze_pdf_from_content(content):
+    """
+    Analýza PDF z bajtů (upload). Stejná logika DocMDP/ISSŘ jako u souboru z disku:
+    po analyze_pdf(content) spustí PdfReader(io.BytesIO(content)) a přepíše docmdp_level/issr_compatible.
+    """
+    result = analyze_pdf(content)
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(content))
+        docmdp_reader = detect_docmdp_lock_via_reader(reader)
+        result['docmdp_level'] = docmdp_reader['level']
+        result['issr_compatible'] = not docmdp_reader['locked']
+    except Exception:
+        pass
+    return result
+
+
 def analyze_pdf_file(filepath):
     """Analýza souboru z disku"""
     try:
@@ -3592,7 +3610,7 @@ def analyze_batch():
             if len(content) > ONLINE_DEMO_MAX_FILE_SIZE:
                 results.append({'error': f'{file.filename}: soubor je větší než 2 MB', 'filename': file.filename})
                 continue
-            r = analyze_pdf(content)
+            r = analyze_pdf_from_content(content)
             r['filename'] = file.filename
             results.append(r)
 
@@ -3624,7 +3642,7 @@ def analyze():
             }), 429
         db.record_web_trial_usage(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
-        return jsonify(analyze_pdf(content))
+        return jsonify(analyze_pdf_from_content(content))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

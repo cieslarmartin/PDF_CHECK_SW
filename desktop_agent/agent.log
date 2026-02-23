@@ -4520,3 +4520,21 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-23 23:39:59,609 - INFO - Analýza dokončena: Predavaci_protokol.pdf
 2026-02-23 23:40:00,204 - INFO - Odesílám 4 výsledků na server (jeden request)...
 2026-02-23 23:40:01,487 - INFO - Batch úspěšně odeslán: batch_20260223_224000_47ce1239 - Uloženo 4 souborů
+2026-02-23 23:49:51,806 - INFO - PDF DokuCheck Agent spuštěn
+2026-02-23 23:49:51,806 - INFO - Spouštím GUI...
+2026-02-23 23:49:52,488 - INFO - Ověřuji licenci se serverem...
+2026-02-23 23:49:53,881 - INFO - Agent běží
+2026-02-23 23:50:22,304 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\A_pruvodni_zprava_240610.pdf
+2026-02-23 23:50:22,386 - INFO - Analýza dokončena: A_pruvodni_zprava_240610.pdf
+2026-02-23 23:50:22,387 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\A_pruvodni_zprava_240610_nezamceny.pdf
+2026-02-23 23:50:22,431 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_nezamceny.pdf
+2026-02-23 23:50:22,432 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\A_pruvodni_zprava_240610_zamceny.pdf
+2026-02-23 23:50:22,462 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_zamceny.pdf
+2026-02-23 23:50:22,464 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-02-23 23:50:22,505 - INFO - Analýza dokončena: D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-02-23 23:50:22,506 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-02-23 23:50:22,548 - INFO - Analýza dokončena: D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-02-23 23:50:22,552 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR\Predavaci_protokol.pdf
+2026-02-23 23:50:22,578 - INFO - Analýza dokončena: Predavaci_protokol.pdf
+2026-02-23 23:50:27,470 - INFO - Odesílám 6 výsledků na server (jeden request)...
+2026-02-23 23:50:28,485 - INFO - Batch úspěšně odeslán: batch_20260223_225027_b79097a8 - Uloženo 6 souborů
