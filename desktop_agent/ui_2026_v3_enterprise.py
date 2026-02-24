@@ -1233,15 +1233,27 @@ class PDFCheckUI_2026_V3:
                 # Limitovaný účet (trial/zdarma): analyzovat jen prvních max_files souborů po jednom
                 to_process = checked_paths_qidx[:max_files]
                 total_files_to_process = len(to_process)
+                if to_process:
+                    source_folder_for_batch = os.path.dirname(to_process[0][0])
                 for path, qidx in to_process:
                     if self.cancel_requested:
                         break
                     processed = len(all_results)
                     self.root.after(0, lambda c=processed + 1, t=total_files_to_process, f=os.path.basename(path): self.update_progress(c, t, f))
                     result = self.on_check_callback(path, mode="single", auto_send=False)
+                    if result.get('success') and source_folder_for_batch:
+                        try:
+                            rel = os.path.relpath(path, source_folder_for_batch).replace('\\', '/')
+                            if not rel.startswith('..'):
+                                result['folder'] = os.path.dirname(rel).replace('\\', '/') or '.'
+                                result['relative_path'] = rel
+                            else:
+                                result.setdefault('folder', '.')
+                                result.setdefault('relative_path', result.get('file_name', os.path.basename(path)))
+                        except Exception:
+                            result.setdefault('folder', '.')
+                            result.setdefault('relative_path', result.get('file_name', os.path.basename(path)))
                     all_results.append((qidx, result))
-                if all_results and to_process:
-                    source_folder_for_batch = os.path.dirname(to_process[0][0])
             else:
                 # Neomezený účet: složky po složce, soubory po jednom
                 task_checked = []
@@ -1288,12 +1300,26 @@ class PDFCheckUI_2026_V3:
                         if all_results and source_folder_for_batch is None:
                             source_folder_for_batch = task_path
                     else:
+                        if source_folder_for_batch is None and items:
+                            source_folder_for_batch = os.path.dirname(items[0][0])
                         for path, qidx in items:
                             if self.cancel_requested or processed >= max_files:
                                 break
                             processed += 1
                             self.root.after(0, lambda c=processed, t=total_files_to_process, f=os.path.basename(path): self.update_progress(c, t, f))
                             result = self.on_check_callback(path, mode="single", auto_send=False)
+                            if result.get('success') and source_folder_for_batch:
+                                try:
+                                    rel = os.path.relpath(path, source_folder_for_batch).replace('\\', '/')
+                                    if not rel.startswith('..'):
+                                        result['folder'] = os.path.dirname(rel).replace('\\', '/') or '.'
+                                        result['relative_path'] = rel
+                                    else:
+                                        result.setdefault('folder', '.')
+                                        result.setdefault('relative_path', result.get('file_name', os.path.basename(path)))
+                                except Exception:
+                                    result.setdefault('folder', '.')
+                                    result.setdefault('relative_path', result.get('file_name', os.path.basename(path)))
                             all_results.append((qidx, result))
 
             if not all_results:

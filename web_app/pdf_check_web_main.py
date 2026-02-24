@@ -2629,163 +2629,159 @@ def check_pdfa_version(content):
         return None, 'FAIL', pdf_version, conformance
 
 def extract_all_signatures(content):
-    """Extrahuje VŠECHNY podpisy z PDF"""
+    """
+    Extrahuje VŠECHNY podpisy z PDF.
+
+    STRATEGIE (robustní – synchronizováno s desktop agentem):
+    1. PRIMÁRNĚ čte jméno z CN v PKCS7 certifikátu (vždy obsahuje správné jméno)
+    2. FALLBACK na /Name pouze pokud CN nenajde platné jméno
+    3. Filtruje systémové hodnoty (CA, TSA, OCSP, atd.) a CAD software junk
+    4. Podporuje BMPString (UTF-16BE) certifikáty ze starších CA
+    """
     signatures = []
-    
-    # Najdi všechny /ByteRange - každý představuje jeden podpis
+
     byteranges = list(re.finditer(rb'/ByteRange\s*\[([^\]]+)\]', content))
-    
+
+    CA_KEYWORDS = [
+        'postsignum', 'root', 'qca', 'tsa', 'tsu', 'ocsp', 'acaeid',
+        'qualified ca', 'i.ca', 'eidentity', 'issř', 'aca ', 'certificate'
+    ]
+
+    BAD_NAME_VALUES = [
+        'cfg_0', 'default', 'auto', 'a_patt', 'not specified', 'format',
+        'x_shbd', '_vykres', 'is_slaboproud', 'ep_x_legenda'
+    ]
+
     for i, br in enumerate(byteranges):
         sig_info = {
             'index': i + 1,
             'signer': '—',
             'ckait': '—',
             'tsa': 'NONE',
-            'date': '—'
+            'date': '—',
+            'valid': False,
+            'timestamp_valid': False,
         }
-        
+
         br_pos = br.start()
-        
-        # Hledej v okolí ByteRange (celý signature dictionary)
-        # Contents může být i hodně před ByteRange, rozšířit hledání
         search_start = max(0, br_pos - 25000)
         search_end = min(len(content), br_pos + 50000)
         search_area = content[search_start:search_end]
-        
-        # /Name – v PDF může být UTF-16BE (BOM \xfe\xff), PDFDocEncoding, nebo escape \ddd (octal)
-        name_match = re.search(rb'/Name\s*\(([^)]+)\)', search_area)
-        if name_match:
-            raw_name = name_match.group(1)
-            # Odstranit PDF escape sekvence: \n \r \t \b \f \( \) \\ a \ddd (octal)
-            def unescape_pdf_string(b):
-                out = []
-                i = 0
-                while i < len(b):
-                    if b[i:i+1] == b'\\' and i + 1 < len(b):
-                        n = b[i+1:i+2]
-                        if n in b'nrtbf':
-                            out.append(bytes([{b'n': 10, b'r': 13, b't': 9, b'b': 8, b'f': 12}[n]]))
-                            i += 1
-                        elif n in b'()\\':
-                            out.append(b[i+1:i+2])
-                            i += 1
-                        elif n.isdigit():
-                            octal_len = 1
-                            if i + 2 < len(b) and b[i+2:i+3].isdigit():
-                                octal_len = 2
-                                if i + 3 < len(b) and b[i+3:i+4].isdigit():
-                                    octal_len = 3
-                            out.append(bytes([int(b[i+1:i+1+octal_len].decode('ascii'), 8)]))
-                            i += octal_len
-                        i += 1
-                    else:
-                        out.append(b[i:i+1])
-                    i += 1
-                return b''.join(out)
-            raw_name = unescape_pdf_string(raw_name)
-            if raw_name.startswith(b'\xfe\xff'):
-                sig_info['signer'] = raw_name[2:].decode('utf-16-be', errors='replace')
-            elif b'\x00' in raw_name[:min(20, len(raw_name))]:
-                sig_info['signer'] = raw_name.decode('utf-16-be', errors='replace')
-            else:
-                # České znaky: cp1250 (Windows-1250) před utf-8
-                for enc in ['cp1250', 'utf-8', 'windows-1250', 'latin-1']:
-                    try:
-                        sig_info['signer'] = raw_name.decode(enc, errors='replace')
-                        if sig_info['signer'] and not any(ord(c) == 0xFFFD for c in sig_info['signer'][:20]):
-                            break
-                    except Exception:
-                        continue
-            sig_info['signer'] = sig_info['signer'].replace('\n', '').replace('\r', '').replace('\ufffd', '?').strip()
-            if sig_info['signer'].lower() == 'default' or len(sig_info['signer']) < 2:
-                sig_info['signer'] = '—'
-        
+
         # /M (datum)
         m_match = re.search(rb'/M\s*\(D:(\d{14})', search_area)
         if m_match:
             d = m_match.group(1).decode('ascii')
             sig_info['date'] = f"{d[:4]}-{d[4:6]}-{d[6:8]} {d[8:10]}:{d[10:12]}"
-        
-        # /Contents<hex> - PKCS7 data
+
+        # /Contents<hex> - PKCS7 data – PRIMÁRNÍ ZDROJ PRO JMÉNO
         contents_match = re.search(rb'/Contents\s*<([0-9a-fA-F]+)>', search_area)
         if contents_match:
             try:
                 hex_data = contents_match.group(1).decode('ascii')
                 pkcs7 = bytes.fromhex(hex_data)
                 pkcs7_hex = pkcs7.hex()
-                
+
                 # TSA OID
                 tsa_oid = bytes.fromhex('060b2a864886f70d010910020e')
                 if tsa_oid in pkcs7:
                     sig_info['tsa'] = 'TSA'
+                    sig_info['timestamp_valid'] = True
                 elif m_match:
                     sig_info['tsa'] = 'LOCAL'
-                
-                # ČKAIT (OU s 7 číslicemi) nebo ČKA (5 číslic)
-                # Hledáme délky: 7 (ČKAIT), 6 (ČKAIT), 5 (ČKA), 4 (ČKA)
 
-                # Délka 7 - ČKAIT
-                ou_match = re.search(r'060355040b(?:0c|13)07([0-9a-f]{14})', pkcs7_hex, re.I)
-                if ou_match:
-                    ckait = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                    if re.match(r'^\d{7}$', ckait):
-                        sig_info['ckait'] = ckait  # ČKAIT 7 číslic
-
-                # Délka 6 - ČKAIT
-                if sig_info['ckait'] == '—':
-                    ou_match = re.search(r'060355040b(?:0c|13)06([0-9a-f]{12})', pkcs7_hex, re.I)
+                # ČKAIT/ČKA z OU (Organizational Unit) – délky 7, 6, 5, 4
+                for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
+                    if sig_info['ckait'] != '—':
+                        break
+                    hex_len = format(length, '02x')
+                    ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
+                    ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
                     if ou_match:
-                        ckait = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                        if re.match(r'^\d{6}$', ckait):
-                            sig_info['ckait'] = ckait  # ČKAIT 6 číslic
+                        try:
+                            value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
+                            if re.match(rf'^\d{{{length}}}$', value):
+                                sig_info['ckait'] = value
+                        except Exception:
+                            pass
 
-                # Délka 5 - ČKA (Česká komora architektů)
-                if sig_info['ckait'] == '—':
-                    ou_match = re.search(r'060355040b(?:0c|13)05([0-9a-f]{10})', pkcs7_hex, re.I)
-                    if ou_match:
-                        cka = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                        if re.match(r'^\d{5}$', cka):
-                            sig_info['ckait'] = cka  # ČKA 5 číslic (uloženo do stejného pole)
-
-                # Délka 4 - ČKA alternativní formát
-                if sig_info['ckait'] == '—':
-                    ou_match = re.search(r'060355040b(?:0c|13)04([0-9a-f]{8})', pkcs7_hex, re.I)
-                    if ou_match:
-                        cka = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                        if re.match(r'^\d{4}$', cka):
-                            sig_info['ckait'] = cka  # ČKA 4 číslice
-                
-                # Fallback pro jméno z PKCS7 (CN) - vyfiltrovat CA certifikáty
-                if sig_info['signer'] == '—':
-                    ca_keywords = ['postsignum', 'root', 'qca', 'tsa', 'tsu', 'ocsp', 'acaeid', 'qualified ca', 'i.ca', 'eidentity']
-                    found_cns = []
-                    
-                    for typ in ['0c', '13']:  # UTF8String, PrintableString
-                        for length in range(5, 80):
-                            hex_len = format(length, '02x')
-                            pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
-                            for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
-                                try:
-                                    cn = bytes.fromhex(cn_match.group(1)).decode('utf-8', errors='ignore')
-                                    if len(cn) > 3:
-                                        is_ca = any(kw in cn.lower() for kw in ca_keywords)
-                                        found_cns.append((cn, is_ca, cn_match.start()))
-                                except:
-                                    pass
-                    
-                    # Seřadit podle pozice (první v certifikátu je obvykle subjekt)
-                    found_cns.sort(key=lambda x: x[2])
-                    
-                    # Vzít první ne-CA CN
-                    for cn, is_ca, pos in found_cns:
-                        if not is_ca:
-                            sig_info['signer'] = cn
-                            break
-            except:
+                # Jméno z CN (Common Name) – UTF8String, PrintableString, BMPString
+                found_cns = []
+                for typ in ['0c', '13', '1e']:
+                    for length in range(5, 80):
+                        hex_len = format(length, '02x')
+                        pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                        for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
+                            try:
+                                raw_bytes = bytes.fromhex(cn_match.group(1))
+                                cn = raw_bytes.decode('utf-16-be', errors='ignore') if typ == '1e' else raw_bytes.decode('utf-8', errors='ignore')
+                                if len(cn) > 3:
+                                    is_ca = any(kw in cn.lower() for kw in CA_KEYWORDS)
+                                    found_cns.append({
+                                        'name': cn,
+                                        'is_ca': is_ca,
+                                        'has_space': ' ' in cn,
+                                        'position': cn_match.start(),
+                                    })
+                            except Exception:
+                                pass
+                best_cn = None
+                for cn_info in sorted(found_cns, key=lambda x: (x['is_ca'], not x['has_space'], x['position'])):
+                    if not cn_info['is_ca']:
+                        best_cn = cn_info['name']
+                        break
+                if best_cn:
+                    sig_info['signer'] = best_cn
+            except Exception:
                 pass
-        
+
+        # FALLBACK: /Name (pokud CN nenašel nic)
+        if sig_info['signer'] == '—':
+            all_names = list(re.finditer(rb'/Name\s*\(([^)]*)\)', search_area))
+            best_name = None
+            best_score = -100
+            for name_match in all_names:
+                raw_name = name_match.group(1)
+                if raw_name.startswith(b'\xfe\xff'):
+                    decoded = raw_name[2:].decode('utf-16-be', errors='ignore')
+                    is_utf16 = True
+                elif b'\x00' in raw_name[:10]:
+                    decoded = raw_name.decode('utf-16-be', errors='ignore')
+                    is_utf16 = True
+                else:
+                    decoded = None
+                    for enc in ['utf-8', 'windows-1250', 'latin-1']:
+                        try:
+                            decoded = raw_name.decode(enc)
+                            break
+                        except Exception:
+                            continue
+                    is_utf16 = False
+                if not decoded:
+                    continue
+                decoded = decoded.replace('\n', '').replace('\r', '').strip()
+                if decoded.lower() in BAD_NAME_VALUES or len(decoded) < 4:
+                    continue
+                if '|' in decoded or decoded.startswith('ref_') or decoded.isdigit():
+                    continue
+                score = 0
+                if is_utf16:
+                    score += 20
+                if ' ' in decoded:
+                    score += 15
+                if re.match(r'^(Ing\.|Mgr\.|Bc\.|Dr\.|akad\.|arch\.|MUDr\.|JUDr\.)', decoded):
+                    score += 10
+                score += min(len(decoded), 30) / 5
+                score -= abs(name_match.start()) / 10000
+                if score > best_score:
+                    best_score = score
+                    best_name = decoded
+            if best_name:
+                sig_info['signer'] = best_name
+
+        sig_info['valid'] = (sig_info['signer'] != '—' and sig_info['ckait'] != '—')
         signatures.append(sig_info)
-    
+
     return signatures
 
 def check_signature_data(content):
