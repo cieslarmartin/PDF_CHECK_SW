@@ -2660,6 +2660,7 @@ def extract_all_signatures(content):
             'tsa': 'NONE',
             'date': '—',
             'valid': False,
+            'signature_type': None,
             'timestamp_valid': False,
         }
 
@@ -2689,8 +2690,9 @@ def extract_all_signatures(content):
                     sig_info['timestamp_valid'] = True
                 elif m_match:
                     sig_info['tsa'] = 'LOCAL'
+                    sig_info['timestamp_valid'] = False
 
-                # ČKAIT/ČKA z OU (Organizational Unit) – délky 7, 6, 5, 4
+                # ČKAIT/ČKA z OU (Organizational Unit) – stejně jako agent
                 for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
                     if sig_info['ckait'] != '—':
                         break
@@ -2702,6 +2704,7 @@ def extract_all_signatures(content):
                             value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
                             if re.match(rf'^\d{{{length}}}$', value):
                                 sig_info['ckait'] = value
+                                sig_info['signature_type'] = sig_type
                         except Exception:
                             pass
 
@@ -2780,6 +2783,7 @@ def extract_all_signatures(content):
                 sig_info['signer'] = best_name
 
         sig_info['valid'] = (sig_info['signer'] != '—' and sig_info['ckait'] != '—')
+        sig_info['certificate_valid'] = sig_info['valid']
         signatures.append(sig_info)
 
     return signatures

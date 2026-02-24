@@ -1110,10 +1110,10 @@ def logs():
         else:
             logs_list = logs_list[offset:offset + per_page]
     else:
-        logs_list = db.get_logs_filtered(
-            category=category, user_id=user_id, date_from=date_from, date_to=date_to,
-            level=level, limit=per_page, offset=offset
-        )
+    logs_list = db.get_logs_filtered(
+        category=category, user_id=user_id, date_from=date_from, date_to=date_to,
+        level=level, limit=per_page, offset=offset
+    )
         if category in ('payment', 'system') and logs_list:
             user_ids = {log.get('user_id') for log in logs_list if log.get('user_id')}
             display_map = {}

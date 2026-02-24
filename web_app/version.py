@@ -2,9 +2,9 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.004"
+WEB_VERSION = "w26.02.005"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 48
+WEB_BUILD = 49
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
 BUILD_NOTES = "Rozpoznání zamčeného PDF (DocMDP Level 1) – sloupec ISSŘ kompatibilita (úřad nemůže vložit podací razítko)."
