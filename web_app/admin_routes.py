@@ -1028,18 +1028,31 @@ def activate_without_invoice():
     return redirect(url_for('admin.pending_orders'))
 
 
-@admin_bp.route('/admin/trial')
+@admin_bp.route('/admin/trial', methods=['GET', 'POST'])
 @admin_required
 def trial():
     """Správa Trial použití: Desktop Agent (Machine-ID) + Web Trial (IP)."""
     db = get_db()
+    if request.method == 'POST' and request.form.get('action') == 'save_web_trial_limit':
+        try:
+            val = request.form.get('web_trial_max_batches_per_24h', '0').strip()
+            n = int(val) if val else 0
+            if n < 0:
+                n = 0
+            db.set_global_setting('web_trial_max_batches_per_24h', n)
+            flash('Limit Web Trial uložen: ' + ('neomezeno' if n == 0 else f'{n} kontrol za 24 h na IP') + '.', 'success')
+        except (ValueError, TypeError):
+            flash('Neplatná hodnota. Zadejte celé číslo (0 = neomezeno).', 'error')
+        return redirect(url_for('admin.trial'))
     trial_list = db.list_trial_usage()
     web_trial_list = db.list_web_trial_usage()
+    web_trial_max_batches = db.get_setting_int('web_trial_max_batches_per_24h', 0)
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
-    return render_template('admin_trial.html', trial_list=trial_list or [], web_trial_list=web_trial_list or [], user=user, active_page='trial')
+    return render_template('admin_trial.html', trial_list=trial_list or [], web_trial_list=web_trial_list or [],
+                          web_trial_max_batches_per_24h=web_trial_max_batches, user=user, active_page='trial')
 
 
 @admin_bp.route('/admin/analytics')

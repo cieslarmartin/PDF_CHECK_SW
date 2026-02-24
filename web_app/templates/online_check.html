@@ -233,7 +233,15 @@
             try {
                 const fd = new FormData();
                 selectedFiles.forEach(f => fd.append('files', f));
-                const r = await fetch('/analyze-batch', { method: 'POST', body: fd });
+                const opts = { method: 'POST', body: fd };
+                try {
+                    const stored = localStorage.getItem('pdfcheck_user');
+                    if (stored) {
+                        const u = JSON.parse(stored);
+                        if (u && u.api_key) opts.headers = { 'Authorization': 'Bearer ' + u.api_key };
+                    }
+                } catch (e) {}
+                const r = await fetch('/analyze-batch', opts);
                 const data = await r.json().catch(() => ({}));
                 if (r.status === 429 && data.limit_exceeded) {
                     showModalLimit();

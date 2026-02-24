@@ -1395,6 +1395,7 @@ async function processFilesWithProgress(files) {
 
     const batch = { id: ++batchCounter, name: batchName, timestamp: new Date().toLocaleTimeString().slice(0,5), files: [], collapsed: false };
 
+    const authHeaders = (user && user.api_key) ? { 'Authorization': 'Bearer ' + user.api_key } : {};
     const totalPdf = pdfFiles.length;
     let limitReached = false;
     for (let i = 0; i < totalPdf; i++) {
@@ -1408,7 +1409,7 @@ async function processFilesWithProgress(files) {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const response = await fetch('/analyze', { method: 'POST', body: formData });
+            const response = await fetch('/analyze', { method: 'POST', body: formData, headers: authHeaders });
             const result = await response.json().catch(function() { return {}; });
             if (!response.ok) {
                 if (response.status === 429 && result.limit_exceeded) {
@@ -3554,12 +3555,34 @@ def _get_client_ip():
     return request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip() or request.remote_addr or ''
 
 
+def _is_paid_user_from_request(db):
+    """True pokud požadavek nese platný API klíč placené licence (Basic/Pro), tedy bez Web Trial limitu."""
+    auth = request.headers.get('Authorization')
+    if not auth or not auth.startswith('Bearer '):
+        return False
+    api_key = auth.replace('Bearer ', '').strip()
+    if not api_key:
+        return False
+    if not db.verify_api_key(api_key):
+        return False
+    lic = db.get_user_license(api_key)
+    if not lic:
+        return False
+    if lic.get('is_expired'):
+        return False
+    tier = lic.get('license_tier', 0)
+    tier_name = (lic.get('tier_name') or '').strip().lower()
+    if tier_name in ('trial', 'free'):
+        return False
+    return tier >= 1
+
+
 @app.route('/analyze-batch', methods=['POST'])
 def analyze_batch():
     """
-    Web Trial: kontrola až 5 PDF v jedné dávce.
-    Limit: max 3 batche na IP za 24 h.
-    Při překročení limitu vrací 429 + limit_exceeded.
+    Kontrola až 5 PDF v jedné dávce.
+    Přihlášený placený uživatel (Authorization: Bearer): bez limitu.
+    Nepřihlášený / trial: limit dle nastavení (Web Trial) na IP.
     """
     ip = _get_client_ip()
     files = request.files.getlist('files') or request.files.getlist('file') or []
@@ -3577,12 +3600,14 @@ def analyze_batch():
 
     try:
         db = Database()
-        allowed, count = db.check_web_trial_limit(ip)
-        if not allowed:
-            return jsonify({
-                'error': f'Dosáhli jste limitu 3 kontrol za 24 hodin (IP). Pro další kontroly se registrujte nebo si zakoupte licenci.',
-                'limit_exceeded': True
-            }), 429
+        paid_user = _is_paid_user_from_request(db)
+        if not paid_user:
+            allowed, count = db.check_web_trial_limit(ip)
+            if not allowed:
+                return jsonify({
+                    'error': f'Dosáhli jste limitu kontrol za 24 hodin (IP). Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
+                    'limit_exceeded': True
+                }), 429
 
         results = []
         for file in files:
@@ -3596,7 +3621,8 @@ def analyze_batch():
             r['filename'] = file.filename
             results.append(r)
 
-        db.record_web_trial_usage(ip)
+        if not paid_user:
+            db.record_web_trial_usage(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=len(results))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -3606,7 +3632,7 @@ def analyze_batch():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Kontrola jednoho PDF – serverové Body B (Online Demo). Max 2 MB, logování do activity_log (kompatibilita)."""
+    """Kontrola jednoho PDF. Přihlášený placený uživatel = bez limitu; jinak Web Trial limit na IP."""
     if 'file' not in request.files:
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
@@ -3616,13 +3642,15 @@ def analyze():
             return jsonify({'error': 'Soubor je větší než 2 MB. Pro větší soubory použijte Desktop aplikaci.'}), 400
         ip = _get_client_ip()
         db = Database()
-        allowed, _ = db.check_web_trial_limit(ip)
-        if not allowed:
-            return jsonify({
-                'error': 'Dosáhli jste limitu 3 kontrol za 24 hodin. Pro další kontroly se registrujte nebo si zakoupte licenci.',
-                'limit_exceeded': True
-            }), 429
-        db.record_web_trial_usage(ip)
+        paid_user = _is_paid_user_from_request(db)
+        if not paid_user:
+            allowed, _ = db.check_web_trial_limit(ip)
+            if not allowed:
+                return jsonify({
+                    'error': 'Dosáhli jste limitu kontrol za 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
+                    'limit_exceeded': True
+                }), 429
+            db.record_web_trial_usage(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         return jsonify(analyze_pdf_from_content(content))
     except Exception as e:

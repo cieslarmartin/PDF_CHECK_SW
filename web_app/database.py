@@ -1682,9 +1682,20 @@ class Database:
         return rows
 
     def check_web_trial_limit(self, ip_address):
-        """Vrátí (allowed: bool, usage_count: int). Limit: max 3 batche za 24 h na IP."""
+        """Vrátí (allowed: bool, usage_count: int). Limit z global_settings web_trial_max_batches_per_24h; 0 = neomezeno."""
         if not ip_address:
             return True, 0
+        limit = self.get_setting_int('web_trial_max_batches_per_24h', 0)
+        if limit <= 0:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT COUNT(*) FROM web_trial_ip_usage
+                WHERE ip_address = ? AND usage_timestamp >= datetime('now', '-24 hours')
+            ''', (ip_address,))
+            count = cursor.fetchone()[0]
+            conn.close()
+            return True, count
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
@@ -1693,7 +1704,7 @@ class Database:
         ''', (ip_address,))
         count = cursor.fetchone()[0]
         conn.close()
-        return count < 3, count
+        return count < limit, count
 
     def record_web_trial_usage(self, ip_address):
         """Zaznamená jedno použití web trial pro IP (1 batch)."""

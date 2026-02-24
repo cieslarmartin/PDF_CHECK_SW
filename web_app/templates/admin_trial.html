@@ -22,9 +22,25 @@
     </div>
 </div>
 
+{# Nastavení limitu Web Trial #}
+<div class="admin-card" style="margin-bottom:20px;">
+    <div class="card-header">Nastavení Web Trial (online kontrola bez přihlášení)</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('admin.trial') }}">
+            <input type="hidden" name="action" value="save_web_trial_limit">
+            <label for="web_trial_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet kontrol za 24 h na jednu IP (0 = neomezeno)</label>
+            <input type="number" id="web_trial_limit" name="web_trial_max_batches_per_24h" value="{{ web_trial_max_batches_per_24h }}" min="0" max="999" step="1" style="width:120px;padding:6px 8px;">
+            <span class="text-muted small" style="margin-left:8px;">0 = Online check i cloud upload bez limitu</span>
+            <div style="margin-top:10px;">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {# A) Web Trial (online check bez přihlášení – podle IP) #}
 <h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Web Trial – online kontroly (podle IP)</h3>
-<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení. Limit: 3 dávky / 24 h na IP.</p>
+<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení.{% if web_trial_max_batches_per_24h == 0 %} Limit: <strong>neomezeno</strong>.{% else %} Limit: <strong>{{ web_trial_max_batches_per_24h }}</strong> kontrol / 24 h na IP.{% endif %}</p>
 <div class="table-container">
     <table class="table-dense">
         <thead>
