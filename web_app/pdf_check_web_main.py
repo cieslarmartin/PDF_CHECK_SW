@@ -910,6 +910,8 @@ HTML_TEMPLATE = '''
                             <div class="legend-item"><span class="badge badge-green">VČR</span> Vlož. čas. razítko</div>
                             <div class="legend-item"><span class="badge badge-red">LOK</span> Z hodin PC</div>
                             <div class="legend-item"><span class="badge badge-red">Bez razítka</span> Žádné</div>
+                            <div class="legend-item"><span class="badge badge-green">✅</span> ISSŘ: OK (úřad může vložit podací razítko)</div>
+                            <div class="legend-item"><span class="badge badge-red">🔒 Zamčeno</span> ISSŘ: Level 1 – úřad nemůže vložit podací razítko</div>
                         </div>
                     </div>
                 </div>
@@ -1394,6 +1396,7 @@ async function processFilesWithProgress(files) {
     const batch = { id: ++batchCounter, name: batchName, timestamp: new Date().toLocaleTimeString().slice(0,5), files: [], collapsed: false };
 
     const totalPdf = pdfFiles.length;
+    let limitReached = false;
     for (let i = 0; i < totalPdf; i++) {
         const file = pdfFiles[i];
         const percent = Math.round(((i + 1) / totalPdf) * 100);
@@ -1406,19 +1409,29 @@ async function processFilesWithProgress(files) {
         formData.append('file', file);
         try {
             const response = await fetch('/analyze', { method: 'POST', body: formData });
-            const result = await response.json();
+            const result = await response.json().catch(function() { return {}; });
+            if (!response.ok) {
+                if (response.status === 429 && result.limit_exceeded) {
+                    progressModal.classList.remove('visible');
+                    alert('Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
+                    limitReached = true;
+                    break;
+                }
+                batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: result.error || 'Chyba kontroly' });
+                continue;
+            }
             batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, ...result });
         } catch (error) {
-            batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, pdfaVersion: null, pdfaStatus: 'FAIL', sig: 'FAIL', signer: '—', ckait: '—', tsa: 'NONE' });
+            batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: 'Chyba: ' + (error.message || 'síťová chyba') });
         }
     }
     
-    // Skrýt progress modal
     progressModal.classList.remove('visible');
-    
-    batches.push(batch);
-    renderResults();
-    updateFilterLists();
+    if (batch.files.length > 0) {
+        batches.push(batch);
+        renderResults();
+        updateFilterLists();
+    }
 }
 
 // Původní processFiles pro zpětnou kompatibilitu
@@ -1755,6 +1768,10 @@ function getFolderStats(folder) {
 
 // Renderuje řádek souboru
 function renderFileRow(file, batchId, indent = 0) {
+    if (file.error) {
+        const errEsc = (file.error + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return '<div class="file-row-wrapper"><div class="file-row"><div class="file-name" style="padding-left:' + indent + 'px">' + (file.name || 'soubor') + '</div><div class="file-cell" style="grid-column: 2 / -1; color:#dc2626;">' + errEsc + '</div></div></div>';
+    }
     const sigCount = file.sig_count || (file.signatures ? file.signatures.length : 0);
     const hasMultipleSigs = sigCount > 1;
     const fileId = 'file-' + batchId + '-' + Math.random().toString(36).substr(2, 9);
