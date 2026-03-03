@@ -8,10 +8,9 @@ import hashlib
 from datetime import datetime
 
 try:
-    from tsa_registry import is_tsa_issuer_qualified, DEFAULT_TSA_REGISTRY
+    from tsa_registry import is_tsa_issuer_qualified
 except ImportError:
-    DEFAULT_TSA_REGISTRY = []
-    def is_tsa_issuer_qualified(tsa_issuer, registry):
+    def is_tsa_issuer_qualified(tsa_issuer):
         return False
 
 
@@ -458,8 +457,8 @@ def analyze_pdf(content):
     }
 
 
-def analyze_pdf_file(filepath, tsa_registry=None):
-    """Analýza PDF souboru z disku - vrací kompletní výsledky pro API. tsa_registry pro vyhodnocení tsa_qualified."""
+def analyze_pdf_file(filepath):
+    """Analýza PDF souboru z disku - vrací kompletní výsledky pro API. Kvalifikace TSA z lokálního whitelistu."""
     try:
         file_size = os.path.getsize(filepath)
         filename = os.path.basename(filepath)
@@ -486,11 +485,10 @@ def analyze_pdf_file(filepath, tsa_registry=None):
             'exact_version': f"PDF/A-{analysis['pdfaVersion']}" if analysis['pdfaVersion'] else "PDF (ne PDF/A)",
             'standard': "ISO 19005-3:2012" if analysis['pdfaVersion'] == 3 else None
         }
-        registry = tsa_registry if tsa_registry is not None else DEFAULT_TSA_REGISTRY
         signatures = []
         for sig in analysis.get('signatures', []):
             tsa_issuer = sig.get('tsa_issuer', '—')
-            tsa_qualified = is_tsa_issuer_qualified(tsa_issuer, registry) if tsa_issuer and tsa_issuer != '—' else False
+            tsa_qualified = is_tsa_issuer_qualified(tsa_issuer) if tsa_issuer and tsa_issuer != '—' else False
             signatures.append({
                 'valid': sig.get('valid', False),
                 'name': sig.get('signer', '—'),
@@ -555,15 +553,15 @@ def find_all_pdfs(folder_path):
     return pdf_files
 
 
-def analyze_multiple_pdfs(file_paths, progress_callback=None, tsa_registry=None):
-    """Analyzuje více PDF souborů najednou. tsa_registry pro vyhodnocení tsa_qualified."""
+def analyze_multiple_pdfs(file_paths, progress_callback=None):
+    """Analyzuje více PDF souborů najednou. Kvalifikace TSA z lokálního whitelistu."""
     results = []
     total = len(file_paths)
     for i, filepath in enumerate(file_paths, 1):
         try:
             if progress_callback:
                 progress_callback(i, total, os.path.basename(filepath))
-            result = analyze_pdf_file(filepath, tsa_registry=tsa_registry)
+            result = analyze_pdf_file(filepath)
             results.append(result)
         except Exception as e:
             results.append({
@@ -574,8 +572,8 @@ def analyze_multiple_pdfs(file_paths, progress_callback=None, tsa_registry=None)
     return results
 
 
-def analyze_folder(folder_path, progress_callback=None, tsa_registry=None):
-    """Analyzuje všechny PDF ve složce (rekurzivně). tsa_registry pro vyhodnocení tsa_qualified."""
+def analyze_folder(folder_path, progress_callback=None):
+    """Analyzuje všechny PDF ve složce (rekurzivně). Kvalifikace TSA z lokálního whitelistu."""
     pdf_files = find_all_pdfs(folder_path)
     if not pdf_files:
         return {
@@ -585,7 +583,7 @@ def analyze_folder(folder_path, progress_callback=None, tsa_registry=None):
             'error': 'Ve složce nebyly nalezeny žádné PDF soubory'
         }
     file_paths = [pdf['full_path'] for pdf in pdf_files]
-    results = analyze_multiple_pdfs(file_paths, progress_callback, tsa_registry=tsa_registry)
+    results = analyze_multiple_pdfs(file_paths, progress_callback)
     for i, result in enumerate(results):
         if i < len(pdf_files):
             result['folder'] = pdf_files[i]['folder']

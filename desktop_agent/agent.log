@@ -6061,3 +6061,22 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-03-03 17:41:58,507 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.Nadobre_test_time stamoPkk.pdf
 2026-03-03 17:41:59,494 - INFO - Odesílám 1 výsledků na server (jeden request)...
 2026-03-03 17:42:00,592 - INFO - Batch úspěšně odeslán: batch_20260303_164200_773651f4 - Uloženo 1 souborů
+2026-03-03 18:19:37,578 - INFO - Agent ukončen
+2026-03-03 18:19:49,788 - INFO - PDF DokuCheck Agent spuštěn
+2026-03-03 18:19:49,788 - INFO - Spouštím GUI...
+2026-03-03 18:19:52,332 - INFO - Ověřuji licenci se serverem...
+2026-03-03 18:19:54,231 - INFO - Agent běží
+2026-03-03 18:20:14,068 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 18:20:14,341 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 18:20:14,342 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-201 Půdorys 1.Nadobre_test_time stamoPkk.pdf
+2026-03-03 18:20:14,548 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.Nadobre_test_time stamoPkk.pdf
+2026-03-03 18:20:14,551 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 18:20:14,655 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 18:20:14,657 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 18:20:14,783 - INFO - Analýza dokončena: 01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 18:20:14,786 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-202 Půdorys 2.NP_time stamp.pdf
+2026-03-03 18:20:14,955 - INFO - Analýza dokončena: 01.1.10-202 Půdorys 2.NP_time stamp.pdf
+2026-03-03 18:20:14,956 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 18:20:15,057 - INFO - Analýza dokončena: 01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 18:20:15,896 - INFO - Odesílám 6 výsledků na server (jeden request)...
+2026-03-03 18:20:17,348 - INFO - Batch úspěšně odeslán: batch_20260303_172017_afefc65f - Uloženo 6 souborů

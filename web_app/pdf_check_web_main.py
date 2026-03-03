@@ -31,10 +31,9 @@ except ImportError:
 from admin_routes import admin_bp
 from version import WEB_BUILD, WEB_VERSION, BUILD_NOTES
 try:
-    from tsa_registry import is_tsa_issuer_qualified, DEFAULT_TSA_REGISTRY
+    from tsa_registry import is_tsa_issuer_qualified
 except ImportError:
-    DEFAULT_TSA_REGISTRY = []
-    def is_tsa_issuer_qualified(tsa_issuer, registry):
+    def is_tsa_issuer_qualified(tsa_issuer):
         return False
 
 # =============================================================================
@@ -1132,7 +1131,7 @@ HTML_TEMPLATE = '''
             </div>
             <div class="modal-content">
                 <div id="help-card-content" class="help-card-body" style="line-height:1.6;">Načítám…</div>
-                <div id="help-tsa-authorities" style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;"></div>
+                <div id="help-tsa-authorities" style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:0.95em;color:#374151;">DokuCheck rozpoznává a validuje kvalifikovaná časová razítka autorit PostSignum, I.CA a eIdentity.</p></div>
             </div>
         </div>
     </div>
@@ -1798,7 +1797,7 @@ function renderFileRow(file, batchId, indent = 0) {
     }
 
     html += '<div class="file-cell file-ckait">' + (hasMultipleSigs ? '—' : (file.ckait || '—')) + '</div>';
-    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_qualified && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
+    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
     html += '<div class="file-cell">' + tsaCell + '</div>';
     html += '<div class="file-cell">' + getIssrBadge(file) + '</div></div>';
 
@@ -1809,7 +1808,7 @@ function renderFileRow(file, batchId, indent = 0) {
             html += '<div class="sig-index">#' + sig.index + '</div>';
             html += '<div class="sig-name">' + (sig.signer || '—') + '</div>';
             html += '<div class="sig-ckait">' + (sig.ckait || '—') + '</div>';
-            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig.tsa) + (sig.tsa_qualified && sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (sig.tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '') + '</div>';
+            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig) + (sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (sig.tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '') + '</div>';
             html += '<div class="sig-date">' + (sig.date || '—') + '</div>';
             html += '</div>';
         }
@@ -1897,9 +1896,13 @@ function getSigBadge(f) {
     if (f.sig === 'PARTIAL') return '<span class="badge badge-red">Podpis (ne autor.)</span>';
     return '<span class="badge badge-red">Žádný podpis</span>';
 }
-// Razítko: VČR (vložené časové) = zeleně, LOK / bez razítka = červeně
+// Razítko: TSA = zeleně (kvalifikované) nebo oranžově (nekvalifikované), LOK / bez razítka = červeně
 function getTsaBadge(f) {
-    if (f.tsa === 'TSA') return '<span class="badge badge-green">VČR</span>';
+    if (f.tsa === 'TSA') {
+        var sigs = f.signatures || [];
+        var allQualified = sigs.length > 0 && sigs.every(function(s) { return s.tsa_qualified === true; });
+        return allQualified ? '<span class="badge badge-green">VČR</span>' : '<span class="badge badge-orange">Nekvalifikované</span>';
+    }
     if (f.tsa === 'PARTIAL') return '<span class="badge badge-red">MIX</span>';
     if (f.tsa === 'LOCAL') return '<span class="badge badge-red">LOK</span>';
     return '<span class="badge badge-red">Bez razítka</span>';
@@ -1909,8 +1912,11 @@ function getIssrBadge(f) {
     if (f.issr_compatible === true) return '<span class="badge badge-green" title="Kompatibilní s ISSŘ">✅</span>';
     return '<span class="badge" style="background:#e5e7eb;color:#6b7280;">—</span>';
 }
-function getTsaBadgeForSig(tsa) {
-    if (tsa === 'TSA') return '<span class="badge badge-green">VČR</span>';
+function getTsaBadgeForSig(sig) {
+    var tsa = (sig && sig.tsa) ? sig.tsa : (typeof sig === 'string' ? sig : '');
+    if (tsa === 'TSA') {
+        return (sig && sig.tsa_qualified === true) ? '<span class="badge badge-green">VČR</span>' : '<span class="badge badge-orange">Nekvalifikované</span>';
+    }
     if (tsa === 'LOCAL') return '<span class="badge badge-red">LOK</span>';
     return '<span class="badge badge-red">Bez razítka</span>';
 }
@@ -2121,28 +2127,7 @@ async function loadSiteSettings() {
         var helpEl = document.getElementById('help-card-content');
         if (infoEl && data.info_card_content !== undefined) infoEl.innerHTML = data.info_card_content || '<p>Obsah není k dispozici.</p>';
         if (helpEl && data.help_card_content !== undefined) helpEl.innerHTML = data.help_card_content || '<p>Obsah není k dispozici.</p>';
-        loadSupportedAuthorities();
     } catch (e) { console.warn('loadSiteSettings:', e); }
-}
-async function loadSupportedAuthorities() {
-    var container = document.getElementById('help-tsa-authorities');
-    if (!container) return;
-    try {
-        var r = await fetch('/api/supported-authorities');
-        if (!r.ok) { container.innerHTML = ''; return; }
-        var data = await r.json();
-        var list = data.authorities || [];
-        if (list.length === 0) { container.innerHTML = ''; return; }
-        var html = '<h4 style="margin:0 0 12px 0;font-size:1em;color:#374151;">Podporované certifikační autority (TSA pro ISSŘ)</h4><table style="width:100%;border-collapse:collapse;font-size:0.9em;"><thead><tr style="border-bottom:2px solid #e5e7eb;"><th style="text-align:left;padding:8px 10px;">Název</th><th style="text-align:left;padding:8px 10px;">Klíčová slova</th><th style="text-align:center;padding:8px 10px;">Kvalifikováno</th></tr></thead><tbody>';
-        for (var i = 0; i < list.length; i++) {
-            var a = list[i];
-            var kw = (a.keywords || []).join(', ');
-            var qual = (a.is_qualified === true) ? 'Ano' : 'Ne';
-            html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 10px;">' + (a.display_name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</td><td style="padding:8px 10px;">' + kw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</td><td style="padding:8px 10px;text-align:center;">' + qual + '</td></tr>';
-        }
-        html += '</tbody></table>';
-        container.innerHTML = html;
-    } catch (e) { container.innerHTML = ''; }
 }
 // Listenery pro modaly se registrují v DOMContentLoaded (až je DOM připraven)
 
@@ -3107,14 +3092,13 @@ def analyze_pdf(content):
     }
 
 
-def _enrich_signatures_tsa_qualified(result, registry):
-    """Doplní u každého podpisu v result['signatures'] pole tsa_qualified dle registru."""
+def _enrich_signatures_tsa_qualified(result):
+    """Doplní u každého podpisu v result['signatures'] pole tsa_qualified dle pevného whitelistu."""
     if not result or not isinstance(result.get('signatures'), list):
         return
-    reg = registry if isinstance(registry, list) else DEFAULT_TSA_REGISTRY
     for sig in result['signatures']:
         tsa_issuer = sig.get('tsa_issuer') or '—'
-        sig['tsa_qualified'] = is_tsa_issuer_qualified(tsa_issuer, reg) if tsa_issuer and tsa_issuer != '—' else False
+        sig['tsa_qualified'] = is_tsa_issuer_qualified(tsa_issuer) if tsa_issuer and tsa_issuer != '—' else False
 
 
 def analyze_pdf_from_content(content):
@@ -3686,10 +3670,6 @@ def analyze_batch():
                     'limit_exceeded': True
                 }), 429
 
-        try:
-            registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
-        except Exception:
-            registry = DEFAULT_TSA_REGISTRY
         results = []
         for file in files:
             if not file.filename or not file.filename.lower().endswith('.pdf'):
@@ -3699,7 +3679,7 @@ def analyze_batch():
                 results.append({'error': f'{file.filename}: soubor je větší než 2 MB', 'filename': file.filename})
                 continue
             r = analyze_pdf_from_content(content)
-            _enrich_signatures_tsa_qualified(r, registry)
+            _enrich_signatures_tsa_qualified(r)
             r['filename'] = file.filename
             results.append(r)
 
@@ -3735,11 +3715,7 @@ def analyze():
             db.record_web_trial_usage(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         result = analyze_pdf_from_content(content)
-        try:
-            registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
-            _enrich_signatures_tsa_qualified(result, registry)
-        except Exception:
-            _enrich_signatures_tsa_qualified(result, DEFAULT_TSA_REGISTRY)
+        _enrich_signatures_tsa_qualified(result)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

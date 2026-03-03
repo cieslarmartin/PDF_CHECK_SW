@@ -34,15 +34,6 @@ except ImportError:
     save_email_templates = lambda x: False
 
 try:
-    from tsa_registry import DEFAULT_TSA_REGISTRY
-except ImportError:
-    DEFAULT_TSA_REGISTRY = [
-        {"display_name": "PostSignum", "keywords": ["postsignum", "PostSignum TSA"], "is_qualified": True},
-        {"display_name": "I.CA", "keywords": ["i.ca", "I.CA"], "is_qualified": True},
-        {"display_name": "eIdentity", "keywords": ["eidentity", "eIdentity"], "is_qualified": True},
-    ]
-
-try:
     from settings_loader import DEFAULT_LANDING_UPDATES
 except ImportError:
     DEFAULT_LANDING_UPDATES = [
@@ -476,77 +467,6 @@ def _safe_for_textarea(s):
     if not s:
         return ''
     return s.replace('</textarea>', '</\u200btextarea>').replace('</TEXTAREA>', '</\u200bTEXTAREA>')
-
-
-@admin_bp.route('/admin/tsa-registry', methods=['GET', 'POST'])
-@admin_required
-def tsa_registry():
-    """Správa registru TSA autorit (whitelist pro ISSŘ). Ukládá se do global_settings tsa_registry."""
-    db = get_db()
-    if not db:
-        flash('Databáze není k dispozici.', 'error')
-        return redirect(url_for('admin.settings'))
-    if request.method == 'POST':
-        action = request.form.get('action', '')
-        if action == 'save_json':
-            raw = request.form.get('tsa_registry_json', '')
-            if raw.strip():
-                try:
-                    data = json.loads(raw)
-                    if isinstance(data, list):
-                        db.set_global_setting('tsa_registry', data)
-                        flash('Registr TSA autorit uložen.', 'success')
-                    else:
-                        flash('JSON musí být pole (list).', 'error')
-                except (json.JSONDecodeError, TypeError) as e:
-                    flash(f'Neplatný JSON: {e}', 'error')
-        elif action == 'add':
-            display_name = (request.form.get('display_name') or '').strip()
-            keywords_raw = (request.form.get('keywords') or '').strip()
-            keywords = [k.strip() for k in keywords_raw.split(',') if k.strip()]
-            is_qualified = request.form.get('is_qualified') == '1'
-            if display_name:
-                registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
-                if not isinstance(registry, list):
-                    registry = list(DEFAULT_TSA_REGISTRY)
-                registry.append({
-                    'display_name': display_name,
-                    'keywords': keywords if keywords else [display_name],
-                    'is_qualified': is_qualified,
-                })
-                db.set_global_setting('tsa_registry', registry)
-                flash(f'Přidána autorita „{display_name}".', 'success')
-            else:
-                flash('Zadejte zobrazovaný název.', 'error')
-        elif action == 'delete':
-            try:
-                idx = int(request.form.get('index', -1))
-                registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
-                if not isinstance(registry, list):
-                    registry = list(DEFAULT_TSA_REGISTRY)
-                if 0 <= idx < len(registry):
-                    removed = registry.pop(idx)
-                    db.set_global_setting('tsa_registry', registry)
-                    flash(f'Odebrána autorita „{removed.get("display_name", "?")}".', 'success')
-                else:
-                    flash('Neplatný index.', 'error')
-            except (ValueError, TypeError):
-                flash('Neplatný index.', 'error')
-        return redirect(url_for('admin.tsa_registry'))
-    registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
-    if not isinstance(registry, list):
-        registry = list(DEFAULT_TSA_REGISTRY)
-    user = session.get('admin_user') or {}
-    if not user.get('display_name'):
-        user = dict(user)
-        user['display_name'] = user.get('email') or 'Admin'
-    return render_template(
-        'admin_tsa_registry.html',
-        authorities=registry,
-        tsa_registry_json=json.dumps(registry, ensure_ascii=False, indent=2),
-        user=user,
-        active_page='tsa_registry',
-    )
 
 
 @admin_bp.route('/admin/updates', methods=['GET', 'POST'])
