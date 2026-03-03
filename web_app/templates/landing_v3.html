@@ -171,6 +171,7 @@
             <h2 class="text-lg font-bold mb-4 text-center anim" style="color:#0f172a;">📰 Co je nového</h2>
             <div class="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                 {% for u in news_updates %}
+                {% if u is mapping and u.month and u.title %}
                 <div class="anim rounded-xl border p-4 text-left transition-shadow hover:shadow-md" style="border-color:#e5e7eb;transition-delay:{{ loop.index0 * 60 }}ms;">
                     <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2" style="background:#eff6ff;color:#1e5a8a;">{{ u.month|e }}</span>
                     <h3 class="font-semibold text-gray-900 mb-2">{{ u.title|e }}</h3>
@@ -180,6 +181,7 @@
                         {% endfor %}
                     </ul>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             <p class="text-center mt-4">
@@ -327,7 +329,9 @@
             <div class="text-left max-w-lg mx-auto mb-6">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Přehled aktualizací</p>
                 {% for u in landing_updates %}
+                {% if u is mapping and u.month %}
                 <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">{{ u.month|e }}</span> {{ (u.items or [])[0]|default(u.title)|e }}{% if (u.items or [])|length > 1 %} <span class="text-gray-400">+ další</span>{% endif %}</p>
+                {% endif %}
                 {% endfor %}
             </div>
             {% endif %}

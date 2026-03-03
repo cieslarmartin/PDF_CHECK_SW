@@ -2,7 +2,10 @@
 # Centrální fallbacky pro global_settings. Všechna čtení přes tyto hodnoty, aby web/agent nespadly při prázdné DB.
 
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 # Výchozí hodnoty pro string / int / bool klíče (fallback když v DB nic není)
 DEFAULTS = {
@@ -165,7 +168,12 @@ def load_settings_for_views(db):
     out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
     out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
     out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
-    out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
+    _raw_updates = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
+    if not isinstance(_raw_updates, list) or len(_raw_updates) == 0:
+        logger.warning("Invalid landing_updates structure in DB, using defaults.")
+        out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
+    else:
+        out["landing_updates"] = _raw_updates
     out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or ""
     # Seznamy odrážek pro šablonu (řádky rozdělené \n)
     path_items = (out.get("coming_soon_path_items") or "").split("\n")
