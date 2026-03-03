@@ -1,0 +1,90 @@
+{% extends "admin_base.html" %}
+{% block title %}PDF DokuCheck Admin – Co je nového{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Co je nového</h2>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:20px;">Přehled aktualizací se zobrazuje na úvodní stránce (landing) a na stránce <strong>Stažení</strong>. Na landingu jsou v sekci „Novinky“ zobrazeny aktuální a minulý měsíc; zde můžete měnit celý seznam i text pro stránku Stažení.</p>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Přehled aktualizací (landing)</div>
+    <div class="card-body" style="padding:20px;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:2px solid #e5e7eb;">
+                    <th style="text-align:left;padding:10px 12px;">Měsíc</th>
+                    <th style="text-align:left;padding:10px 12px;">Název</th>
+                    <th style="text-align:left;padding:10px 12px;">Odrážky</th>
+                    <th style="width:80px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in landing_updates %}
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                    <td style="padding:10px 12px;">{{ u.month|e }}</td>
+                    <td style="padding:10px 12px;">{{ u.title|e }}</td>
+                    <td style="padding:10px 12px;font-size:0.9em;">{{ (u.items or [])|join('; ')|e }}</td>
+                    <td style="padding:10px 12px;">
+                        <form method="post" style="display:inline;" onsubmit="return confirm('Odebrat tento záznam?');">
+                            <input type="hidden" name="action" value="delete_entry">
+                            <input type="hidden" name="index" value="{{ loop.index0 }}">
+                            <button type="submit" class="btn btn-secondary btn-small" style="padding:4px 8px;font-size:0.8em;">Odebrat</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="padding:16px;color:#6b7280;">Žádné záznamy. Přidejte níže nebo upravte JSON.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Přidat záznam</div>
+    <div class="card-body" style="padding:20px;">
+        <form method="post">
+            <input type="hidden" name="action" value="add_entry">
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Měsíc (např. 03/2026)</label>
+                <input type="text" name="month" placeholder="03/2026" required style="width:100%;max-width:140px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Název (např. Březen 2026)</label>
+                <input type="text" name="title" placeholder="Březen 2026" style="width:100%;max-width:280px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Odrážky (jedna na řádek)</label>
+                <textarea name="items" rows="3" style="width:100%;max-width:480px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;" placeholder="Přidána funkce...&#10;Další bod..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Přidat</button>
+        </form>
+    </div>
+</div>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Úprava jako JSON</div>
+    <div class="card-body" style="padding:20px;">
+        <p style="font-size:0.85em;color:#6b7280;margin-bottom:10px;">Každá položka: month, title, items (pole řetězců).</p>
+        <form method="post">
+            <input type="hidden" name="action" value="save_updates_json">
+            <textarea name="landing_updates_json" rows="14" style="width:100%;padding:12px;font-family:monospace;font-size:13px;border:1px solid #d1d5db;border-radius:8px;">{{ landing_updates_json|e }}</textarea>
+            <div style="margin-top:10px;">
+                <button type="submit" class="btn btn-primary">Uložit JSON</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
+    <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Stránka Stažení – text „Co je nového v této verzi“</div>
+    <div class="card-body" style="padding:20px;">
+        <p style="font-size:0.85em;color:#6b7280;margin-bottom:10px;">Tento text se zobrazí na stránce <a href="/download" target="_blank">Stažení</a> pod nadpisem. Můžete použít HTML (např. &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;) nebo prostý text.</p>
+        <form method="post">
+            <input type="hidden" name="action" value="save_download_whats_new">
+            <textarea name="download_whats_new" rows="8" style="width:100%;padding:12px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;">{{ download_whats_new|e }}</textarea>
+            <div style="margin-top:10px;">
+                <button type="submit" class="btn btn-primary">Uložit text</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -30,6 +30,12 @@ except ImportError:
 # NOVÉ: Admin systém
 from admin_routes import admin_bp
 from version import WEB_BUILD, WEB_VERSION, BUILD_NOTES
+try:
+    from tsa_registry import is_tsa_issuer_qualified, DEFAULT_TSA_REGISTRY
+except ImportError:
+    DEFAULT_TSA_REGISTRY = []
+    def is_tsa_issuer_qualified(tsa_issuer, registry):
+        return False
 
 # =============================================================================
 # AUTOMATICKÉ UVOLNĚNÍ PORTU
@@ -1126,6 +1132,7 @@ HTML_TEMPLATE = '''
             </div>
             <div class="modal-content">
                 <div id="help-card-content" class="help-card-body" style="line-height:1.6;">Načítám…</div>
+                <div id="help-tsa-authorities" style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;"></div>
             </div>
         </div>
     </div>
@@ -1791,7 +1798,7 @@ function renderFileRow(file, batchId, indent = 0) {
     }
 
     html += '<div class="file-cell file-ckait">' + (hasMultipleSigs ? '—' : (file.ckait || '—')) + '</div>';
-    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
+    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_qualified && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
     html += '<div class="file-cell">' + tsaCell + '</div>';
     html += '<div class="file-cell">' + getIssrBadge(file) + '</div></div>';
 
@@ -1802,7 +1809,7 @@ function renderFileRow(file, batchId, indent = 0) {
             html += '<div class="sig-index">#' + sig.index + '</div>';
             html += '<div class="sig-name">' + (sig.signer || '—') + '</div>';
             html += '<div class="sig-ckait">' + (sig.ckait || '—') + '</div>';
-            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig.tsa) + (sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (sig.tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '') + '</div>';
+            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig.tsa) + (sig.tsa_qualified && sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (sig.tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '') + '</div>';
             html += '<div class="sig-date">' + (sig.date || '—') + '</div>';
             html += '</div>';
         }
@@ -2114,7 +2121,28 @@ async function loadSiteSettings() {
         var helpEl = document.getElementById('help-card-content');
         if (infoEl && data.info_card_content !== undefined) infoEl.innerHTML = data.info_card_content || '<p>Obsah není k dispozici.</p>';
         if (helpEl && data.help_card_content !== undefined) helpEl.innerHTML = data.help_card_content || '<p>Obsah není k dispozici.</p>';
+        loadSupportedAuthorities();
     } catch (e) { console.warn('loadSiteSettings:', e); }
+}
+async function loadSupportedAuthorities() {
+    var container = document.getElementById('help-tsa-authorities');
+    if (!container) return;
+    try {
+        var r = await fetch('/api/supported-authorities');
+        if (!r.ok) { container.innerHTML = ''; return; }
+        var data = await r.json();
+        var list = data.authorities || [];
+        if (list.length === 0) { container.innerHTML = ''; return; }
+        var html = '<h4 style="margin:0 0 12px 0;font-size:1em;color:#374151;">Podporované certifikační autority (TSA pro ISSŘ)</h4><table style="width:100%;border-collapse:collapse;font-size:0.9em;"><thead><tr style="border-bottom:2px solid #e5e7eb;"><th style="text-align:left;padding:8px 10px;">Název</th><th style="text-align:left;padding:8px 10px;">Klíčová slova</th><th style="text-align:center;padding:8px 10px;">Kvalifikováno</th></tr></thead><tbody>';
+        for (var i = 0; i < list.length; i++) {
+            var a = list[i];
+            var kw = (a.keywords || []).join(', ');
+            var qual = (a.is_qualified === true) ? 'Ano' : 'Ne';
+            html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 10px;">' + (a.display_name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</td><td style="padding:8px 10px;">' + kw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</td><td style="padding:8px 10px;text-align:center;">' + qual + '</td></tr>';
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch (e) { container.innerHTML = ''; }
 }
 // Listenery pro modaly se registrují v DOMContentLoaded (až je DOM připraven)
 
@@ -2214,7 +2242,8 @@ async function loadAgentResults() {
                             ckait: s.ckait_number || '—',
                             tsa: s.timestamp_valid ? 'TSA' : 'LOCAL',
                             date: s.date || '—',
-                            tsa_issuer: s.tsa_issuer || '—'
+                            tsa_issuer: s.tsa_issuer || '—',
+                            tsa_qualified: s.tsa_qualified === true
                         }))
                     };
                 });
@@ -3078,6 +3107,16 @@ def analyze_pdf(content):
     }
 
 
+def _enrich_signatures_tsa_qualified(result, registry):
+    """Doplní u každého podpisu v result['signatures'] pole tsa_qualified dle registru."""
+    if not result or not isinstance(result.get('signatures'), list):
+        return
+    reg = registry if isinstance(registry, list) else DEFAULT_TSA_REGISTRY
+    for sig in result['signatures']:
+        tsa_issuer = sig.get('tsa_issuer') or '—'
+        sig['tsa_qualified'] = is_tsa_issuer_qualified(tsa_issuer, reg) if tsa_issuer and tsa_issuer != '—' else False
+
+
 def analyze_pdf_from_content(content):
     """
     Analýza PDF z bajtů (upload). Stejná logika DocMDP/ISSŘ jako u souboru z disku:
@@ -3297,7 +3336,8 @@ def download():
         pilot_notice_text=settings.get('pilot_notice_text', ''),
         show_pilot_notice=settings.get('show_pilot_notice', True),
         agent_build_id=settings.get('agent_build_id', ''),
-        agent_version_display=settings.get('agent_version_display', ''))
+        agent_version_display=settings.get('agent_version_display', ''),
+        download_whats_new=settings.get('download_whats_new', ''))
 
 
 try:
@@ -3646,6 +3686,10 @@ def analyze_batch():
                     'limit_exceeded': True
                 }), 429
 
+        try:
+            registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+        except Exception:
+            registry = DEFAULT_TSA_REGISTRY
         results = []
         for file in files:
             if not file.filename or not file.filename.lower().endswith('.pdf'):
@@ -3655,6 +3699,7 @@ def analyze_batch():
                 results.append({'error': f'{file.filename}: soubor je větší než 2 MB', 'filename': file.filename})
                 continue
             r = analyze_pdf_from_content(content)
+            _enrich_signatures_tsa_qualified(r, registry)
             r['filename'] = file.filename
             results.append(r)
 
@@ -3689,7 +3734,13 @@ def analyze():
                 }), 429
             db.record_web_trial_usage(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
-        return jsonify(analyze_pdf_from_content(content))
+        result = analyze_pdf_from_content(content)
+        try:
+            registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+            _enrich_signatures_tsa_qualified(result, registry)
+        except Exception:
+            _enrich_signatures_tsa_qualified(result, DEFAULT_TSA_REGISTRY)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

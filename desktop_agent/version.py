@@ -2,8 +2,8 @@
 # Jediný zdroj pravdy pro verzi Agenta. Formát: v{RR}.{MM}.{XXX} (rok, měsíc, pořadové číslo buildu).
 # Při každém buildu zvyšte XXX (poloautomaticky při spuštění build skriptu nebo ručně).
 
-AGENT_VERSION = "v26.02.002"
+AGENT_VERSION = "v26.02.003"
 # Zpětná kompatibilita pro build_installer a staré reference
-BUILD_VERSION = "47"
+BUILD_VERSION = "48"
 # Zobrazení na webu (Ke stažení) – stejná hodnota jako BUILD_VERSION
-AGENT_BUILD_ID = "47"
+AGENT_BUILD_ID = "48"

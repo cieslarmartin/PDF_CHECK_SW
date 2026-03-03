@@ -12,6 +12,10 @@ import requests
 # Importy lokálních modulů
 from pdf_checker import analyze_pdf_file, analyze_multiple_pdfs, analyze_folder
 from license import LicenseManager
+try:
+    from tsa_registry import DEFAULT_TSA_REGISTRY
+except ImportError:
+    DEFAULT_TSA_REGISTRY = []
 # Grafika V3 (Enterprise) – strom složek, světlé rozlišení, bez detailu kontroly v okně
 from ui_2026_v3_enterprise import create_app_2026_v3 as create_app
 
@@ -143,7 +147,7 @@ class PDFCheckAgent:
         logger.info("PDF DokuCheck Agent spuštěn")
 
     def fetch_legal_config(self):
-        """Stáhne právní konfiguraci z PA (disclaimer, vop_url, gdpr_url). Při nedostupnosti vrátí striktní fallback."""
+        """Stáhne právní konfiguraci z PA (disclaimer, vop_url, gdpr_url, tsa_registry). Při nedostupnosti vrátí striktní fallback."""
         try:
             r = requests.get(LEGAL_CONFIG_URL, timeout=5)
             if r.status_code == 200:
@@ -151,14 +155,18 @@ class PDFCheckAgent:
                 if isinstance(data, dict):
                     vop = data.get("vop_url") or data.get("vop_link") or LEGAL_CONFIG_FALLBACK["vop_url"]
                     gdpr = data.get("gdpr_url") or data.get("gdpr_link") or LEGAL_CONFIG_FALLBACK["gdpr_url"]
+                    tsa_registry = data.get("tsa_registry") if isinstance(data.get("tsa_registry"), list) else DEFAULT_TSA_REGISTRY
                     return {
                         "disclaimer": data.get("disclaimer") or LEGAL_CONFIG_FALLBACK["disclaimer"],
                         "vop_url": vop,
                         "gdpr_url": gdpr,
+                        "tsa_registry": tsa_registry,
                     }
         except Exception:
             pass
-        return dict(LEGAL_CONFIG_FALLBACK)
+        out = dict(LEGAL_CONFIG_FALLBACK)
+        out["tsa_registry"] = DEFAULT_TSA_REGISTRY
+        return out
 
     def check_pdf(self, filepath_or_folder, mode='single', auto_send=None):
         """
@@ -214,7 +222,8 @@ class PDFCheckAgent:
                     if self.app:
                         self.app.root.after(0, lambda: self.app.update_progress(current, total, filename))
 
-                folder_results = analyze_folder(folder, progress_callback)
+                tsa_registry = self.legal_config.get("tsa_registry") if isinstance(self.legal_config.get("tsa_registry"), list) else None
+                folder_results = analyze_folder(folder, progress_callback, tsa_registry=tsa_registry)
 
                 # Odeslání na API (batch) - předej source_folder pro stromovou strukturu
                 if do_send:
@@ -236,7 +245,8 @@ class PDFCheckAgent:
             logger.error(f"Soubor není PDF: {filepath}")
             return {'success': False, 'error': 'Soubor není PDF'}
 
-        result = analyze_pdf_file(filepath)
+        tsa_registry = self.legal_config.get("tsa_registry") if isinstance(self.legal_config.get("tsa_registry"), list) else None
+        result = analyze_pdf_file(filepath, tsa_registry=tsa_registry)
 
         if not result.get('success'):
             logger.error(f"Chyba analýzy: {result.get('error')}")

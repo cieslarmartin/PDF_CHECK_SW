@@ -102,6 +102,7 @@
             <a href="#pripravujeme" class="hover:text-blue-700 transition">Připravujeme</a>
             <a href="#faq" class="hover:text-blue-700 transition">FAQ</a>
             <a href="#kontakt" class="hover:text-blue-700 transition">Kontakt</a>
+            <a href="#news" class="hover:text-blue-700 transition">Novinky</a>
             <a href="/download/agent" class="hover:text-blue-700 transition">Ke&nbsp;stažení</a>
             <span class="w-px h-5 bg-gray-200"></span>
             <a href="/portal" class="hover:text-blue-700 transition">Můj&nbsp;účet</a>
@@ -118,6 +119,7 @@
     <a href="#dva-rezimy" class="mobL py-2 hover:text-blue-700">Režimy</a>
     <a href="#cenik" class="mobL py-2 hover:text-blue-700">Ceník</a>
     <a href="#faq" class="mobL py-2 hover:text-blue-700">FAQ</a>
+    <a href="#news" class="mobL py-2 hover:text-blue-700">Novinky</a>
     <hr class="my-1 border-gray-100">
     <a href="#kontakt" class="mobL py-2 hover:text-blue-700">Kontakt</a>
     <a href="/portal" class="mobL py-2 hover:text-blue-700">Můj účet</a>
@@ -160,6 +162,32 @@
             </div>
         </div>
     </section>
+
+    {# ============ CO JE NOVÉHO (News – tento + minulý měsíc) ============ #}
+    {% set news_updates = (landing_updates or [])[:2] %}
+    {% if news_updates %}
+    <section id="news" class="py-10 bg-white border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-lg font-bold mb-4 text-center anim" style="color:#0f172a;">📰 Co je nového</h2>
+            <div class="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                {% for u in news_updates %}
+                <div class="anim rounded-xl border p-4 text-left transition-shadow hover:shadow-md" style="border-color:#e5e7eb;transition-delay:{{ loop.index0 * 60 }}ms;">
+                    <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2" style="background:#eff6ff;color:#1e5a8a;">{{ u.month|e }}</span>
+                    <h3 class="font-semibold text-gray-900 mb-2">{{ u.title|e }}</h3>
+                    <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                        {% for item in (u.items or []) %}
+                        <li>{{ item|e }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-center mt-4">
+                <a href="#download" class="text-sm font-medium" style="color:#1e5a8a;">Verze ke stažení a další aktuality →</a>
+            </p>
+        </div>
+    </section>
+    {% endif %}
 
     {# ============ JAK TO FUNGUJE ============ #}
     <section id="jak" class="py-16 bg-gray-50">
@@ -294,7 +322,14 @@
             <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#1e5a8a,#1d4ed8);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></div>
             <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení aplikace</h2>
             <p class="text-sm text-gray-500 mb-4">Stáhněte si nejnovější verzi programu Agenta. Kontrola PDF na vašem počítači, na server jdou jen metadata.</p>
-            <p class="text-sm text-gray-600 mb-6">Aktuální verze obsahuje <strong>rozpoznání zamčeného souboru</strong> (DocMDP Level 1) – upozorní vás, pokud úřad (ISSŘ) do dokumentu nemůže vložit podací razítko.</p>
+            {% if landing_updates and landing_updates|length > 0 %}
+            <div class="text-left max-w-lg mx-auto mb-6">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Přehled aktualizací</p>
+                {% for u in landing_updates %}
+                <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">{{ u.month|e }}</span> {{ (u.items or [])[0]|default(u.title)|e }}{% if (u.items or [])|length > 1 %} <span class="text-gray-400">+ další</span>{% endif %}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% if show_pilot_notice and pilot_notice_text %}
             <div class="mb-6 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm text-left max-w-lg mx-auto"><strong>Info:</strong> {{ pilot_notice_text }}</div>
             {% endif %}

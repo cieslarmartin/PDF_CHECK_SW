@@ -33,6 +33,23 @@ except ImportError:
     get_email_templates = lambda: {}
     save_email_templates = lambda x: False
 
+try:
+    from tsa_registry import DEFAULT_TSA_REGISTRY
+except ImportError:
+    DEFAULT_TSA_REGISTRY = [
+        {"display_name": "PostSignum", "keywords": ["postsignum", "PostSignum TSA"], "is_qualified": True},
+        {"display_name": "I.CA", "keywords": ["i.ca", "I.CA"], "is_qualified": True},
+        {"display_name": "eIdentity", "keywords": ["eidentity", "eIdentity"], "is_qualified": True},
+    ]
+
+try:
+    from settings_loader import DEFAULT_LANDING_UPDATES
+except ImportError:
+    DEFAULT_LANDING_UPDATES = [
+        {"month": "03/2026", "title": "Březen 2026", "items": ["Přidána funkce rozpoznání certifikační autority (PostSignum, I.CA, eIdentity)."]},
+        {"month": "02/2026", "title": "Únor 2026", "items": ["Rozpoznání zamčeného souboru (DocMDP Level 1) – ISSŘ."]},
+    ]
+
 # Import license config
 try:
     from license_config import LicenseTier, tier_to_string, TIER_NAMES
@@ -459,6 +476,149 @@ def _safe_for_textarea(s):
     if not s:
         return ''
     return s.replace('</textarea>', '</\u200btextarea>').replace('</TEXTAREA>', '</\u200bTEXTAREA>')
+
+
+@admin_bp.route('/admin/tsa-registry', methods=['GET', 'POST'])
+@admin_required
+def tsa_registry():
+    """Správa registru TSA autorit (whitelist pro ISSŘ). Ukládá se do global_settings tsa_registry."""
+    db = get_db()
+    if not db:
+        flash('Databáze není k dispozici.', 'error')
+        return redirect(url_for('admin.settings'))
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        if action == 'save_json':
+            raw = request.form.get('tsa_registry_json', '')
+            if raw.strip():
+                try:
+                    data = json.loads(raw)
+                    if isinstance(data, list):
+                        db.set_global_setting('tsa_registry', data)
+                        flash('Registr TSA autorit uložen.', 'success')
+                    else:
+                        flash('JSON musí být pole (list).', 'error')
+                except (json.JSONDecodeError, TypeError) as e:
+                    flash(f'Neplatný JSON: {e}', 'error')
+        elif action == 'add':
+            display_name = (request.form.get('display_name') or '').strip()
+            keywords_raw = (request.form.get('keywords') or '').strip()
+            keywords = [k.strip() for k in keywords_raw.split(',') if k.strip()]
+            is_qualified = request.form.get('is_qualified') == '1'
+            if display_name:
+                registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+                if not isinstance(registry, list):
+                    registry = list(DEFAULT_TSA_REGISTRY)
+                registry.append({
+                    'display_name': display_name,
+                    'keywords': keywords if keywords else [display_name],
+                    'is_qualified': is_qualified,
+                })
+                db.set_global_setting('tsa_registry', registry)
+                flash(f'Přidána autorita „{display_name}".', 'success')
+            else:
+                flash('Zadejte zobrazovaný název.', 'error')
+        elif action == 'delete':
+            try:
+                idx = int(request.form.get('index', -1))
+                registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+                if not isinstance(registry, list):
+                    registry = list(DEFAULT_TSA_REGISTRY)
+                if 0 <= idx < len(registry):
+                    removed = registry.pop(idx)
+                    db.set_global_setting('tsa_registry', registry)
+                    flash(f'Odebrána autorita „{removed.get("display_name", "?")}".', 'success')
+                else:
+                    flash('Neplatný index.', 'error')
+            except (ValueError, TypeError):
+                flash('Neplatný index.', 'error')
+        return redirect(url_for('admin.tsa_registry'))
+    registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+    if not isinstance(registry, list):
+        registry = list(DEFAULT_TSA_REGISTRY)
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template(
+        'admin_tsa_registry.html',
+        authorities=registry,
+        tsa_registry_json=json.dumps(registry, ensure_ascii=False, indent=2),
+        user=user,
+        active_page='tsa_registry',
+    )
+
+
+@admin_bp.route('/admin/updates', methods=['GET', 'POST'])
+@admin_required
+def updates():
+    """Co je nového – přehled aktualizací (landing + stránka Stažení)."""
+    db = get_db()
+    if not db:
+        flash('Databáze není k dispozici.', 'error')
+        return redirect(url_for('admin.settings'))
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        if action == 'save_updates_json':
+            raw = request.form.get('landing_updates_json', '')
+            if raw.strip():
+                try:
+                    data = json.loads(raw)
+                    if isinstance(data, list):
+                        db.set_global_setting('landing_updates', data)
+                        flash('Přehled aktualizací uložen.', 'success')
+                    else:
+                        flash('JSON musí být pole (list).', 'error')
+                except (json.JSONDecodeError, TypeError) as e:
+                    flash(f'Neplatný JSON: {e}', 'error')
+        elif action == 'save_download_whats_new':
+            db.set_global_setting('download_whats_new', request.form.get('download_whats_new', '') or '')
+            flash('Text „Co je nového“ pro stránku Stažení uložen.', 'success')
+        elif action == 'add_entry':
+            month = (request.form.get('month') or '').strip()
+            title = (request.form.get('title') or '').strip()
+            items_raw = (request.form.get('items') or '').strip()
+            items = [x.strip() for x in items_raw.split('\n') if x.strip()]
+            if month:
+                updates_list = db.get_setting_json('landing_updates', DEFAULT_LANDING_UPDATES)
+                if not isinstance(updates_list, list):
+                    updates_list = list(DEFAULT_LANDING_UPDATES)
+                updates_list.insert(0, {'month': month, 'title': title or month, 'items': items or []})
+                db.set_global_setting('landing_updates', updates_list)
+                flash(f'Přidán záznam „{title or month}".', 'success')
+            else:
+                flash('Zadejte měsíc (např. 03/2026).', 'error')
+        elif action == 'delete_entry':
+            try:
+                idx = int(request.form.get('index', -1))
+                updates_list = db.get_setting_json('landing_updates', DEFAULT_LANDING_UPDATES)
+                if not isinstance(updates_list, list):
+                    updates_list = list(DEFAULT_LANDING_UPDATES)
+                if 0 <= idx < len(updates_list):
+                    removed = updates_list.pop(idx)
+                    db.set_global_setting('landing_updates', updates_list)
+                    flash(f'Odebrán záznam „{removed.get("title", removed.get("month", "?"))}".', 'success')
+                else:
+                    flash('Neplatný index.', 'error')
+            except (ValueError, TypeError):
+                flash('Neplatný index.', 'error')
+        return redirect(url_for('admin.updates'))
+    landing_updates = db.get_setting_json('landing_updates', DEFAULT_LANDING_UPDATES)
+    if not isinstance(landing_updates, list):
+        landing_updates = list(DEFAULT_LANDING_UPDATES)
+    download_whats_new = db.get_global_setting('download_whats_new', '') or ''
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template(
+        'admin_updates.html',
+        landing_updates=landing_updates,
+        landing_updates_json=json.dumps(landing_updates, ensure_ascii=False, indent=2),
+        download_whats_new=download_whats_new,
+        user=user,
+        active_page='updates',
+    )
 
 
 @admin_bp.route('/admin/content-help', methods=['GET'])

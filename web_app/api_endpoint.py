@@ -31,6 +31,15 @@ except ImportError:
     def get_analysis_timeout_seconds(db):
         return 300
 
+try:
+    from tsa_registry import DEFAULT_TSA_REGISTRY
+except ImportError:
+    DEFAULT_TSA_REGISTRY = [
+        {"display_name": "PostSignum", "keywords": ["postsignum", "PostSignum TSA"], "is_qualified": True},
+        {"display_name": "I.CA", "keywords": ["i.ca", "I.CA"], "is_qualified": True},
+        {"display_name": "eIdentity", "keywords": ["eidentity", "eIdentity"], "is_qualified": True},
+    ]
+
 logger = logging.getLogger(__name__)
 
 # Jednorázové přihlašovací tokeny (agent → web) – ukládají se do DB (sdílené mezi workery)
@@ -1306,6 +1315,10 @@ def register_api_routes(app):
             except Exception:
                 out['allowed_extensions'] = ['.pdf']
                 out['analysis_timeout_seconds'] = 300
+            try:
+                out['tsa_registry'] = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+            except Exception:
+                out['tsa_registry'] = DEFAULT_TSA_REGISTRY
             return jsonify(out), 200
         except Exception as e:
             logger.exception(f"Agent config error: {e}")
@@ -1317,7 +1330,20 @@ def register_api_routes(app):
                 'update_msg': 'Používáte aktuální verzi.',
                 'allowed_extensions': ['.pdf'],
                 'analysis_timeout_seconds': 300,
+                'tsa_registry': DEFAULT_TSA_REGISTRY,
             }), 200
+
+    @app.route('/api/supported-authorities', methods=['GET'])
+    def supported_authorities():
+        """Veřejný seznam podporovaných TSA autorit (pro ISSŘ). Bez autentizace."""
+        try:
+            registry = db.get_setting_json('tsa_registry', DEFAULT_TSA_REGISTRY)
+            if not isinstance(registry, list):
+                registry = DEFAULT_TSA_REGISTRY
+            return jsonify({'authorities': registry}), 200
+        except Exception as e:
+            logger.exception(f"Supported authorities error: {e}")
+            return jsonify({'authorities': DEFAULT_TSA_REGISTRY}), 200
 
     # =========================================================================
     # RATE LIMITING PRO FREE CHECK (NOVÉ v41)

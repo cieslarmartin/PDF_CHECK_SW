@@ -42,9 +42,16 @@
                 Stáhnete si nejnovější verzi programu Agenta. Desktop aplikace slouží ke kontrole PDF dokumentů (PDF/A-3, podpisy, časová razítka) 
                 a odesílání výsledků na tento portál. Po stažení a instalaci se přihlaste pomocí e-mailu a hesla nebo API klíče.
             </p>
+            {% if download_whats_new %}
+            <div class="mb-6 p-4 rounded-xl border border-blue-100 bg-blue-50/50 text-gray-700 text-sm">
+                <p class="font-semibold mb-2" style="color:#1e5a8a;">Co je nového v této verzi</p>
+                <div class="whitespace-pre-line">{{ download_whats_new|safe }}</div>
+            </div>
+            {% else %}
             <p class="text-gray-600 mb-6">
-                <strong>Aktuální verze obsahuje rozpoznání zamčeného souboru</strong> (DocMDP Level 1) – upozorní vás, pokud úřad (ISSŘ) do dokumentu nemůže vložit podací razítko.
+                <strong>Aktuální verze obsahuje rozpoznání zamčeného souboru</strong> (DocMDP Level 1) – upozorní vás, pokud úřad (ISSŘ) do dokumentu nemůže vložit podací razítko. <strong>03/2026:</strong> Rozpoznání certifikačních autorit časového razítka (PostSignum, I.CA, eIdentity) platných pro ISSŘ.
             </p>
+            {% endif %}
             {% if show_pilot_notice and pilot_notice_text %}
             <div class="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900" role="alert">
                 <p class="font-medium mb-1">ℹ Upozornění</p>

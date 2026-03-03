@@ -78,6 +78,24 @@ DEFAULT_ALLOWED_EXTENSIONS = [".pdf"]
 
 DEFAULT_HEADER_SCRIPTS = []
 
+# Přehled aktualizací pro landing a stránku Stažení (měsíc, název, odrážky)
+DEFAULT_LANDING_UPDATES = [
+    {
+        "month": "03/2026",
+        "title": "Březen 2026",
+        "items": [
+            "Přidána funkce rozpoznání certifikační autority časového razítka: PostSignum, I.CA, eIdentity (platné pro ISSŘ).",
+        ],
+    },
+    {
+        "month": "02/2026",
+        "title": "Únor 2026",
+        "items": [
+            "Rozpoznání zamčeného souboru (DocMDP Level 1) – upozornění, pokud úřad nemůže vložit podací razítko (ISSŘ).",
+        ],
+    },
+]
+
 
 def get_setting(db, key: str):
     """Vrátí hodnotu klíče z DB s fallbackem na výchozí. db = instance Database()."""
@@ -147,6 +165,8 @@ def load_settings_for_views(db):
     out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
     out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
     out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
+    out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
+    out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or ""
     # Seznamy odrážek pro šablonu (řádky rozdělené \n)
     path_items = (out.get("coming_soon_path_items") or "").split("\n")
     out["coming_soon_path_items_list"] = [x.strip() for x in path_items if x.strip()]
