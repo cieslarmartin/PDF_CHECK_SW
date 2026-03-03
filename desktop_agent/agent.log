@@ -5445,3 +5445,315 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-02-24 15:08:52,598 - INFO - Odesílám 138 výsledků na server (jeden request)...
 2026-02-24 15:08:59,261 - INFO - Batch úspěšně odeslán: batch_20260224_140853_71550585 - Uloženo 138 souborů
 2026-02-24 15:15:25,196 - INFO - Agent ukončen
+2026-03-03 16:36:13,221 - INFO - PDF DokuCheck Agent spuštěn
+2026-03-03 16:36:13,222 - INFO - Spouštím GUI...
+2026-03-03 16:36:16,427 - INFO - Ověřuji licenci se serverem...
+2026-03-03 16:36:18,100 - INFO - Agent běží
+2026-03-03 16:36:53,515 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 16:36:54,069 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 16:36:54,069 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 16:36:54,178 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 16:36:54,180 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 16:36:54,295 - INFO - Analýza dokončena: 01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 16:36:54,298 - INFO - Kontrola souboru: C:/Claude/testovaci PDF/ISSR/ceete_time_stamp\01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 16:36:54,375 - INFO - Analýza dokončena: 01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 16:36:57,335 - INFO - Odesílám 4 výsledků na server (jeden request)...
+2026-03-03 16:36:58,849 - INFO - Batch úspěšně odeslán: batch_20260303_153659_4dd8eabe - Uloženo 4 souborů
+2026-03-03 16:37:40,605 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-03-03 16:37:40,675 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE.pdf
+2026-03-03 16:37:40,723 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-03-03 16:37:40,782 - INFO - Analýza dokončena: 4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1).pdf
+2026-03-03 16:37:40,783 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\4_05_01_02_SIT.pdf
+2026-03-03 16:37:40,841 - INFO - Analýza dokončena: 4_05_01_02_SIT.pdf
+2026-03-03 16:37:40,841 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\4_05_01_03_vzor.pdf
+2026-03-03 16:37:40,887 - INFO - Analýza dokončena: 4_05_01_03_vzor.pdf
+2026-03-03 16:37:40,888 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\A_pruvodni_zprava_240610.pdf
+2026-03-03 16:37:40,916 - INFO - Analýza dokončena: A_pruvodni_zprava_240610.pdf
+2026-03-03 16:37:40,921 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\A_pruvodni_zprava_240610_nezamceny.pdf
+2026-03-03 16:37:40,986 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_nezamceny.pdf
+2026-03-03 16:37:40,989 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\A_pruvodni_zprava_240610_zamceny.pdf
+2026-03-03 16:37:41,042 - INFO - Analýza dokončena: A_pruvodni_zprava_240610_zamceny.pdf
+2026-03-03 16:37:41,044 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-03-03 16:37:41,114 - INFO - Analýza dokončena: D-01.1.10-15 Pohled jižní - bourací práce_pdfA.pdf
+2026-03-03 16:37:41,114 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-03-03 16:37:41,201 - INFO - Analýza dokončena: D-01.1.10-16 Pohled západní - bourací práce_pdfA.pdf
+2026-03-03 16:37:41,203 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\Predavaci_protokol.pdf
+2026-03-03 16:37:41,250 - INFO - Analýza dokončena: Predavaci_protokol.pdf
+2026-03-03 16:37:41,281 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\ceete_time_stamp\01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 16:37:41,465 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.Nadobre_test_time stamoP.pdf
+2026-03-03 16:37:41,469 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\ceete_time_stamp\01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 16:37:41,580 - INFO - Analýza dokončena: 01.1.10-201 Půdorys 1.NP.pdf
+2026-03-03 16:37:41,583 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\ceete_time_stamp\01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 16:37:41,707 - INFO - Analýza dokončena: 01.1.10-202 Půdorys 2.NP.pdf
+2026-03-03 16:37:41,734 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\ISSR\ceete_time_stamp\01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 16:37:41,840 - INFO - Analýza dokončena: 01.1.10-203 Půdorys 3.NP.pdf
+2026-03-03 16:37:41,844 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4-05.02.03_vzor.pdf
+2026-03-03 16:37:41,894 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-03-03 16:37:41,916 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-03-03 16:37:41,979 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-03-03 16:37:41,982 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-03-03 16:37:41,996 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-03-03 16:37:41,996 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-03-03 16:37:42,115 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-03-03 16:37:42,117 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-03-03 16:37:42,203 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-03-03 16:37:42,204 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-03-03 16:37:42,237 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-03-03 16:37:42,238 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa1.pdf
+2026-03-03 16:37:42,243 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:42,244 - WARNING - parsing for Object Streams
+2026-03-03 16:37:42,245 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-03-03 16:37:42,261 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2.pdf
+2026-03-03 16:37:42,264 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:42,264 - WARNING - parsing for Object Streams
+2026-03-03 16:37:42,265 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-03-03 16:37:42,284 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_bez casoveho.pdf
+2026-03-03 16:37:42,312 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-03-03 16:37:42,353 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa2_sign.pdf
+2026-03-03 16:37:42,402 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-03-03 16:37:42,405 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_pdfa3.pdf
+2026-03-03 16:37:42,408 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:42,408 - WARNING - parsing for Object Streams
+2026-03-03 16:37:42,409 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-03-03 16:37:42,424 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testovaci_PDF\test_standard.pdf
+2026-03-03 16:37:42,427 - INFO - Analýza dokončena: test_standard.pdf
+2026-03-03 16:37:42,484 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4-05.02.03_vzor.pdf
+2026-03-03 16:37:42,534 - INFO - Analýza dokončena: 4-05.02.03_vzor.pdf
+2026-03-03 16:37:42,537 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-03-03 16:37:42,602 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign.pdf
+2026-03-03 16:37:42,604 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-03-03 16:37:42,619 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho.pdf
+2026-03-03 16:37:42,644 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-03-03 16:37:42,791 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO.pdf
+2026-03-03 16:37:42,793 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-03-03 16:37:42,910 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis.pdf
+2026-03-03 16:37:42,912 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-03-03 16:37:42,954 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA).pdf
+2026-03-03 16:37:42,955 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_pdfa1.pdf
+2026-03-03 16:37:42,958 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:42,958 - WARNING - parsing for Object Streams
+2026-03-03 16:37:42,959 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-03-03 16:37:42,973 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_pdfa2.pdf
+2026-03-03 16:37:42,975 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:42,976 - WARNING - parsing for Object Streams
+2026-03-03 16:37:42,977 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-03-03 16:37:42,991 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_pdfa2_bez casoveho.pdf
+2026-03-03 16:37:43,020 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-03-03 16:37:43,023 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_pdfa2_sign.pdf
+2026-03-03 16:37:43,070 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-03-03 16:37:43,086 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_pdfa3.pdf
+2026-03-03 16:37:43,088 - WARNING - incorrect startxref pointer(1)
+2026-03-03 16:37:43,089 - WARNING - parsing for Object Streams
+2026-03-03 16:37:43,090 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-03-03 16:37:43,114 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\test_standard.pdf
+2026-03-03 16:37:43,116 - INFO - Analýza dokončena: test_standard.pdf
+2026-03-03 16:37:43,131 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4-05.02.03_vzor_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,143 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,155 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,166 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,179 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,215 - INFO - Analýza dokončena: 4_02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,216 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1)_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,234 - INFO - Analýza dokončena: 4_02.1.10-008 ŘEZ 2,3 - BOURACÍ PRÁCE (1)_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,235 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,240 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,241 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,259 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,259 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,276 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,277 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,302 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,303 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\test_pdfa2_bez casoveho_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,306 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,306 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\test_pdfa2_sign_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,309 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,310 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\test_standard_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,313 - INFO - Analýza dokončena: test_standard_unsigned_pdfa3b.pdf
+2026-03-03 16:37:43,313 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\4-05.02.03_vzor_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,323 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,324 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,334 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,335 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,341 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,342 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,357 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,357 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,373 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,373 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,402 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,402 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\test_pdfa2_bez casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,405 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,406 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\test_pdfa2_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,408 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,409 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\333\test_standard_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,411 - INFO - Analýza dokončena: test_standard_unsigned_pdfa3a.pdf
+2026-03-03 16:37:43,414 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:43,448 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:43,449 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4-05.02.03_vzor_unsigned_1.pdf
+2026-03-03 16:37:43,485 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned_1.pdf
+2026-03-03 16:37:43,486 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:43,539 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:43,542 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_1.pdf
+2026-03-03 16:37:43,592 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_1.pdf
+2026-03-03 16:37:43,592 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:43,604 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:43,606 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_1.pdf
+2026-03-03 16:37:43,617 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_1.pdf
+2026-03-03 16:37:43,655 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:43,775 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:43,776 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_1.pdf
+2026-03-03 16:37:43,896 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_1.pdf
+2026-03-03 16:37:43,896 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:43,977 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:43,978 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_1.pdf
+2026-03-03 16:37:44,059 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_1.pdf
+2026-03-03 16:37:44,060 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:44,158 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:44,159 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_1.pdf
+2026-03-03 16:37:44,270 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_1.pdf
+2026-03-03 16:37:44,272 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:44,291 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:44,294 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_pdfa2_bez casoveho_unsigned_1.pdf
+2026-03-03 16:37:44,315 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned_1.pdf
+2026-03-03 16:37:44,331 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:44,345 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:44,348 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_pdfa2_sign_unsigned_1.pdf
+2026-03-03 16:37:44,360 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned_1.pdf
+2026-03-03 16:37:44,360 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_standard_unsigned.pdf
+2026-03-03 16:37:44,363 - INFO - Analýza dokončena: test_standard_unsigned.pdf
+2026-03-03 16:37:44,368 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\3333\test_standard_unsigned_1.pdf
+2026-03-03 16:37:44,371 - INFO - Analýza dokončena: test_standard_unsigned_1.pdf
+2026-03-03 16:37:44,380 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\4-05.02.03_vzor_pdfa3b.pdf
+2026-03-03 16:37:44,392 - INFO - Analýza dokončena: 4-05.02.03_vzor_pdfa3b.pdf
+2026-03-03 16:37:44,398 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_pdfa3b.pdf
+2026-03-03 16:37:44,410 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_pdfa3b.pdf
+2026-03-03 16:37:44,425 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_pdfa3b.pdf
+2026-03-03 16:37:44,432 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_pdfa3b.pdf
+2026-03-03 16:37:44,457 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\4_C4_MZ_casove_bez_3a_podpis_ANO_pdfa3b.pdf
+2026-03-03 16:37:44,477 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_pdfa3b.pdf
+2026-03-03 16:37:44,483 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_pdfa3b.pdf
+2026-03-03 16:37:44,505 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_pdfa3b.pdf
+2026-03-03 16:37:44,505 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_pdfa3b.pdf
+2026-03-03 16:37:44,542 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_pdfa3b.pdf
+2026-03-03 16:37:44,543 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_pdfa1_pdfa3b.pdf
+2026-03-03 16:37:44,545 - INFO - Analýza dokončena: test_pdfa1_pdfa3b.pdf
+2026-03-03 16:37:44,564 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_pdfa2_bez casoveho_pdfa3b.pdf
+2026-03-03 16:37:44,568 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_pdfa3b.pdf
+2026-03-03 16:37:44,582 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_pdfa2_pdfa3b.pdf
+2026-03-03 16:37:44,586 - INFO - Analýza dokončena: test_pdfa2_pdfa3b.pdf
+2026-03-03 16:37:44,596 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_pdfa2_sign_pdfa3b.pdf
+2026-03-03 16:37:44,600 - INFO - Analýza dokončena: test_pdfa2_sign_pdfa3b.pdf
+2026-03-03 16:37:44,614 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_pdfa3_pdfa3b.pdf
+2026-03-03 16:37:44,619 - INFO - Analýza dokončena: test_pdfa3_pdfa3b.pdf
+2026-03-03 16:37:44,650 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33333\test_standard_pdfa3b.pdf
+2026-03-03 16:37:44,654 - INFO - Analýza dokončena: test_standard_pdfa3b.pdf
+2026-03-03 16:37:44,668 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:44,707 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:44,709 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:44,762 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:44,764 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:44,775 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:44,779 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:44,900 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:44,901 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:44,997 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:44,998 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:45,117 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:45,118 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:45,137 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:45,137 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:45,148 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:45,151 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33344\test_standard_unsigned.pdf
+2026-03-03 16:37:45,154 - INFO - Analýza dokončena: test_standard_unsigned.pdf
+2026-03-03 16:37:45,155 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:45,185 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned.pdf
+2026-03-03 16:37:45,187 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4-05.02.03_vzor_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,209 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,210 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4-05.02.03_vzor_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,221 - INFO - Analýza dokončena: 4-05.02.03_vzor_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,226 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:45,253 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned.pdf
+2026-03-03 16:37:45,253 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,322 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,324 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,337 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,338 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:45,352 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned.pdf
+2026-03-03 16:37:45,355 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,364 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,367 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,374 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,386 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:45,437 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned.pdf
+2026-03-03 16:37:45,438 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,478 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,479 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,495 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,520 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:45,587 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned.pdf
+2026-03-03 16:37:45,588 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,645 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,646 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,667 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,685 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:45,809 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned.pdf
+2026-03-03 16:37:45,811 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,907 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,909 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,942 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,948 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa1_unsigned.pdf
+2026-03-03 16:37:45,955 - INFO - Analýza dokončena: test_pdfa1_unsigned.pdf
+2026-03-03 16:37:45,963 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa1_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,967 - INFO - Analýza dokončena: test_pdfa1_unsigned_pdfa1a.pdf
+2026-03-03 16:37:45,989 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa1_unsigned_pdfa3a.pdf
+2026-03-03 16:37:45,993 - INFO - Analýza dokončena: test_pdfa1_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,019 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:46,025 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned.pdf
+2026-03-03 16:37:46,047 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_bez casoveho_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,052 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,069 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_bez casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,074 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,090 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:46,095 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned.pdf
+2026-03-03 16:37:46,115 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_sign_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,121 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,149 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,154 - INFO - Analýza dokončena: test_pdfa2_sign_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,172 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_unsigned.pdf
+2026-03-03 16:37:46,174 - INFO - Analýza dokončena: test_pdfa2_unsigned.pdf
+2026-03-03 16:37:46,189 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,192 - INFO - Analýza dokončena: test_pdfa2_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,202 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa2_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,205 - INFO - Analýza dokončena: test_pdfa2_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,217 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa3_unsigned.pdf
+2026-03-03 16:37:46,220 - INFO - Analýza dokončena: test_pdfa3_unsigned.pdf
+2026-03-03 16:37:46,231 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa3_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,235 - INFO - Analýza dokončena: test_pdfa3_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,246 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_pdfa3_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,248 - INFO - Analýza dokončena: test_pdfa3_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,257 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_standard_unsigned.pdf
+2026-03-03 16:37:46,260 - INFO - Analýza dokončena: test_standard_unsigned.pdf
+2026-03-03 16:37:46,263 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_standard_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,266 - INFO - Analýza dokončena: test_standard_unsigned_pdfa1a.pdf
+2026-03-03 16:37:46,267 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\Nová složka\33355\test_standard_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,270 - INFO - Analýza dokončena: test_standard_unsigned_pdfa3a.pdf
+2026-03-03 16:37:46,279 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\4-05.02.03_vzor_temp_unsigned.pdf
+2026-03-03 16:37:46,311 - INFO - Analýza dokončena: 4-05.02.03_vzor_temp_unsigned.pdf
+2026-03-03 16:37:46,312 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_temp_unsigned.pdf
+2026-03-03 16:37:46,348 - INFO - Analýza dokončena: 4_02.1.1.40-03 půdorys 1.NP - Vodovod_sign_temp_unsigned.pdf
+2026-03-03 16:37:46,350 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_temp_unsigned.pdf
+2026-03-03 16:37:46,360 - INFO - Analýza dokončena: 4_02_IO05_02_Trubni_situace_bez_3a_bez_podpisu_bez_razitka_casoveho_temp_unsigned.pdf
+2026-03-03 16:37:46,362 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\4_C4_MZ_casove_bez_3a_podpis_ANO_temp_unsigned.pdf
+2026-03-03 16:37:46,444 - INFO - Analýza dokončena: 4_C4_MZ_casove_bez_3a_podpis_ANO_temp_unsigned.pdf
+2026-03-03 16:37:46,447 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_temp_unsigned.pdf
+2026-03-03 16:37:46,524 - INFO - Analýza dokončena: 4_IO.01-01_TZ_motloch_PDF3a_ne_podpis_temp_unsigned.pdf
+2026-03-03 16:37:46,525 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_temp_unsigned.pdf
+2026-03-03 16:37:46,647 - INFO - Analýza dokončena: D-02.1.10-001 PŮDORYS 1.PP - BOURACÍ PRÁCE_(PDFA)_temp_unsigned.pdf
+2026-03-03 16:37:46,649 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\test_pdfa2_bez casoveho_temp_unsigned.pdf
+2026-03-03 16:37:46,670 - INFO - Analýza dokončena: test_pdfa2_bez casoveho_temp_unsigned.pdf
+2026-03-03 16:37:46,694 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\test_pdfa2_sign_temp_unsigned.pdf
+2026-03-03 16:37:46,707 - INFO - Analýza dokončena: test_pdfa2_sign_temp_unsigned.pdf
+2026-03-03 16:37:46,723 - INFO - Kontrola souboru: C:/Claude/testovaci PDF\testpvaci_pdf na prevod pdf\prevedene pdf\test_standard_temp_unsigned.pdf
+2026-03-03 16:37:46,726 - INFO - Analýza dokončena: test_standard_temp_unsigned.pdf
+2026-03-03 16:37:48,464 - INFO - Odesílám 142 výsledků na server (jeden request)...
+2026-03-03 16:37:56,579 - INFO - Batch úspěšně odeslán: batch_20260303_153750_59ce9f26 - Uloženo 142 souborů

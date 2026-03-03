@@ -2650,8 +2650,9 @@ def check_pdfa_version(content):
         return None, 'FAIL', pdf_version, conformance
 
 
-def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, ca_keywords):
-    """Z PKCS7 (obsahující RFC3161 timestamp) vybere první CN za TSTInfo OID jako jméno TSA. Vrací řetězec nebo '—'."""
+def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid):
+    """Z PKCS7 (obsahující RFC3161 timestamp) vybere první CN za TSTInfo OID jako jméno TSA. Vrací řetězec nebo '—'.
+    Pro TSA issuer se nepoužívá filtr ca_keywords – chceme zobrazit přesně název TSA (např. PostSignum TSA 4)."""
     try:
         idx = pkcs7.find(tsa_oid)
         if idx < 0:
@@ -2666,7 +2667,7 @@ def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, ca_keywords):
                     try:
                         raw = bytes.fromhex(m.group(1))
                         cn = raw.decode('utf-16-be', errors='ignore') if typ == '1e' else raw.decode('utf-8', errors='ignore')
-                        if len(cn) > 2 and not any(kw in cn.lower() for kw in ca_keywords):
+                        if len(cn) > 2:
                             found.append((m.start(), cn))
                     except Exception:
                         pass
@@ -2739,7 +2740,7 @@ def extract_all_signatures(content):
                 if tsa_oid in pkcs7:
                     sig_info['tsa'] = 'TSA'
                     sig_info['timestamp_valid'] = True
-                    sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, CA_KEYWORDS)
+                    sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid)
                 elif m_match:
                     sig_info['tsa'] = 'LOCAL'
                     sig_info['timestamp_valid'] = False
