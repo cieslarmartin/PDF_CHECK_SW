@@ -163,7 +163,8 @@
         </div>
     </section>
 
-    {# ============ CO JE NOVÉHO (News – tento + minulý měsíc) ============ #}
+    {# ============ CO JE NOVÉHO (News – tento + minulý měsíc) – zobrazit jen když máme data ============ #}
+    {% if landing_updates %}
     {% set news_updates = (landing_updates or [])[:2] %}
     {% if news_updates %}
     <section id="news" class="py-10 bg-white border-b border-gray-100">
@@ -189,6 +190,7 @@
             </p>
         </div>
     </section>
+    {% endif %}
     {% endif %}
 
     {# ============ JAK TO FUNGUJE ============ #}
