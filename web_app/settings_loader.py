@@ -153,10 +153,14 @@ def load_settings_for_views(db):
     editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
     out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
     try:
-        from version import WEB_VERSION
+        from version import WEB_VERSION, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = WEB_VERSION
+        out["agent_build_id"] = AGENT_BUILD_ID
+        out["agent_version_display"] = AGENT_VERSION_DISPLAY
     except ImportError:
         out["web_version"] = "w26.02.001"
+        out["agent_build_id"] = "46"
+        out["agent_version_display"] = "v26.02.001"
     return out
 
 

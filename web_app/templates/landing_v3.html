@@ -302,6 +302,9 @@
                 <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>Stáhnout pro Windows</a>
                 <a href="/download" class="px-6 py-3 rounded-lg border text-gray-600 hover:bg-gray-100 transition" style="border-color:#e5e7eb;">Stránka Stažení</a>
             </div>
+            {% if agent_version_display or agent_build_id %}
+            <p class="mt-4 text-sm text-gray-500">Verze agenta: {{ agent_version_display|default('') }}{% if agent_build_id %} (Build {{ agent_build_id }}){% endif %}</p>
+            {% endif %}
         </div>
     </section>
 

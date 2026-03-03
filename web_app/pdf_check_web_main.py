@@ -614,6 +614,7 @@ HTML_TEMPLATE = '''
         .sig-name { color: #374151; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .sig-ckait { font-family: monospace; color: #1e5a8a; text-align: center; }
         .sig-tsa { text-align: center; }
+        .tsa-issuer-text { font-size: 0.7em; color: #6b7280; margin-top: 2px; word-break: break-word; }
         .sig-date { color: #6b7280; font-size: 0.9em; }
 
         /* Badges */
@@ -1790,7 +1791,8 @@ function renderFileRow(file, batchId, indent = 0) {
     }
 
     html += '<div class="file-cell file-ckait">' + (hasMultipleSigs ? '—' : (file.ckait || '—')) + '</div>';
-    html += '<div class="file-cell">' + getTsaBadge(file) + '</div>';
+    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
+    html += '<div class="file-cell">' + tsaCell + '</div>';
     html += '<div class="file-cell">' + getIssrBadge(file) + '</div></div>';
 
     if (hasMultipleSigs && file.signatures) {
@@ -1800,7 +1802,7 @@ function renderFileRow(file, batchId, indent = 0) {
             html += '<div class="sig-index">#' + sig.index + '</div>';
             html += '<div class="sig-name">' + (sig.signer || '—') + '</div>';
             html += '<div class="sig-ckait">' + (sig.ckait || '—') + '</div>';
-            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig.tsa) + '</div>';
+            html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig.tsa) + (sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (sig.tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '') + '</div>';
             html += '<div class="sig-date">' + (sig.date || '—') + '</div>';
             html += '</div>';
         }
@@ -2211,7 +2213,8 @@ async function loadAgentResults() {
                             signer: s.name || '—',
                             ckait: s.ckait_number || '—',
                             tsa: s.timestamp_valid ? 'TSA' : 'LOCAL',
-                            date: s.date || '—'
+                            date: s.date || '—',
+                            tsa_issuer: s.tsa_issuer || '—'
                         }))
                     };
                 });
@@ -2646,6 +2649,35 @@ def check_pdfa_version(content):
     except Exception:
         return None, 'FAIL', pdf_version, conformance
 
+
+def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, ca_keywords):
+    """Z PKCS7 (obsahující RFC3161 timestamp) vybere první CN za TSTInfo OID jako jméno TSA. Vrací řetězec nebo '—'."""
+    try:
+        idx = pkcs7.find(tsa_oid)
+        if idx < 0:
+            return '—'
+        tail_hex = pkcs7[idx:].hex()
+        found = []
+        for typ in ['0c', '13', '1e']:
+            for length in range(5, 80):
+                hex_len = format(length, '02x')
+                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                for m in re.finditer(pattern, tail_hex, re.I):
+                    try:
+                        raw = bytes.fromhex(m.group(1))
+                        cn = raw.decode('utf-16-be', errors='ignore') if typ == '1e' else raw.decode('utf-8', errors='ignore')
+                        if len(cn) > 2 and not any(kw in cn.lower() for kw in ca_keywords):
+                            found.append((m.start(), cn))
+                    except Exception:
+                        pass
+        if found:
+            found.sort(key=lambda x: x[0])
+            return found[0][1].strip() or '—'
+    except Exception:
+        pass
+    return '—'
+
+
 def extract_all_signatures(content):
     """
     Extrahuje VŠECHNY podpisy z PDF.
@@ -2676,6 +2708,7 @@ def extract_all_signatures(content):
             'signer': '—',
             'ckait': '—',
             'tsa': 'NONE',
+            'tsa_issuer': '—',
             'date': '—',
             'valid': False,
             'signature_type': None,
@@ -2706,6 +2739,7 @@ def extract_all_signatures(content):
                 if tsa_oid in pkcs7:
                     sig_info['tsa'] = 'TSA'
                     sig_info['timestamp_valid'] = True
+                    sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, CA_KEYWORDS)
                 elif m_match:
                     sig_info['tsa'] = 'LOCAL'
                     sig_info['timestamp_valid'] = False
@@ -3260,7 +3294,9 @@ def download():
         contact_email=contact_email, contact_phone=contact_phone,
         download_url=settings.get('download_url', ''),
         pilot_notice_text=settings.get('pilot_notice_text', ''),
-        show_pilot_notice=settings.get('show_pilot_notice', True))
+        show_pilot_notice=settings.get('show_pilot_notice', True),
+        agent_build_id=settings.get('agent_build_id', ''),
+        agent_version_display=settings.get('agent_version_display', ''))
 
 
 try:

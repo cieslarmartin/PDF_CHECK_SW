@@ -30,6 +30,35 @@ def check_pdfa_version(content):
         return None, 'FAIL'
 
 
+def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, ca_keywords):
+    """Z PKCS7 (obsahující RFC3161 timestamp) vybere první CN za TSTInfo OID jako jméno TSA. Vrací řetězec nebo '—'."""
+    try:
+        idx = pkcs7.find(tsa_oid)
+        if idx < 0:
+            return '—'
+        # Hledej CN (0603550403) v části za TSTInfo – certifikát TSA je typicky až za tokenem
+        tail_hex = pkcs7[idx:].hex()
+        found = []
+        for typ in ['0c', '13', '1e']:
+            for length in range(5, 80):
+                hex_len = format(length, '02x')
+                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                for m in re.finditer(pattern, tail_hex, re.I):
+                    try:
+                        raw = bytes.fromhex(m.group(1))
+                        cn = raw.decode('utf-16-be', errors='ignore') if typ == '1e' else raw.decode('utf-8', errors='ignore')
+                        if len(cn) > 2 and not any(kw in cn.lower() for kw in ca_keywords):
+                            found.append((m.start(), cn))
+                    except Exception:
+                        pass
+        if found:
+            found.sort(key=lambda x: x[0])
+            return found[0][1].strip() or '—'
+    except Exception:
+        pass
+    return '—'
+
+
 def extract_all_signatures(content):
     """
     Extrahuje VŠECHNY podpisy z PDF
@@ -61,6 +90,7 @@ def extract_all_signatures(content):
             'signer': '—',
             'ckait': '—',
             'tsa': 'NONE',
+            'tsa_issuer': '—',
             'date': '—',
             'valid': False,
             'signature_type': None
@@ -90,6 +120,7 @@ def extract_all_signatures(content):
                 if tsa_oid in pkcs7:
                     sig_info['tsa'] = 'TSA'
                     sig_info['timestamp_valid'] = True
+                    sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid, CA_KEYWORDS)
                 elif m_match:
                     sig_info['tsa'] = 'LOCAL'
                     sig_info['timestamp_valid'] = False
@@ -457,7 +488,8 @@ def analyze_pdf_file(filepath):
                 'signature_type': sig.get('signature_type', None),
                 'timestamp_valid': sig.get('timestamp_valid', False),
                 'certificate_valid': sig.get('certificate_valid', False),
-                'date': sig.get('date', '—')
+                'date': sig.get('date', '—'),
+                'tsa_issuer': sig.get('tsa_issuer', '—')
             })
         docmdp_level = analysis.get('docmdp_level')
         issr_compatible = analysis.get('issr_compatible', True)

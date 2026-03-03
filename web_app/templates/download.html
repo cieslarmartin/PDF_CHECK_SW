@@ -62,11 +62,14 @@
                 </div>
             </div>
             {% endif %}
-            <p class="mb-6">
+            <p class="mb-2">
                 <a href="{{ download_url or '#' }}" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-btn-primary transition text-white no-underline {% if not download_url %}opacity-70 pointer-events-none{% endif %}">
                     {% if download_url %}🪟 Stáhnout pro Windows (.exe){% else %}Odkaz na stažení bude doplněn v Adminu{% endif %}
                 </a>
             </p>
+            {% if agent_version_display or agent_build_id %}
+            <p class="mb-6 text-sm text-gray-500">Verze agenta: {{ agent_version_display|default('') }}{% if agent_build_id %} (Build {{ agent_build_id }}){% endif %}</p>
+            {% endif %}
             <p class="mb-6">
                 <a href="/app" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold border border-gray-300 transition text-gray-700 no-underline hover:bg-gray-50">
                     Přejít do webové aplikace (ONLINE kontrola)
