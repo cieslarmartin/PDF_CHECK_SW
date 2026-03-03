@@ -1,7 +1,12 @@
 # tsa_registry.py
-# Whitelist TSA autorit platných pro ISSŘ (ČR). Kvalifikace z pevného seznamu v constants.
+# Whitelist TSA autorit platných pro ISSŘ (ČR). Kvalifikace z pevného seznamu.
 
-from constants import SUPPORTED_TSA_AUTHORITIES
+try:
+    from constants import SUPPORTED_TSA_AUTHORITIES
+except ImportError:
+    SUPPORTED_TSA_AUTHORITIES = [
+        "postsignum", "i.ca", "eidentity", "první certifikační", "česká pošta",
+    ]
 
 
 def is_tsa_issuer_qualified(tsa_issuer):

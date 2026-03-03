@@ -3159,7 +3159,10 @@ def index():
     """Landing page DokuCheck – verze V3. Texty a promo z global_settings. FAQ dynamicky z tabulky faq."""
     db = Database()
     settings = load_settings_for_views(db) if load_settings_for_views else {}
-    settings['faq_list'] = db.get_all_faq()
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
     return render_template('landing_v3.html', **settings)
 
 
@@ -3168,7 +3171,10 @@ def design_a():
     """Landing page – design varianta A (Gradient Glass)."""
     db = Database()
     settings = load_settings_for_views(db) if load_settings_for_views else {}
-    settings['faq_list'] = db.get_all_faq()
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
     return render_template('landing_design_a.html', **settings)
 
 
@@ -3177,7 +3183,10 @@ def design_b():
     """Landing page – design varianta B (Clean Minimal)."""
     db = Database()
     settings = load_settings_for_views(db) if load_settings_for_views else {}
-    settings['faq_list'] = db.get_all_faq()
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
     return render_template('landing_design_b.html', **settings)
 
 
@@ -3186,7 +3195,10 @@ def design_c():
     """Landing page – design varianta C (Bold Cards)."""
     db = Database()
     settings = load_settings_for_views(db) if load_settings_for_views else {}
-    settings['faq_list'] = db.get_all_faq()
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
     return render_template('landing_design_c.html', **settings)
 
 
