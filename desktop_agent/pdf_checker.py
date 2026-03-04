@@ -65,6 +65,155 @@ def _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid):
     return '—'
 
 
+CA_KEYWORDS = [
+    'postsignum', 'root', 'qca', 'tsa', 'tsu', 'ocsp', 'acaeid',
+    'qualified ca', 'i.ca', 'eidentity', 'issř', 'aca ', 'certificate'
+]
+
+
+def _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=None):
+    """Vyplní signer, ckait, tsa, tsa_issuer, timestamp_valid, signature_type v sig_info z PKCS7 bajtů."""
+    if not pkcs7 or len(pkcs7) < 50:
+        return
+    try:
+        pkcs7_hex = pkcs7.hex()
+        tsa_oid = bytes.fromhex('060b2a864886f70d010910020e')
+        if tsa_oid in pkcs7:
+            sig_info['tsa'] = 'TSA'
+            sig_info['timestamp_valid'] = True
+            sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid)
+        elif m_date:
+            sig_info['tsa'] = 'LOCAL'
+            sig_info['timestamp_valid'] = False
+        for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
+            if sig_info.get('ckait', '—') != '—':
+                break
+            hex_len = format(length, '02x')
+            ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
+            ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
+            if ou_match:
+                try:
+                    value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
+                    if re.match(rf'^\d{{{length}}}$', value):
+                        sig_info['ckait'] = value
+                        sig_info['signature_type'] = sig_type
+                except Exception:
+                    pass
+        found_cns = []
+        for typ in ['0c', '13', '1e']:
+            for length in range(5, 80):
+                hex_len = format(length, '02x')
+                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
+                    try:
+                        raw_bytes = bytes.fromhex(cn_match.group(1))
+                        cn = raw_bytes.decode('utf-16-be', errors='ignore') if typ == '1e' else raw_bytes.decode('utf-8', errors='ignore')
+                        if len(cn) > 3:
+                            is_ca = any(kw in cn.lower() for kw in CA_KEYWORDS)
+                            has_space = ' ' in cn
+                            found_cns.append({'name': cn, 'is_ca': is_ca, 'has_space': has_space, 'position': cn_match.start()})
+                    except Exception:
+                        pass
+        best_cn = None
+        for cn_info in sorted(found_cns, key=lambda x: (x['is_ca'], not x['has_space'], x['position'])):
+            if not cn_info['is_ca']:
+                best_cn = cn_info['name']
+                break
+        if best_cn:
+            sig_info['signer'] = best_cn
+        if sig_info.get('type') == 'DOCUMENT_TIMESTAMP':
+            sig_info['valid'] = (sig_info.get('tsa_issuer', '—') != '—')
+            sig_info['certificate_valid'] = sig_info['valid']
+        else:
+            sig_info['valid'] = (sig_info.get('signer', '—') != '—' and sig_info.get('ckait', '—') != '—')
+            sig_info['certificate_valid'] = sig_info['valid']
+    except Exception:
+        pass
+
+
+def extract_signatures_via_reader(reader):
+    """
+    Extrahuje všechny podpisy ze struktury PDF (pypdf). Nezávisí na velikosti souboru – čte jen relevantní objekty.
+    Vrací seznam dictů ve stejném formátu jako extract_all_signatures (index, signer, ckait, tsa, tsa_issuer, date, valid, type, ...).
+    """
+    signatures = []
+    try:
+        catalog = getattr(reader, 'trailer', None) and reader.trailer.get('/Root') or getattr(reader, 'root_object', None)
+        if catalog is None:
+            return signatures
+        catalog = _resolve_obj(catalog, reader)
+        if not catalog or '/AcroForm' not in catalog:
+            return signatures
+        acro = _resolve_obj(catalog['/AcroForm'], reader)
+        if not acro or '/Fields' not in acro:
+            return signatures
+        fields = acro.get('/Fields') or []
+        idx = 0
+        for f_ref in fields:
+            f = _resolve_obj(f_ref, reader)
+            if not f:
+                continue
+            ft = f.get('/FT')
+            if ft is not None and str(ft) != '/Sig':
+                continue
+            v = f.get('/V')
+            if v is None:
+                continue
+            v_dict = _resolve_obj(v, reader)
+            if not v_dict:
+                continue
+            idx += 1
+            sig_info = {
+                'index': idx,
+                'signer': '—',
+                'ckait': '—',
+                'tsa': 'NONE',
+                'tsa_issuer': '—',
+                'date': '—',
+                'valid': False,
+                'signature_type': None,
+                'type': 'SIGNATURE',
+                'timestamp_valid': False,
+                'certificate_valid': False,
+            }
+            subfilter = v_dict.get('/SubFilter')
+            if subfilter is not None:
+                subfilter = str(subfilter).strip()
+                if subfilter == 'ETSI.RFC3161':
+                    sig_info['type'] = 'DOCUMENT_TIMESTAMP'
+                elif subfilter in ('adbe.pkcs7.detached', 'ETSI.CAdES.detached'):
+                    sig_info['type'] = 'SIGNATURE'
+            m = v_dict.get('/M')
+            if m is not None:
+                m_str = str(m)
+                d_match = re.search(r'D:(\d{14})', m_str)
+                if d_match:
+                    d = d_match.group(1)
+                    sig_info['date'] = f"{d[:4]}-{d[4:6]}-{d[6:8]} {d[8:10]}:{d[10:12]}"
+            contents_obj = v_dict.get('/Contents')
+            if contents_obj is not None:
+                pkcs7 = None
+                if hasattr(contents_obj, 'get_object'):
+                    pkcs7 = contents_obj.get_object()
+                elif hasattr(contents_obj, 'original_bytes'):
+                    pkcs7 = contents_obj.original_bytes
+                if isinstance(pkcs7, (bytes, bytearray)):
+                    pkcs7 = bytes(pkcs7)
+                    _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
+                elif isinstance(contents_obj, (str, bytes)):
+                    raw = contents_obj if isinstance(contents_obj, bytes) else contents_obj.encode('latin-1')
+                    if len(raw) > 10 and raw[:2] != b'30':
+                        try:
+                            pkcs7 = bytes.fromhex(raw.decode('ascii', errors='ignore'))
+                            _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
+                        except Exception:
+                            pass
+            signatures.append(sig_info)
+    except Exception:
+        pass
+    return signatures
+
+
 def extract_all_signatures(content):
     """
     Extrahuje VŠECHNY podpisy z PDF
@@ -483,23 +632,61 @@ def analyze_pdf_file(filepath):
         file_size = os.path.getsize(filepath)
         filename = os.path.basename(filepath)
         file_hash = get_file_hash(filepath)
+        # Primárně podpisy a DocMDP ze struktury PDF (pypdf) – nezávisí na velikosti souboru
+        sig_list_from_reader = []
+        reader = None
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(filepath)
+            sig_list_from_reader = extract_signatures_via_reader(reader)
+        except Exception:
+            pass
         with open(filepath, 'rb') as f:
             if file_size <= 2 * 1024 * 1024:
                 content = f.read()
             else:
-                content = f.read(150 * 1024)
+                content = f.read(512 * 1024)
                 f.seek(-1024 * 1024, 2)
                 content += f.read()
         analysis = analyze_pdf(content)
+        # Přepsat podpisy z readeru, pokud jsme nějaké získali (nezávisí na chunku)
+        if sig_list_from_reader:
+            signature_objs = [s for s in sig_list_from_reader if s.get('type') == 'SIGNATURE']
+            analysis['signatures'] = sig_list_from_reader
+            analysis['sig_count'] = len(sig_list_from_reader)
+            if signature_objs:
+                all_have_ckait = all(s.get('ckait', '—') != '—' for s in signature_objs)
+                all_have_name = all(s.get('signer', '—') != '—' for s in signature_objs)
+                analysis['sig'] = 'OK' if (all_have_ckait and all_have_name) else 'PARTIAL'
+                analysis['signer'] = signature_objs[0].get('signer', '—')
+                analysis['ckait'] = signature_objs[0].get('ckait', '—')
+            else:
+                analysis['sig'] = 'PARTIAL' if analysis.get('sig_count') else 'FAIL'
+                analysis['signer'] = '—'
+                analysis['ckait'] = '—'
+            if any(s.get('tsa') == 'TSA' and s.get('timestamp_valid') for s in sig_list_from_reader):
+                analysis['tsa'] = 'TSA'
+            elif any(s.get('tsa') == 'LOCAL' for s in sig_list_from_reader):
+                analysis['tsa'] = 'LOCAL'
+            else:
+                analysis['tsa'] = 'NONE'
         # Preferenční detekce DocMDP přes strukturu PDF (AcroForm / Sig / Lock, TransformParams)
-        try:
-            from pypdf import PdfReader
-            reader = PdfReader(filepath)
-            docmdp_reader = detect_docmdp_lock_via_reader(reader)
-            analysis['docmdp_level'] = docmdp_reader['level']
-            analysis['issr_compatible'] = not docmdp_reader['locked']
-        except Exception:
-            pass
+        if reader is not None:
+            try:
+                docmdp_reader = detect_docmdp_lock_via_reader(reader)
+                analysis['docmdp_level'] = docmdp_reader['level']
+                analysis['issr_compatible'] = not docmdp_reader['locked']
+            except Exception:
+                pass
+        else:
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(filepath)
+                docmdp_reader = detect_docmdp_lock_via_reader(reader)
+                analysis['docmdp_level'] = docmdp_reader['level']
+                analysis['issr_compatible'] = not docmdp_reader['locked']
+            except Exception:
+                pass
         pdf_format = {
             'is_pdf_a3': analysis['pdfaVersion'] == 3,
             'exact_version': f"PDF/A-{analysis['pdfaVersion']}" if analysis['pdfaVersion'] else "PDF (ne PDF/A)",
