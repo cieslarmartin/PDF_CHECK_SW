@@ -1381,7 +1381,7 @@ function confirmUpload() {
     }
 }
 
-// Upload s progress barem (bez přihlášení = Free trial max 5 souborů)
+// Upload s progress barem – jeden batch na kořenovou složku (dvě složky = dva tasky)
 async function processFilesWithProgress(files) {
     let pdfFiles = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
     if (pdfFiles.length === 0) return;
@@ -1394,53 +1394,67 @@ async function processFilesWithProgress(files) {
         alert('Limit licence: Free max 5, Basic max 100 souborů. Zkontrolováno prvních ' + maxFiles + '. Pro více zvolte Pro licenci.');
     }
 
-    // Zobrazit progress modal
+    // Seskupit podle kořenové složky (jedna složka = jeden batch)
+    const groups = {};
+    for (const f of pdfFiles) {
+        const path = f.webkitRelativePath || f.name || '';
+        const root = path.indexOf('/') >= 0 ? path.split('/')[0] : (pdfFiles.length === 1 ? f.name : ('Upload_' + new Date().toLocaleTimeString().replace(/[:.]/g, '-')));
+        if (!groups[root]) groups[root] = [];
+        groups[root].push(f);
+    }
+    const groupKeys = Object.keys(groups);
+
     const progressModal = document.getElementById('upload-progress-modal');
     const progressBar = document.getElementById('upload-progress-bar');
     const progressText = document.getElementById('upload-progress-text');
     const progressFile = document.getElementById('upload-progress-file');
     progressModal.classList.add('visible');
-    
-    const batchName = pdfFiles.length === 1 ? pdfFiles[0].name : 
-        (pdfFiles[0].webkitRelativePath ? pdfFiles[0].webkitRelativePath.split('/')[0] : 'Upload_' + new Date().toLocaleTimeString());
-
-    const batch = { id: ++batchCounter, name: batchName, timestamp: new Date().toLocaleTimeString().slice(0,5), files: [], collapsed: false };
 
     const authHeaders = (user && user.api_key) ? { 'Authorization': 'Bearer ' + user.api_key } : {};
     const totalPdf = pdfFiles.length;
+    let globalIndex = 0;
     let limitReached = false;
-    for (let i = 0; i < totalPdf; i++) {
-        const file = pdfFiles[i];
-        const percent = Math.round(((i + 1) / totalPdf) * 100);
-        
-        progressBar.style.width = percent + '%';
-        progressText.textContent = `${i + 1} / ${totalPdf} (${percent}%)`;
-        progressFile.textContent = file.name;
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-            const response = await fetch('/analyze', { method: 'POST', body: formData, headers: authHeaders });
-            const result = await response.json().catch(function() { return {}; });
-            if (!response.ok) {
-                if (response.status === 429 && result.limit_exceeded) {
-                    progressModal.classList.remove('visible');
-                    alert('Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
-                    limitReached = true;
-                    break;
+    const newBatches = [];
+
+    for (const root of groupKeys) {
+        const groupFiles = groups[root];
+        const batch = { id: ++batchCounter, name: root, timestamp: new Date().toLocaleTimeString().slice(0, 5), files: [], collapsed: false };
+
+        for (let i = 0; i < groupFiles.length; i++) {
+            const file = groupFiles[i];
+            globalIndex++;
+            const percent = Math.round((globalIndex / totalPdf) * 100);
+            progressBar.style.width = percent + '%';
+            progressText.textContent = globalIndex + ' / ' + totalPdf + ' (' + percent + '%)';
+            progressFile.textContent = file.name;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('/analyze', { method: 'POST', body: formData, headers: authHeaders });
+                const result = await response.json().catch(function() { return {}; });
+                if (!response.ok) {
+                    if (response.status === 429 && result.limit_exceeded) {
+                        progressModal.classList.remove('visible');
+                        alert('Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
+                        limitReached = true;
+                        break;
+                    }
+                    batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: result.error || 'Chyba kontroly' });
+                    continue;
                 }
-                batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: result.error || 'Chyba kontroly' });
-                continue;
+                batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, ...result });
+            } catch (error) {
+                batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: 'Chyba: ' + (error.message || 'síťová chyba') });
             }
-            batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, ...result });
-        } catch (error) {
-            batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: 'Chyba: ' + (error.message || 'síťová chyba') });
         }
+        if (batch.files.length > 0) newBatches.push(batch);
+        if (limitReached) break;
     }
-    
+
     progressModal.classList.remove('visible');
-    if (batch.files.length > 0) {
-        batches.push(batch);
+    newBatches.forEach(function(b) { batches.push(b); });
+    if (newBatches.length > 0) {
         renderResults();
         updateFilterLists();
     }
