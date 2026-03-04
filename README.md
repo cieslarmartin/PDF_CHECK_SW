@@ -28,3 +28,5 @@ Skript zkopíruje v42 → web_app (včetně přejmenování hlavního souboru) a
 
 - **ANALYZA_PRED_PRESUNEM.md** – provazby Agent ↔ Web, API, licence
 - **UKLIZENO.md** – přehled „kde co leží“ po reorganizaci
+- **STABLE_VERSION.md** – stabilní verze pro návrat (restore point), tag v Gitu
+- **NAVRH_VERZE_A_INSTALACE.md** – chování instalace na Windows, verze v agentu (návrh)

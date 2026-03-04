@@ -915,13 +915,15 @@ HTML_TEMPLATE = '''
                     <div class="legend">
                         <div class="legend-title">Legenda:</div>
                         <div class="legend-grid">
-                            <div class="legend-item"><span class="badge badge-green">A-3</span> Správně</div>
-                            <div class="legend-item"><span class="badge badge-red">A-2 / A-1 / NE</span> Špatně</div>
-                            <div class="legend-item"><span class="badge badge-green">VČR</span> Vlož. čas. razítko</div>
+                            <div class="legend-item"><span class="badge badge-green">A-3</span> PDF/A-3 vyhovuje</div>
+                            <div class="legend-item"><span class="badge badge-red">A-2 / A-1 / NE</span> PDF/A nevyhovuje</div>
+                            <div class="legend-item"><span class="badge badge-green">Podpis OK</span> Platný podpis + ČKAIT/ČKA</div>
+                            <div class="legend-item"><span class="badge badge-red">PARTIAL/FAIL</span> Podpis chybí nebo neplatný</div>
+                            <div class="legend-item"><span class="badge badge-green">TSA</span> Kvalifikované časové razítko</div>
                             <div class="legend-item"><span class="badge badge-red">LOK</span> Z hodin PC</div>
-                            <div class="legend-item"><span class="badge badge-red">Bez razítka</span> Žádné</div>
-                            <div class="legend-item"><span class="badge badge-green">✅</span> ISSŘ: OK (úřad může vložit podací razítko)</div>
-                            <div class="legend-item"><span class="badge badge-red">🔒 Zamčeno</span> ISSŘ: Level 1 – úřad nemůže vložit podací razítko</div>
+                            <div class="legend-item"><span class="badge badge-red">NONE</span> Žádné razítko</div>
+                            <div class="legend-item"><span class="badge badge-green">✅ ISSŘ</span> Úřad může vložit podací razítko</div>
+                            <div class="legend-item"><span class="badge badge-red">🔒 Zamčeno</span> ISSŘ Level 1 – úřad nemůže vložit razítko</div>
                         </div>
                     </div>
                 </div>
@@ -2223,12 +2225,8 @@ async function loadAgentResults() {
                     const pdfFormat = parsed.results?.pdf_format || {};
                     const signatures = parsed.results?.signatures || [];
 
-                    // Cesta pro strom: folder_path + file_name; pokud chybí složka, použij source_folder jako kořen
+                    // Cesta pro strom: pouze folder_path z API (bez náhrady za source_folder – každá složka zvlášť)
                     let folderPath = (r.folder_path || '').trim().replace(/\\\\/g, '/') || '.';
-                    if (folderPath === '.' && sourceFolder) {
-                        const sf = sourceFolder.replace(/\\\\/g, '/').trim();
-                        folderPath = sf.split('/').filter(Boolean).pop() || '.';
-                    }
                     const filePath = (folderPath && folderPath !== '.') ? (folderPath + '/' + r.file_name) : r.file_name;
 
                     const isCompatible = r.parsed_results?.results?.issr_compatible ?? r.results?.issr_compatible ?? r.parsed_results?.display?.issr_compatible ?? r.display?.issr_compatible ?? true;
@@ -2522,25 +2520,23 @@ function updateFeatureLocks() {
     }
 }
 
-// Export – Trial(0): Excel lokálně | Basic(1): zamčeno | Pro(2+): Excel ze serveru
+// Export – zelené tlačítko exportuje VŠECHNY uložené tasky (export-all)
 function exportExcel() {
     if (batches.length === 0) {
         alert('Nejsou žádná data k exportu.');
         return;
     }
-    // Basic (tier 1) = zamčeno, zobrazí výzvu k upgradu
     if (licenseState.tier === 1 && !hasFeature('export_excel')) {
         checkFeatureAccess('export_excel');
         return;
     }
-    // Pro+ a batch na serveru → Excel
-    const batchId = batches[0].batch_id;
-    if (hasFeature('export_excel') && batchId && !batchId.startsWith('legacy_')) {
-        fetchWithAuthAndDownload('/api/agent/batch/' + batchId + '/export?format=xlsx', 'batch.xlsx');
-    } else {
-        // Trial (0) nebo Pro bez server batche → Excel z lokálních dat (SheetJS)
-        exportBatchCSV(batches[0].id);
+    // Pro+ → export všech batchů na serveru
+    if (hasFeature('export_excel') || hasFeature('export_all')) {
+        fetchWithAuthAndDownload('/api/agent/export-all', 'export_vse.xlsx');
+        return;
     }
+    // Trial: lokální Excel z prvního batch (SheetJS)
+    exportBatchCSV(batches[0].id);
 }
 
 // Export všech dat (Pro+) – jen vaše data

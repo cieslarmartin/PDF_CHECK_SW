@@ -10,6 +10,7 @@ Spouštění z kořene desktop_agent: python build_installer.py
 5. Smaže build/ a dist/.
 """
 
+import argparse
 import os
 import re
 import sys
@@ -19,6 +20,7 @@ from datetime import datetime
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 INSTALL_DIR = os.path.join(SCRIPT_DIR, "install")
+# Volitelná cesta pro výstup: env DOKUCHECK_INSTALL_OUTPUT nebo --output-dir
 ISS_TEMPLATE = os.path.join(INSTALL_DIR, "installer_config.iss")
 ISS_BUILD = os.path.join(INSTALL_DIR, "installer_config_build.iss")
 BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
@@ -127,8 +129,8 @@ def run_inno_setup(version):
         pass
 
 
-def finalize_installer(version):
-    """Přejmenuje výstup na DokuCheckPRO_Setup_{verze}_{datum}.exe v install/."""
+def finalize_installer(version, output_dir=None):
+    """Přejmenuje výstup na DokuCheckPRO_Setup_{verze}_{datum}.exe v install/; pokud je output_dir, zkopíruje tam také."""
     date_str = datetime.now().strftime("%Y-%m-%d")
     final_name = f"DokuCheckPRO_Setup_{version}_{date_str}.exe"
     final_path = os.path.join(INSTALL_DIR, final_name)
@@ -141,6 +143,11 @@ def finalize_installer(version):
         os.remove(final_path)
     shutil.move(base_path, final_path)
     print(f"Instalátor uložen: {final_path}")
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        dest = os.path.join(output_dir, final_name)
+        shutil.copy2(final_path, dest)
+        print(f"Kopie do zvolené cesty: {dest}")
     return final_path
 
 
@@ -153,8 +160,20 @@ def clean_build_dirs():
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Build Windows instalátoru DokuCheck")
+    parser.add_argument(
+        "--output-dir", "-o",
+        default=os.environ.get("DOKUCHECK_INSTALL_OUTPUT", "").strip(),
+        metavar="CESTA",
+        help="Cesta, kam zkopírovat hotový .exe (navíc k desktop_agent/install). Můžete též nastavit env DOKUCHECK_INSTALL_OUTPUT.",
+    )
+    args = parser.parse_args()
+    output_dir = args.output_dir.strip() if args.output_dir else None
+
     os.chdir(SCRIPT_DIR)
     print("=== Build instalátoru DokuCheck ===\n")
+    if output_dir:
+        print(f"Výstupní kopie bude také v: {os.path.abspath(output_dir)}\n")
     print("Kontrola závislostí…")
     check_pyinstaller()
     iscc_path = find_iscc()
@@ -171,7 +190,7 @@ def main():
     run_inno_setup(version)
 
     print("Krok 3/4: Přejmenování a přesun do install/…")
-    finalize_installer(version)
+    finalize_installer(version, output_dir=output_dir)
 
     print("Krok 4/4: Čištění build/ a dist/…")
     clean_build_dirs()

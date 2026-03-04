@@ -81,21 +81,20 @@ DEFAULT_ALLOWED_EXTENSIONS = [".pdf"]
 
 DEFAULT_HEADER_SCRIPTS = []
 
-# Přehled aktualizací pro landing a stránku Stažení (měsíc, název, odrážky). Prázdný seznam hned na začátku kvůli NameError.
-DEFAULT_LANDING_UPDATES = []
+# Přehled aktualizací pro landing – sekce „Co je nového“ (měsíc, název, odrážky).
 DEFAULT_LANDING_UPDATES = [
     {
         "month": "03/2026",
         "title": "Březen 2026",
         "items": [
-            "Přidána funkce rozpoznání certifikační autority časového razítka: PostSignum, I.CA, eIdentity (platné pro ISSŘ).",
+            "Implementováno automatické rozlišování certifikačních autorit v ČR (PostSignum, I.CA, eIdentity) a podpora pro vícenásobné podpisy v PDF.",
         ],
     },
     {
         "month": "02/2026",
         "title": "Únor 2026",
         "items": [
-            "Rozpoznání zamčeného souboru (DocMDP Level 1) – upozornění, pokud úřad nemůže vložit podací razítko (ISSŘ).",
+            "Funkce pro čtení a zamykání souborů podle metodiky MMR pro digitální stavební řízení.",
         ],
     },
 ]
@@ -169,7 +168,9 @@ def load_settings_for_views(db):
     out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
     out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
     out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
-    out["landing_updates"] = []
+    out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
+    if not isinstance(out["landing_updates"], list):
+        out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
     out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or ""
     # Seznamy odrážek pro šablonu (řádky rozdělené \n)
     path_items = (out.get("coming_soon_path_items") or "").split("\n")
@@ -178,13 +179,14 @@ def load_settings_for_views(db):
     out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
     try:
         from version import WEB_VERSION, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
-        out["web_version"] = WEB_VERSION
-        out["agent_build_id"] = AGENT_BUILD_ID
-        out["agent_version_display"] = AGENT_VERSION_DISPLAY
-    except ImportError:
+        out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"
+        out["agent_build_id"] = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else "51"
+        out["agent_version_display"] = (AGENT_VERSION_DISPLAY or "").strip() or "v26.03.0xx"
+    except (ImportError, AttributeError) as e:
+        logger.warning("version.py nedostupný, použit fallback: %s", e)
         out["web_version"] = "w26.02.001"
-        out["agent_build_id"] = "46"
-        out["agent_version_display"] = "v26.02.001"
+        out["agent_build_id"] = "51"
+        out["agent_version_display"] = "v26.03.0xx"
     return out
 
 

@@ -1452,6 +1452,8 @@ class PDFCheckUI_2026_V3:
                             self.queue_display[qidx]["sent"] = True
                     if not self.is_running:
                         self._update_progress_idle()
+                    # Po úspěšném odeslání vymazat frontu a připravit na další vložení
+                    self.clear_results_and_queue()
             except Exception as e:
                 upload_error = str(e)
             self._open_web()

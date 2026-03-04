@@ -126,16 +126,18 @@
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
-<main style="padding-top:98px;">
+<main style="padding-top:72px;">
 
     {# ============ HERO ============ #}
-    <section class="py-16 md:py-24 bg-white">
+    <section class="py-8 md:py-12 bg-white">
         <div class="max-w-6xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-center gap-10 anim">
                 <div class="flex-1">
-                    <span class="hero-version-badge">Verze 2.4 – Únor 2026</span>
-                    <div class="mb-6"></div>
                     <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">{{ landing_hero_badge|default('ONLINE + Desktop') }}</span>
+                    <div class="mb-4 p-4 rounded-xl border font-medium text-sm" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;">
+                        Webová aplikace vyžaduje pro plnou funkčnost aktuální verzi desktop agenta.
+                    </div>
+                    <p class="mb-2 text-sm font-semibold" style="color:#1e5a8a;">Aktuální verze: {{ agent_version_display|default('v26.03.0xx') }}</p>
                     <h1 class="mb-4" style="line-height:1.1;">
                         <span class="flex items-center gap-3">
                             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-12 w-12 md:h-14 md:w-14">
