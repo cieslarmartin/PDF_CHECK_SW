@@ -99,13 +99,26 @@ def extract_all_signatures(content):
             'tsa_issuer': '—',
             'date': '—',
             'valid': False,
-            'signature_type': None
+            'signature_type': None,
+            'type': 'SIGNATURE',  # DOCUMENT_TIMESTAMP | SIGNATURE
         }
 
         br_pos = br.start()
         search_start = max(0, br_pos - 25000)
         search_end = min(len(content), br_pos + 50000)
         search_area = content[search_start:search_end]
+        # SubFilter tohoto objektu: mezi koncem předchozího ByteRange a začátkem tohoto
+        prev_end = byteranges[i - 1].end() if i > 0 else 0
+        subfilter_window = content[prev_end:min(len(content), br_pos + 500)]
+
+        # /SubFilter – rozlišení Document Timestamp vs. Digitální podpis (neovlivňuje FAIL u razítka)
+        subfilter_match = re.search(rb'/SubFilter\s*/([^\s\[\]<>()/]+)', subfilter_window)
+        if subfilter_match:
+            subfilter_val = subfilter_match.group(1).decode('ascii', errors='ignore').strip()
+            if subfilter_val == 'ETSI.RFC3161':
+                sig_info['type'] = 'DOCUMENT_TIMESTAMP'
+            elif subfilter_val in ('adbe.pkcs7.detached', 'ETSI.CAdES.detached'):
+                sig_info['type'] = 'SIGNATURE'
 
         # /M (datum) - načti vždy
         m_match = re.search(rb'/M\s*\(D:(\d{14})', search_area)
@@ -226,14 +239,19 @@ def extract_all_signatures(content):
             if best_name:
                 sig_info['signer'] = best_name
 
-        sig_info['valid'] = (sig_info['signer'] != '—' and sig_info['ckait'] != '—')
-        sig_info['certificate_valid'] = sig_info['valid']
+        # Validace: DOCUMENT_TIMESTAMP = platné, pokud máme TSA issuer; SIGNATURE = jméno + ČKAIT
+        if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
+            sig_info['valid'] = (sig_info.get('tsa_issuer', '—') != '—')
+            sig_info['certificate_valid'] = sig_info['valid']
+        else:
+            sig_info['valid'] = (sig_info['signer'] != '—' and sig_info['ckait'] != '—')
+            sig_info['certificate_valid'] = sig_info['valid']
         signatures.append(sig_info)
     return signatures
 
 
 def check_signature_data(content):
-    """Extrahuje informace o podpisech"""
+    """Extrahuje informace o podpisech. Dokument je podepsaný, pokud má alespoň jeden objekt typu SIGNATURE s platnými daty."""
     result = {
         'has_signature': False,
         'signer_name': '—',
@@ -244,12 +262,14 @@ def check_signature_data(content):
     try:
         if b'/Type /Sig' not in content and b'/Type/Sig' not in content:
             return result
-        result['has_signature'] = True
         signatures = extract_all_signatures(content)
         result['signatures'] = signatures
         result['sig_count'] = len(signatures)
-        signers = list(dict.fromkeys([s['signer'] for s in signatures if s['signer'] != '—']))
-        ckaits = list(dict.fromkeys([s['ckait'] for s in signatures if s['ckait'] != '—']))
+        # Jen objekty typu SIGNATURE rozhodují o „podepsanosti“; DOCUMENT_TIMESTAMP nikdy nezpůsobí FAIL
+        signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
+        result['has_signature'] = any(s.get('valid') for s in signature_objs)
+        signers = list(dict.fromkeys([s['signer'] for s in signature_objs if s['signer'] != '—']))
+        ckaits = list(dict.fromkeys([s['ckait'] for s in signature_objs if s['ckait'] != '—']))
         result['signer_name'] = ', '.join(signers) if signers else '—'
         result['ckait_number'] = ', '.join(ckaits) if ckaits else '—'
         return result
@@ -429,18 +449,18 @@ def detect_docmdp_lock(content):
 
 
 def analyze_pdf(content):
-    """Kompletní analýza PDF"""
+    """Kompletní analýza PDF. Status podpisu vychází pouze z objektů typu SIGNATURE (ne z DOCUMENT_TIMESTAMP)."""
     pdfa_version, pdfa_status = check_pdfa_version(content)
     sig_data = check_signature_data(content)
     tsa = check_timestamp(content)
     docmdp = detect_docmdp_lock(content)
-    if sig_data['has_signature']:
-        if sig_data['sig_count'] > 0:
-            all_have_ckait = all(s['ckait'] != '—' for s in sig_data['signatures'])
-            all_have_name = all(s['signer'] != '—' for s in sig_data['signatures'])
-            sig_status = 'OK' if (all_have_ckait and all_have_name) else 'PARTIAL'
-        else:
-            sig_status = 'PARTIAL'
+    signature_objs = [s for s in sig_data.get('signatures', []) if s.get('type') == 'SIGNATURE']
+    if sig_data['has_signature'] and signature_objs:
+        all_have_ckait = all(s['ckait'] != '—' for s in signature_objs)
+        all_have_name = all(s['signer'] != '—' for s in signature_objs)
+        sig_status = 'OK' if (all_have_ckait and all_have_name) else 'PARTIAL'
+    elif sig_data['has_signature']:
+        sig_status = 'PARTIAL'
     else:
         sig_status = 'FAIL'
     return {
@@ -489,9 +509,17 @@ def analyze_pdf_file(filepath):
         for sig in analysis.get('signatures', []):
             tsa_issuer = sig.get('tsa_issuer', '—')
             tsa_qualified = is_tsa_issuer_qualified(tsa_issuer) if tsa_issuer and tsa_issuer != '—' else False
+            sig_type = sig.get('type', 'SIGNATURE')
+            if sig_type == 'DOCUMENT_TIMESTAMP':
+                display_name = 'Časové razítko dokumentu (' + (tsa_issuer if tsa_issuer != '—' else '—') + ')'
+            else:
+                display_name = sig.get('signer', '—')
             signatures.append({
+                'index': sig.get('index', len(signatures) + 1),
+                'type': sig_type,
                 'valid': sig.get('valid', False),
-                'name': sig.get('signer', '—'),
+                'name': display_name,
+                'signer': sig.get('signer', '—'),
                 'ckait_number': sig.get('ckait', '—'),
                 'signature_type': sig.get('signature_type', None),
                 'timestamp_valid': sig.get('timestamp_valid', False),

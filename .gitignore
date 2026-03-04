@@ -1,5 +1,6 @@
-# Database – mění se na serveru, způsobuje konflikty při git pull
+# Database – mění se na serveru, způsobuje konflikty při git pull (včetně lokální testovací)
 web_app/pdfcheck_results.db
+web_app/*.db
 
 # Virtuální prostředí (lokální i na PA)
 venv/
