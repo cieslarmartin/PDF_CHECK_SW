@@ -178,15 +178,21 @@ def load_settings_for_views(db):
     editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
     out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
     try:
-        from version import WEB_VERSION, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
+        from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"
+        out["web_build"] = str(WEB_BUILD) if WEB_BUILD is not None else "n/a"
         out["agent_build_id"] = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else "51"
         out["agent_version_display"] = (AGENT_VERSION_DISPLAY or "").strip() or "v26.03.0xx"
+        out["agent_version"] = out["agent_version_display"]
+        out["agent_build"] = out["agent_build_id"]
     except (ImportError, AttributeError) as e:
         logger.warning("version.py nedostupný, použit fallback: %s", e)
         out["web_version"] = "w26.02.001"
+        out["web_build"] = "n/a"
         out["agent_build_id"] = "51"
         out["agent_version_display"] = "v26.03.0xx"
+        out["agent_version"] = out["agent_version_display"]
+        out["agent_build"] = out["agent_build_id"]
     return out
 
 

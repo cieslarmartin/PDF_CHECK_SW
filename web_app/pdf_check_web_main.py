@@ -227,7 +227,9 @@ HTML_TEMPLATE = '''
         .header-btn-logout:hover { background: #fee2e2; color: #b91c1c; }
         .header-logged-in-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-divider { width: 1px; height: 20px; background: #e5e7eb; }
-        .header-build { font-size: 0.7em; color: #d1d5db; }
+        .header-build { font-size: 0.7em; color: #9ca3af; white-space: nowrap; }
+        .header-btn-nav { background: transparent !important; border: none; color: #6b7280; }
+        .header-btn-nav:hover { color: #1e5a8a; text-decoration: underline; }
 
         /* License Badge */
         .license-badge {
@@ -783,12 +785,12 @@ HTML_TEMPLATE = '''
                 </div>
             </div>
             <div class="header-actions">
-                <a href="/" class="header-btn" style="text-decoration:none;">🏠 Úvod</a>
+                <a href="/" class="header-btn header-btn-nav" style="text-decoration:none;">Zpět na web</a>
                 <div class="header-divider"></div>
                 <button class="header-btn" onclick="showHelpModal()">❓ Nápověda</button>
                 <div class="header-divider"></div>
                 <button class="header-btn" onclick="showInfoModal()">📘 Info</button>
-                <span class="header-build">v42</span>
+                <span class="header-build">Web: {{ web_version|default('n/a') }} (Build {{ web_build|default('n/a') }}) | Agent: {{ agent_version|default('n/a') }} (Build {{ agent_build|default('n/a') }})</span>
                 <div class="header-user-widget">
                     <button type="button" id="header-login-btn" class="header-btn header-btn-primary" onclick="showLoginModal()">👤 PŘIHLÁSIT SE</button>
                     <span id="logged-in-area" style="display:none;align-items:center;gap:10px;" class="header-logged-in-row">
@@ -3535,6 +3537,10 @@ def app_main():
         provider_legal_note = settings.get("provider_legal_note", "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.")
         contact_email = settings.get("contact_email", "")
         app_legal_notice = settings.get("app_legal_notice", "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.")
+        web_version = settings.get("web_version") or "n/a"
+        web_build = settings.get("web_build") or "n/a"
+        agent_version = settings.get("agent_version") or settings.get("agent_version_display") or "n/a"
+        agent_build = settings.get("agent_build") or settings.get("agent_build_id") or "n/a"
     except Exception:
         footer_disclaimer = "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost."
         provider_name = "Ing. Martin Cieślar"
@@ -3543,6 +3549,7 @@ def app_main():
         provider_legal_note = "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016."
         contact_email = ""
         app_legal_notice = "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka."
+        web_version = web_build = agent_version = agent_build = "n/a"
     return render_template_string(
         HTML_TEMPLATE,
         bootstrap_user=bootstrap_user,
@@ -3553,6 +3560,10 @@ def app_main():
         provider_legal_note=provider_legal_note,
         contact_email=contact_email,
         app_legal_notice=app_legal_notice,
+        web_version=web_version,
+        web_build=web_build,
+        agent_version=agent_version,
+        agent_build=agent_build,
     )
 
 
