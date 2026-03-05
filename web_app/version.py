@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.016"
+WEB_VERSION = "w26.02.018"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 60
+WEB_BUILD = 62
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "Rozpoznání zamčeného PDF (DocMDP Level 1) – sloupec ISSŘ kompatibilita (úřad nemůže vložit podací razítko)."
+BUILD_NOTES = "Filtr ISSŘ v řádku filtrů; volba „Vše kromě zeleného“ u PDF/A, Podpis, Čas. razítko, ISSŘ."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 AGENT_BUILD_ID = "52"

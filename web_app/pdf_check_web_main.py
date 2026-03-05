@@ -228,8 +228,8 @@ HTML_TEMPLATE = '''
         .header-logged-in-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-divider { width: 1px; height: 20px; background: #e5e7eb; }
         .header-build { font-size: 0.7em; color: #9ca3af; white-space: nowrap; }
-        .header-btn-nav { background: transparent !important; border: none; color: #6b7280; }
-        .header-btn-nav:hover { color: #1e5a8a; text-decoration: underline; }
+        .header-btn-nav { background: #eff6ff !important; border: 1px solid #bfdbfe; color: #1e5a8a; }
+        .header-btn-nav:hover { background: #dbeafe !important; color: #1e5a8a; text-decoration: none; border-color: #93c5fd; }
 
         /* License Badge */
         .license-badge {
@@ -388,10 +388,11 @@ HTML_TEMPLATE = '''
         .filter-btn:not(.active):hover { border-color: #1e5a8a; }
         .sort-select { width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.75em; }
 
-        /* Legend */
-        .legend { margin-top: 16px; padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.7em; color: #6b7280; }
-        .legend-title { font-weight: 600; color: #374151; margin-bottom: 4px; }
-        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        /* Legend – po segmentech (PDF/A, Podpis, Časové razítko, ISSŘ) */
+        .legend-wrapper { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .legend-segment { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; font-size: 0.7em; color: #6b7280; }
+        .legend-segment-title { font-weight: 600; color: #374151; padding: 6px 8px; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; font-size: 0.95em; }
+        .legend-segment-body { padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
 
         /* Main content */
@@ -914,18 +915,35 @@ HTML_TEMPLATE = '''
                         </select>
                     </div>
 
-                    <div class="legend">
-                        <div class="legend-title">Legenda:</div>
-                        <div class="legend-grid">
-                            <div class="legend-item"><span class="badge badge-green">A-3</span> PDF/A-3 vyhovuje</div>
-                            <div class="legend-item"><span class="badge badge-red">A-2 / A-1 / NE</span> PDF/A nevyhovuje</div>
-                            <div class="legend-item"><span class="badge badge-green">Podpis OK</span> Platný podpis + ČKAIT/ČKA</div>
-                            <div class="legend-item"><span class="badge badge-red">PARTIAL/FAIL</span> Podpis chybí nebo neplatný</div>
-                            <div class="legend-item"><span class="badge badge-green">TSA</span> Kvalifikované časové razítko</div>
-                            <div class="legend-item"><span class="badge badge-red">LOK</span> Z hodin PC</div>
-                            <div class="legend-item"><span class="badge badge-red">NONE</span> Žádné razítko</div>
-                            <div class="legend-item"><span class="badge badge-green">✅ ISSŘ</span> Úřad může vložit podací razítko</div>
-                            <div class="legend-item"><span class="badge badge-red">🔒 Zamčeno</span> ISSŘ Level 1 – úřad nemůže vložit razítko</div>
+                    <div class="legend-wrapper">
+                        <div class="legend-segment">
+                            <div class="legend-segment-title">PDF/A</div>
+                            <div class="legend-segment-body">
+                                <div class="legend-item"><span class="badge badge-green">A-3</span> Vyhovuje</div>
+                                <div class="legend-item"><span class="badge badge-red">A-2 / A-1 / NE</span> Nevyhovuje</div>
+                            </div>
+                        </div>
+                        <div class="legend-segment">
+                            <div class="legend-segment-title">Podpis</div>
+                            <div class="legend-segment-body">
+                                <div class="legend-item"><span class="badge badge-green">OK</span> Platný podpis + ČKAIT/ČKA</div>
+                                <div class="legend-item"><span class="badge badge-red">PARTIAL/FAIL</span> Chybí nebo neplatný</div>
+                            </div>
+                        </div>
+                        <div class="legend-segment">
+                            <div class="legend-segment-title">Časové razítko (autorita)</div>
+                            <div class="legend-segment-body">
+                                <div class="legend-item"><span class="badge badge-green">TSA</span> Kvalifikované + rozpoznání autority (PostSignum, I.CA, eIdentity)</div>
+                                <div class="legend-item"><span class="badge badge-red">LOK</span> Z hodin PC</div>
+                                <div class="legend-item"><span class="badge badge-red">NONE</span> Žádné</div>
+                            </div>
+                        </div>
+                        <div class="legend-segment">
+                            <div class="legend-segment-title">ISSŘ (podací razítko)</div>
+                            <div class="legend-segment-body">
+                                <div class="legend-item"><span class="badge badge-green">✅ OK</span> Úřad může vložit podací razítko</div>
+                                <div class="legend-item"><span class="badge badge-red">🔒 Zamčeno</span> Level 1 – úřad nemůže vložit</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -975,6 +993,7 @@ HTML_TEMPLATE = '''
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('pdfa','A2')"><span class="filter-dot" style="background:#ef4444"></span>PDF/A-2</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('pdfa','A1')"><span class="filter-dot" style="background:#ef4444"></span>PDF/A-1</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('pdfa','NONE')"><span class="filter-dot" style="background:#ef4444"></span>Není PDF/A</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('pdfa','__EXCEPT_GREEN__')">Vše kromě zeleného</button>
                         </div>
                     </div>
                     <div class="table-header-cell">
@@ -984,6 +1003,7 @@ HTML_TEMPLATE = '''
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('sig','OK')"><span class="filter-dot" style="background:#22c55e"></span>Autorizovaná osoba</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('sig','PARTIAL')"><span class="filter-dot" style="background:#ef4444"></span>Podpis (ne autor.)</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('sig','FAIL')"><span class="filter-dot" style="background:#ef4444"></span>Žádný podpis</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('sig','__EXCEPT_GREEN__')">Vše kromě zeleného</button>
                         </div>
                     </div>
                     <div class="table-header-cell">
@@ -1009,9 +1029,18 @@ HTML_TEMPLATE = '''
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('tsa','TSA')"><span class="filter-dot" style="background:#22c55e"></span>VČR (vlož. čas. razítko)</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('tsa','LOCAL')"><span class="filter-dot" style="background:#ef4444"></span>LOK (z hodin PC)</button>
                             <button class="filter-dropdown-item" onclick="setHeaderFilter('tsa','NONE')"><span class="filter-dot" style="background:#ef4444"></span>Bez razítka</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('tsa','__EXCEPT_GREEN__')">Vše kromě zeleného</button>
                         </div>
                     </div>
-                    <div class="table-header-cell" title="ISSŘ: dokument nesmí být zamčen DocMDP Level 1 (podací razítko)">ISSŘ</div>
+                    <div class="table-header-cell">
+                        <button class="table-header-btn" onclick="toggleDropdown('issr',event)" title="ISSŘ: dokument nesmí být zamčen DocMDP Level 1 (podací razítko)">ISSŘ <span class="arrow">▼</span></button>
+                        <div class="filter-dropdown" id="dropdown-issr" style="right:0;left:auto;">
+                            <button class="filter-dropdown-item clear" onclick="setHeaderFilter(null,null)">✕ Zobrazit vše</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('issr','OK')"><span class="filter-dot" style="background:#22c55e"></span>Kompatibilní (OK)</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('issr','LOCKED')"><span class="filter-dot" style="background:#ef4444"></span>Zamčeno (Level 1)</button>
+                            <button class="filter-dropdown-item" onclick="setHeaderFilter('issr','__EXCEPT_GREEN__')">Vše kromě zeleného</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="results-container" id="results-container">
@@ -1563,14 +1592,15 @@ function toggleDropdown(col, event) {
     if (!wasVisible) dropdown.classList.add('visible');
 }
 
+const headerFilterColumnLabels = { pdfa: 'PDF/A', sig: 'Podpis', tsa: 'Čas. razítko', issr: 'ISSŘ', signer: 'Jméno (CN)', ckait: 'ČKAIT' };
 function setHeaderFilter(column, value) {
     headerFilter = { column, value };
     document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('visible'));
     const filterBar = document.getElementById('active-filter');
     if (column && value) {
         filterBar.classList.add('visible');
-        document.getElementById('filter-column').textContent = column;
-        document.getElementById('filter-value').textContent = value;
+        document.getElementById('filter-column').textContent = headerFilterColumnLabels[column] || column;
+        document.getElementById('filter-value').textContent = (value === '__EXCEPT_GREEN__' ? 'vše kromě zeleného' : value);
     } else {
         filterBar.classList.remove('visible');
     }
@@ -1641,23 +1671,9 @@ function renderResults() {
         html += '<button class="batch-btn delete" onclick="event.stopPropagation();deleteBatch(' + batch.id + ')">✕</button></div></div>';
         html += '<div class="batch-content' + (batch.collapsed ? '' : ' visible') + '" id="batch-content-' + batch.id + '">';
 
-        // Použij stromovou strukturu
+        // Vždy použij stromovou strukturu (konzistentní zobrazení i pro soubory v rootu)
         const folderTree = buildFolderTree(filteredFiles);
-
-        // Pokud jsou soubory jen v rootu (žádné podsložky), zobraz je přímo
-        const hasSubfolders = Object.keys(folderTree.folders).length > 0;
-
-        if (hasSubfolders) {
-            // Renderuj stromovou strukturu
-            html += renderFolderTree(folderTree, batch.id, 0);
-        } else {
-            // Soubory přímo v rootu - bez obalující složky
-            html += '<div class="folder-flat">';
-            for (const file of folderTree.files) {
-                html += renderFileRow(file, batch.id, 0);
-            }
-            html += '</div>';
-        }
+        html += renderFolderTree(folderTree, batch.id, 0);
 
         html += '</div></div>';
     }
@@ -1675,16 +1691,29 @@ function filterFiles(files) {
         if (sidebarFilters.tsa === 'local' && f.tsa !== 'LOCAL') return false;
         if (sidebarFilters.tsa === 'none' && f.tsa !== 'NONE') return false;
         if (headerFilter.column && headerFilter.value) {
+            const v = headerFilter.value;
             if (headerFilter.column === 'pdfa') {
-                if (headerFilter.value === 'A3' && f.pdfaVersion !== 3) return false;
-                if (headerFilter.value === 'A2' && f.pdfaVersion !== 2) return false;
-                if (headerFilter.value === 'A1' && f.pdfaVersion !== 1) return false;
-                if (headerFilter.value === 'NONE' && f.pdfaVersion !== null) return false;
+                if (v === '__EXCEPT_GREEN__') { if (f.pdfaVersion === 3) return false; }
+                else if (v === 'A3' && f.pdfaVersion !== 3) return false;
+                else if (v === 'A2' && f.pdfaVersion !== 2) return false;
+                else if (v === 'A1' && f.pdfaVersion !== 1) return false;
+                else if (v === 'NONE' && f.pdfaVersion !== null) return false;
             }
-            if (headerFilter.column === 'sig' && f.sig !== headerFilter.value) return false;
+            if (headerFilter.column === 'sig') {
+                if (v === '__EXCEPT_GREEN__') { if (f.sig === 'OK') return false; }
+                else if (f.sig !== v) return false;
+            }
             if (headerFilter.column === 'signer' && f.signer !== headerFilter.value) return false;
             if (headerFilter.column === 'ckait' && f.ckait !== headerFilter.value) return false;
-            if (headerFilter.column === 'tsa' && f.tsa !== headerFilter.value) return false;
+            if (headerFilter.column === 'tsa') {
+                if (v === '__EXCEPT_GREEN__') { if (f.tsa === 'TSA') return false; }
+                else if (f.tsa !== v) return false;
+            }
+            if (headerFilter.column === 'issr') {
+                if (v === '__EXCEPT_GREEN__') { if (f.issr_compatible === true) return false; }
+                else if (v === 'OK' && f.issr_compatible !== true) return false;
+                else if (v === 'LOCKED' && f.issr_compatible !== false) return false;
+            }
         }
         return true;
     });
@@ -3526,6 +3555,7 @@ def app_logout():
 def app_main():
     """Hlavní aplikace – kontrola PDF (původní UI). Po přihlášení z agenta (token) se předá bootstrap_user pro auto-load."""
     bootstrap_user = session.get('portal_user')
+    web_version = web_build = agent_version = agent_build = "n/a"
     try:
         from .settings_loader import load_settings_for_views
         db = Database()
@@ -3549,7 +3579,30 @@ def app_main():
         provider_legal_note = "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016."
         contact_email = ""
         app_legal_notice = "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka."
-        web_version = web_build = agent_version = agent_build = "n/a"
+    if web_build == "n/a" or agent_build == "n/a":
+        try:
+            from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
+            if web_build == "n/a":
+                web_version = (WEB_VERSION or "").strip() or web_version
+                web_build = str(WEB_BUILD) if WEB_BUILD is not None else web_build
+            if agent_build == "n/a":
+                agent_version = (AGENT_VERSION_DISPLAY or "").strip() or agent_version
+                agent_build = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else agent_build
+        except Exception:
+            pass
+    if web_version == "n/a" or web_build == "n/a" or agent_version == "n/a" or agent_build == "n/a":
+        try:
+            from . import version as ver
+            if web_version == "n/a":
+                web_version = getattr(ver, "WEB_VERSION", None) or web_version
+            if web_build == "n/a":
+                web_build = str(getattr(ver, "WEB_BUILD", None) or web_build)
+            if agent_version == "n/a":
+                agent_version = getattr(ver, "AGENT_VERSION_DISPLAY", None) or agent_version
+            if agent_build == "n/a":
+                agent_build = str(getattr(ver, "AGENT_BUILD_ID", None) or agent_build)
+        except Exception:
+            pass
     return render_template_string(
         HTML_TEMPLATE,
         bootstrap_user=bootstrap_user,
