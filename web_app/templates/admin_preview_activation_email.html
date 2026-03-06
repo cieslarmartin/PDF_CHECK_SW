@@ -1,0 +1,63 @@
+{% extends "admin_base.html" %}
+{% block title %}Náhled a odeslání aktivačního e-mailu{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Odeslání aktivačního e-mailu</h2>
+
+<div class="admin-card">
+    <div class="card-header">Příjemce a nastavení</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('admin.send_activation_email_action') }}">
+            <input type="hidden" name="api_key" value="{{ api_key }}">
+            <input type="hidden" name="order_id" value="{{ order_id }}">
+            <input type="hidden" name="user_email" value="{{ email }}">
+            
+            <div style="margin-bottom: 15px;">
+                <strong>Příjemce:</strong> {{ email }}
+            </div>
+            
+            {% if set_password_url %}
+            <div style="margin-bottom: 15px;">
+                <strong>Vygenerovaný odkaz na nastavení hesla (funkční):</strong><br>
+                <a href="{{ set_password_url }}" target="_blank" style="word-break: break-all;">{{ set_password_url }}</a>
+            </div>
+            {% endif %}
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="small font-weight-bold">Předmět e-mailu</label>
+                <input type="text" name="subject" class="form-control" value="{{ subject }}" style="width:100%;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="small font-weight-bold">Tělo e-mailu (lze upravit před odesláním)</label>
+                <p class="small text-muted" style="margin-bottom:4px;">Zobrazuje se HTML formát (pokud šablona obsahuje značky jako &lt;br&gt; nebo &lt;p&gt;). Jinak prostý text.</p>
+                <textarea name="body" class="form-control" rows="12" style="width:100%; font-family: monospace;">{{ body_html or body }}</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:bold;cursor:pointer;">
+                    <input type="checkbox" name="attach_invoice" value="1" {% if invoice_path %}checked{% endif %} {% if not invoice_path %}disabled{% endif %}>
+                    Přiložit vygenerovanou fakturu (PDF)
+                </label>
+                {% if invoice_path %}
+                <div class="small text-muted" style="margin-left: 24px;">Faktura: {{ invoice_path }}</div>
+                {% else %}
+                <div class="small text-danger" style="margin-left: 24px;">K této objednávce nebyla nalezena faktura (nejdříve ji vygenerujte v přehledu objednávek).</div>
+                {% endif %}
+            </div>
+
+            <div style="display:flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">✉️ Odeslat e-mail klientovi</button>
+                <a href="{{ url_for('admin.pending_orders') }}" class="btn btn-outline-secondary">Zrušit a zpět na objednávky</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="admin-card" style="margin-top: 20px; border-color: #e5e7eb;">
+    <div class="card-header" style="background: #f9fafb; color: #4b5563;">Nápověda k šablonám</div>
+    <div class="card-body small text-muted">
+        <p>Výchozí šablonu tohoto e-mailu můžete trvale upravit v sekci <strong>Nastavení &rarr; Marketing</strong> (resp. Marketing e-maily v závislosti na verzi administrace).</p>
+        <p>Pokud chcete e-mail hezčí, můžete do šablony (v nastavení, ne zde) vložit HTML značky jako <code>&lt;b&gt;tučně&lt;/b&gt;</code> nebo <code>&lt;br&gt;</code> pro nový řádek.</p>
+    </div>
+</div>
+{% endblock %}

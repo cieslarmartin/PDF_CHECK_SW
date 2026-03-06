@@ -121,17 +121,22 @@ def send_order_notification_to_admin(order=None, **kwargs):
     return send_email(to_email, subject, body, append_footer=False)
 
 
-def send_email_with_attachment(to_email, subject, body_plain, attachment_path=None, attachment_filename=None, append_footer=True):
-    """Odešle e-mail s volitelnou přílohou (PDF faktura)."""
+def send_email_with_attachment(to_email, subject, body_plain, attachment_path=None, attachment_filename=None, append_footer=True, body_html=None):
+    """Odešle e-mail s volitelnou přílohou (PDF faktura) a volitelným HTML tělem."""
     if append_footer:
         templates = get_email_templates()
-        body_plain = _apply_footer(body_plain, templates.get("footer_text", ""))
+        footer_text = templates.get("footer_text", "")
+        body_plain = _apply_footer(body_plain, footer_text)
+        if body_html:
+            # Jednoduché připojení textové patičky do HTML
+            footer_html = "<br><br><hr><pre>" + footer_text.replace('\n', '<br>') + "</pre>"
+            body_html = body_html + footer_html
     app = current_app
     try:
         mail = getattr(app, 'mail', None)
         if mail:
             from flask_mail import Message
-            msg = Message(subject=subject, recipients=[to_email], body=body_plain)
+            msg = Message(subject=subject, recipients=[to_email], body=body_plain, html=body_html)
             if attachment_path and os.path.isfile(attachment_path):
                 with open(attachment_path, 'rb') as f:
                     msg.attach(attachment_filename or os.path.basename(attachment_path), 'application/pdf', f.read())
@@ -148,12 +153,23 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
         smtp_pass = os.environ.get('MAIL_PASSWORD') or app.config.get('MAIL_PASSWORD', '')
         if not smtp_host or not smtp_user:
             return False
-        msg = MIMEMultipart()
+        
+        # Vytvoření zprávy
+        msg = MIMEMultipart('mixed')
         msg['Subject'] = subject
         from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
         msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
-        msg.attach(MIMEText(body_plain, 'plain', 'utf-8'))
+        
+        # Tělo e-mailu (plain vs html)
+        if body_html:
+            alt_part = MIMEMultipart('alternative')
+            alt_part.attach(MIMEText(body_plain, 'plain', 'utf-8'))
+            alt_part.attach(MIMEText(body_html, 'html', 'utf-8'))
+            msg.attach(alt_part)
+        else:
+            msg.attach(MIMEText(body_plain, 'plain', 'utf-8'))
+            
         if attachment_path and os.path.isfile(attachment_path):
             with open(attachment_path, 'rb') as f:
                 part = MIMEBase('application', 'pdf')
@@ -207,12 +223,8 @@ def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_cz
     return send_email(email, subject, body, append_footer=True)
 
 
-def send_activation_email(user_email, password_plain=None, download_url=None, login_url=None, user_name=None, set_password_url=None):
-    """E-mail 2: aktivace. Bez hesla v těle (antispam): při set_password_url se pošle jen odkaz na nastavení hesla.
-    Placeholdery: {jmeno}, {email}, {heslo}, {login_url}, {download_url}, {set_password_url}.
-    - set_password_url je nastaven: tělo obsahuje odkaz na nastavení hesla, heslo se do e-mailu neposílá.
-    - set_password_url není nastaven, password_plain je: staré chování (heslo v mailu – může jít do spamu).
-    - set_password_url ani password_plain: prodloužení přístupu, text o stávajícím hesle."""
+def get_activation_email_preview(user_email, password_plain=None, download_url=None, login_url=None, user_name=None, set_password_url=None):
+    """Vrátí (předmět, tělo_plain, tělo_html) pro aktivační e-mail – pro náhled v administraci. Neodesílá!"""
     if not download_url:
         download_url = os.environ.get('DOWNLOAD_URL', 'https://www.dokucheck.cz/download')
     if not login_url:
@@ -252,6 +264,18 @@ def send_activation_email(user_email, password_plain=None, download_url=None, lo
         return (t.replace("{jmeno}", jmeno_text).replace("{email}", user_email or '')
                 .replace("{heslo}", heslo_text).replace("{download_url}", download_url or '')
                 .replace("{login_url}", login_url or '').replace("{set_password_url}", set_pwd_url_placeholder))
+    
     subject = repl(subject_tpl)
     body = repl(body_tpl)
-    return send_email(user_email, subject, body, append_footer=True)
+    
+    # Podpora HTML:
+    body_html = None
+    if '<br>' in body or '<p>' in body or 'href=' in body:
+        body_html = body
+        # Plain text odvozený z HTML
+        import re
+        body = re.sub(r'<br\s*/?>', '\n', body)
+        body = re.sub(r'</p>', '\n\n', body)
+        body = re.sub(r'<[^>]+>', '', body)
+    
+    return subject, body, body_html

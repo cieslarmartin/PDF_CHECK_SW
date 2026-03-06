@@ -1072,20 +1072,18 @@ def confirm_payment():
         if not has_password:
             set_pwd_token = secrets.token_urlsafe(32)
             expires_at = time.time() + 7 * 24 * 3600  # 7 dní
-            if db.store_set_password_token(set_pwd_token, api_key, expires_at):
-                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
-                set_password_url = base + '/portal/set-password?token=' + set_pwd_token
-        send_activation_email(email, password_plain=None, download_url=download_url, login_url=login_url, user_name=user_name, set_password_url=set_password_url)
+            db.store_set_password_token(set_pwd_token, api_key, expires_at)
+
         if existing:
             notify_admin('Platba potvrzena – objednávka #{} (existující účet)'.format(order_id),
-                         'Přijetí platby pro objednávku #{} ({}). Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.'.format(order_id, email))
+                         'Přijetí platby pro objednávku #{} ({}). Licence přiřazena existujícímu účtu.'.format(order_id, email))
         else:
             notify_admin('Platba potvrzena – objednávka #{}'.format(order_id),
-                         'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s odkazem na nastavení hesla odeslán.'.format(order_id, email))
+                         'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena.'.format(order_id, email))
     except Exception:
         pass
-    flash('Platba potvrzena. ' + ('Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.' if existing else 'Licence vytvořena, e-mail s odkazem na nastavení hesla odeslán.'), 'success')
-    return redirect(url_for('admin.pending_orders'))
+    flash('Platba potvrzena, licence připravena. Nyní můžete upravit a odeslat aktivační e-mail.', 'success')
+    return redirect(url_for('admin.preview_activation_email', api_key=api_key, order_id=order_id))
 
 
 @admin_bp.route('/admin/activate-without-invoice', methods=['POST'])
@@ -1138,18 +1136,141 @@ def activate_without_invoice():
         if not has_password:
             set_pwd_token = secrets.token_urlsafe(32)
             expires_at = time.time() + 7 * 24 * 3600
-            if db.store_set_password_token(set_pwd_token, api_key, expires_at):
-                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
-                set_password_url = base + '/portal/set-password?token=' + set_pwd_token
-        send_activation_email(email, password_plain=None, download_url=download_url, login_url=login_url, user_name=user_name, set_password_url=set_password_url)
+            db.store_set_password_token(set_pwd_token, api_key, expires_at)
+        
         notify_admin(
             'Ruční aktivace – objednávka #{}'.format(order_id),
             'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). '.format(order_id, user_name, email)
-            + ('Licence přiřazena existujícímu účtu.' if existing else 'Licence vytvořena.') + ' Aktivační e-mail odeslán.'
+            + ('Licence přiřazena existujícímu účtu.' if existing else 'Licence vytvořena.')
         )
     except Exception:
         pass
-    flash('Uživatel aktivován ručně. ' + ('Licence přiřazena existujícímu účtu.' if existing else 'Licence vytvořena.') + ' Aktivační e-mail odeslán.', 'success')
+    flash('Uživatel aktivován ručně. Nyní můžete upravit a odeslat aktivační e-mail.', 'success')
+    return redirect(url_for('admin.preview_activation_email', api_key=api_key, order_id=order_id))
+
+
+@admin_bp.route('/admin/preview-activation-email', methods=['GET'])
+@admin_required
+def preview_activation_email():
+    """Zobrazí náhled aktivačního e-mailu před odesláním."""
+    api_key = request.args.get('api_key', '').strip()
+    order_id = request.args.get('order_id', '').strip()
+    if not api_key:
+        flash('Chybí API klíč k odeslání e-mailu', 'error')
+        return redirect(url_for('admin.pending_orders'))
+        
+    db = get_db()
+    license_data = db.get_license_by_api_key(api_key)
+    if not license_data:
+        flash('Licence nebyla nalezena.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+        
+    email = license_data.get('email')
+    user_name = license_data.get('user_name')
+    
+    # Získání tokenu pro heslo (pokud byl vytvořen a ještě neexpiroval)
+    set_password_url = None
+    try:
+        import time
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT token FROM set_password_tokens WHERE api_key = ? AND expires_at > ? ORDER BY expires_at DESC LIMIT 1', (api_key, time.time()))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+            set_password_url = base + '/portal/set-password?token=' + row['token']
+    except Exception as e:
+        pass
+
+    download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
+    login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
+
+    from email_sender import get_activation_email_preview
+    subject, body_plain, body_html = get_activation_email_preview(
+        user_email=email,
+        password_plain=None,
+        download_url=download_url,
+        login_url=login_url,
+        user_name=user_name,
+        set_password_url=set_password_url
+    )
+    
+    # Cesta k faktuře, pokud je předáno order_id
+    invoice_path = None
+    if order_id:
+        order = db.get_pending_order_by_id(order_id)
+        if order and order.get('invoice_path'):
+            invoice_path = order.get('invoice_path')
+            
+    return render_template(
+        'admin_preview_activation_email.html',
+        api_key=api_key,
+        order_id=order_id,
+        email=email,
+        set_password_url=set_password_url,
+        subject=subject,
+        body=body_plain,
+        body_html=body_html,
+        invoice_path=invoice_path,
+        user=session.get('admin_user') or {},
+        active_page='pending_orders'
+    )
+
+
+@admin_bp.route('/admin/send-activation-email', methods=['POST'])
+@admin_required
+def send_activation_email_action():
+    """Fyzicky odešle upravený aktivační e-mail."""
+    to_email = request.form.get('user_email', '').strip()
+    subject = request.form.get('subject', '').strip()
+    body = request.form.get('body', '').strip()
+    attach_invoice = request.form.get('attach_invoice') == '1'
+    order_id = request.form.get('order_id', '').strip()
+    
+    if not to_email or not subject or not body:
+        flash('Chybí povinná data pro odeslání e-mailu.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+        
+    db = get_db()
+    invoice_path = None
+    invoice_filename = None
+    
+    if attach_invoice and order_id:
+        order = db.get_pending_order_by_id(order_id)
+        if order and order.get('invoice_path') and os.path.isfile(order.get('invoice_path')):
+            invoice_path = order.get('invoice_path')
+            display_num = (order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id)
+            invoice_filename = f'faktura_{display_num}.pdf'
+
+    from email_sender import send_email_with_attachment
+    
+    # Pokud tělo obsahuje typické HTML znaky, pošleme ho jako HTML verzi
+    body_html = None
+    if '<br>' in body or '<p>' in body or 'href=' in body:
+        body_html = body
+        import re
+        body_plain = re.sub(r'<br\s*/?>', '\n', body)
+        body_plain = re.sub(r'</p>', '\n\n', body_plain)
+        body_plain = re.sub(r'<[^>]+>', '', body_plain)
+    else:
+        body_plain = body
+
+    success = send_email_with_attachment(
+        to_email=to_email,
+        subject=subject,
+        body_plain=body_plain,
+        body_html=body_html,
+        attachment_path=invoice_path,
+        attachment_filename=invoice_filename,
+        append_footer=True
+    )
+    
+    if success:
+        flash(f'Aktivační e-mail byl odeslán uživateli {to_email}.', 'success')
+    else:
+        flash('Chyba při odesílání e-mailu. Zkontrolujte SMTP nastavení.', 'error')
+        
     return redirect(url_for('admin.pending_orders'))
 
 

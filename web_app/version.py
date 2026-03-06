@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.021"
+WEB_VERSION = "w26.02.022"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 65
+WEB_BUILD = 66
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "Nastavení e-mailů v Admin dashboardu (Nastavení → E-maily): schránka, příjemce objednávek a info."
+BUILD_NOTES = "Náhled aktivačního e-mailu před odesláním s možností přiložit fakturu a ručních úprav."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 AGENT_BUILD_ID = "52"

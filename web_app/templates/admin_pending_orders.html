@@ -187,6 +187,7 @@
                         {% else %}
                         <span class="text-muted small">Bez objednávky</span>
                         {% endif %}
+                        <a href="{{ url_for('admin.preview_activation_email', api_key=l.api_key, order_id=l.order_id if l.order_id else '') }}" class="btn btn-outline-primary btn-sm" title="Odeslat uživateli e-mail s odkazem na nastavení hesla">✉️ Odeslat heslo</a>
                         <form method="post" action="{{ url_for('admin.delete_active_license') }}" style="display:inline;" onsubmit="return confirm('Opravdu SMAZAT licenci ({{ l.email }})?');">
                             <input type="hidden" name="api_key" value="{{ l.api_key }}">
                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže licenci.">🗑️ Lic.</button>
