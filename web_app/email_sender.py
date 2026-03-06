@@ -143,10 +143,8 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
             mail.send(msg)
             return True
         import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.base import MIMEBase
-        from email import encoders
+        from email.message import EmailMessage
+        from email.policy import SMTPUTF8
         smtp_host = os.environ.get('MAIL_SERVER') or app.config.get('MAIL_SERVER', '') or 'smtp.seznam.cz'
         smtp_port = int(os.environ.get('MAIL_PORT') or app.config.get('MAIL_PORT') or 465)
         smtp_user = os.environ.get('MAIL_USERNAME') or app.config.get('MAIL_USERNAME', '') or 'info@dokucheck.cz'
@@ -154,42 +152,37 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
         if not smtp_host or not smtp_user:
             return False
         
-        # Vytvoření zprávy
-        msg = MIMEMultipart('mixed')
+        # Vytvoření zprávy s podporou UTF-8
+        msg = EmailMessage(policy=SMTPUTF8)
         msg['Subject'] = subject
         from_addr = app.config.get('MAIL_DEFAULT_SENDER') or smtp_user
         msg['From'] = from_addr if from_addr else smtp_user
         msg['To'] = to_email
         
         # Tělo e-mailu (plain vs html)
+        msg.set_content(body_plain, subtype='plain', charset='utf-8')
         if body_html:
-            alt_part = MIMEMultipart('alternative')
-            alt_part.attach(MIMEText(body_plain, 'plain', 'utf-8'))
-            alt_part.attach(MIMEText(body_html, 'html', 'utf-8'))
-            msg.attach(alt_part)
-        else:
-            msg.attach(MIMEText(body_plain, 'plain', 'utf-8'))
+            msg.add_alternative(body_html, subtype='html', charset='utf-8')
             
+        # Příloha
         if attachment_path and os.path.isfile(attachment_path):
             with open(attachment_path, 'rb') as f:
-                part = MIMEBase('application', 'pdf')
-                part.set_payload(f.read())
-            encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 'attachment', filename=(attachment_filename or os.path.basename(attachment_path)))
-            msg.attach(part)
+                pdf_data = f.read()
+            msg.add_attachment(pdf_data, maintype='application', subtype='pdf', filename=(attachment_filename or os.path.basename(attachment_path)))
+            
         use_ssl = app.config.get('MAIL_USE_SSL', True)
         if use_ssl and smtp_port == 465:
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
                 if smtp_pass:
                     server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, [to_email], msg.as_string())
+                server.send_message(msg)
         else:
             with smtplib.SMTP(smtp_host, smtp_port) as server:
                 if smtp_port == 587:
                     server.starttls()
                 if smtp_pass:
                     server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, [to_email], msg.as_string())
+                server.send_message(msg)
         return True
     except Exception as e:
         import traceback
