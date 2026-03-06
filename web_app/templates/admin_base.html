@@ -301,6 +301,7 @@
             <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">❓</span> Správa FAQ</a></li>
             <li><a href="{{ url_for('admin.content_help') }}" class="{{ 'active' if active_page == 'content_help' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📄</span> Správa obsahu nápovědy</a></li>
             <li><a href="{{ url_for('admin.updates') }}" class="{{ 'active' if active_page == 'updates' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📰</span> Co je nového</a></li>
+            <li><a href="{{ url_for('admin.coming_soon') }}" class="{{ 'active' if active_page == 'coming_soon' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🔜</span> Připravujeme</a></li>
         </ul>
         <div class="user-info">
             {{ user.display_name if user else 'Admin' }}<br>

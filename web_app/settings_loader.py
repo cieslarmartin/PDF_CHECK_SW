@@ -158,37 +158,33 @@ def load_settings_for_views(db):
     out["download_url"] = db.get_global_setting("download_url", "") or ""
     out["pilot_notice_text"] = db.get_global_setting("pilot_notice_text", DEFAULTS.get("pilot_notice_text", "")) or DEFAULTS.get("pilot_notice_text", "")
     out["show_pilot_notice"] = db.get_setting_bool("show_pilot_notice", DEFAULTS.get("show_pilot_notice", True))
-    # Sekce Připravujeme (Coming Soon) na hlavní stránce
+    # Sekce Připravujeme (Coming Soon) na hlavní stránce – dynamický seznam karet z JSON nebo z 4 starých klíčů
     out["coming_soon_intro"] = db.get_global_setting("coming_soon_intro", "") or "Rozšíření Agenta, která řeší reálné potřeby projektantů: kontrola cest a názvů souborů a úpravy PDF včetně podepisování přímo v systému."
-    out["coming_soon_path_title"] = db.get_global_setting("coming_soon_path_title", "") or "Path Checker"
-    out["coming_soon_path_subtitle"] = db.get_global_setting("coming_soon_path_subtitle", "") or "Aplikace pro kontrolu cest, revizi a logistiku souborů"
-    out["coming_soon_path_items"] = db.get_global_setting("coming_soon_path_items", "") or "Kontrola délky názvů a cest (Path Length) na vašem PC – prevence problémů na OneDrive/SharePoint\nBlesková kontrola tisíců souborů najednou\nExport problematických souborů do Excelu pro rychlou opravu"
-    out["coming_soon_path_benefit"] = db.get_global_setting("coming_soon_path_benefit", "") or "→ Žádné neočekávané pády u velkých zakázek. Z Agenta – vše běží na vašem PC."
-    out["coming_soon_editor_title"] = db.get_global_setting("coming_soon_editor_title", "") or "Online editor a podpis PDF"
-    out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
-    out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
-    out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
-    out["coming_soon_zpf_title"] = db.get_global_setting("coming_soon_zpf_title", "") or "Výpočet poplatku za odvody ze ZPF"
-    out["coming_soon_zpf_subtitle"] = db.get_global_setting("coming_soon_zpf_subtitle", "") or "Program pro výpočet poplatku za odvody ze zemědělského půdního fondu (ZPF)"
-    out["coming_soon_zpf_items"] = db.get_global_setting("coming_soon_zpf_items", "") or "Přehledný výpočet podle platné metodiky\nExport pro projekty a dokumentaci"
-    out["coming_soon_zpf_benefit"] = db.get_global_setting("coming_soon_zpf_benefit", "") or "→ Rychlý výpočet poplatků pro projekty."
-    out["coming_soon_parking_title"] = db.get_global_setting("coming_soon_parking_title", "") or "Výpočet počtu parkovacích míst"
-    out["coming_soon_parking_subtitle"] = db.get_global_setting("coming_soon_parking_subtitle", "") or "Aplikace pro výpočet počtu parkovacích míst do projektu"
-    out["coming_soon_parking_items"] = db.get_global_setting("coming_soon_parking_items", "") or "Výpočet dle normy a typu stavby\nVýstup pro projektovou dokumentaci"
-    out["coming_soon_parking_benefit"] = db.get_global_setting("coming_soon_parking_benefit", "") or "→ Správný počet parkovacích míst do projektu na první pokus."
+    cards_json = db.get_setting_json("coming_soon_cards", None)
+    if isinstance(cards_json, list) and len(cards_json) > 0:
+        out["coming_soon_cards"] = []
+        for c in cards_json:
+            item = dict(c) if isinstance(c, dict) else {}
+            items_str = item.get("items") or ""
+            if isinstance(items_str, list):
+                item["items_list"] = [x.strip() for x in items_str if str(x).strip()]
+            else:
+                item["items_list"] = [x.strip() for x in str(items_str).split("\n") if x.strip()]
+            item.setdefault("color", "blue")
+            out["coming_soon_cards"].append(item)
+    else:
+        # Zpětná kompatibilita: sestavit z 4 pevných klíčů
+        _def = lambda k, d: (db.get_global_setting(k, "") or "").strip() or d
+        out["coming_soon_cards"] = [
+            {"title": _def("coming_soon_path_title", "Path Checker"), "subtitle": _def("coming_soon_path_subtitle", "Aplikace pro kontrolu cest, revizi a logistiku souborů"), "items": _def("coming_soon_path_items", ""), "benefit": _def("coming_soon_path_benefit", "→ Žádné neočekávané pády u velkých zakázek. Z Agenta – vše běží na vašem PC."), "items_list": [x.strip() for x in (_def("coming_soon_path_items", "") or "").split("\n") if x.strip()], "color": "blue"},
+            {"title": _def("coming_soon_editor_title", "Online editor a podpis PDF"), "subtitle": _def("coming_soon_editor_subtitle", "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"), "items": _def("coming_soon_editor_items", ""), "benefit": _def("coming_soon_editor_benefit", "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."), "items_list": [x.strip() for x in (_def("coming_soon_editor_items", "") or "").split("\n") if x.strip()], "color": "purple"},
+            {"title": _def("coming_soon_zpf_title", "Výpočet poplatku za odvody ze ZPF"), "subtitle": _def("coming_soon_zpf_subtitle", "Program pro výpočet poplatku za odvody ze ZPF"), "items": _def("coming_soon_zpf_items", ""), "benefit": _def("coming_soon_zpf_benefit", "→ Rychlý výpočet poplatků pro projekty."), "items_list": [x.strip() for x in (_def("coming_soon_zpf_items", "") or "").split("\n") if x.strip()], "color": "green"},
+            {"title": _def("coming_soon_parking_title", "Výpočet počtu parkovacích míst"), "subtitle": _def("coming_soon_parking_subtitle", "Aplikace pro výpočet počtu parkovacích míst do projektu"), "items": _def("coming_soon_parking_items", ""), "benefit": _def("coming_soon_parking_benefit", "→ Správný počet parkovacích míst do projektu na první pokus."), "items_list": [x.strip() for x in (_def("coming_soon_parking_items", "") or "").split("\n") if x.strip()], "color": "amber"},
+        ]
     out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
     if not isinstance(out["landing_updates"], list):
         out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
     out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or ""
-    # Seznamy odrážek pro šablonu (řádky rozdělené \n)
-    path_items = (out.get("coming_soon_path_items") or "").split("\n")
-    out["coming_soon_path_items_list"] = [x.strip() for x in path_items if x.strip()]
-    editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
-    out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
-    zpf_items = (out.get("coming_soon_zpf_items") or "").split("\n")
-    out["coming_soon_zpf_items_list"] = [x.strip() for x in zpf_items if x.strip()]
-    parking_items = (out.get("coming_soon_parking_items") or "").split("\n")
-    out["coming_soon_parking_items_list"] = [x.strip() for x in parking_items if x.strip()]
     try:
         from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"

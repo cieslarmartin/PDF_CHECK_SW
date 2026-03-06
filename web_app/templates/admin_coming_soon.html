@@ -1,0 +1,133 @@
+{% extends "admin_base.html" %}
+{% block title %}Připravujeme – DokuCheck Admin{% endblock %}
+{% block content %}
+<style>
+    .cs-row { border-bottom: 1px solid #e5e7eb; }
+    .cs-row:hover { background: #f9fafb; }
+    .cs-row.dragging { opacity: 0.6; background: #f3f4f6; }
+    .cs-drag { cursor: grab; color: #9ca3af; padding: 8px 4px; }
+    .cs-drag:active { cursor: grabbing; }
+</style>
+
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Sekce Připravujeme</h2>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:20px;">Karty se zobrazují na úvodní stránce (landing). Můžete přidávat nové, upravovat a měnit pořadí přetažením. Barva určuje styl karty (modrá, fialová, zelená, oranžová).</p>
+
+<form method="post">
+    <input type="hidden" name="action" value="save_intro">
+    <div class="admin-card" style="margin-bottom:20px;">
+        <div class="card-header">Úvodní text sekce</div>
+        <div class="card-body">
+            <textarea name="coming_soon_intro" class="form-control admin-settings-textarea" rows="2" style="width:100%;">{{ coming_soon_intro|e }}</textarea>
+            <button type="submit" class="btn btn-secondary btn-sm" style="margin-top:8px;">Uložit úvodní text</button>
+        </div>
+    </div>
+</form>
+
+<form method="post" id="formCards">
+    <input type="hidden" name="action" value="save_coming_soon_cards">
+    <div class="admin-card" style="margin-bottom:20px;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Karty</span>
+            <button type="button" class="btn btn-primary btn-sm" id="btnAddCard">+ Přidat kartu</button>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:2px solid #e5e7eb;background:#f9fafb;">
+                        <th style="width:36px;"></th>
+                        <th style="text-align:left;padding:8px 10px;">Nadpis</th>
+                        <th style="text-align:left;padding:8px 10px;">Podnadpis</th>
+                        <th style="text-align:left;padding:8px 10px;">Odrážky (řádky)</th>
+                        <th style="text-align:left;padding:8px 10px;">Benefit</th>
+                        <th style="width:100px;">Barva</th>
+                        <th style="width:70px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cards-tbody">
+                    {% for c in coming_soon_cards %}
+                    <tr class="cs-row card-row" draggable="true">
+                        <td class="cs-drag" title="Přetáhnout">⋮⋮</td>
+                        <td style="padding:8px 10px;"><input type="text" name="title" value="{{ c.title|e }}" class="form-control" style="width:100%;min-width:140px;" placeholder="Název"></td>
+                        <td style="padding:8px 10px;"><input type="text" name="subtitle" value="{{ c.subtitle|e }}" class="form-control" style="width:100%;min-width:180px;" placeholder="Podnadpis"></td>
+                        <td style="padding:8px 10px;"><textarea name="items" class="form-control" rows="2" style="width:100%;min-width:200px;font-size:0.9em;" placeholder="Jedna odrážka na řádek">{{ c.items|e }}</textarea></td>
+                        <td style="padding:8px 10px;"><input type="text" name="benefit" value="{{ c.benefit|e }}" class="form-control" style="width:100%;min-width:160px;" placeholder="→ Závěrečná věta"></td>
+                        <td style="padding:8px 10px;">
+                            <select name="color" class="form-control form-select" style="width:100%;">
+                                <option value="blue" {{ 'selected' if (c.color|default('blue')) == 'blue' else '' }}>Modrá</option>
+                                <option value="purple" {{ 'selected' if (c.color|default('')) == 'purple' else '' }}>Fialová</option>
+                                <option value="green" {{ 'selected' if (c.color|default('')) == 'green' else '' }}>Zelená</option>
+                                <option value="amber" {{ 'selected' if (c.color|default('')) == 'amber' else '' }}>Oranžová</option>
+                            </select>
+                        </td>
+                        <td style="padding:8px 10px;"><button type="button" class="btn btn-secondary btn-small btn-remove-row" style="padding:4px 8px;font-size:0.8em;">Odebrat</button></td>
+                    </tr>
+                    {% else %}
+                    <tr id="no-cards-msg"><td colspan="7" style="padding:16px;color:#6b7280;">Žádné karty. Klikněte na „Přidat kartu“.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Uložit karty</button>
+        </div>
+    </div>
+</form>
+
+<script>
+(function() {
+    var tbody = document.getElementById('cards-tbody');
+    var btnAdd = document.getElementById('btnAddCard');
+    var noMsg = document.getElementById('no-cards-msg');
+    var rowTemplate = function() {
+        var tr = document.createElement('tr');
+        tr.className = 'cs-row card-row';
+        tr.draggable = true;
+        tr.innerHTML = '<td class="cs-drag" title="Přetáhnout">⋮⋮</td>' +
+            '<td style="padding:8px 10px;"><input type="text" name="title" class="form-control" style="width:100%;min-width:140px;" placeholder="Název"></td>' +
+            '<td style="padding:8px 10px;"><input type="text" name="subtitle" class="form-control" style="width:100%;min-width:180px;" placeholder="Podnadpis"></td>' +
+            '<td style="padding:8px 10px;"><textarea name="items" class="form-control" rows="2" style="width:100%;min-width:200px;font-size:0.9em;" placeholder="Jedna odrážka na řádek"></textarea></td>' +
+            '<td style="padding:8px 10px;"><input type="text" name="benefit" class="form-control" style="width:100%;min-width:160px;" placeholder="→ Závěrečná věta"></td>' +
+            '<td style="padding:8px 10px;"><select name="color" class="form-control form-select" style="width:100%;"><option value="blue">Modrá</option><option value="purple">Fialová</option><option value="green">Zelená</option><option value="amber">Oranžová</option></select></td>' +
+            '<td style="padding:8px 10px;"><button type="button" class="btn btn-secondary btn-small btn-remove-row" style="padding:4px 8px;font-size:0.8em;">Odebrat</button></td>';
+        return tr;
+    };
+    btnAdd.addEventListener('click', function() {
+        if (noMsg) noMsg.remove();
+        tbody.appendChild(rowTemplate());
+        bindRow(tbody.lastElementChild);
+    });
+    function bindRow(tr) {
+        if (!tr) return;
+        var btn = tr.querySelector('.btn-remove-row');
+        if (btn) btn.addEventListener('click', function() {
+            tr.remove();
+            if (tbody.querySelectorAll('.card-row').length === 0 && !document.getElementById('no-cards-msg')) {
+                var empty = document.createElement('tr');
+                empty.id = 'no-cards-msg';
+                empty.innerHTML = '<td colspan="7" style="padding:16px;color:#6b7280;">Žádné karty. Klikněte na „Přidat kartu“.</td>';
+                tbody.appendChild(empty);
+            }
+        });
+        tr.addEventListener('dragstart', function(e) {
+            tr.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
+            e.dataTransfer.setData('text/html', tr.outerHTML);
+        });
+        tr.addEventListener('dragend', function() { tr.classList.remove('dragging'); });
+        tr.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            var dragging = tbody.querySelector('.dragging');
+            if (dragging && dragging !== tr) {
+                var all = Array.from(tbody.querySelectorAll('.card-row'));
+                var idx = all.indexOf(tr);
+                var dragIdx = all.indexOf(dragging);
+                if (dragIdx < idx) tbody.insertBefore(dragging, tr.nextSibling);
+                else tbody.insertBefore(dragging, tr);
+            }
+        });
+    }
+    tbody.querySelectorAll('.card-row').forEach(bindRow);
+})();
+</script>
+{% endblock %}

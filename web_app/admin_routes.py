@@ -218,6 +218,20 @@ def logout():
 # ADMIN DASHBOARD
 # =============================================================================
 
+def _get_coming_soon_cards_for_admin(db):
+    """Vrátí seznam karet Připravujeme: z JSON nebo sestavený ze 4 starých klíčů."""
+    cards = db.get_setting_json('coming_soon_cards', None)
+    if isinstance(cards, list) and len(cards) > 0:
+        return list(cards)
+    _g = lambda k, d: (db.get_global_setting(k, '') or '').strip() or d
+    return [
+        {'title': _g('coming_soon_path_title', 'Path Checker'), 'subtitle': _g('coming_soon_path_subtitle', 'Aplikace pro kontrolu cest…'), 'items': _g('coming_soon_path_items', ''), 'benefit': _g('coming_soon_path_benefit', '→ Žádné neočekávané pády…'), 'color': 'blue'},
+        {'title': _g('coming_soon_editor_title', 'Online editor a podpis PDF'), 'subtitle': _g('coming_soon_editor_subtitle', 'Úprava PDF…'), 'items': _g('coming_soon_editor_items', ''), 'benefit': _g('coming_soon_editor_benefit', '→ Méně vrácení…'), 'color': 'purple'},
+        {'title': _g('coming_soon_zpf_title', 'Výpočet poplatku za odvody ze ZPF'), 'subtitle': _g('coming_soon_zpf_subtitle', 'Program pro výpočet…'), 'items': _g('coming_soon_zpf_items', ''), 'benefit': _g('coming_soon_zpf_benefit', '→ Rychlý výpočet…'), 'color': 'green'},
+        {'title': _g('coming_soon_parking_title', 'Výpočet počtu parkovacích míst'), 'subtitle': _g('coming_soon_parking_subtitle', 'Aplikace pro výpočet…'), 'items': _g('coming_soon_parking_items', ''), 'benefit': _g('coming_soon_parking_benefit', '→ Správný počet…'), 'color': 'amber'},
+    ]
+
+
 @admin_bp.route('/admin')
 @admin_bp.route('/admin/dashboard')
 @admin_required
@@ -284,13 +298,8 @@ def dashboard():
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
     email_templates = get_email_templates() if get_email_templates else {}
-    # Karty sekce Připravujeme pro výpis na dashboardu
-    coming_soon_cards = [
-        {'title': db.get_global_setting('coming_soon_path_title', '') or 'Path Checker', 'subtitle': db.get_global_setting('coming_soon_path_subtitle', '') or ''},
-        {'title': db.get_global_setting('coming_soon_editor_title', '') or 'Online editor a podpis PDF', 'subtitle': db.get_global_setting('coming_soon_editor_subtitle', '') or ''},
-        {'title': db.get_global_setting('coming_soon_zpf_title', '') or 'Výpočet poplatku za odvody ze ZPF', 'subtitle': db.get_global_setting('coming_soon_zpf_subtitle', '') or ''},
-        {'title': db.get_global_setting('coming_soon_parking_title', '') or 'Výpočet počtu parkovacích míst', 'subtitle': db.get_global_setting('coming_soon_parking_subtitle', '') or ''},
-    ]
+    # Karty sekce Připravujeme pro výpis na dashboardu (stejná logika jako stránka Připravujeme)
+    coming_soon_cards = _get_coming_soon_cards_for_admin(db)
     return render_template('admin_dashboard.html',
                           licenses=licenses,
                           stats=stats,
@@ -544,6 +553,50 @@ def updates():
         download_whats_new=download_whats_new,
         user=user,
         active_page='updates',
+    )
+
+
+@admin_bp.route('/admin/coming-soon', methods=['GET', 'POST'])
+@admin_required
+def coming_soon():
+    """Sekce Připravujeme – přidávání, úprava a pořadí karet na landingu."""
+    db = get_db()
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        if action == 'save_coming_soon_cards':
+            titles = request.form.getlist('title')
+            subtitles = request.form.getlist('subtitle')
+            items_list = request.form.getlist('items')
+            benefits = request.form.getlist('benefit')
+            colors = request.form.getlist('color')
+            n = len(titles)
+            cards = []
+            for i in range(n):
+                cards.append({
+                    'title': (titles[i] if i < len(titles) else '').strip(),
+                    'subtitle': (subtitles[i] if i < len(subtitles) else '').strip(),
+                    'items': (items_list[i] if i < len(items_list) else '').strip(),
+                    'benefit': (benefits[i] if i < len(benefits) else '').strip(),
+                    'color': (colors[i] if i < len(colors) else 'blue').strip() or 'blue',
+                })
+            db.set_global_setting('coming_soon_cards', cards)
+            flash('Karty sekce Připravujeme uloženy.', 'success')
+        elif action == 'save_intro':
+            db.set_global_setting('coming_soon_intro', request.form.get('coming_soon_intro', '') or '')
+            flash('Úvodní text uložen.', 'success')
+        return redirect(url_for('admin.coming_soon'))
+    coming_soon_cards = _get_coming_soon_cards_for_admin(db)
+    coming_soon_intro = db.get_global_setting('coming_soon_intro', '') or ''
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template(
+        'admin_coming_soon.html',
+        coming_soon_cards=coming_soon_cards,
+        coming_soon_intro=coming_soon_intro,
+        user=user,
+        active_page='coming_soon',
     )
 
 
