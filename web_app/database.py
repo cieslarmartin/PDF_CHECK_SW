@@ -464,6 +464,8 @@ class Database:
             'allow_excel_export': 'BOOLEAN DEFAULT 1',
             'payment_method': 'TEXT',  # Karta, Převod
             'last_payment_date': 'TIMESTAMP',
+            'activation_token': 'TEXT',
+            'token_expires': 'TIMESTAMP',
         }
 
         for col_name, col_type in new_columns.items():
@@ -1377,6 +1379,40 @@ class Database:
             cursor.execute('DELETE FROM set_password_tokens WHERE token = ?', (token.strip(),))
             conn.commit()
             return api_key, True
+        finally:
+            conn.close()
+
+    def generate_activation_token(self, api_key):
+        """Vytvoří bezpečný token a uloží ho do db s platností 48h (přidáno pro přímé použití dle požadavku)."""
+        import secrets
+        from datetime import datetime, timedelta
+        token = secrets.token_urlsafe(32)
+        expires = (datetime.now() + timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
+        conn = self.get_connection()
+        try:
+            conn.execute('UPDATE api_keys SET activation_token = ?, token_expires = ? WHERE api_key = ?', (token, expires, api_key))
+            conn.commit()
+            return token
+        finally:
+            conn.close()
+
+    def verify_and_consume_activation_token(self, token):
+        """Ověří a zkonzumuje token z api_keys, vrátí api_key nebo None."""
+        from datetime import datetime
+        conn = self.get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT api_key, token_expires FROM api_keys WHERE activation_token = ?', (token,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            expires = row['token_expires']
+            if expires and datetime.now().strftime('%Y-%m-%d %H:%M:%S') > expires:
+                return None
+            api_key = row['api_key']
+            cur.execute('UPDATE api_keys SET activation_token = NULL, token_expires = NULL WHERE api_key = ?', (api_key,))
+            conn.commit()
+            return api_key
         finally:
             conn.close()
 

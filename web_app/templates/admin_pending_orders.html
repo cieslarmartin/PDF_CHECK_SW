@@ -88,7 +88,7 @@
                             🔑 Znovu zaslat licenci
                         </button>
                         {% else %}
-                        <button type="button" class="action-btn action-success" title="Potvrdit platbu, vytvořit uživatele a připravit aktivační e-mail." onclick="if(confirm('Potvrdit platbu a vytvořit uživatele pro {{ o.email }}?')) document.getElementById('form-activate-{{ o.id }}').submit();">
+                        <button type="button" class="action-btn action-success" title="Potvrdit platbu, vytvořit uživatele a připravit aktivační e-mail." onclick="if(confirm('Potvrdit platbu a vytvořit uživatele pro {{ o.email }}?')) openEmailModal('activation', '{{ o.id }}', '')">
                             ⚡ Potvrdit platbu a aktivovat
                         </button>
                         {% endif %}

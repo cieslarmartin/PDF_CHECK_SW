@@ -3917,6 +3917,31 @@ def portal_logout():
     return redirect(url_for('index'))
 
 
+@app.route('/set-password', methods=['GET', 'POST'])
+def public_set_password():
+    """Nové nastavení hesla (podle tokenu v tabulce api_keys)."""
+    token = (request.args.get('token') or request.form.get('token') or '').strip()
+    if not token:
+        return render_template('portal_set_password.html', error='Chybí odkaz. Použijte odkaz z aktivačního e-mailu.', token='')
+    db = Database()
+    if request.method == 'POST':
+        new_pass = (request.form.get('new_password') or '').strip()
+        new_pass2 = (request.form.get('new_password2') or '').strip()
+        if not new_pass or not new_pass2:
+            return render_template('portal_set_password.html', error='Vyplňte heslo a potvrzení', token=token)
+        if new_pass != new_pass2:
+            return render_template('portal_set_password.html', error='Hesla se neshodují', token=token)
+        if len(new_pass) < 6:
+            return render_template('portal_set_password.html', error='Heslo musí mít alespoň 6 znaků', token=token)
+        api_key = db.verify_and_consume_activation_token(token)
+        if not api_key:
+            return render_template('portal_set_password.html', error='Odkaz vypršel nebo byl již použit. Požádejte o nový aktivační e-mail.', token='')
+        if db.admin_set_license_password(api_key, new_pass):
+            return redirect(url_for('portal') + '?set_password=ok')
+        return render_template('portal_set_password.html', error='Nepodařilo se nastavit heslo. Zkuste to znovu.', token=token)
+    return render_template('portal_set_password.html', error=None, token=token)
+
+
 @app.route('/portal/set-password', methods=['GET', 'POST'])
 def portal_set_password():
     """Nastavení hesla po aktivaci (odkaz z e-mailu bez hesla – antispam). Token je jednorázový."""

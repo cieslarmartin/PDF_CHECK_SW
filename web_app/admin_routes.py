@@ -1695,26 +1695,28 @@ def api_email_preview():
             
         if not email:
             return jsonify({'success': False, 'error': 'Nelze určit příjemce (chybí e-mail)'})
+
+        # --- Automatické vytvoření uživatele (pokud ještě nemá licenci) ---
+        if not api_key:
+            existing = db.get_license_by_email(email)
+            if existing:
+                api_key = existing['api_key']
+            else:
+                tier_name = order.get('tarif') or 'standard' if order else 'standard'
+                tier_row = db.get_tier_by_name(tier_name)
+                tier_id = tier_row.get('id') if tier_row else 1
+                api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=None)
             
-        # Vytvoření / získání tokenu (pokud je api_key)
+            if order and order_id:
+                db.update_pending_order_status(order_id, 'ACTIVE')
+            
+        # Vytvoření tokenu
         set_password_url = None
         if api_key:
-            import time
-            conn = db.get_connection()
-            cur = conn.cursor()
-            cur.execute('SELECT token FROM set_password_tokens WHERE api_key = ? AND expires_at > ? ORDER BY expires_at DESC LIMIT 1', (api_key, time.time()))
-            row = cur.fetchone()
-            conn.close()
-            if row:
-                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
-                set_password_url = base + '/portal/set-password?token=' + row['token']
-            else:
-                # Vytvořit nový token
-                set_pwd_token = secrets.token_urlsafe(32)
-                expires_at = time.time() + 7 * 24 * 3600
-                if db.store_set_password_token(set_pwd_token, api_key, expires_at):
-                    base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
-                    set_password_url = base + '/portal/set-password?token=' + set_pwd_token
+            # Vygenerujeme nový token přímo do tabulky api_keys (podle zadání)
+            token = db.generate_activation_token(api_key)
+            base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+            set_password_url = f"{base}/set-password?token={token}"
 
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
         login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
