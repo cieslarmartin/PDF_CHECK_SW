@@ -601,8 +601,8 @@ def save_email_templates_route():
 @admin_bp.route('/admin/send-test-email', methods=['POST'])
 @admin_required
 def send_test_email_route():
-    """Odešle testovací e-mail na zadanou adresu (výchozí info@dokucheck.cz). Při chybě vypíše podrobný log do konzole."""
-    to_email = (request.form.get('test_email_to') or 'info@dokucheck.cz').strip()
+    """Odešle testovací e-mail na zadanou adresu (výchozí z Nastavení → E-maily). Při chybě vypíše podrobný log do konzole."""
+    to_email = (request.form.get('test_email_to') or current_app.config.get('ADMIN_INFO_EMAIL') or os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')).strip()
     if not to_email:
         flash('Zadejte e-mail příjemce', 'error')
         return redirect(url_for('admin.dashboard') + '#email-templates')
@@ -639,18 +639,24 @@ def _log_smtp_error(e=None):
         pass
 
 
+def _admin_info_email_for_test():
+    """Příjemce testovacího mailu: z Nastavení → E-maily (admin_info_email) nebo env."""
+    return current_app.config.get('ADMIN_INFO_EMAIL') or os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
+
+
 @admin_bp.route('/admin/test-smtp', methods=['GET', 'POST'])
 @admin_required
 def test_smtp():
-    """TEST SMTP: odešle jeden e-mail na info@dokucheck.cz. Při chybě (např. 535) vypíše do logu: SMTP CHYBA: Zkontrolujte Heslo pro aplikace ve WSGI!"""
+    """TEST SMTP: odešle jeden e-mail na adresu z Nastavení → E-maily (admin_info_email). Při chybě vypíše do logu SMTP CHYBA."""
     if request.method == 'GET':
         return render_template('admin_test_smtp.html')
     # POST
+    to_email = _admin_info_email_for_test()
     try:
         from email_sender import send_email
-        ok = send_email('info@dokucheck.cz', 'DokuCheck – TEST SMTP', 'Toto je testovací e-mail z Adminu (TEST SMTP). Pokud jste ho obdrželi, SMTP funguje.', append_footer=False)
+        ok = send_email(to_email, 'DokuCheck – TEST SMTP', 'Toto je testovací e-mail z Adminu (TEST SMTP). Pokud jste ho obdrželi, SMTP funguje.', append_footer=False)
         if ok:
-            flash('TEST SMTP: E-mail byl odeslán na info@dokucheck.cz.', 'success')
+            flash('TEST SMTP: E-mail byl odeslán na {}.'.format(to_email), 'success')
         else:
             _log_smtp_error()
             flash('TEST SMTP: Odeslání se nezdařilo. Zkontrolujte Error log (SMTP CHYBA: Heslo pro aplikace ve WSGI).', 'error')
@@ -1243,7 +1249,10 @@ def logs():
 def _settings_for_admin(db):
     """Načte všechna nastavení pro Admin stránku Nastavení (s fallbacky)."""
     if load_settings_for_views:
-        return load_settings_for_views(db)
+        st = load_settings_for_views(db)
+        for key in ('mail_server', 'mail_port', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
+            st[key] = db.get_global_setting(key, '') or ''
+        return st
     s = {}
     for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone',
                 'bank_account', 'bank_iban', 'landing_hero_title', 'landing_hero_subtitle', 'landing_hero_badge',
@@ -1275,6 +1284,8 @@ def _settings_for_admin(db):
     for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
                 'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
         s[key] = db.get_global_setting(key, '')
+    for key in ('mail_server', 'mail_port', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
+        s[key] = db.get_global_setting(key, '') or ''
     return s
 
 
@@ -1429,6 +1440,16 @@ def settings():
                         'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Sekce Připravujeme uložena', 'success')
+        elif action == 'save_mail':
+            for key in ('mail_server', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
+                db.set_global_setting(key, (request.form.get(key) or '').strip())
+            port_raw = (request.form.get('mail_port') or '').strip()
+            if port_raw:
+                try:
+                    db.set_global_setting('mail_port', str(int(port_raw)))
+                except ValueError:
+                    pass
+            flash('Nastavení e-mailů uloženo. Heslo k SMTP se nastavuje v proměnných prostředí (MAIL_PASSWORD) na serveru.', 'success')
         elif action == 'save_system':
             for key in ('seo_meta_title', 'seo_meta_description', 'email_order_confirmation_subject', 'email_order_confirmation_body',
                         'email_welcome_subject', 'email_welcome_body'):

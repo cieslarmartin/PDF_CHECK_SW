@@ -77,20 +77,27 @@ def send_email(to_email, subject, body_plain, append_footer=True):
         return False
 
 
-ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
+def _order_notification_email():
+    """Příjemce notifikací objednávek: z app.config (nastavení v dashboardu) nebo z env."""
+    app = current_app
+    return app.config.get('ORDER_NOTIFICATION_EMAIL') or os.environ.get('ORDER_NOTIFICATION_EMAIL', 'objednavky@dokucheck.cz')
 
-ORDER_NOTIFICATION_EMAIL = os.environ.get('ORDER_NOTIFICATION_EMAIL', 'objednavky@dokucheck.cz')
+
+def _admin_info_email():
+    """Příjemce ostatních admin mailů: z app.config nebo z env."""
+    app = current_app
+    return app.config.get('ADMIN_INFO_EMAIL') or os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
 
 
 def send_order_notification_to_admin(order=None, **kwargs):
-    """Odešle notifikaci o nové objednávce na objednavky@dokucheck.cz.
+    """Odešle notifikaci o nové objednávce na adresu z Nastavení → E-maily (order_notification_email).
     Přijímá slovník objednávky (order) s poli: order_display_number, jmeno_firma, ico, email, tarif,
     ulice, mesto, psc, dic, discount_requested, amount_czk, amount_czk_final, created_at, status.
     Tělo e-mailu obsahuje všechny údaje od klienta."""
     if order is None:
         order = kwargs
     order_number = order.get('order_display_number') or order.get('invoice_number') or order.get('id') or '—'
-    to_email = ORDER_NOTIFICATION_EMAIL
+    to_email = _order_notification_email()
     subject = 'Nová objednávka: {}'.format(order_number)
     lines = [
         'Nová objednávka',
@@ -184,8 +191,8 @@ def send_email_with_attachment(to_email, subject, body_plain, attachment_path=No
 
 
 def notify_admin(subject, body_plain):
-    """Pošle informační e-mail administrátorovi na info@dokucheck.cz."""
-    return send_email(ADMIN_INFO_EMAIL, subject, body_plain, append_footer=False)
+    """Pošle informační e-mail administrátorovi na adresu z Nastavení → E-maily (admin_info_email)."""
+    return send_email(_admin_info_email(), subject, body_plain, append_footer=False)
 
 
 def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):

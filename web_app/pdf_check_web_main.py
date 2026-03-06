@@ -28,7 +28,7 @@ except ImportError:
     DEFAULT_PRICING_TARIFS = {"basic": {"label": "BASIC", "amount_czk": 1290}, "standard": {"label": "PRO", "amount_czk": 1990}}
 
 # NOVÉ: Admin systém
-from admin_routes import admin_bp
+from admin_routes import admin_bp, get_db
 from version import WEB_BUILD, WEB_VERSION, BUILD_NOTES
 try:
     from tsa_registry import is_tsa_issuer_qualified
@@ -68,6 +68,29 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 # Kanonická doména a HTTPS (obcházení problému s DNS přesměrováním na Wedosu)
 CANONICAL_HOST = 'www.dokucheck.cz'
 BARE_DOMAIN = 'dokucheck.cz'
+
+
+@app.before_request
+def inject_mail_config_from_db():
+    """Načte nastavení e-mailů z DB (Nastavení → E-maily) do app.config; má přednost před env."""
+    try:
+        db = get_db()
+        for key, config_key in [
+            ('mail_server', 'MAIL_SERVER'), ('mail_username', 'MAIL_USERNAME'),
+            ('mail_default_sender', 'MAIL_DEFAULT_SENDER'),
+            ('order_notification_email', 'ORDER_NOTIFICATION_EMAIL'), ('admin_info_email', 'ADMIN_INFO_EMAIL'),
+        ]:
+            val = (db.get_global_setting(key, '') or '').strip()
+            if val:
+                current_app.config[config_key] = val
+        port_val = (db.get_global_setting('mail_port', '') or '').strip()
+        if port_val:
+            try:
+                current_app.config['MAIL_PORT'] = int(port_val)
+            except ValueError:
+                pass
+    except Exception:
+        pass
 
 
 @app.before_request

@@ -11,6 +11,7 @@
     <li><a href="#tab-legal" class="admin-tab" data-tab="legal">Právní info</a></li>
     <li><a href="#tab-coming-soon" class="admin-tab" data-tab="coming-soon">Připravujeme</a></li>
     <li><a href="#tab-environment" class="admin-tab" data-tab="environment">Nastavení prostředí</a></li>
+    <li><a href="#tab-mail" class="admin-tab" data-tab="mail">E-maily</a></li>
     <li><a href="#tab-system" class="admin-tab" data-tab="system">Systém</a></li>
 </ul>
 
@@ -353,6 +354,38 @@
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit nastavení prostředí</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{# ----- E-maily (schránky a příjemci) ----- #}
+<div id="tab-mail" class="tab-pane">
+    <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_mail">
+        <div class="admin-card">
+            <div class="card-header">Schránka pro odesílání (SMTP)</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Odesílatel všech mailů (objednávky, aktivace, potvrzení). Heslo se <strong>nenastavuje zde</strong> – na serveru (PythonAnywhere → Web → Environment variables) nastavte <code>MAIL_PASSWORD</code> pro tuto schránku.</p>
+                <label class="admin-settings-label">SMTP server (mail_server)</label>
+                <input type="text" name="mail_server" class="form-control admin-settings-input" value="{{ settings.mail_server|e }}" placeholder="smtp.seznam.cz">
+                <label class="admin-settings-label">Port (mail_port)</label>
+                <input type="number" name="mail_port" class="form-control admin-settings-input" value="{{ settings.mail_port|e }}" placeholder="465">
+                <label class="admin-settings-label">E-mail odesílatele – přihlášení SMTP (mail_username)</label>
+                <input type="email" name="mail_username" class="form-control admin-settings-input" value="{{ settings.mail_username|e }}" placeholder="objednavky@dokucheck.cz">
+                <label class="admin-settings-label">Zobrazené jméno a adresa (mail_default_sender)</label>
+                <input type="text" name="mail_default_sender" class="form-control admin-settings-input" value="{{ settings.mail_default_sender|e }}" placeholder="DokuCheck Objednávky &lt;objednavky@dokucheck.cz&gt;">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Kam posílat které maily</div>
+                <p class="small text-muted mb-3">Objednávky by měly jít na objednavky@. Ostatní admin maily (test SMTP, informační) na info@ nebo jinou adresu.</p>
+                <label class="admin-settings-label">Příjemce notifikací o objednávkách (order_notification_email)</label>
+                <input type="email" name="order_notification_email" class="form-control admin-settings-input" value="{{ settings.order_notification_email|e }}" placeholder="objednavky@dokucheck.cz">
+                <label class="admin-settings-label">Příjemce ostatních admin mailů – test SMTP, informace (admin_info_email)</label>
+                <input type="email" name="admin_info_email" class="form-control admin-settings-input" value="{{ settings.admin_info_email|e }}" placeholder="info@dokucheck.cz">
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit nastavení e-mailů</button>
             </div>
         </div>
     </form>
