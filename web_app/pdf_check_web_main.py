@@ -3896,15 +3896,24 @@ def portal():
         return redirect(url_for('portal'))
     if session.get('portal_user'):
         db = Database()
-        lic = db.get_user_license(session['portal_user']['api_key'])
+        api_key = session['portal_user']['api_key']
+        lic = db.get_user_license(api_key)
         tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
         exp = (lic or {}).get('license_expires')
         license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
         upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
+        pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+        portal_stats = db.get_portal_user_activity_stats(api_key)
+        portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
+        download_url = db.get_global_setting('download_url', '') or ''
         return render_template('portal_dashboard.html',
                                tier_name=tier_name,
                                license_expires_label=license_expires_label,
                                upgrade_request_email=upgrade_email,
+                               pricing_tarifs=pricing_tarifs,
+                               portal_stats=portal_stats,
+                               portal_activity=portal_activity,
+                               download_url=download_url,
                                pw_message=None, pw_error=False)
     success = request.args.get('set_password') == 'ok'
     return render_template('portal_login.html', success=success)
@@ -3996,15 +4005,24 @@ def _portal_dashboard_with_message(message, error=True):
     if not session.get('portal_user'):
         return redirect(url_for('portal'))
     db = Database()
-    lic = db.get_user_license(session['portal_user']['api_key'])
+    api_key = session['portal_user']['api_key']
+    lic = db.get_user_license(api_key)
     tier_name = (lic or {}).get('tier_name') or session['portal_user'].get('tier_name')
     exp = (lic or {}).get('license_expires')
     license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
     upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
+    pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+    portal_stats = db.get_portal_user_activity_stats(api_key)
+    portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
+    download_url = db.get_global_setting('download_url', '') or ''
     return render_template('portal_dashboard.html',
                            tier_name=tier_name,
                            license_expires_label=license_expires_label,
                            upgrade_request_email=upgrade_email,
+                           pricing_tarifs=pricing_tarifs,
+                           portal_stats=portal_stats,
+                           portal_activity=portal_activity,
+                           download_url=download_url,
                            pw_message=message, pw_error=error)
 
 

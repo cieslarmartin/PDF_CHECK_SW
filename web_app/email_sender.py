@@ -208,9 +208,17 @@ def get_order_confirmation_email_preview(order_id, email, jmeno_firma, tarif, am
     """Vrátí (předmět, tělo_plain, tělo_html) pro e-mail s platebními údaji (fakturou). Neodesílá!"""
     templates = get_email_templates()
     subject_tpl = templates.get("order_confirmation_subject") or "DokuCheck – potvrzení objednávky č. {vs}"
-    body_tpl = templates.get("order_confirmation_body") or (
-        "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
-    )
+    body_tpl = templates.get("order_confirmation_body") or ""
+    if not body_tpl or ('<p>' not in body_tpl and '<br>' not in body_tpl and 'href=' not in body_tpl):
+        try:
+            from site_config_loader import DEFAULT_EMAIL_TEMPLATES
+            body_tpl = DEFAULT_EMAIL_TEMPLATES.get("order_confirmation_body") or (
+                "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
+            )
+        except ImportError:
+            body_tpl = (
+                "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
+            )
     subject = subject_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
     body = body_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
     

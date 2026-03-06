@@ -807,6 +807,50 @@ def delete_pending_order():
     return redirect(url_for('admin.pending_orders'))
 
 
+@admin_bp.route('/admin/pending-orders/<int:order_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_pending_order(order_id):
+    """Zobrazí formulář pro úpravu objednávky a uloží změny."""
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        flash('Objednávka nenalezena', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    if request.method == 'POST':
+        def _num(s):
+            s = (s or '').strip()
+            if not s:
+                return None
+            try:
+                return float(s.replace(',', '.'))
+            except ValueError:
+                return None
+        ok = db.update_pending_order(
+            order_id,
+            jmeno_firma=request.form.get('jmeno_firma', '').strip(),
+            ico=request.form.get('ico', '').strip(),
+            email=request.form.get('email', '').strip(),
+            tarif=request.form.get('tarif', '').strip(),
+            ulice=request.form.get('ulice', '').strip(),
+            mesto=request.form.get('mesto', '').strip(),
+            psc=request.form.get('psc', '').strip(),
+            dic=request.form.get('dic', '').strip(),
+            order_display_number=request.form.get('order_display_number', '').strip(),
+            amount_czk=_num(request.form.get('amount_czk')),
+            amount_czk_final=_num(request.form.get('amount_czk_final')),
+        )
+        if ok:
+            flash('Objednávka byla upravena.', 'success')
+        else:
+            flash('Změny se nepodařilo uložit.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_edit_order.html', order=order, user=user, active_page='pending_orders')
+
+
 @admin_bp.route('/admin/delete-active-license', methods=['POST'])
 @admin_required
 def delete_active_license():
@@ -1751,7 +1795,8 @@ def api_email_preview():
             'recipient': email,
             'has_invoice': bool(order and order.get('invoice_path') and os.path.isfile(order.get('invoice_path'))),
             'order_id': order['id'] if order else '',
-            'api_key': api_key
+            'api_key': api_key,
+            'set_password_url': set_password_url or ''
         })
     return jsonify({'success': False, 'error': 'Neznámý typ akce'})
 
@@ -1810,7 +1855,8 @@ def api_email_send():
         flash(f'E-mail byl odeslán na {to_email}.', 'success')
         if action_type == 'payment' and order_id:
             db.update_pending_order_status(order_id, 'payment_sent')
-        # if action_type == 'activation', status is already ACTIVE or we update it?
+        if action_type == 'activation' and order_id:
+            db.update_pending_order_status(order_id, 'ACTIVE')
     else:
         db.log_email(to_email, subject, 'error')
         flash('Chyba při odesílání e-mailu. Zkontrolujte SMTP nastavení.', 'error')

@@ -1,0 +1,65 @@
+{% extends "admin_base.html" %}
+{% block title %}Upravit objednávku #{{ order.id }} – DokuCheck Admin{% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Upravit objednávku</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Objednávka {{ order.order_display_number or order.id }} – úprava údajů zákazníka a fakturace. Stav objednávky se zde nemění.</p>
+
+<form method="post" action="{{ url_for('admin.edit_pending_order', order_id=order.id) }}">
+    <div class="admin-card" style="max-width:640px;">
+        <div class="card-body">
+            <div class="form-group">
+                <label for="jmeno_firma">Jméno / Firma *</label>
+                <input type="text" id="jmeno_firma" name="jmeno_firma" class="form-control" value="{{ (order.jmeno_firma or '')|e }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail *</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ (order.email or '')|e }}" required>
+            </div>
+            <div class="form-group">
+                <label for="ico">IČO</label>
+                <input type="text" id="ico" name="ico" class="form-control" value="{{ (order.ico or '')|e }}" placeholder="Např. 12345678">
+            </div>
+            <div class="form-group">
+                <label for="dic">DIČ</label>
+                <input type="text" id="dic" name="dic" class="form-control" value="{{ (order.dic or '')|e }}" placeholder="CZ12345678">
+            </div>
+            <div class="form-group">
+                <label for="tarif">Tarif</label>
+                <input type="text" id="tarif" name="tarif" class="form-control" value="{{ (order.tarif or '')|e }}" placeholder="basic / standard">
+            </div>
+            <div class="form-group">
+                <label for="ulice">Ulice a číslo</label>
+                <input type="text" id="ulice" name="ulice" class="form-control" value="{{ (order.ulice or '')|e }}">
+            </div>
+            <div class="form-group" style="display:flex; gap:12px;">
+                <div style="flex:1;">
+                    <label for="mesto">Město</label>
+                    <input type="text" id="mesto" name="mesto" class="form-control" value="{{ (order.mesto or '')|e }}">
+                </div>
+                <div style="width:100px;">
+                    <label for="psc">PSČ</label>
+                    <input type="text" id="psc" name="psc" class="form-control" value="{{ (order.psc or '')|e }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="order_display_number">Číslo objednávky (zobrazené)</label>
+                <input type="text" id="order_display_number" name="order_display_number" class="form-control" value="{{ (order.order_display_number or '')|e }}" placeholder="Např. 2026-001">
+            </div>
+            <div class="form-group" style="display:flex; gap:12px;">
+                <div style="flex:1;">
+                    <label for="amount_czk">Částka (Kč)</label>
+                    <input type="text" id="amount_czk" name="amount_czk" class="form-control" value="{{ order.amount_czk or '' }}" placeholder="1990">
+                </div>
+                <div style="flex:1;">
+                    <label for="amount_czk_final">Částka po slevě (Kč)</label>
+                    <input type="text" id="amount_czk_final" name="amount_czk_final" class="form-control" value="{{ order.amount_czk_final or '' }}" placeholder="1592">
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+            <a href="{{ url_for('admin.pending_orders') }}" class="btn btn-secondary" style="margin-left:8px;">Zrušit</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

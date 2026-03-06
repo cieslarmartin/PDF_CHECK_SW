@@ -326,6 +326,7 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_activity_log_timestamp ON activity_log(timestamp)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_activity_log_ip ON activity_log(ip_address)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_activity_log_api_key ON activity_log(api_key)')
 
         # Starý online_demo_log – zachován pro zpětnou kompatibilitu, nově se používá activity_log
         cursor.execute('''
@@ -1580,6 +1581,30 @@ class Database:
         finally:
             conn.close()
 
+    def update_pending_order(self, order_id, **kwargs):
+        """Aktualizuje editovatelné sloupce objednávky (jmeno_firma, ico, email, tarif, ulice, mesto, psc, dic, order_display_number, amount_czk, amount_czk_final). Status se nemění."""
+        allowed = {'jmeno_firma', 'ico', 'email', 'tarif', 'ulice', 'mesto', 'psc', 'dic',
+                   'order_display_number', 'invoice_number', 'amount_czk', 'amount_czk_final'}
+        updates = []
+        values = []
+        for k, v in kwargs.items():
+            if k in allowed:
+                updates.append(f'{k} = ?')
+                values.append(v)
+        if not updates:
+            return False
+        values.append(order_id)
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE pending_orders SET ' + ', '.join(updates) + ' WHERE id = ?', values)
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
     def log_email(self, recipient, subject, status):
         """Uloží záznam o odeslaném e-mailu."""
         conn = self.get_connection()
@@ -2087,6 +2112,52 @@ class Database:
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
+
+    def get_activity_log_by_api_key(self, api_key, limit=50):
+        """Vrátí log aktivit pro jeden účet (portál): datum, typ zdroje, počet souborů."""
+        if not api_key:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT timestamp, source_type, file_count FROM activity_log WHERE api_key = ? ORDER BY timestamp DESC LIMIT ?',
+            (api_key, limit)
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_portal_user_activity_stats(self, api_key):
+        """Agregované statistiky pro portál: celkem dávek/souborů, rozpad podle zdroje (agent/registered/web_trial), poslední aktivita."""
+        if not api_key:
+            return {'total_batches': 0, 'total_files': 0, 'by_source': {}, 'last_activity': None}
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT COUNT(*) AS batches, COALESCE(SUM(file_count), 0) AS files FROM activity_log WHERE api_key = ?',
+            (api_key,)
+        )
+        row = cursor.fetchone()
+        total_batches = row['batches'] or 0
+        total_files = row['files'] or 0
+        cursor.execute('''
+            SELECT source_type, COUNT(*) AS batches, COALESCE(SUM(file_count), 0) AS files
+            FROM activity_log WHERE api_key = ? GROUP BY source_type
+        ''', (api_key,))
+        by_source = {r['source_type']: {'batches': r['batches'], 'files': r['files']} for r in cursor.fetchall()}
+        cursor.execute(
+            'SELECT timestamp FROM activity_log WHERE api_key = ? ORDER BY timestamp DESC LIMIT 1',
+            (api_key,)
+        )
+        last_row = cursor.fetchone()
+        last_activity = last_row['timestamp'] if last_row and last_row['timestamp'] else None
+        conn.close()
+        return {
+            'total_batches': total_batches,
+            'total_files': total_files,
+            'by_source': by_source,
+            'last_activity': last_activity,
+        }
 
     def get_activity_stats_today(self):
         """Agregovaná data pro dashboard: kontroly dnes, trial batche dnes, aktivní licence."""

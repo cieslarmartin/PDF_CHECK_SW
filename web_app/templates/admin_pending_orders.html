@@ -21,6 +21,8 @@
     .crm-modal-content { background: white; border-radius: 8px; padding: 20px; width: 100%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
     .crm-modal-header { font-size: 1.25em; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; display: flex; justify-content: space-between; }
     .crm-modal-close { cursor: pointer; background: none; border: none; font-size: 1.5em; line-height: 1; margin-top: -5px; color: #6b7280; }
+    .btn-sm { padding: 4px 10px; font-size: 0.85em; }
+    #tabPreview.active, #tabEdit.active { background: #1e5a8a; color: white; border-color: #1e5a8a; }
 </style>
 
 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -61,48 +63,70 @@
                 <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
                 <td>
                     {% if o.status == 'NEW_ORDER' or o.status == 'pending' %}
-                        <span class="status-badge status-pending">Objednáno (Nová)</span>
+                        <span class="status-badge status-pending">Objednáno</span>
                     {% elif o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT' %}
-                        <span class="status-badge status-payment">Odeslána platba</span>
+                        <span class="status-badge status-payment">Čeká na zaplacení</span>
                     {% elif o.status == 'ACTIVE' or o.status == 'active' %}
-                        <span class="status-badge status-active">Aktivní (Zaplaceno)</span>
+                        <span class="status-badge status-active">Aktivní licence</span>
                     {% else %}
                         <span class="status-badge" style="background:#f3f4f6;">{{ o.status }}</span>
                     {% endif %}
                 </td>
-                <td style="min-width:240px;">
+                <td style="min-width:260px;">
                     <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                        
-                        {# 1. Odeslat platební údaje #}
-                        <button type="button" class="action-btn action-primary" title="Odešle e-mail s fakturou a QR kódem pro platbu." onclick="openEmailModal('payment', '{{ o.id }}', null)">
-                            ✉️ Platební údaje
-                        </button>
-                        
-                        {# 2. Aktivovat a odeslat licenci (pokud je aktivní, pošle znovu, jinak aktivuje a pošle) #}
-                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:none;" id="form-activate-{{ o.id }}">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                        </form>
-                        
-                        {% if o.has_active_license %}
-                        <button type="button" class="action-btn action-success" title="Vygeneruje licenci a pošle e-mail s odkazem na nastavení hesla." onclick="openEmailModal('activation', '{{ o.id }}', '{{ o.api_key }}')">
-                            🔑 Znovu zaslat licenci
-                        </button>
-                        {% else %}
-                        <button type="button" class="action-btn action-success" title="Potvrdit platbu, vytvořit uživatele a připravit aktivační e-mail." onclick="if(confirm('Potvrdit platbu a vytvořit uživatele pro {{ o.email }}?')) openEmailModal('activation', '{{ o.id }}', '')">
-                            ⚡ Potvrdit platbu a aktivovat
+                        {% set is_pending = (o.status == 'NEW_ORDER' or o.status == 'pending') %}
+                        {% set is_waiting_payment = (o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT') %}
+                        {% set is_active = (o.status == 'ACTIVE' or o.status == 'active') %}
+
+                        {# Objednáno: Odeslat údaje k platbě #}
+                        {% if is_pending or is_waiting_payment %}
+                        <button type="button" class="action-btn action-primary" title="Odešle e-mail s platebními údaji a fakturou." onclick="openEmailModal('payment', '{{ o.id }}', null)">
+                            ✉️ Odeslat údaje k platbě
                         </button>
                         {% endif %}
 
-                        {# Další akce: Faktura #}
+                        {# Čeká na zaplacení: Zaplaceno a poslat aktivaci #}
+                        {% if is_waiting_payment and not o.has_active_license %}
+                        <button type="button" class="action-btn action-success" title="Zaplaceno – odeslat aktivační e-mail s odkazem na heslo." onclick="openEmailModal('activation', '{{ o.id }}', '')">
+                            🔑 Zaplaceno a poslat aktivaci
+                        </button>
+                        {% endif %}
+
+                        {# Aktivní licence: Znovu poslat aktivaci #}
+                        {% if o.has_active_license %}
+                        <button type="button" class="action-btn action-success" title="Znovu odeslat aktivační e-mail s odkazem na heslo." onclick="openEmailModal('activation', '{{ o.id }}', '{{ o.api_key or '' }}')">
+                            🔑 Znovu poslat aktivaci
+                        </button>
+                        {% endif %}
+
+                        {# Faktura #}
                         {% if o.invoice_path %}
                         <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="action-btn" title="Stáhnout PDF fakturu">📄 Faktura</a>
                         {% else %}
                         <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;">
                             <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="action-btn" title="Vygeneruje PDF fakturu pro tuto objednávku">📄 Vygenerovat fakturu</button>
+                            <button type="submit" class="action-btn" title="Vygenerovat PDF fakturu">📄 Vygenerovat fakturu</button>
                         </form>
                         {% endif %}
-                        
+
+                        {# Upravit #}
+                        <a href="{{ url_for('admin.edit_pending_order', order_id=o.id) }}" class="action-btn" title="Upravit údaje objednávky">✏️ Upravit</a>
+
+                        {# Smazat objednávku (ne u ACTIVE – tam jen smazat licenci) #}
+                        {% if not is_active %}
+                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto objednávku?');">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="action-btn action-danger" title="Smazat objednávku">🗑️ Smazat obj.</button>
+                        </form>
+                        {% endif %}
+
+                        {# Smazat licenci (jen u aktivní licence) #}
+                        {% if o.has_active_license and o.api_key %}
+                        <form method="post" action="{{ url_for('admin.delete_active_license') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat licenci pro tohoto uživatele?');">
+                            <input type="hidden" name="api_key" value="{{ o.api_key }}">
+                            <button type="submit" class="action-btn action-danger" title="Smazat licenci">🗑️ Smazat lic.</button>
+                        </form>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -115,7 +139,7 @@
 
 <!-- ODESÍLACÍ MODAL -->
 <div id="emailModal" class="crm-modal">
-    <div class="crm-modal-content">
+    <div class="crm-modal-content" style="max-width:720px;">
         <div class="crm-modal-header">
             <span id="modalTitle">Odeslat e-mail</span>
             <button class="crm-modal-close" onclick="closeEmailModal()">&times;</button>
@@ -130,14 +154,31 @@
                 <input type="text" name="recipient" id="m_recipient" class="form-control" readonly>
             </div>
             
-            <div style="margin-bottom:12px;">
+            <div id="m_set_password_block" style="margin-bottom:12px; padding:10px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; display:none;">
+                <label class="small font-weight-bold">Odkaz na nastavení hesla</label>
+                <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                    <input type="text" id="m_set_password_url" class="form-control" readonly style="flex:1; font-size:0.85em;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="copySetPasswordUrl()" title="Kopírovat odkaz">Kopírovat</button>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:8px;">
                 <label class="small font-weight-bold">Předmět</label>
                 <input type="text" name="subject" id="m_subject" class="form-control" required>
             </div>
             
-            <div style="margin-bottom:12px;">
-                <label class="small font-weight-bold">Tělo e-mailu (HTML povoleno)</label>
-                <textarea name="body" id="m_body" class="form-control" rows="10" required style="font-family:monospace;"></textarea>
+            <div style="margin-bottom:8px;">
+                <span class="small font-weight-bold">Tělo e-mailu</span>
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="tabPreview" onclick="showModalTab('preview')">Náhled</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="tabEdit" onclick="showModalTab('edit')">Úprava textu</button>
+                </div>
+            </div>
+            <div id="modalPreviewWrap" style="margin-bottom:12px; border:1px solid #e5e7eb; border-radius:6px; overflow:hidden; min-height:200px;">
+                <div id="modalPreview" style="padding:12px; background:#f9fafb; min-height:180px; max-height:320px; overflow:auto;"></div>
+            </div>
+            <div id="modalEditWrap" style="margin-bottom:12px; display:none;">
+                <textarea name="body" id="m_body" class="form-control" rows="10" required style="font-family:monospace; font-size:0.9em;"></textarea>
             </div>
             
             <div style="margin-bottom:15px; padding:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;">
@@ -157,52 +198,88 @@
 </div>
 
 <script>
+function showModalTab(tab) {
+    var isPreview = (tab === 'preview');
+    document.getElementById('modalPreviewWrap').style.display = isPreview ? 'block' : 'none';
+    document.getElementById('modalEditWrap').style.display = isPreview ? 'none' : 'block';
+    document.getElementById('tabPreview').classList.toggle('active', isPreview);
+    document.getElementById('tabEdit').classList.toggle('active', !isPreview);
+    if (isPreview) updateModalPreview();
+}
+function updateModalPreview() {
+    var body = document.getElementById('m_body').value;
+    var wrap = document.getElementById('modalPreview');
+    wrap.innerHTML = body || '<em>Žádný obsah</em>';
+}
+function copySetPasswordUrl() {
+    var input = document.getElementById('m_set_password_url');
+    if (!input || !input.value) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(function() { alert('Odkaz zkopírován.'); }).catch(function() { fallbackCopy(input.value); });
+    } else { fallbackCopy(input.value); }
+}
+function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); alert('Odkaz zkopírován.'); } catch (e) {}
+    document.body.removeChild(ta);
+}
 function openEmailModal(type, orderId, apiKey) {
     document.getElementById('modalTitle').innerText = (type === 'payment') ? 'Odeslat platební údaje' : 'Odeslat aktivační e-mail';
     document.getElementById('m_action_type').value = type;
     document.getElementById('m_order_id').value = orderId;
     document.getElementById('m_api_key').value = apiKey || '';
     
-    // Reset forms
     document.getElementById('m_recipient').value = 'Načítám...';
     document.getElementById('m_subject').value = 'Načítám...';
     document.getElementById('m_body').value = 'Načítám...';
     document.getElementById('m_attach_invoice').checked = false;
     document.getElementById('m_attach_invoice').disabled = true;
     document.getElementById('m_invoice_warning').style.display = 'none';
+    document.getElementById('m_set_password_block').style.display = 'none';
+    document.getElementById('modalPreview').innerHTML = '';
+    showModalTab('preview');
     
     document.getElementById('emailModal').classList.add('show');
     
-    // Fetch data
-    let url = `/admin/api/email-preview?type=${type}&order_id=${orderId}`;
-    if (apiKey) url += `&api_key=${apiKey}`;
+    var url = '/admin/api/email-preview?type=' + encodeURIComponent(type) + '&order_id=' + encodeURIComponent(orderId);
+    if (apiKey) url += '&api_key=' + encodeURIComponent(apiKey);
     
     fetch(url)
-    .then(r => r.json())
-    .then(data => {
-        if(!data.success) {
-            alert('Chyba: ' + data.error);
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            alert('Chyba: ' + (data.error || 'Neznámá chyba'));
             closeEmailModal();
             return;
         }
-        document.getElementById('m_recipient').value = data.recipient;
-        document.getElementById('m_subject').value = data.subject;
-        document.getElementById('m_body').value = data.body_html || data.body_plain;
+        document.getElementById('m_recipient').value = data.recipient || '';
+        document.getElementById('m_subject').value = data.subject || '';
+        var bodyContent = data.body_html || data.body_plain || '';
+        document.getElementById('m_body').value = bodyContent;
+        updateModalPreview();
         
-        if(data.has_invoice) {
+        if (data.set_password_url) {
+            document.getElementById('m_set_password_url').value = data.set_password_url;
+            document.getElementById('m_set_password_block').style.display = 'block';
+        } else {
+            document.getElementById('m_set_password_block').style.display = 'none';
+        }
+        
+        if (data.has_invoice) {
             document.getElementById('m_attach_invoice').disabled = false;
-            // Default check invoice logic
             document.getElementById('m_attach_invoice').checked = (type === 'payment');
         } else {
             document.getElementById('m_invoice_warning').style.display = 'block';
         }
     })
-    .catch(err => {
+    .catch(function(err) {
         alert('Chyba komunikace se serverem.');
         closeEmailModal();
     });
 }
-
 function closeEmailModal() {
     document.getElementById('emailModal').classList.remove('show');
 }
