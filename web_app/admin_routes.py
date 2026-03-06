@@ -284,6 +284,13 @@ def dashboard():
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
     email_templates = get_email_templates() if get_email_templates else {}
+    # Karty sekce Připravujeme pro výpis na dashboardu
+    coming_soon_cards = [
+        {'title': db.get_global_setting('coming_soon_path_title', '') or 'Path Checker', 'subtitle': db.get_global_setting('coming_soon_path_subtitle', '') or ''},
+        {'title': db.get_global_setting('coming_soon_editor_title', '') or 'Online editor a podpis PDF', 'subtitle': db.get_global_setting('coming_soon_editor_subtitle', '') or ''},
+        {'title': db.get_global_setting('coming_soon_zpf_title', '') or 'Výpočet poplatku za odvody ze ZPF', 'subtitle': db.get_global_setting('coming_soon_zpf_subtitle', '') or ''},
+        {'title': db.get_global_setting('coming_soon_parking_title', '') or 'Výpočet počtu parkovacích míst', 'subtitle': db.get_global_setting('coming_soon_parking_subtitle', '') or ''},
+    ]
     return render_template('admin_dashboard.html',
                           licenses=licenses,
                           stats=stats,
@@ -303,6 +310,7 @@ def dashboard():
                           status_filter=status_filter,
                           email_templates=email_templates,
                           user=user,
+                          coming_soon_cards=coming_soon_cards,
                           active_page='dashboard')
 
 
@@ -807,6 +815,84 @@ def apply_discount():
     except Exception:
         pass
     flash('Sleva 20 % uplatněna na objednávku #{}. Faktura přegenerována.'.format(order.get('order_display_number') or order_id), 'success')
+    return redirect(url_for('admin.users_licenses'))
+
+
+@admin_bp.route('/admin/bulk-delete-orders', methods=['POST'])
+@admin_required
+def bulk_delete_orders():
+    """Hromadné smazání vybraných objednávek (zaškrtávací políčka)."""
+    raw = request.form.get('order_ids', '') or ''
+    order_ids = [x.strip() for x in raw.split(',') if x.strip()]
+    if not order_ids:
+        flash('Nejsou vybrány žádné objednávky.', 'error')
+        return redirect(url_for('admin.users_licenses'))
+    db = get_db()
+    deleted = 0
+    for oid in order_ids:
+        if db.get_pending_order_by_id(oid) and db.delete_pending_order(oid):
+            deleted += 1
+    flash('Smazáno objednávek: {}.'.format(deleted), 'success' if deleted else 'info')
+    return redirect(url_for('admin.users_licenses'))
+
+
+@admin_bp.route('/admin/bulk-send-payment', methods=['POST'])
+@admin_required
+def bulk_send_payment():
+    """Hromadné odeslání e-mailu s platebními údaji vybraným objednávkám."""
+    raw = request.form.get('order_ids', '') or ''
+    order_ids = [x.strip() for x in raw.split(',') if x.strip()]
+    if not order_ids:
+        flash('Nejsou vybrány žádné objednávky.', 'error')
+        return redirect(url_for('admin.users_licenses'))
+    db = get_db()
+    from email_sender import get_order_confirmation_email_preview, send_email_with_attachment
+    sent = 0
+    failed = 0
+    for oid in order_ids:
+        order = db.get_pending_order_by_id(oid)
+        if not order:
+            failed += 1
+            continue
+        to_email = (order.get('email') or '').strip()
+        if not to_email:
+            failed += 1
+            continue
+        try:
+            subject, body_plain, body_html = get_order_confirmation_email_preview(
+                order_id=order['id'],
+                email=to_email,
+                jmeno_firma=order.get('jmeno_firma'),
+                tarif=order.get('tarif'),
+                amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or ''
+            )
+            invoice_path = None
+            invoice_filename = None
+            if order.get('invoice_path') and os.path.isfile(order.get('invoice_path')):
+                invoice_path = order.get('invoice_path')
+                invoice_filename = 'faktura_{}.pdf'.format((order.get('invoice_number') or order.get('order_display_number') or '').strip() or oid)
+            ok = send_email_with_attachment(
+                to_email=to_email,
+                subject=subject,
+                body_plain=body_plain,
+                body_html=body_html,
+                attachment_path=invoice_path,
+                attachment_filename=invoice_filename,
+                append_footer=True
+            )
+            if ok:
+                db.log_email(to_email, subject, 'success')
+                db.update_pending_order_status(oid, 'payment_sent')
+                sent += 1
+            else:
+                db.log_email(to_email, subject, 'error')
+                failed += 1
+        except Exception:
+            failed += 1
+    if sent:
+        flash('Odesláno e-mailů s platebními údaji: {}.'.format(sent), 'success')
+    if failed:
+        flash('Selhalo nebo přeskočeno: {} objednávek.'.format(failed), 'error' if sent == 0 else 'warning')
     return redirect(url_for('admin.users_licenses'))
 
 
@@ -1493,7 +1579,9 @@ def _settings_for_admin(db):
     s['header_scripts'] = db.get_setting_json('header_scripts', [])
     s['allowed_extensions'] = db.get_setting_json('allowed_extensions', ['.pdf'])
     for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
-                'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
+                'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit',
+                'coming_soon_zpf_title', 'coming_soon_zpf_subtitle', 'coming_soon_zpf_items', 'coming_soon_zpf_benefit',
+                'coming_soon_parking_title', 'coming_soon_parking_subtitle', 'coming_soon_parking_items', 'coming_soon_parking_benefit'):
         s[key] = db.get_global_setting(key, '')
     for key in ('mail_server', 'mail_port', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
         s[key] = db.get_global_setting(key, '') or ''
@@ -1648,7 +1736,9 @@ def settings():
             flash('Nastavení prostředí uloženo', 'success')
         elif action == 'save_coming_soon':
             for key in ('coming_soon_intro', 'coming_soon_path_title', 'coming_soon_path_subtitle', 'coming_soon_path_items', 'coming_soon_path_benefit',
-                        'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit'):
+                        'coming_soon_editor_title', 'coming_soon_editor_subtitle', 'coming_soon_editor_items', 'coming_soon_editor_benefit',
+                        'coming_soon_zpf_title', 'coming_soon_zpf_subtitle', 'coming_soon_zpf_items', 'coming_soon_zpf_benefit',
+                        'coming_soon_parking_title', 'coming_soon_parking_subtitle', 'coming_soon_parking_items', 'coming_soon_parking_benefit'):
                 db.set_global_setting(key, request.form.get(key, ''))
             flash('Sekce Připravujeme uložena', 'success')
         elif action == 'save_mail':

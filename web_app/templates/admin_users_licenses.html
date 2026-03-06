@@ -30,10 +30,22 @@
 {# ==================== SEKCE OBJEDNÁVKY ==================== #}
 <div class="section-card">
     <h2 class="section-title">Objednávky</h2>
+    <div class="bulk-toolbar" style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span>Vybrané: <strong id="selectedOrderCount">0</strong></span>
+        <form method="post" action="{{ url_for('admin.bulk_delete_orders') }}" id="formBulkDelete" style="display:inline;">
+            <input type="hidden" name="order_ids" id="bulkDeleteIds" value="">
+            <button type="submit" class="btn btn-sm btn-secondary action-danger" id="btnBulkDelete">Smazat vybrané</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.bulk_send_payment') }}" id="formBulkSendPayment" style="display:inline;">
+            <input type="hidden" name="order_ids" id="bulkSendPaymentIds" value="">
+            <button type="submit" class="btn btn-sm btn-primary">Odeslat vybraným údaje k platbě</button>
+        </form>
+    </div>
     <div class="table-container">
         <table class="table-dense">
             <thead>
                 <tr>
+                    <th style="width:40px;"><input type="checkbox" id="selectAllOrders" title="Vybrat vše"></th>
                     <th>Objednávka</th>
                     <th>Datum</th>
                     <th>Zákazník</th>
@@ -46,6 +58,7 @@
             <tbody>
                 {% for o in orders %}
                 <tr>
+                    <td><input type="checkbox" class="order-cb" value="{{ o.id }}"></td>
                     <td><strong>{{ o.order_display_number or o.id }}</strong></td>
                     <td style="color:#6b7280; font-size:0.9em;">
                         {{ (o.created_at or '')[:16] }}
@@ -107,12 +120,70 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné objednávky v systému.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Žádné objednávky v systému.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+<script>
+(function() {
+    var selectAll = document.getElementById('selectAllOrders');
+    var checkboxes = document.querySelectorAll('.order-cb');
+    var countEl = document.getElementById('selectedOrderCount');
+    var formDelete = document.getElementById('formBulkDelete');
+    var formSendPayment = document.getElementById('formBulkSendPayment');
+    var inputDeleteIds = document.getElementById('bulkDeleteIds');
+    var inputSendPaymentIds = document.getElementById('bulkSendPaymentIds');
+    function updateCount() {
+        var n = document.querySelectorAll('.order-cb:checked').length;
+        countEl.textContent = n;
+        if (selectAll) selectAll.checked = n > 0 && n === checkboxes.length;
+        if (selectAll) selectAll.indeterminate = n > 0 && n < checkboxes.length;
+    }
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
+            updateCount();
+        });
+    }
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener('change', updateCount);
+    });
+    function getSelectedIds() {
+        var ids = [];
+        document.querySelectorAll('.order-cb:checked').forEach(function(cb) { ids.push(cb.value); });
+        return ids;
+    }
+    formDelete.addEventListener('submit', function(e) {
+        var ids = getSelectedIds();
+        if (ids.length === 0) {
+            e.preventDefault();
+            alert('Nejprve vyberte alespoň jednu objednávku.');
+            return;
+        }
+        if (!confirm('Opravdu smazat ' + ids.length + ' vybraných objednávek?')) {
+            e.preventDefault();
+            return;
+        }
+        inputDeleteIds.value = ids.join(',');
+    });
+    formSendPayment.addEventListener('submit', function(e) {
+        var ids = getSelectedIds();
+        if (ids.length === 0) {
+            e.preventDefault();
+            alert('Nejprve vyberte alespoň jednu objednávku.');
+            return;
+        }
+        if (!confirm('Odeslat e-mail s platebními údaji ' + ids.length + ' vybraným objednávkám?')) {
+            e.preventDefault();
+            return;
+        }
+        inputSendPaymentIds.value = ids.join(',');
+    });
+    updateCount();
+})();
+</script>
 
 {# ==================== SEKCE LICENCE A UŽIVATELÉ ==================== #}
 <div class="section-card">

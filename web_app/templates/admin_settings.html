@@ -304,6 +304,28 @@
                 <label class="admin-settings-label">Závěrečná věta / benefit (coming_soon_editor_benefit)</label>
                 <input type="text" name="coming_soon_editor_benefit" class="form-control admin-settings-input" value="{{ settings.coming_soon_editor_benefit|e }}">
             </div>
+            <div class="card-body">
+                <div class="card-header">Karta 3 – Výpočet poplatku za odvody ze ZPF</div>
+                <label class="admin-settings-label">Nadpis (coming_soon_zpf_title)</label>
+                <input type="text" name="coming_soon_zpf_title" class="form-control admin-settings-input" value="{{ settings.coming_soon_zpf_title|e }}">
+                <label class="admin-settings-label">Podnadpis (coming_soon_zpf_subtitle)</label>
+                <input type="text" name="coming_soon_zpf_subtitle" class="form-control admin-settings-input" value="{{ settings.coming_soon_zpf_subtitle|e }}">
+                <label class="admin-settings-label">Odrážky – jeden bod na řádek (coming_soon_zpf_items)</label>
+                <textarea name="coming_soon_zpf_items" class="form-control admin-settings-textarea" rows="3">{{ settings.coming_soon_zpf_items|e }}</textarea>
+                <label class="admin-settings-label">Závěrečná věta / benefit (coming_soon_zpf_benefit)</label>
+                <input type="text" name="coming_soon_zpf_benefit" class="form-control admin-settings-input" value="{{ settings.coming_soon_zpf_benefit|e }}">
+            </div>
+            <div class="card-body">
+                <div class="card-header">Karta 4 – Výpočet počtu parkovacích míst</div>
+                <label class="admin-settings-label">Nadpis (coming_soon_parking_title)</label>
+                <input type="text" name="coming_soon_parking_title" class="form-control admin-settings-input" value="{{ settings.coming_soon_parking_title|e }}">
+                <label class="admin-settings-label">Podnadpis (coming_soon_parking_subtitle)</label>
+                <input type="text" name="coming_soon_parking_subtitle" class="form-control admin-settings-input" value="{{ settings.coming_soon_parking_subtitle|e }}">
+                <label class="admin-settings-label">Odrážky – jeden bod na řádek (coming_soon_parking_items)</label>
+                <textarea name="coming_soon_parking_items" class="form-control admin-settings-textarea" rows="3">{{ settings.coming_soon_parking_items|e }}</textarea>
+                <label class="admin-settings-label">Závěrečná věta / benefit (coming_soon_parking_benefit)</label>
+                <input type="text" name="coming_soon_parking_benefit" class="form-control admin-settings-input" value="{{ settings.coming_soon_parking_benefit|e }}">
+            </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit sekci Připravujeme</button>
             </div>

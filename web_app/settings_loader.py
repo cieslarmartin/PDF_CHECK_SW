@@ -168,6 +168,14 @@ def load_settings_for_views(db):
     out["coming_soon_editor_subtitle"] = db.get_global_setting("coming_soon_editor_subtitle", "") or "Úprava PDF dokumentů, vkládání podpisů a digitální schvalování přímo v systému"
     out["coming_soon_editor_items"] = db.get_global_setting("coming_soon_editor_items", "") or "Odstranění starých podpisů a razítek, hromadný převod do PDF/A-3a\nNové podepsání autorizačním razítkem v jednom kroku\nSnadná oprava nevyhovujících PDF pro Portál stavebníka"
     out["coming_soon_editor_benefit"] = db.get_global_setting("coming_soon_editor_benefit", "") or "→ Méně vrácení dokumentace, rychlejší odeslání na portál. Z Agenta – soubory na disku."
+    out["coming_soon_zpf_title"] = db.get_global_setting("coming_soon_zpf_title", "") or "Výpočet poplatku za odvody ze ZPF"
+    out["coming_soon_zpf_subtitle"] = db.get_global_setting("coming_soon_zpf_subtitle", "") or "Program pro výpočet poplatku za odvody ze zemědělského půdního fondu (ZPF)"
+    out["coming_soon_zpf_items"] = db.get_global_setting("coming_soon_zpf_items", "") or "Přehledný výpočet podle platné metodiky\nExport pro projekty a dokumentaci"
+    out["coming_soon_zpf_benefit"] = db.get_global_setting("coming_soon_zpf_benefit", "") or "→ Rychlý výpočet poplatků pro projekty."
+    out["coming_soon_parking_title"] = db.get_global_setting("coming_soon_parking_title", "") or "Výpočet počtu parkovacích míst"
+    out["coming_soon_parking_subtitle"] = db.get_global_setting("coming_soon_parking_subtitle", "") or "Aplikace pro výpočet počtu parkovacích míst do projektu"
+    out["coming_soon_parking_items"] = db.get_global_setting("coming_soon_parking_items", "") or "Výpočet dle normy a typu stavby\nVýstup pro projektovou dokumentaci"
+    out["coming_soon_parking_benefit"] = db.get_global_setting("coming_soon_parking_benefit", "") or "→ Správný počet parkovacích míst do projektu na první pokus."
     out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
     if not isinstance(out["landing_updates"], list):
         out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
@@ -177,6 +185,10 @@ def load_settings_for_views(db):
     out["coming_soon_path_items_list"] = [x.strip() for x in path_items if x.strip()]
     editor_items = (out.get("coming_soon_editor_items") or "").split("\n")
     out["coming_soon_editor_items_list"] = [x.strip() for x in editor_items if x.strip()]
+    zpf_items = (out.get("coming_soon_zpf_items") or "").split("\n")
+    out["coming_soon_zpf_items_list"] = [x.strip() for x in zpf_items if x.strip()]
+    parking_items = (out.get("coming_soon_parking_items") or "").split("\n")
+    out["coming_soon_parking_items_list"] = [x.strip() for x in parking_items if x.strip()]
     try:
         from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"
