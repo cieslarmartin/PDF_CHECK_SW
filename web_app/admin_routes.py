@@ -1195,7 +1195,7 @@ def preview_activation_email():
         return redirect(url_for('admin.pending_orders'))
         
     db = get_db()
-    license_data = db.get_license_by_api_key(api_key)
+    license_data = db.get_user_license(api_key)
     if not license_data:
         flash('Licence nebyla nalezena.', 'error')
         return redirect(url_for('admin.pending_orders'))
@@ -1729,7 +1729,7 @@ def api_email_preview():
         email = None
         user_name = None
         if api_key:
-            license_data = db.get_license_by_api_key(api_key)
+            license_data = db.get_user_license(api_key)
             if license_data:
                 email = license_data.get('email')
                 user_name = license_data.get('user_name')
