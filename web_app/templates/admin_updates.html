@@ -7,18 +7,26 @@
 <div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
     <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Přehled aktualizací (landing)</div>
     <div class="card-body" style="padding:20px;overflow-x:auto;">
+        <p style="font-size:0.85em;color:#6b7280;margin:0 0 12px 0;">Chyťte řádek za ikonu ⋮⋮ a přetáhněte pro změnu pořadí. Po přetažení klikněte na <strong>Uložit pořadí</strong>.</p>
+        <form method="post" id="formReorderUpdates" style="margin-bottom:12px;">
+            <input type="hidden" name="action" value="save_updates_json">
+            <input type="hidden" name="landing_updates_json" id="reorderUpdatesJson" value="">
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSaveOrder">Uložit pořadí</button>
+        </form>
         <table style="width:100%;border-collapse:collapse;">
             <thead>
                 <tr style="border-bottom:2px solid #e5e7eb;">
+                    <th style="width:44px;"></th>
                     <th style="text-align:left;padding:10px 12px;">Měsíc</th>
                     <th style="text-align:left;padding:10px 12px;">Název</th>
                     <th style="text-align:left;padding:10px 12px;">Odrážky</th>
                     <th style="width:80px;"></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="updates-tbody">
                 {% for u in landing_updates %}
-                <tr style="border-bottom:1px solid #e5e7eb;">
+                <tr class="update-row" draggable="true" data-index="{{ loop.index0 }}" style="border-bottom:1px solid #e5e7eb;cursor:grab;">
+                    <td style="padding:10px 12px;vertical-align:middle;color:#9ca3af;cursor:grab;" title="Přetáhnout pro změnu pořadí">⋮⋮</td>
                     <td style="padding:10px 12px;">{{ u.get('month', '')|e }}</td>
                     <td style="padding:10px 12px;">{{ u.get('title', '')|e }}</td>
                     <td style="padding:10px 12px;font-size:0.9em;">{{ (u.get('items') or [])|join('; ')|e }}</td>
@@ -31,12 +39,93 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="4" style="padding:16px;color:#6b7280;">Žádné záznamy. Přidejte níže nebo upravte JSON.</td></tr>
+                <tr><td colspan="5" style="padding:16px;color:#6b7280;">Žádné záznamy. Přidejte níže nebo upravte JSON.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+<script>
+(function() {
+    var landingUpdates = {{ landing_updates_json|tojson }};
+    var tbody = document.getElementById('updates-tbody');
+    var reorderInput = document.getElementById('reorderUpdatesJson');
+    var formReorder = document.getElementById('formReorderUpdates');
+    var rows = tbody ? tbody.querySelectorAll('tr.update-row') : [];
+    function syncReorderInput() {
+        if (!Array.isArray(landingUpdates) || !reorderInput) return;
+        reorderInput.value = JSON.stringify(landingUpdates, null, 2);
+    }
+    function reorderFromDom() {
+        if (!tbody || !Array.isArray(landingUpdates)) return;
+        var order = [];
+        tbody.querySelectorAll('tr.update-row').forEach(function(tr) {
+            var idx = parseInt(tr.getAttribute('data-index'), 10);
+            if (!isNaN(idx) && idx >= 0 && idx < landingUpdates.length) order.push(idx);
+        });
+        if (order.length !== landingUpdates.length) return;
+        var newList = order.map(function(i) { return landingUpdates[i]; });
+        landingUpdates = newList;
+        tbody.querySelectorAll('tr.update-row').forEach(function(tr, i) {
+            tr.setAttribute('data-index', String(i));
+            var inp = tr.querySelector('input[name="index"]');
+            if (inp) inp.value = i;
+        });
+        syncReorderInput();
+    }
+    var draggedEl = null;
+    function handleDragStart(e) {
+        draggedEl = e.target.closest('tr.update-row');
+        if (draggedEl) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedEl.getAttribute('data-index'));
+            draggedEl.classList.add('dragging');
+        }
+    }
+    function handleDragEnd(e) {
+        var tr = e.target.closest('tr.update-row');
+        if (tr) tr.classList.remove('dragging');
+        draggedEl = null;
+    }
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var tr = e.target.closest('tr.update-row');
+        if (!tr || tr === draggedEl) return;
+        var all = Array.from(tbody.querySelectorAll('tr.update-row'));
+        var idx = all.indexOf(tr);
+        var dragIdx = all.indexOf(draggedEl);
+        if (idx === -1 || dragIdx === -1) return;
+        if (dragIdx < idx) {
+            tr.parentNode.insertBefore(draggedEl, tr.nextSibling);
+        } else {
+            tr.parentNode.insertBefore(draggedEl, tr);
+        }
+    }
+    function handleDrop(e) {
+        e.preventDefault();
+        reorderFromDom();
+    }
+    rows.forEach(function(tr) {
+        tr.addEventListener('dragstart', handleDragStart);
+        tr.addEventListener('dragend', handleDragEnd);
+        tr.addEventListener('dragover', handleDragOver);
+        tr.addEventListener('drop', handleDrop);
+    });
+    syncReorderInput();
+    formReorder.addEventListener('submit', function() {
+        if (!reorderInput.value.trim()) {
+            alert('Žádné změny pořadí k uložení.');
+            return false;
+        }
+        return true;
+    });
+})();
+</script>
+<style>
+tr.update-row.dragging { opacity: 0.5; background: #f3f4f6; }
+#updates-tbody tr.update-row:hover { background: #f9fafb; }
+</style>
 
 <div class="admin-card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:24px;">
     <div class="card-header" style="padding:16px 20px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#1e5a8a;">Přidat záznam</div>
