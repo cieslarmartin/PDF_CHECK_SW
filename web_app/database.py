@@ -534,6 +534,37 @@ class Database:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN amount_czk REAL')
             if 'amount_czk_final' not in po_cols:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN amount_czk_final REAL')
+            if 'payment_sent_at' not in po_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN payment_sent_at TIMESTAMP')
+        except Exception:
+            pass
+
+        # email_logs: historie odeslaných e-mailů (pro "Poslední komunikace")
+        try:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS email_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    recipient TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_email_logs_sent ON email_logs(sent_at DESC)')
+        except Exception:
+            pass
+
+        # page_visits: historie návštěvníků webu
+        try:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS page_visits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ip_address TEXT,
+                    path TEXT,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_visits_ts ON page_visits(timestamp)')
         except Exception:
             pass
 
@@ -1497,15 +1528,104 @@ class Database:
             return False
 
     def update_pending_order_status(self, order_id, new_status):
-        """Aktualizuje status objednávky (NEW_ORDER, WAITING_PAYMENT, ACTIVE). Vrátí True při úspěchu."""
+        """Aktualizuje status objednávky (pending, payment_sent, active). Vrátí True při úspěchu."""
         if not order_id or not str(new_status).strip():
             return False
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute('UPDATE pending_orders SET status = ? WHERE id = ?', (str(new_status).strip(), order_id))
+            status_str = str(new_status).strip()
+            if status_str == 'payment_sent':
+                cursor.execute('UPDATE pending_orders SET status = ?, payment_sent_at = CURRENT_TIMESTAMP WHERE id = ?', (status_str, order_id))
+            else:
+                cursor.execute('UPDATE pending_orders SET status = ? WHERE id = ?', (status_str, order_id))
             conn.commit()
             return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def log_email(self, recipient, subject, status):
+        """Uloží záznam o odeslaném e-mailu."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO email_logs (recipient, subject, status) VALUES (?, ?, ?)',
+                (str(recipient), str(subject), str(status))
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def get_recent_email_logs(self, limit=10):
+        """Vrátí posledních N odeslaných e-mailů."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT * FROM email_logs ORDER BY sent_at DESC LIMIT ?', (limit,))
+            return [dict(row) for row in cursor.fetchall()]
+        except Exception:
+            return []
+        finally:
+            conn.close()
+
+    def log_page_visit(self, ip_address, path):
+        """Uloží návštěvu stránky (pouze info, pro grafy)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO page_visits (ip_address, path) VALUES (?, ?)',
+                (str(ip_address), str(path))
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def get_combined_activity_last_30_days(self):
+        """Vrátí statistiky za posledních 30 dní - kontroly a návštěvy."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT date(timestamp) as date, 
+                       COUNT(id) as visits
+                FROM page_visits 
+                WHERE timestamp >= date('now', '-30 days')
+                GROUP BY date(timestamp)
+                ORDER BY date(timestamp) DESC
+            ''')
+            visits = {r['date']: r['visits'] for r in cursor.fetchall()}
+            
+            cursor.execute('''
+                SELECT date(timestamp) as date, 
+                       COUNT(id) as checks
+                FROM activity_log 
+                WHERE timestamp >= date('now', '-30 days')
+                GROUP BY date(timestamp)
+                ORDER BY date(timestamp) DESC
+            ''')
+            checks = {r['date']: r['checks'] for r in cursor.fetchall()}
+            
+            from datetime import datetime, timedelta
+            today = datetime.utcnow().date()
+            res = []
+            for i in range(29, -1, -1):
+                d = (today - timedelta(days=i)).isoformat()
+                res.append({
+                    'date': d, 
+                    'visits': visits.get(d, 0),
+                    'checks': checks.get(d, 0)
+                })
+            return res
+        except Exception:
+            return []
         finally:
             conn.close()
 

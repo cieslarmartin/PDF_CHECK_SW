@@ -92,6 +92,32 @@
     </div>
 </div>
 
+{# ============ POSLEDNÍ KOMUNIKACE (E-maily) ============ #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Poslední komunikace (odeslané e-maily)</h3>
+    <table class="table-dense" style="width:100%;">
+        <thead><tr><th>Příjemce</th><th>Předmět</th><th>Čas</th><th>Status</th></tr></thead>
+        <tbody>
+            {% for mail in recent_emails %}
+            <tr>
+                <td>{{ mail.recipient }}</td>
+                <td><small>{{ mail.subject }}</small></td>
+                <td><small>{{ (mail.sent_at or '')[:16] }}</small></td>
+                <td>
+                    {% if mail.status == 'success' %}
+                        <span style="color:#16a34a; font-weight:bold;">Odesláno</span>
+                    {% else %}
+                        <span style="color:#dc2626; font-weight:bold;">Chyba</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted" style="padding:12px;">Zatím nebyly odeslány žádné e-maily.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 {# ============ ODKAZY NA WEB (sbalitelné) ============ #}
 <details style="margin-bottom:24px;">
     <summary style="cursor:pointer;font-size:1em;font-weight:600;color:#374151;padding:8px 0;">Odkazy na web</summary>
@@ -582,9 +608,12 @@ document.addEventListener('keydown', function(e) {
             type: 'bar',
             data: {
                 labels: _activity30.map(function(x) { return (x.date || '').toString().substring(5); }),
-                datasets: [{ label: 'Soubory', data: _activity30.map(function(x) { return x.files || 0; }), backgroundColor: colors.blue }]
+                datasets: [
+                    { label: 'Provedená kontrola dokumentace', data: _activity30.map(function(x) { return x.checks || 0; }), backgroundColor: colors.blue },
+                    { label: 'Pouhá návštěva webu', data: _activity30.map(function(x) { return x.visits || 0; }), backgroundColor: colors.gray }
+                ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
         });
     }
 

@@ -1,204 +1,210 @@
 {% extends "admin_base.html" %}
 {% block title %}Objednávky a licence – DokuCheck Admin{% endblock %}
 {% block content %}
-<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Správa objednávek</h2>
-<p style="margin-bottom:20px;color:#6b7280;">Nové objednávky → vygenerovat fakturu (uloží se na server) → čekající na platbu → stáhnout fakturu / odeslat zákazníkovi manuálně → potvrdit platbu.</p>
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; white-space: nowrap; }
+    .status-pending { background: #dbeafe; color: #1d4ed8; }
+    .status-payment { background: #fef3c7; color: #b45309; }
+    .status-active { background: #d1fae5; color: #047857; }
+    .action-btn { background: none; border: 1px solid #d1d5db; color: #374151; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.85em; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .action-btn:hover { background: #f3f4f6; color: #111827; }
+    .action-primary { border-color: #1e5a8a; color: #1e5a8a; }
+    .action-primary:hover { background: #1e5a8a; color: white; }
+    .action-success { border-color: #16A34A; color: #16A34A; }
+    .action-success:hover { background: #16A34A; color: white; }
+    .action-danger { border-color: #ef4444; color: #ef4444; }
+    .action-danger:hover { background: #ef4444; color: white; }
+    
+    /* Vlastní jednoduchý modál */
+    .crm-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .crm-modal.show { display: flex; }
+    .crm-modal-content { background: white; border-radius: 8px; padding: 20px; width: 100%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+    .crm-modal-header { font-size: 1.25em; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; display: flex; justify-content: space-between; }
+    .crm-modal-close { cursor: pointer; background: none; border: none; font-size: 1.5em; line-height: 1; margin-top: -5px; color: #6b7280; }
+</style>
 
-{# A) Nové objednávky (NEW_ORDER) – OBJEDNAT (vygeneruje fakturu + notifikace) #}
-<h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) {{ env_labels.label_section_new_orders|default('Nové objednávky') }}</h3>
-<div class="table-container">
-    <table class="table-dense">
-        <thead>
-            <tr>
-                <th>Č. objednávky</th>
-                <th>Datum</th>
-                <th>Jméno / Firma</th>
-                <th>IČ</th>
-                <th>E-mail</th>
-                <th>Tarif</th>
-                <th>Cena</th>
-                <th>Sleva</th>
-                <th>Stav</th>
-                <th>Akce</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for o in orders_new %}
-            <tr>
-                <td>{{ o.order_display_number or o.id }}</td>
-                <td>{{ (o.created_at or '')[:16] }}</td>
-                <td>{{ o.jmeno_firma or '—' }}{% if o.ulice or o.mesto %}<br><small style="color:#9ca3af;">{{ o.ulice or '' }} {{ o.mesto or '' }} {{ o.psc or '' }}</small>{% endif %}</td>
-                <td>{{ o.ico or '—' }}{% if o.dic %}<br><small>DIČ: {{ o.dic }}</small>{% endif %}</td>
-                <td>{{ o.email or '—' }}</td>
-                <td>{{ (o.tarif or '—')|upper }}</td>
-                <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
-                <td>
-                    {% if o.discount_applied %}<span style="background:#d1fae5;color:#047857;padding:2px 6px;border-radius:4px;font-size:0.8em;">-{{ o.discount_percent|int }}%</span>
-                    {% elif o.discount_requested %}<span style="background:#fef3c7;color:#b45309;padding:2px 6px;border-radius:4px;font-size:0.8em;">Žádost</span>
-                    {% else %}—{% endif %}
-                </td>
-                <td><span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_new|default('Nová') }}</span></td>
-                <td style="white-space:nowrap;">
-                    <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">STÁHNOUT FAKTURU (PDF)</a>
-                    {% if o.discount_requested and not o.discount_applied %}
-                    <form method="post" action="{{ url_for('admin.apply_discount') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-sm" style="background:#059669;color:#fff;" onclick="return confirm('Uplatnit slevu 20% na objednávku #{{ o.order_display_number or o.id }}?');">UPLATNIT SLEVU</button>
-                    </form>
-                    {% endif %}
-                    <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-primary btn-sm">{{ env_labels.label_btn_obednat|default('OBJEDNAT') }}</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">GENEROVAT ZNOVU</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;margin-left:6px;">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">{{ env_labels.label_btn_activate|default('VYTVOŘIT UŽIVATELE A AKTIVOVAT') }}</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;margin-left:6px;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
-                        <input type="hidden" name="order_id" value="{{ o.id }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">SMAZAT</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Žádné nové objednávky.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h2 style="font-size:1.2em;font-weight:600;margin:0;">CRM: Správa objednávek a licencí</h2>
+    <div style="font-size:0.9em; color:#6b7280;">
+        Flow: Objednáno &rarr; ✉️ Odeslána platba &rarr; 🔑 Aktivováno
+    </div>
 </div>
 
-{# B) Čekající na platbu (WAITING_PAYMENT) – toggle ČSOB + POTVRDIT PŘIJETÍ PLATBY #}
-<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">B) {{ env_labels.label_section_waiting_payment|default('Čekající na platbu') }}</h3>
-<div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <form method="post" action="{{ url_for('admin.toggle_auto_activate_csob') }}" id="form-csob" style="display:flex;align-items:center;gap:8px;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-            <input type="checkbox" name="auto_activate_csob" value="1" {% if auto_activate_csob %}checked{% endif %} onchange="document.getElementById('form-csob').submit();">
-            <span style="font-size:0.9em;">Automaticky aktivovat po zaplacení (ČSOB)</span>
-        </label>
-    </form>
-    <script>
-    document.getElementById('form-csob').addEventListener('submit', function(e) {
-        var cb = this.querySelector('input[name=auto_activate_csob]');
-        if (!cb.checked) { var h = document.createElement('input'); h.type = 'hidden'; h.name = 'auto_activate_csob'; h.value = '0'; this.appendChild(h); }
-    });
-    </script>
-    <span style="font-size:0.85em;color:#6b7280;">Manuálně: tlačítko „POTVRDIT PŘIJETÍ PLATBY“ níže.</span>
-</div>
-<div class="table-container">
-    <table class="table-dense">
-        <thead>
-            <tr>
-                <th>Č. objednávky</th>
-                <th>Datum</th>
-                <th>Jméno / Firma</th>
-                <th>E-mail</th>
-                <th>Tarif</th>
-                <th>Stav</th>
-                <th>Akce</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for o in orders_waiting %}
-            <tr>
-                <td>{{ o.order_display_number or o.id }}</td>
-                <td>{{ (o.created_at or '')[:16] }}</td>
-                <td>{{ o.jmeno_firma or '—' }}</td>
-                <td>{{ o.email or '—' }}</td>
-                <td>{{ (o.tarif or '—')|upper }}</td>
-                <td><span style="background:#fef3c7;color:#b45309;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ env_labels.label_status_waiting_payment|default('Čeká na platbu') }}</span></td>
-                <td style="min-width:260px;">
-                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;">
-                        <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="btn btn-outline-secondary btn-sm">📄 Faktura</a>
-                        <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm">🔄 Znovu</button>
-                        </form>
-                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-primary btn-sm">✅ {{ env_labels.label_btn_confirm_payment|default('Potvrdit platbu') }}</button>
-                        </form>
-                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:inline;">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm">👤+ Vytvořit a aktivovat</button>
-                        </form>
-                        <form method="post" action="{{ url_for('admin.activate_without_invoice') }}" style="display:inline;">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm">⚡ Aktivovat bez faktury</button>
-                        </form>
-                    </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;">
-                        <form method="post" action="{{ url_for('admin.delete_user_from_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu SMAZAT UŽIVATELE (licenci) pro e-mail {{ o.email }}? Objednávka zůstane.');">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže uživatele (licenci) z databáze. Objednávka zůstane.">🗑️ Smazat uživatele</button>
-                        </form>
-                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat objednávku #{{ o.order_display_number or o.id }}?');">
-                            <input type="hidden" name="order_id" value="{{ o.id }}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">🗑️ Smazat obj.</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné objednávky čekající na platbu.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{# C) Aktivní licence (Zaplaceno) #}
-<h3 style="font-size:1.05em;margin:24px 0 10px;color:#1f2937;">C) {{ env_labels.label_section_active_licenses|default('Aktivní licence (Zaplaceno)') }}</h3>
-<p style="margin-bottom:10px;color:#6b7280;font-size:0.9em;">Uživatelé s přístupem (Basic / PRO).</p>
 <div class="table-container">
     <table class="table-dense">
         <thead>
             <tr>
                 <th>Objednávka</th>
-                <th>E-mail</th>
-                <th>Jméno</th>
+                <th>Datum</th>
+                <th>Zákazník</th>
                 <th>Tarif</th>
-                <th>Expirace</th>
-                <th>Akce</th>
+                <th>Cena</th>
+                <th>Stav</th>
+                <th>Akce a komunikace</th>
             </tr>
         </thead>
         <tbody>
-            {% for l in active_licenses %}
+            {% for o in orders %}
             <tr>
-                <td>{{ l.order_display_number or l.order_id or '—' }}</td>
-                <td>{{ l.email or '—' }}</td>
-                <td>{{ l.user_name or '—' }}</td>
-                <td><span style="background:#d1fae5;color:#047857;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ l.tier_name or 'Pro' }}</span></td>
-                <td>{{ (l.license_expires or '')[:10] if l.license_expires else '—' }}</td>
-                <td style="min-width:200px;">
-                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;">
-                        {% if l.order_id %}
-                        <a href="{{ url_for('admin.download_invoice', order_id=l.order_id) }}" class="btn btn-outline-secondary btn-sm">📄 Faktura</a>
-                        <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;">
-                            <input type="hidden" name="order_id" value="{{ l.order_id }}">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm">🔄 Znovu</button>
+                <td><strong>{{ o.order_display_number or o.id }}</strong></td>
+                <td style="color:#6b7280; font-size:0.9em;">
+                    {{ (o.created_at or '')[:16] }}
+                    {% if o.payment_sent_at %}
+                    <br><span style="font-size:0.85em; color:#8b5cf6;">✉️ {{ o.payment_sent_at[:16] }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="font-weight:500;">{{ o.jmeno_firma or '—' }}</div>
+                    <div style="font-size:0.85em; color:#4b5563;">{{ o.email }}</div>
+                </td>
+                <td>{{ (o.tarif or '—')|upper }}</td>
+                <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
+                <td>
+                    {% if o.status == 'NEW_ORDER' or o.status == 'pending' %}
+                        <span class="status-badge status-pending">Objednáno (Nová)</span>
+                    {% elif o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT' %}
+                        <span class="status-badge status-payment">Odeslána platba</span>
+                    {% elif o.status == 'ACTIVE' or o.status == 'active' %}
+                        <span class="status-badge status-active">Aktivní (Zaplaceno)</span>
+                    {% else %}
+                        <span class="status-badge" style="background:#f3f4f6;">{{ o.status }}</span>
+                    {% endif %}
+                </td>
+                <td style="min-width:240px;">
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        
+                        {# 1. Odeslat platební údaje #}
+                        <button type="button" class="action-btn action-primary" title="Odešle e-mail s fakturou a QR kódem pro platbu." onclick="openEmailModal('payment', '{{ o.id }}', null)">
+                            ✉️ Platební údaje
+                        </button>
+                        
+                        {# 2. Aktivovat a odeslat licenci (pokud je aktivní, pošle znovu, jinak aktivuje a pošle) #}
+                        <form method="post" action="{{ url_for('admin.confirm_payment') }}" style="display:none;" id="form-activate-{{ o.id }}">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
                         </form>
-                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat objednávku pro tuto licenci? Licence se tím NESMAŽE, jen záznam o objednávce.');">
-                            <input type="hidden" name="order_id" value="{{ l.order_id }}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže objednávku.">🗑️ Obj.</button>
-                        </form>
+                        
+                        {% if o.has_active_license %}
+                        <button type="button" class="action-btn action-success" title="Vygeneruje licenci a pošle e-mail s odkazem na nastavení hesla." onclick="openEmailModal('activation', '{{ o.id }}', '{{ o.api_key }}')">
+                            🔑 Znovu zaslat licenci
+                        </button>
                         {% else %}
-                        <span class="text-muted small">Bez objednávky</span>
+                        <button type="button" class="action-btn action-success" title="Potvrdit platbu, vytvořit uživatele a připravit aktivační e-mail." onclick="if(confirm('Potvrdit platbu a vytvořit uživatele pro {{ o.email }}?')) document.getElementById('form-activate-{{ o.id }}').submit();">
+                            ⚡ Potvrdit platbu a aktivovat
+                        </button>
                         {% endif %}
-                        <a href="{{ url_for('admin.preview_activation_email', api_key=l.api_key, order_id=l.order_id if l.order_id else '') }}" class="btn btn-outline-primary btn-sm" title="Odeslat uživateli e-mail s odkazem na nastavení hesla">✉️ Odeslat heslo</a>
-                        <form method="post" action="{{ url_for('admin.delete_active_license') }}" style="display:inline;" onsubmit="return confirm('Opravdu SMAZAT licenci ({{ l.email }})?');">
-                            <input type="hidden" name="api_key" value="{{ l.api_key }}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže licenci.">🗑️ Lic.</button>
+
+                        {# Další akce: Faktura #}
+                        {% if o.invoice_path %}
+                        <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="action-btn" title="Stáhnout PDF fakturu">📄 Faktura</a>
+                        {% else %}
+                        <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <button type="submit" class="action-btn" title="Vygeneruje PDF fakturu pro tuto objednávku">📄 Vygenerovat fakturu</button>
                         </form>
+                        {% endif %}
+                        
                     </div>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné aktivní licence (nebo pouze Trial/Free).</td></tr>
+            <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné objednávky v systému.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- ODESÍLACÍ MODAL -->
+<div id="emailModal" class="crm-modal">
+    <div class="crm-modal-content">
+        <div class="crm-modal-header">
+            <span id="modalTitle">Odeslat e-mail</span>
+            <button class="crm-modal-close" onclick="closeEmailModal()">&times;</button>
+        </div>
+        <form method="post" action="{{ url_for('admin.api_email_send') }}" id="emailForm">
+            <input type="hidden" name="action_type" id="m_action_type">
+            <input type="hidden" name="order_id" id="m_order_id">
+            <input type="hidden" name="api_key" id="m_api_key">
+            
+            <div style="margin-bottom:12px;">
+                <label class="small font-weight-bold">Příjemce</label>
+                <input type="text" name="recipient" id="m_recipient" class="form-control" readonly>
+            </div>
+            
+            <div style="margin-bottom:12px;">
+                <label class="small font-weight-bold">Předmět</label>
+                <input type="text" name="subject" id="m_subject" class="form-control" required>
+            </div>
+            
+            <div style="margin-bottom:12px;">
+                <label class="small font-weight-bold">Tělo e-mailu (HTML povoleno)</label>
+                <textarea name="body" id="m_body" class="form-control" rows="10" required style="font-family:monospace;"></textarea>
+            </div>
+            
+            <div style="margin-bottom:15px; padding:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:bold;cursor:pointer;margin:0;">
+                    <input type="checkbox" name="attach_invoice" value="1" id="m_attach_invoice">
+                    Přiložit fakturu v PDF
+                </label>
+                <div id="m_invoice_warning" class="small text-danger mt-1" style="display:none;margin-left:24px;">Nelze, faktura nebyla vygenerována.</div>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-outline-secondary" onclick="closeEmailModal()">Zrušit</button>
+                <button type="submit" class="btn btn-primary" style="background:#1e5a8a;">Potvrdit a odeslat</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEmailModal(type, orderId, apiKey) {
+    document.getElementById('modalTitle').innerText = (type === 'payment') ? 'Odeslat platební údaje' : 'Odeslat aktivační e-mail';
+    document.getElementById('m_action_type').value = type;
+    document.getElementById('m_order_id').value = orderId;
+    document.getElementById('m_api_key').value = apiKey || '';
+    
+    // Reset forms
+    document.getElementById('m_recipient').value = 'Načítám...';
+    document.getElementById('m_subject').value = 'Načítám...';
+    document.getElementById('m_body').value = 'Načítám...';
+    document.getElementById('m_attach_invoice').checked = false;
+    document.getElementById('m_attach_invoice').disabled = true;
+    document.getElementById('m_invoice_warning').style.display = 'none';
+    
+    document.getElementById('emailModal').classList.add('show');
+    
+    // Fetch data
+    let url = `/admin/api/email-preview?type=${type}&order_id=${orderId}`;
+    if (apiKey) url += `&api_key=${apiKey}`;
+    
+    fetch(url)
+    .then(r => r.json())
+    .then(data => {
+        if(!data.success) {
+            alert('Chyba: ' + data.error);
+            closeEmailModal();
+            return;
+        }
+        document.getElementById('m_recipient').value = data.recipient;
+        document.getElementById('m_subject').value = data.subject;
+        document.getElementById('m_body').value = data.body_html || data.body_plain;
+        
+        if(data.has_invoice) {
+            document.getElementById('m_attach_invoice').disabled = false;
+            // Default check invoice logic
+            document.getElementById('m_attach_invoice').checked = (type === 'payment');
+        } else {
+            document.getElementById('m_invoice_warning').style.display = 'block';
+        }
+    })
+    .catch(err => {
+        alert('Chyba komunikace se serverem.');
+        closeEmailModal();
+    });
+}
+
+function closeEmailModal() {
+    document.getElementById('emailModal').classList.remove('show');
+}
+</script>
 {% endblock %}

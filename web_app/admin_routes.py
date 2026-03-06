@@ -257,14 +257,9 @@ def dashboard():
     for tier in LicenseTier:
         stats['by_tier'][tier.name] = sum(1 for l in licenses if l.get('license_tier') == tier.value)
 
-    activity_30_raw = db.get_activity_last_30_days()
-    # Vyplnit všech 30 dní (0 kde chybí) pro sloupcový graf
-    today = datetime.utcnow().date()
-    day_map = {r['date']: r['files'] for r in (activity_30_raw or [])}
-    activity_30 = []
-    for i in range(29, -1, -1):
-        d = (today - timedelta(days=i)).isoformat()
-        activity_30.append({'date': d, 'files': day_map.get(d, 0)})
+    activity_30_raw = db.get_combined_activity_last_30_days()
+    activity_30 = activity_30_raw
+    
     tiers_list = db.get_all_license_tiers()
     # Pro nové licence nabízíme pouze Free, Basic, Pro, Trial (bez Enterprise)
     product_tiers = [t for t in tiers_list if (t.get('name') or '').strip() in ('Trial', 'Basic', 'Pro', 'Unlimited')]
@@ -282,6 +277,7 @@ def dashboard():
     trial_stats = db.get_trial_stats()
     activity_log = db.get_activity_log(limit=200)
     activity_stats = db.get_activity_stats_today()
+    recent_emails = db.get_recent_email_logs(limit=10)
 
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
@@ -301,6 +297,7 @@ def dashboard():
                           trial_stats=trial_stats or {},
                           activity_log=activity_log or [],
                           activity_stats=activity_stats or {},
+                          recent_emails=recent_emails or [],
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
@@ -715,47 +712,41 @@ def tiers():
 @admin_bp.route('/admin/pending-orders', methods=['GET'])
 @admin_required
 def pending_orders():
-    """Správa objednávek: A) Nové objednávky (NEW_ORDER), B) Čekající na platbu (WAITING_PAYMENT), C) Aktivní licence."""
+    """Správa objednávek: sjednocený pohled na celý životní cyklus (pending -> payment_sent -> active)."""
     db = get_db()
-    orders_new = db.get_pending_orders(status='NEW_ORDER', limit=200)
-    orders_waiting = db.get_pending_orders(status='WAITING_PAYMENT', limit=200)
-    # Zpětná kompatibilita: i staré "pending" ukaž v čekajících
-    orders_pending_legacy = db.get_pending_orders(status='pending', limit=50)
-    if orders_pending_legacy:
-        seen_ids = {o['id'] for o in (orders_waiting or [])}
-        for o in orders_pending_legacy:
-            if o['id'] not in seen_ids:
-                (orders_waiting or []).append(o)
+    
+    # 1. Načtení všech objednávek
+    orders_raw = db.get_pending_orders(limit=500)
+    orders = []
+    
+    # 2. Mapování existujících licencí podle emailu, aby bylo vidět, zda uživatel už opravdu existuje
     licenses = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
-    active_licenses = []
-    if licenses:
-        conn = db.get_connection()
-        cur = conn.cursor()
-        for l in licenses:
-            if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free'):
-                l_dict = dict(l)
-                if l_dict.get('email'):
-                    # Získání order_id k licenci
-                    cur.execute('SELECT id, invoice_path, order_display_number FROM pending_orders WHERE email = ? ORDER BY id DESC LIMIT 1', (l_dict['email'],))
-                    r = cur.fetchone()
-                    if r:
-                        l_dict['order_id'] = r['id']
-                        l_dict['invoice_path'] = r['invoice_path']
-                        l_dict['order_display_number'] = r['order_display_number']
-                active_licenses.append(l_dict)
-        conn.close()
+    active_emails = { (l.get('email') or '').lower(): l for l in licenses if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free') }
+    
+    for o in (orders_raw or []):
+        o_dict = dict(o)
+        email = (o_dict.get('email') or '').lower()
+        # Pokud má aktivní licenci, označíme
+        if email in active_emails:
+            o_dict['has_active_license'] = True
+            o_dict['api_key'] = active_emails[email].get('api_key')
+        else:
+            o_dict['has_active_license'] = False
+            o_dict['api_key'] = None
+        orders.append(o_dict)
+
     try:
         auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
     except Exception:
         auto_activate_csob = False
+        
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
+        
     return render_template('admin_pending_orders.html',
-        orders_new=orders_new or [],
-        orders_waiting=orders_waiting or [],
-        active_licenses=active_licenses,
+        orders=orders,
         auto_activate_csob=auto_activate_csob,
         user=user, active_page='pending_orders')
 
@@ -1656,6 +1647,160 @@ def settings():
 # =============================================================================
 # API ENDPOINTS PRO ADMIN AKCE
 # =============================================================================
+
+@admin_bp.route('/admin/api/email-preview', methods=['GET'])
+@admin_required
+def api_email_preview():
+    """Vrátí JSON s náhledem e-mailu (platba nebo aktivace) pro Modal."""
+    db = get_db()
+    action_type = request.args.get('type')
+    order_id = request.args.get('order_id', '')
+    api_key = request.args.get('api_key', '')
+    
+    order = db.get_pending_order_by_id(order_id) if order_id else None
+    
+    if action_type == 'payment':
+        if not order:
+            return jsonify({'success': False, 'error': 'Objednávka nenalezena'})
+        from email_sender import get_order_confirmation_email_preview
+        subject, body_plain, body_html = get_order_confirmation_email_preview(
+            order_id=order['id'],
+            email=order.get('email'),
+            jmeno_firma=order.get('jmeno_firma'),
+            tarif=order.get('tarif'),
+            amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or ''
+        )
+        return jsonify({
+            'success': True,
+            'subject': subject,
+            'body_plain': body_plain,
+            'body_html': body_html,
+            'recipient': order.get('email'),
+            'has_invoice': bool(order.get('invoice_path') and os.path.isfile(order.get('invoice_path'))),
+            'order_id': order['id']
+        })
+        
+    elif action_type == 'activation':
+        # Může to být aktivace z objednávky nebo přímo na licenci
+        email = None
+        user_name = None
+        if api_key:
+            license_data = db.get_license_by_api_key(api_key)
+            if license_data:
+                email = license_data.get('email')
+                user_name = license_data.get('user_name')
+        if not email and order:
+            email = order.get('email')
+            user_name = order.get('jmeno_firma') or order.get('email')
+            
+        if not email:
+            return jsonify({'success': False, 'error': 'Nelze určit příjemce (chybí e-mail)'})
+            
+        # Vytvoření / získání tokenu (pokud je api_key)
+        set_password_url = None
+        if api_key:
+            import time
+            conn = db.get_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT token FROM set_password_tokens WHERE api_key = ? AND expires_at > ? ORDER BY expires_at DESC LIMIT 1', (api_key, time.time()))
+            row = cur.fetchone()
+            conn.close()
+            if row:
+                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+                set_password_url = base + '/portal/set-password?token=' + row['token']
+            else:
+                # Vytvořit nový token
+                set_pwd_token = secrets.token_urlsafe(32)
+                expires_at = time.time() + 7 * 24 * 3600
+                if db.store_set_password_token(set_pwd_token, api_key, expires_at):
+                    base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+                    set_password_url = base + '/portal/set-password?token=' + set_pwd_token
+
+        download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
+        login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
+
+        from email_sender import get_activation_email_preview
+        subject, body_plain, body_html = get_activation_email_preview(
+            user_email=email,
+            password_plain=None,
+            download_url=download_url,
+            login_url=login_url,
+            user_name=user_name,
+            set_password_url=set_password_url
+        )
+        return jsonify({
+            'success': True,
+            'subject': subject,
+            'body_plain': body_plain,
+            'body_html': body_html,
+            'recipient': email,
+            'has_invoice': bool(order and order.get('invoice_path') and os.path.isfile(order.get('invoice_path'))),
+            'order_id': order['id'] if order else '',
+            'api_key': api_key
+        })
+    return jsonify({'success': False, 'error': 'Neznámý typ akce'})
+
+
+@admin_bp.route('/admin/api/email/send', methods=['POST'])
+@admin_required
+def api_email_send():
+    """Odešle e-mail na základě dat z modálu (platba nebo aktivace)."""
+    to_email = request.form.get('recipient', '').strip()
+    subject = request.form.get('subject', '').strip()
+    body_html_or_plain = request.form.get('body', '').strip()
+    action_type = request.form.get('action_type', '').strip()
+    order_id = request.form.get('order_id', '').strip()
+    api_key = request.form.get('api_key', '').strip()
+    attach_invoice = request.form.get('attach_invoice') == '1'
+    
+    if not to_email or not subject or not body_html_or_plain:
+        flash('Chybí povinná data pro odeslání e-mailu.', 'error')
+        return redirect(url_for('admin.pending_orders'))
+        
+    db = get_db()
+    invoice_path = None
+    invoice_filename = None
+    
+    if attach_invoice and order_id:
+        order = db.get_pending_order_by_id(order_id)
+        if order and order.get('invoice_path') and os.path.isfile(order.get('invoice_path')):
+            invoice_path = order.get('invoice_path')
+            display_num = (order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id)
+            invoice_filename = f'faktura_{display_num}.pdf'
+
+    from email_sender import send_email_with_attachment
+    
+    # Odvození plain vs html
+    body_html = None
+    body_plain = body_html_or_plain
+    if '<br>' in body_html_or_plain or '<p>' in body_html_or_plain or 'href=' in body_html_or_plain or '<b>' in body_html_or_plain:
+        body_html = body_html_or_plain
+        import re
+        body_plain = re.sub(r'<br\s*/?>', '\n', body_html)
+        body_plain = re.sub(r'</p>', '\n\n', body_plain)
+        body_plain = re.sub(r'<[^>]+>', '', body_plain)
+
+    success = send_email_with_attachment(
+        to_email=to_email,
+        subject=subject,
+        body_plain=body_plain,
+        body_html=body_html,
+        attachment_path=invoice_path,
+        attachment_filename=invoice_filename,
+        append_footer=True
+    )
+    
+    if success:
+        db.log_email(to_email, subject, 'success')
+        flash(f'E-mail byl odeslán na {to_email}.', 'success')
+        if action_type == 'payment' and order_id:
+            db.update_pending_order_status(order_id, 'payment_sent')
+        # if action_type == 'activation', status is already ACTIVE or we update it?
+    else:
+        db.log_email(to_email, subject, 'error')
+        flash('Chyba při odesílání e-mailu. Zkontrolujte SMTP nastavení.', 'error')
+        
+    return redirect(url_for('admin.pending_orders'))
 
 @admin_bp.route('/admin/api/trial/reset', methods=['POST'])
 @admin_required

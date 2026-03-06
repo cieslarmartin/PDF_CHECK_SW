@@ -274,7 +274,7 @@
 
             {# ── Obchod ── #}
             <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obchod</li>
-            <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">💰</span> Objednávky</a></li>
+            <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}" title="Komplexní CRM pro správu životního cyklu zákazníka (Nová -> Platba -> Aktivace)"><span style="width:1.4rem;display:inline-block;text-align:center;">⏳</span> Správa objednávek</a></li>
             <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Ceník / Tarify</a></li>
             <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🛒</span> Texty checkoutu</a></li>
 

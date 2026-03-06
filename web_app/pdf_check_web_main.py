@@ -3459,6 +3459,10 @@ def count_pdfs_in_folder(folder_path):
 def index():
     """Landing page DokuCheck – verze V3. Texty a promo z global_settings. FAQ dynamicky z tabulky faq."""
     db = Database()
+    try:
+        db.log_page_visit(request.remote_addr or request.headers.get('X-Forwarded-For', ''), '/')
+    except Exception:
+        pass
     settings = load_settings_for_views(db) if load_settings_for_views else {}
     try:
         settings['faq_list'] = db.get_all_faq()
