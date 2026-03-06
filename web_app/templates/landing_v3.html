@@ -161,21 +161,20 @@
         </div>
     </section>
 
-    {# ============ CO JE NOVÉHO – statický text, bez DB ============ #}
+    {# ============ CO JE NOVÉHO – z DB (landing_updates) ============ #}
     <section id="news" class="py-10 bg-white border-b border-gray-100">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-lg font-bold mb-4 text-center anim" style="color:#0f172a;">Co je nového</h2>
             <div class="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                {% for u in (landing_updates|default([]))[:4] %}
                 <div class="anim rounded-xl border p-4 text-left transition-shadow hover:shadow-md" style="border-color:#e5e7eb;">
-                    <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2" style="background:#eff6ff;color:#1e5a8a;">03/2026</span>
-                    <h3 class="font-semibold text-gray-900 mb-2">Březen 2026</h3>
-                    <p class="text-sm text-gray-600">Automatické rozlišování certifikačních autorit v ČR (PostSignum, I.CA, eIdentity) a podpora vícenásobných podpisů v PDF.</p>
+                    <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2" style="background:#eff6ff;color:#1e5a8a;">{{ u.get('month', '')|e }}</span>
+                    <h3 class="font-semibold text-gray-900 mb-2">{{ u.get('title', u.get('month', ''))|e }}</h3>
+                    <p class="text-sm text-gray-600">{% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}—{% endif %}</p>
                 </div>
-                <div class="anim rounded-xl border p-4 text-left transition-shadow hover:shadow-md" style="border-color:#e5e7eb;">
-                    <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2" style="background:#eff6ff;color:#1e5a8a;">02/2026</span>
-                    <h3 class="font-semibold text-gray-900 mb-2">Únor 2026</h3>
-                    <p class="text-sm text-gray-600">Čtení a zamykání souborů podle metodiky MMR pro digitální stavební řízení (ISSŘ).</p>
-                </div>
+                {% else %}
+                <div class="anim rounded-xl border p-4 text-left col-span-2" style="border-color:#e5e7eb;"><p class="text-sm text-gray-500">Přehled novinek naleznete v sekci Stažení.</p></div>
+                {% endfor %}
             </div>
             <p class="text-center mt-4">
                 <a href="#download" class="text-sm font-medium" style="color:#1e5a8a;">Verze ke stažení →</a>
@@ -318,8 +317,11 @@
             <p class="text-sm text-gray-500 mb-4">Stáhněte si nejnovější verzi programu Agenta. Kontrola PDF na vašem počítači, na server jdou jen metadata.</p>
             <div class="text-left max-w-lg mx-auto mb-6">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Přehled aktualizací</p>
-                <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">03/2026</span> Automatické rozlišování CA (PostSignum, I.CA, eIdentity), vícenásobné podpisy v PDF.</p>
-                <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">02/2026</span> Čtení a zamykání souborů podle metodiky MMR (ISSŘ).</p>
+                {% for u in (landing_updates|default([]))[:5] %}
+                <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">{{ u.get('month', '')|e }}</span> {% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}{{ u.get('title', '')|e }}{% endif %}</p>
+                {% else %}
+                <p class="text-sm text-gray-500">Aktuální verze a novinky v aplikaci.</p>
+                {% endfor %}
             </div>
             {% if show_pilot_notice and pilot_notice_text %}
             <div class="mb-6 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm text-left max-w-lg mx-auto"><strong>Info:</strong> {{ pilot_notice_text }}</div>

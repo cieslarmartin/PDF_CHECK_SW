@@ -269,18 +269,21 @@
         </div>
         <ul class="sidebar-nav">
             {# ── Přehled ── #}
-            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Přehled</a></li>
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Přehled</li>
+            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Dashboard</a></li>
             <li><a href="{{ url_for('admin.analytics') }}" class="{{ 'active' if active_page == 'analytics' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👁️</span> Návštěvnost</a></li>
+
+            {# ── Uživatelé a licence ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Uživatelé a licence</li>
+            <li><a href="{{ url_for('admin.users_licenses') }}" class="{{ 'active' if active_page == 'users_licenses' else '' }}" title="Objednávky (CRM) a seznam licencí"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Objednávky a licence</a></li>
 
             {# ── Obchod ── #}
             <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obchod</li>
-            <li><a href="{{ url_for('admin.pending_orders') }}" class="{{ 'active' if active_page == 'pending_orders' else '' }}" title="Komplexní CRM pro správu životního cyklu zákazníka (Nová -> Platba -> Aktivace)"><span style="width:1.4rem;display:inline-block;text-align:center;">⏳</span> Správa objednávek</a></li>
             <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Ceník / Tarify</a></li>
             <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🛒</span> Texty checkoutu</a></li>
 
-            {# ── Uživatelé ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Uživatelé</li>
-            <li><a href="{{ url_for('admin.users') }}" class="{{ 'active' if active_page == 'users' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Seznam uživatelů</a></li>
+            {# ── Aktivita ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Aktivita</li>
             <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>
             <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📜</span> Logy</a></li>
 
@@ -292,8 +295,8 @@
             <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Firma</li>
             <li><a href="{{ url_for('admin.company_settings') }}" class="{{ 'active' if active_page == 'company_settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🏢</span> Nastavení firmy</a></li>
 
-            {# ── Systém ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Systém</li>
+            {# ── Obsah a systém ── #}
+            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obsah a systém</li>
             <li><a href="{{ url_for('admin.settings') }}" class="{{ 'active' if active_page == 'settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">⚙️</span> Nastavení</a></li>
             <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">❓</span> Správa FAQ</a></li>
             <li><a href="{{ url_for('admin.content_help') }}" class="{{ 'active' if active_page == 'content_help' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📄</span> Správa obsahu nápovědy</a></li>

@@ -1,0 +1,640 @@
+{% extends "admin_base.html" %}
+{% block title %}Uživatelé a licence – DokuCheck Admin{% endblock %}
+{% block content %}
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; white-space: nowrap; }
+    .status-pending { background: #dbeafe; color: #1d4ed8; }
+    .status-payment { background: #fef3c7; color: #b45309; }
+    .status-active { background: #d1fae5; color: #047857; }
+    .action-btn { background: none; border: 1px solid #d1d5db; color: #374151; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.85em; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .action-btn:hover { background: #f3f4f6; color: #111827; }
+    .action-primary { border-color: #1e5a8a; color: #1e5a8a; }
+    .action-primary:hover { background: #1e5a8a; color: white; }
+    .action-success { border-color: #16A34A; color: #16A34A; }
+    .action-success:hover { background: #16A34A; color: white; }
+    .action-danger { border-color: #ef4444; color: #ef4444; }
+    .action-danger:hover { background: #ef4444; color: white; }
+    .crm-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .crm-modal.show { display: flex; }
+    .crm-modal-content { background: white; border-radius: 8px; padding: 20px; width: 100%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+    .crm-modal-header { font-size: 1.25em; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; display: flex; justify-content: space-between; }
+    .crm-modal-close { cursor: pointer; background: none; border: none; font-size: 1.5em; line-height: 1; margin-top: -5px; color: #6b7280; }
+    #tabPreview.active, #tabEdit.active { background: #1e5a8a; color: white; border-color: #1e5a8a; }
+    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section-title { font-size: 1.15em; font-weight: 600; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; color: #1e5a8a; }
+</style>
+
+<h1 style="font-size:1.35em;font-weight:600;margin:0 0 20px;">Uživatelé a licence</h1>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:24px;">Objednávky (CRM) a seznam licencí na jednom místě. Flow: Objednáno &rarr; Odeslána platba &rarr; Aktivováno.</p>
+
+{# ==================== SEKCE OBJEDNÁVKY ==================== #}
+<div class="section-card">
+    <h2 class="section-title">Objednávky</h2>
+    <div class="table-container">
+        <table class="table-dense">
+            <thead>
+                <tr>
+                    <th>Objednávka</th>
+                    <th>Datum</th>
+                    <th>Zákazník</th>
+                    <th>Tarif</th>
+                    <th>Cena</th>
+                    <th>Stav</th>
+                    <th>Akce a komunikace</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td><strong>{{ o.order_display_number or o.id }}</strong></td>
+                    <td style="color:#6b7280; font-size:0.9em;">
+                        {{ (o.created_at or '')[:16] }}
+                        {% if o.payment_sent_at %}
+                        <br><span style="font-size:0.85em; color:#8b5cf6;">✉️ {{ o.payment_sent_at[:16] }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-weight:500;">{{ o.jmeno_firma or '—' }}</div>
+                        <div style="font-size:0.85em; color:#4b5563;">{{ o.email }}</div>
+                    </td>
+                    <td>{{ (o.tarif or '—')|upper }}</td>
+                    <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
+                    <td>
+                        {% if o.status == 'NEW_ORDER' or o.status == 'pending' %}
+                            <span class="status-badge status-pending">Objednáno</span>
+                        {% elif o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT' %}
+                            <span class="status-badge status-payment">Čeká na zaplacení</span>
+                        {% elif o.status == 'ACTIVE' or o.status == 'active' %}
+                            <span class="status-badge status-active">Aktivní licence</span>
+                        {% else %}
+                            <span class="status-badge" style="background:#f3f4f6;">{{ o.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="min-width:260px;">
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                            {% set is_pending = (o.status == 'NEW_ORDER' or o.status == 'pending') %}
+                            {% set is_waiting_payment = (o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT') %}
+                            {% set is_active = (o.status == 'ACTIVE' or o.status == 'active') %}
+                            {% if is_pending or is_waiting_payment %}
+                            <button type="button" class="action-btn action-primary" title="Odešle e-mail s platebními údaji a fakturou." onclick="openEmailModal('payment', '{{ o.id }}', null)">✉️ Odeslat údaje k platbě</button>
+                            {% endif %}
+                            {% if is_waiting_payment and not o.has_active_license %}
+                            <button type="button" class="action-btn action-success" title="Zaplaceno – odeslat aktivační e-mail." onclick="openEmailModal('activation', '{{ o.id }}', '')">🔑 Zaplaceno a poslat aktivaci</button>
+                            {% endif %}
+                            {% if o.has_active_license %}
+                            <button type="button" class="action-btn action-success" title="Znovu odeslat aktivační e-mail." onclick="openEmailModal('activation', '{{ o.id }}', '{{ o.api_key or '' }}')">🔑 Znovu poslat aktivaci</button>
+                            {% endif %}
+                            {% if o.invoice_path %}
+                            <a href="{{ url_for('admin.download_invoice', order_id=o.id) }}" class="action-btn" title="Stáhnout PDF fakturu">📄 Faktura</a>
+                            {% else %}
+                            <form method="post" action="{{ url_for('admin.generate_invoice') }}" style="display:inline;">
+                                <input type="hidden" name="order_id" value="{{ o.id }}">
+                                <button type="submit" class="action-btn" title="Vygenerovat PDF fakturu">📄 Vygenerovat fakturu</button>
+                            </form>
+                            {% endif %}
+                            <a href="{{ url_for('admin.edit_pending_order', order_id=o.id) }}" class="action-btn" title="Upravit údaje objednávky">✏️ Upravit</a>
+                            <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto objednávku?{% if is_active %} Licence zůstane aktivní.{% endif %}');">
+                                <input type="hidden" name="order_id" value="{{ o.id }}">
+                                <button type="submit" class="action-btn action-danger" title="Smazat objednávku">🗑️ Smazat obj.</button>
+                            </form>
+                            {% if o.has_active_license and o.api_key %}
+                            <form method="post" action="{{ url_for('admin.delete_active_license') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat licenci pro tohoto uživatele?');">
+                                <input type="hidden" name="api_key" value="{{ o.api_key }}">
+                                <button type="submit" class="action-btn action-danger" title="Smazat licenci">🗑️ Smazat lic.</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné objednávky v systému.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ==================== SEKCE LICENCE A UŽIVATELÉ ==================== #}
+<div class="section-card">
+    <h2 class="section-title">Licence a uživatelé</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
+        <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="tier" value="{{ tier_filter }}">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <input type="text" name="q" class="form-control" style="width:160px;" placeholder="Vyhledat…" value="{{ search }}">
+            <button type="submit" class="btn btn-sm btn-secondary">Hledat</button>
+        </form>
+        <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="q" value="{{ search }}">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <select name="tier" class="form-control form-select" style="width:120px;" onchange="this.form.submit()">
+                <option value="">Všechny tarify</option>
+                {% for t in tiers_list %}
+                <option value="{{ t.name }}" {{ 'selected' if tier_filter == t.name else '' }}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="q" value="{{ search }}">
+            <input type="hidden" name="tier" value="{{ tier_filter }}">
+            <select name="status" class="form-control form-select" style="width:110px;" onchange="this.form.submit()">
+                <option value="">Stav účtu</option>
+                <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Aktivní</option>
+                <option value="blocked" {{ 'selected' if status_filter == 'blocked' else '' }}>Blokovaný</option>
+            </select>
+        </form>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('createForm').reset(); openModal('createModal');">+ Nová licence</button>
+    </div>
+    <div class="table-container">
+        <table class="table-dense">
+            <thead>
+                <tr>
+                    <th>E-mail / Jméno</th>
+                    <th>Tarif</th>
+                    <th>Zařízení</th>
+                    <th>Poslední aktivita</th>
+                    <th>Poslední IP</th>
+                    <th>Soubory</th>
+                    <th>Platba</th>
+                    <th>Heslo</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for license in licenses %}
+                <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}">
+                    <td>
+                        <strong>{{ license.email or '—' }}</strong>
+                        {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
+                    </td>
+                    <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
+                    <td title="{% if license.device_names %}Stanice: {{ license.device_names|e }}{% endif %}">{{ license.active_devices }}/{{ license.max_devices if license.max_devices and license.max_devices != -1 else '∞' }}{% if license.device_names %} <small style="color:#6b7280;">({{ license.device_names|truncate(30, True) }})</small>{% endif %}</td>
+                    <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
+                    <td><small style="font-family:monospace;font-size:0.85em;">{{ license.last_ip or '—' }}</small></td>
+                    <td>{{ license.total_checks }}</td>
+                    <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
+                    <td><small style="font-family:monospace;font-size:0.85em;">{{ (license.get('password_plain_stored') or '—')|e }}</small></td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit">Upravit</button>
+                            <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
+                            <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')">SMAZAT</button>
+                            <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)">INFO</button>
+                            <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn">Audit</a>
+                            <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)">Heslo</button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ========== E-MAIL MODAL (objednávky) ========== #}
+<div id="emailModal" class="crm-modal">
+    <div class="crm-modal-content" style="max-width:720px;">
+        <div class="crm-modal-header">
+            <span id="modalTitle">Odeslat e-mail</span>
+            <button class="crm-modal-close" onclick="closeEmailModal()">&times;</button>
+        </div>
+        <form method="post" action="{{ url_for('admin.api_email_send') }}" id="emailForm">
+            <input type="hidden" name="action_type" id="m_action_type">
+            <input type="hidden" name="order_id" id="m_order_id">
+            <input type="hidden" name="api_key" id="m_api_key">
+            <div style="margin-bottom:12px;">
+                <label class="small font-weight-bold">Příjemce</label>
+                <input type="text" name="recipient" id="m_recipient" class="form-control" readonly>
+            </div>
+            <div id="m_set_password_block" style="margin-bottom:12px; padding:10px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; display:none;">
+                <label class="small font-weight-bold">Odkaz na nastavení hesla</label>
+                <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                    <input type="text" id="m_set_password_url" class="form-control" readonly style="flex:1; font-size:0.85em;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="copySetPasswordUrl()" title="Kopírovat odkaz">Kopírovat</button>
+                </div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <label class="small font-weight-bold">Předmět</label>
+                <input type="text" name="subject" id="m_subject" class="form-control" required>
+            </div>
+            <div style="margin-bottom:8px;">
+                <span class="small font-weight-bold">Tělo e-mailu</span>
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="tabPreview" onclick="showModalTab('preview')">Náhled</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="tabEdit" onclick="showModalTab('edit')">Úprava textu</button>
+                </div>
+            </div>
+            <div id="modalPreviewWrap" style="margin-bottom:12px; border:1px solid #e5e7eb; border-radius:6px; overflow:hidden; min-height:200px;">
+                <div id="modalPreview" style="padding:12px; background:#f9fafb; min-height:180px; max-height:320px; overflow:auto;"></div>
+            </div>
+            <div id="modalEditWrap" style="margin-bottom:12px; display:none;">
+                <textarea name="body" id="m_body" class="form-control" rows="10" required style="font-family:monospace; font-size:0.9em;"></textarea>
+            </div>
+            <div style="margin-bottom:15px; padding:10px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:bold;cursor:pointer;margin:0;">
+                    <input type="checkbox" name="attach_invoice" value="1" id="m_attach_invoice">
+                    Přiložit fakturu v PDF
+                </label>
+                <div id="m_invoice_warning" class="small text-danger mt-1" style="display:none;margin-left:24px;">Nelze, faktura nebyla vygenerována.</div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-outline-secondary" onclick="closeEmailModal()">Zrušit</button>
+                <button type="submit" class="btn btn-primary" style="background:#1e5a8a;">Potvrdit a odeslat</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ========== LICENCE MODÁLY ========== #}
+<div class="modal-overlay" id="createModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Vytvořit novou licenci</h3>
+            <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
+        </div>
+        <form id="createForm" onsubmit="submitCreateForm(event)">
+            <div class="form-group">
+                <label for="create_user_name">Jméno uživatele</label>
+                <input type="text" id="create_user_name" name="user_name" required>
+            </div>
+            <div class="form-group">
+                <label for="create_email">E-mail</label>
+                <input type="email" id="create_email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="create_tier_id">Tarif</label>
+                <select id="create_tier_id" name="tier_id">
+                    {% for t in product_tiers or tiers_list %}
+                    <option value="{{ t.id }}">{{ t.name }}</option>
+                    {% endfor %}
+                    {% if not (product_tiers or tiers_list) %}
+                    <option value="1">Free</option><option value="2">Basic</option><option value="3">Pro</option><option value="4">Trial</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="create_password">Heslo (pro přihlášení e-mailem v agentovi)</label>
+                <input type="password" id="create_password" name="password" placeholder="Doporučeno vyplnit">
+            </div>
+            <div class="form-group">
+                <label for="create_days">Platnost (dní, prázdné = neomezeno)</label>
+                <input type="number" id="create_days" name="days" value="365" min="1">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Zrušit</button>
+                <button type="submit" class="btn btn-primary">Vytvořit</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-overlay" id="editModal">
+    <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+            <h3>Upravit uživatele</h3>
+            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <form id="editForm" onsubmit="submitEditForm(event)">
+            <input type="hidden" id="edit_api_key" name="api_key">
+            <div class="form-group">
+                <label for="edit_user_name">Jméno</label>
+                <input type="text" id="edit_user_name" name="user_name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="edit_email">E-mail</label>
+                <input type="email" id="edit_email" name="email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="edit_tier_id">Tarif</label>
+                <select id="edit_tier_id" name="tier_id">
+                    {% for t in product_tiers or tiers_list %}
+                    <option value="{{ t.id }}">{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit_license_expires">Datum expirace</label>
+                <input type="date" id="edit_license_expires" name="license_expires" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="edit_is_active">Status</label>
+                <select id="edit_is_active" name="is_active" class="form-control">
+                    <option value="1">Aktivní</option>
+                    <option value="0">Blokovaný</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stávající heslo</label>
+                <div id="edit_current_password_display" style="font-family:monospace;padding:8px;background:#f3f4f6;border-radius:6px;font-size:0.95em;margin-bottom:4px;">—</div>
+            </div>
+            <div class="form-group">
+                <label for="edit_new_password">Nové heslo (nevyplňovat = beze změny)</label>
+                <input type="text" id="edit_new_password" name="new_password" class="form-control" placeholder="Min. 6 znaků" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="edit_payment_method">Způsob platby</label>
+                <select id="edit_payment_method" name="payment_method" class="form-control">
+                    <option value="">—</option>
+                    <option value="Karta">Karta</option>
+                    <option value="Převod">Převod</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit_last_payment_date">Datum poslední platby</label>
+                <input type="date" id="edit_last_payment_date" name="last_payment_date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Historie fakturace</label>
+                <div id="editBillingList" style="max-height:120px;overflow-y:auto;font-size:0.8em;color:#6b7280;margin-top:4px;"></div>
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="openAddBillingModal()">+ Přidat záznam</button>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Zrušit</button>
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-overlay" id="changePasswordModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Změnit heslo uživatele</h3>
+            <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
+        </div>
+        <p style="margin-bottom:16px;color:#6b7280;">Uživatel: <strong id="changePasswordUserDisplay"></strong></p>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label>Stávající heslo</label>
+            <div id="changePasswordCurrentDisplay" style="font-family:monospace;padding:8px;background:#f3f4f6;border-radius:6px;font-size:0.95em;">—</div>
+        </div>
+        <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
+            <input type="hidden" id="changePasswordApiKey" name="api_key">
+            <div class="form-group">
+                <label for="changePasswordNew">Nové heslo</label>
+                <input type="text" id="changePasswordNew" name="new_password" required minlength="6" placeholder="Min. 6 znaků" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="changePasswordNew2">Nové heslo znovu</label>
+                <input type="text" id="changePasswordNew2" name="new_password2" required minlength="6" autocomplete="off">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Zrušit</button>
+                <button type="submit" class="btn btn-primary">Uložit heslo</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-overlay" id="welcomePackageModal">
+    <div class="modal" style="max-width:560px;">
+        <div class="modal-header">
+            <h3>Údaje licence</h3>
+            <button class="modal-close" onclick="closeModal('welcomePackageModal')">&times;</button>
+        </div>
+        <p style="margin-bottom:12px;color:#6b7280;font-size:0.9em;">Pouze zobrazení údajů licence.</p>
+        <div id="welcomePackageContent" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:0.85em;white-space:pre-wrap;word-break:break-all;max-height:280px;overflow-y:auto;"></div>
+        <div class="modal-actions" style="margin-top:16px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('welcomePackageModal')">Zavřít</button>
+            <button type="button" class="btn btn-primary" id="welcomePackageCopyBtn" style="display:none;" onclick="copyWelcomePackageText()">Kopírovat text</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="resultModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Výsledek</h3>
+            <button class="modal-close" onclick="closeModal('resultModal')">&times;</button>
+        </div>
+        <div id="resultContent"></div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="closeModal('resultModal'); location.reload();">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showModalTab(tab) {
+    var isPreview = (tab === 'preview');
+    document.getElementById('modalPreviewWrap').style.display = isPreview ? 'block' : 'none';
+    document.getElementById('modalEditWrap').style.display = isPreview ? 'none' : 'block';
+    document.getElementById('tabPreview').classList.toggle('active', isPreview);
+    document.getElementById('tabEdit').classList.toggle('active', !isPreview);
+    if (isPreview) updateModalPreview();
+}
+function updateModalPreview() {
+    var body = document.getElementById('m_body').value;
+    document.getElementById('modalPreview').innerHTML = body || '<em>Žádný obsah</em>';
+}
+function copySetPasswordUrl() {
+    var input = document.getElementById('m_set_password_url');
+    if (!input || !input.value) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(function() { alert('Odkaz zkopírován.'); }).catch(function() { fallbackCopy(input.value); });
+    } else { fallbackCopy(input.value); }
+}
+function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); alert('Odkaz zkopírován.'); } catch (e) {}
+    document.body.removeChild(ta);
+}
+function openEmailModal(type, orderId, apiKey) {
+    document.getElementById('modalTitle').innerText = (type === 'payment') ? 'Odeslat platební údaje' : 'Odeslat aktivační e-mail';
+    document.getElementById('m_action_type').value = type;
+    document.getElementById('m_order_id').value = orderId;
+    document.getElementById('m_api_key').value = apiKey || '';
+    document.getElementById('m_recipient').value = 'Načítám...';
+    document.getElementById('m_subject').value = 'Načítám...';
+    document.getElementById('m_body').value = 'Načítám...';
+    document.getElementById('m_attach_invoice').checked = false;
+    document.getElementById('m_attach_invoice').disabled = true;
+    document.getElementById('m_invoice_warning').style.display = 'none';
+    document.getElementById('m_set_password_block').style.display = 'none';
+    document.getElementById('modalPreview').innerHTML = '';
+    showModalTab('preview');
+    document.getElementById('emailModal').classList.add('show');
+    var url = '/admin/api/email-preview?type=' + encodeURIComponent(type) + '&order_id=' + encodeURIComponent(orderId);
+    if (apiKey) url += '&api_key=' + encodeURIComponent(apiKey);
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.success) { alert('Chyba: ' + (data.error || 'Neznámá chyba')); closeEmailModal(); return; }
+        document.getElementById('m_recipient').value = data.recipient || '';
+        document.getElementById('m_subject').value = data.subject || '';
+        document.getElementById('m_body').value = data.body_html || data.body_plain || '';
+        updateModalPreview();
+        if (data.set_password_url) { document.getElementById('m_set_password_url').value = data.set_password_url; document.getElementById('m_set_password_block').style.display = 'block'; } else { document.getElementById('m_set_password_block').style.display = 'none'; }
+        if (data.has_invoice) { document.getElementById('m_attach_invoice').disabled = false; document.getElementById('m_attach_invoice').checked = (type === 'payment'); } else { document.getElementById('m_invoice_warning').style.display = 'block'; }
+    }).catch(function(err) { alert('Chyba komunikace se serverem.'); closeEmailModal(); });
+}
+function closeEmailModal() { document.getElementById('emailModal').classList.remove('show'); }
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function openEditModalFromRow(tr) {
+    var apiKey = tr.getAttribute('data-api-key');
+    var tierId = tr.getAttribute('data-tier-id') || '';
+    var pwdPlain = tr.getAttribute('data-password-plain') || '';
+    document.getElementById('edit_api_key').value = apiKey;
+    document.getElementById('edit_user_name').value = tr.getAttribute('data-user-name') || '';
+    document.getElementById('edit_email').value = tr.getAttribute('data-email') || '';
+    document.getElementById('edit_license_expires').value = (tr.getAttribute('data-license-expires') || '').substring(0, 10);
+    document.getElementById('edit_is_active').value = tr.getAttribute('data-is-active') === '1' ? '1' : '0';
+    document.getElementById('edit_payment_method').value = tr.getAttribute('data-payment-method') || '';
+    document.getElementById('edit_last_payment_date').value = (tr.getAttribute('data-last-payment-date') || '').substring(0, 10);
+    document.getElementById('edit_current_password_display').textContent = pwdPlain || '—';
+    document.getElementById('edit_new_password').value = '';
+    var sel = document.getElementById('edit_tier_id');
+    if (tierId && tierId !== 'None') sel.value = tierId;
+    else if (sel.options.length) sel.selectedIndex = 0;
+    loadBillingHistory(apiKey);
+    openModal('editModal');
+}
+async function loadBillingHistory(apiKey) {
+    var el = document.getElementById('editBillingList');
+    el.innerHTML = 'Načítám…';
+    try {
+        var r = await fetch('/admin/api/license/billing?api_key=' + encodeURIComponent(apiKey));
+        var data = await r.json();
+        if (data.success && data.data && data.data.length) {
+            el.innerHTML = data.data.map(function(x) {
+                return '<div style="padding:4px 0;border-bottom:1px solid #eee;">' + (x.description || '-') + ' ' + (x.amount_cents != null ? x.amount_cents + ' Kč' : '') + ' <small>' + (x.paid_at || x.created_at || '').substring(0, 10) + '</small></div>';
+            }).join('');
+        } else { el.innerHTML = '<span class="text-muted">Žádné záznamy</span>'; }
+    } catch (e) { el.innerHTML = '<span style="color:#dc2626;">Chyba načtení</span>'; }
+}
+function openAddBillingModal() {
+    var apiKey = document.getElementById('edit_api_key').value;
+    var desc = prompt('Popis (např. Faktura 2025-01):');
+    if (desc === null) return;
+    var amount = prompt('Částka (Kč):', '0');
+    if (amount === null) return;
+    var paidAt = prompt('Datum platby (YYYY-MM-DD):', new Date().toISOString().substring(0, 10));
+    if (paidAt === null) return;
+    var fd = new FormData();
+    fd.append('api_key', apiKey);
+    fd.append('description', desc);
+    fd.append('amount_cents', Math.round(parseFloat(amount) || 0) * 100);
+    fd.append('paid_at', paidAt);
+    fetch('/admin/api/license/billing', { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(res) {
+        if (res.success) { loadBillingHistory(apiKey); alert('Záznam přidán'); }
+        else alert(res.error || 'Chyba');
+    }).catch(function(e) { alert('Chyba: ' + e.message); });
+}
+var lastWelcomePackageText = '';
+function openWelcomePackageModal(btn) {
+    var apiKey = btn.getAttribute('data-api-key');
+    document.getElementById('welcomePackageContent').textContent = 'Načítám…';
+    document.getElementById('welcomePackageCopyBtn').style.display = 'none';
+    openModal('welcomePackageModal');
+    var fd = new FormData();
+    fd.append('api_key', apiKey);
+    fetch('/admin/api/license/welcome-package', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            lastWelcomePackageText = data.email_body || '';
+            document.getElementById('welcomePackageContent').textContent = lastWelcomePackageText || (data.error || 'Chyba');
+            document.getElementById('welcomePackageCopyBtn').style.display = lastWelcomePackageText ? 'inline-block' : 'none';
+        })
+        .catch(function(e) { document.getElementById('welcomePackageContent').textContent = 'Chyba: ' + e.message; });
+}
+function copyWelcomePackageText() {
+    if (lastWelcomePackageText && navigator.clipboard) {
+        navigator.clipboard.writeText(lastWelcomePackageText).then(function() { alert('Text zkopírován do schránky.'); });
+    }
+}
+function openChangePasswordModal(btn) {
+    var apiKey = btn.getAttribute('data-api-key');
+    var display = btn.getAttribute('data-user-display') || apiKey;
+    var pwdPlain = btn.getAttribute('data-password-plain') || '';
+    document.getElementById('changePasswordApiKey').value = apiKey;
+    document.getElementById('changePasswordUserDisplay').textContent = display;
+    document.getElementById('changePasswordCurrentDisplay').textContent = pwdPlain || '—';
+    document.getElementById('changePasswordForm').reset();
+    openModal('changePasswordModal');
+}
+async function submitChangePassword(e) {
+    e.preventDefault();
+    var apiKey = document.getElementById('changePasswordApiKey').value;
+    var newPass = document.getElementById('changePasswordNew').value;
+    var newPass2 = document.getElementById('changePasswordNew2').value;
+    if (newPass !== newPass2) { showResult('Hesla se neshodují', true); return; }
+    if (newPass.length < 6) { showResult('Heslo musí mít alespoň 6 znaků', true); return; }
+    var data = new FormData();
+    data.append('api_key', apiKey);
+    data.append('new_password', newPass);
+    data.append('new_password2', newPass2);
+    try {
+        var resp = await fetch('/admin/api/license/set-password', { method: 'POST', body: data });
+        var result = await resp.json();
+        closeModal('changePasswordModal');
+        showResult(result.message || result.error, !result.success);
+    } catch (err) { showResult('Chyba: ' + err.message, true); }
+}
+function showResult(message, isError) {
+    var content = document.getElementById('resultContent');
+    content.innerHTML = '<div class="alert alert-' + (isError ? 'error' : 'success') + '">' + message + '</div>';
+    openModal('resultModal');
+}
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() { alert('API klíč zkopírován do schránky'); });
+}
+async function submitCreateForm(e) {
+    e.preventDefault();
+    var data = new FormData(document.getElementById('createForm'));
+    data.append('tier_id', document.getElementById('create_tier_id').value);
+    try {
+        var response = await fetch('/admin/api/license/create', { method: 'POST', body: data });
+        var result = await response.json();
+        if (result.success) {
+            closeModal('createModal');
+            showResult('<p><strong>Licence vytvořena!</strong></p><p style="margin-top:12px;">API klíč:</p><div style="background:#f3f4f6;padding:12px;border-radius:8px;font-family:monospace;word-break:break-all;margin-top:8px;">' + result.api_key + '</div><button class="btn btn-secondary btn-small" style="margin-top:12px;" onclick="copyToClipboard(\'' + result.api_key + '\')">Kopírovat</button>', false);
+        } else { showResult(result.error || 'Chyba při vytváření', true); }
+    } catch (err) { showResult('Chyba: ' + err.message, true); }
+}
+async function submitEditForm(e) {
+    e.preventDefault();
+    var data = new FormData(document.getElementById('editForm'));
+    var np = document.getElementById('edit_new_password').value;
+    if (np) data.set('new_password', np);
+    try {
+        var response = await fetch('{{ url_for("admin.api_update_license") }}', { method: 'POST', body: data });
+        var result = await response.json();
+        closeModal('editModal');
+        showResult(result.message || result.error, !result.success);
+        if (result.success) setTimeout(function() { location.reload(); }, 800);
+    } catch (err) { showResult('Chyba: ' + err.message, true); }
+}
+async function toggleLicense(apiKey, activate) {
+    if (!confirm('Opravdu chcete ' + (activate ? 'aktivovat' : 'deaktivovat') + ' tuto licenci?')) return;
+    var data = new FormData();
+    data.append('api_key', apiKey);
+    data.append('is_active', activate ? '1' : '0');
+    try {
+        var response = await fetch('/admin/api/license/toggle', { method: 'POST', body: data });
+        var result = await response.json();
+        showResult(result.message || result.error, !result.success);
+    } catch (err) { showResult('Chyba: ' + err.message, true); }
+}
+async function deleteLicense(apiKey) {
+    if (!confirm('Opravdu chcete SMAZAT tuto licenci? Tato akce je nevratná!')) return;
+    if (!confirm('Potvrzujete smazání licence?')) return;
+    var data = new FormData();
+    data.append('api_key', apiKey);
+    try {
+        var response = await fetch('/admin/api/license/delete', { method: 'POST', body: data });
+        var result = await response.json();
+        showResult(result.message || result.error, !result.success);
+    } catch (err) { showResult('Chyba: ' + err.message, true); }
+}
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(function(modal) { modal.classList.remove('active'); });
+    }
+});
+</script>
+{% endblock %}

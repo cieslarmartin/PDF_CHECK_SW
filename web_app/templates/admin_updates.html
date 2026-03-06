@@ -19,9 +19,9 @@
             <tbody>
                 {% for u in landing_updates %}
                 <tr style="border-bottom:1px solid #e5e7eb;">
-                    <td style="padding:10px 12px;">{{ u.month|e }}</td>
-                    <td style="padding:10px 12px;">{{ u.title|e }}</td>
-                    <td style="padding:10px 12px;font-size:0.9em;">{{ (u.items or [])|join('; ')|e }}</td>
+                    <td style="padding:10px 12px;">{{ u.get('month', '')|e }}</td>
+                    <td style="padding:10px 12px;">{{ u.get('title', '')|e }}</td>
+                    <td style="padding:10px 12px;font-size:0.9em;">{{ (u.get('items') or [])|join('; ')|e }}</td>
                     <td style="padding:10px 12px;">
                         <form method="post" style="display:inline;" onsubmit="return confirm('Odebrat tento záznam?');">
                             <input type="hidden" name="action" value="delete_entry">

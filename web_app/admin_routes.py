@@ -668,8 +668,8 @@ def test_smtp():
 @admin_bp.route('/admin/users')
 @admin_required
 def users():
-    """Přesměruje na dashboard (hlavní pohled na uživatele)."""
-    return redirect(url_for('admin.dashboard'))
+    """Přesměruje na Uživatelé a licence (objednávky + licence)."""
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/users/audit')
@@ -709,46 +709,73 @@ def tiers():
     return render_template('admin_tiers.html', tiers_list=tiers_list or [], user=user, active_page='tiers')
 
 
-@admin_bp.route('/admin/pending-orders', methods=['GET'])
+@admin_bp.route('/admin/users-licenses', methods=['GET'])
 @admin_required
-def pending_orders():
-    """Správa objednávek: sjednocený pohled na celý životní cyklus (pending -> payment_sent -> active)."""
+def users_licenses():
+    """Uživatelé a licence: objednávky (CRM) + seznam licencí na jedné stránce."""
     db = get_db()
-    
-    # 1. Načtení všech objednávek
+    search = (request.args.get('q') or '').strip()
+    tier_filter = (request.args.get('tier') or '').strip()
+    status_filter = (request.args.get('status') or '').strip()
+
+    # Objednávky (stejná logika jako dříve pending_orders)
     orders_raw = db.get_pending_orders(limit=500)
+    licenses_all = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
+    active_emails = {(l.get('email') or '').lower(): l for l in licenses_all if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')}
     orders = []
-    
-    # 2. Mapování existujících licencí podle emailu, aby bylo vidět, zda uživatel už opravdu existuje
-    licenses = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
-    active_emails = { (l.get('email') or '').lower(): l for l in licenses if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free') }
-    
     for o in (orders_raw or []):
         o_dict = dict(o)
         email = (o_dict.get('email') or '').lower()
-        # Pokud má aktivní licenci, označíme
-        if email in active_emails:
-            o_dict['has_active_license'] = True
-            o_dict['api_key'] = active_emails[email].get('api_key')
-        else:
-            o_dict['has_active_license'] = False
-            o_dict['api_key'] = None
+        o_dict['has_active_license'] = email in active_emails
+        o_dict['api_key'] = active_emails.get(email, {}).get('api_key') if email in active_emails else None
         orders.append(o_dict)
 
+    # Licence (filtry jako na dashboardu)
+    licenses = list(licenses_all) if licenses_all else []
+    if search:
+        search_lower = search.lower()
+        licenses = [l for l in licenses if (
+            (l.get('email') or '').lower().find(search_lower) >= 0 or
+            (l.get('user_name') or '').lower().find(search_lower) >= 0 or
+            (l.get('api_key') or '').lower().find(search_lower) >= 0
+        )]
+    if tier_filter:
+        licenses = [l for l in licenses if (l.get('tier_name') or '').lower() == tier_filter.lower()]
+    if status_filter == 'blocked':
+        licenses = [l for l in licenses if not l.get('is_active')]
+    elif status_filter == 'active':
+        licenses = [l for l in licenses if l.get('is_active')]
+
+    tiers_list = db.get_all_license_tiers()
+    product_tiers = [t for t in (tiers_list or []) if (t.get('name') or '').strip() in ('Trial', 'Basic', 'Pro', 'Unlimited')] or (tiers_list or [])
     try:
         auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
     except Exception:
         auto_activate_csob = False
-        
+
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
-        
-    return render_template('admin_pending_orders.html',
+
+    return render_template('admin_users_licenses.html',
         orders=orders,
+        licenses=licenses,
+        tiers_list=tiers_list or [],
+        product_tiers=product_tiers,
+        search=search,
+        tier_filter=tier_filter,
+        status_filter=status_filter,
         auto_activate_csob=auto_activate_csob,
-        user=user, active_page='pending_orders')
+        user=user,
+        active_page='users_licenses')
+
+
+@admin_bp.route('/admin/pending-orders', methods=['GET'])
+@admin_required
+def pending_orders():
+    """Přesměruje na Uživatelé a licence (objednávky jsou tam)."""
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/apply-discount', methods=['POST'])
@@ -758,16 +785,16 @@ def apply_discount():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     ok = db.apply_discount_to_order(order_id, discount_percent=20)
     if not ok:
         flash('Slevu se nepodařilo uplatnit.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     # Přegenerovat fakturu s novou cenou
     try:
         order_updated = db.get_pending_order_by_id(order_id)
@@ -780,31 +807,27 @@ def apply_discount():
     except Exception:
         pass
     flash('Sleva 20 % uplatněna na objednávku #{}. Faktura přegenerována.'.format(order.get('order_display_number') or order_id), 'success')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/delete-pending-order', methods=['POST'])
 @admin_required
 def delete_pending_order():
-    """Smaže objednávku (novou nebo čekající na platbu). Nelze mazat již aktivované."""
+    """Smaže záznam objednávky z pending_orders. U aktivní objednávky licence zůstane v api_keys."""
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
-    status = (order.get('status') or '').upper()
-    if status == 'ACTIVE':
-        flash('Aktivní objednávku nelze smazat.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     if db.delete_pending_order(order_id):
         flash('Objednávka #{} byla smazána.'.format(order_id), 'success')
     else:
         flash('Objednávku se nepodařilo smazat.', 'error')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/pending-orders/<int:order_id>/edit', methods=['GET', 'POST'])
@@ -815,7 +838,7 @@ def edit_pending_order(order_id):
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     if request.method == 'POST':
         def _num(s):
             s = (s or '').strip()
@@ -843,7 +866,7 @@ def edit_pending_order(order_id):
             flash('Objednávka byla upravena.', 'success')
         else:
             flash('Změny se nepodařilo uložit.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
@@ -858,13 +881,13 @@ def delete_active_license():
     api_key = request.form.get('api_key', '').strip()
     if not api_key:
         flash('Chybí API klíč', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     if db.admin_delete_license(api_key):
         flash('Licence smazána', 'success')
     else:
         flash('Chyba při mazání licence', 'error')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/delete-user-from-order', methods=['POST'])
@@ -874,16 +897,16 @@ def delete_user_from_order():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     email = (order.get('email') or '').strip()
     if not email:
         flash('Objednávka nemá e-mail – nelze určit uživatele.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     deleted_key = db.delete_user_by_email(email)
     if deleted_key:
         # Vrátit objednávku do stavu čekající (aby šla znovu aktivovat)
@@ -891,7 +914,7 @@ def delete_user_from_order():
         flash('Uživatel {} byl smazán (api_key: {}). Objednávka vrácena do stavu Čekající na platbu.'.format(email, deleted_key[:12] + '...'), 'success')
     else:
         flash('Uživatel s e-mailem {} nebyl nalezen v databázi licencí.'.format(email), 'error')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
@@ -951,12 +974,12 @@ def generate_invoice():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     try:
         from settings_loader import get_pricing_tarifs
         pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
@@ -967,10 +990,10 @@ def generate_invoice():
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
         flash('Vygenerování PDF faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     if not filepath or not os.path.isfile(filepath):
         flash('Vygenerování PDF faktury se nezdařilo. Zkontrolujte Nastavení firmy (složka faktur) a font Unicode.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_invoice_path(order_id, filepath)
     if (order.get('status') or '').upper() == 'NEW_ORDER':
         db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
@@ -980,7 +1003,7 @@ def generate_invoice():
     except Exception:
         pass
     flash('Faktura vygenerována a uložena. Objednávka v sekci Čekající na platbu.', 'success')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/regenerate-invoice', methods=['POST'])
@@ -990,12 +1013,12 @@ def regenerate_invoice():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     try:
         from settings_loader import get_pricing_tarifs
         pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
@@ -1006,13 +1029,13 @@ def regenerate_invoice():
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
         flash('Přegenerování faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     if not filepath or not os.path.isfile(filepath):
         flash('Přegenerování faktury se nezdařilo. Zkontrolujte Nastavení firmy a font Unicode.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_invoice_path(order_id, filepath)
     flash('Faktura přegenerována a uložena.', 'success')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/invoice/<int:order_id>/download')
@@ -1024,7 +1047,7 @@ def download_invoice(order_id):
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     # Číslo faktury pro download_name (= order_display_number)
     display_num = (order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id)
     dl_name = 'faktura_{}.pdf'.format(display_num)
@@ -1043,7 +1066,7 @@ def download_invoice(order_id):
             if os.path.isfile(path):
                 return send_file(path, as_attachment=True, download_name=dl_name)
     flash('Faktura k objednávce #{} nebyla nalezena. Vygenerujte ji tlačítkem „VYGENEROVAT FAKTURU“ nebo „GENEROVAT ZNOVU“.'.format(order_id), 'error')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/toggle-auto-activate-csob', methods=['POST'])
@@ -1054,7 +1077,7 @@ def toggle_auto_activate_csob():
     value = request.form.get('auto_activate_csob') == '1'
     db.set_global_setting('auto_activate_csob', '1' if value else '0')
     flash('Nastavení „Automaticky aktivovat po zaplacení (ČSOB)“ uloženo.', 'success')
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/confirm-payment', methods=['POST'])
@@ -1064,26 +1087,26 @@ def confirm_payment():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     status = (order.get('status') or '').upper()
     if status not in ('PENDING', 'WAITING_PAYMENT', 'NEW_ORDER'):
         flash('Objednávka již byla zpracována nebo není ve stavu Nová / Čekající na platbu.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
     if not tier_row:
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     tier_id = tier_row.get('id')
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
         flash('Objednávka nemá e-mail', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     existing = db.get_license_by_email(email)
     has_password = existing and (existing.get('password_hash') or '').strip()
     password_plain = None  # heslo se už v e-mailu neposílá (antispam), uživatel si ho nastaví odkazem
@@ -1091,13 +1114,13 @@ def confirm_payment():
         ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
         if not ok:
             flash('Aktualizace licence existujícího účtu se nezdařila.', 'error')
-            return redirect(url_for('admin.pending_orders'))
+            return redirect(url_for('admin.users_licenses'))
         api_key = existing['api_key']
     else:
         api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
         if not api_key:
             flash('Vytvoření licence se nezdařilo.', 'error')
-            return redirect(url_for('admin.pending_orders'))
+            return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
         from email_sender import send_activation_email, notify_admin
@@ -1128,26 +1151,26 @@ def activate_without_invoice():
     order_id = request.form.get('order_id', '').strip()
     if not order_id:
         flash('Chybí ID objednávky', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     db = get_db()
     order = db.get_pending_order_by_id(order_id)
     if not order:
         flash('Objednávka nenalezena', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     status = (order.get('status') or '').upper()
     if status not in ('PENDING', 'WAITING_PAYMENT'):
         flash('Objednávka již byla zpracována nebo není ve stavu Čekající na platbu.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
     if not tier_row:
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     tier_id = tier_row.get('id')
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
         flash('Objednávka nemá e-mail', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
     existing = db.get_license_by_email(email)
     has_password = existing and (existing.get('password_hash') or '').strip()
     password_plain = None
@@ -1155,13 +1178,13 @@ def activate_without_invoice():
         ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
         if not ok:
             flash('Aktualizace licence existujícího účtu se nezdařila.', 'error')
-            return redirect(url_for('admin.pending_orders'))
+            return redirect(url_for('admin.users_licenses'))
         api_key = existing['api_key']
     else:
         api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
         if not api_key:
             flash('Vytvoření licence se nezdařilo.', 'error')
-            return redirect(url_for('admin.pending_orders'))
+            return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
         from email_sender import send_activation_email, notify_admin
@@ -1192,13 +1215,13 @@ def preview_activation_email():
     order_id = request.args.get('order_id', '').strip()
     if not api_key:
         flash('Chybí API klíč k odeslání e-mailu', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
         
     db = get_db()
     license_data = db.get_user_license(api_key)
     if not license_data:
         flash('Licence nebyla nalezena.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
         
     email = license_data.get('email')
     user_name = license_data.get('user_name')
@@ -1265,7 +1288,7 @@ def send_activation_email_action():
     
     if not to_email or not subject or not body:
         flash('Chybí povinná data pro odeslání e-mailu.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
         
     db = get_db()
     invoice_path = None
@@ -1306,7 +1329,7 @@ def send_activation_email_action():
     else:
         flash('Chyba při odesílání e-mailu. Zkontrolujte SMTP nastavení.', 'error')
         
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 
 @admin_bp.route('/admin/trial', methods=['GET', 'POST'])
@@ -1815,7 +1838,7 @@ def api_email_send():
     
     if not to_email or not subject or not body_html_or_plain:
         flash('Chybí povinná data pro odeslání e-mailu.', 'error')
-        return redirect(url_for('admin.pending_orders'))
+        return redirect(url_for('admin.users_licenses'))
         
     db = get_db()
     invoice_path = None
@@ -1861,7 +1884,7 @@ def api_email_send():
         db.log_email(to_email, subject, 'error')
         flash('Chyba při odesílání e-mailu. Zkontrolujte SMTP nastavení.', 'error')
         
-    return redirect(url_for('admin.pending_orders'))
+    return redirect(url_for('admin.users_licenses'))
 
 @admin_bp.route('/admin/api/trial/reset', methods=['POST'])
 @admin_required

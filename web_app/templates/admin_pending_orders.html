@@ -112,13 +112,11 @@
                         {# Upravit #}
                         <a href="{{ url_for('admin.edit_pending_order', order_id=o.id) }}" class="action-btn" title="Upravit údaje objednávky">✏️ Upravit</a>
 
-                        {# Smazat objednávku (ne u ACTIVE – tam jen smazat licenci) #}
-                        {% if not is_active %}
-                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto objednávku?');">
+                        {# Smazat objednávku (vždy – smaže záznam objednávky, u aktivní licence zůstane licence) #}
+                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto objednávku?{% if is_active %} Licence zůstane aktivní.{% endif %}');">
                             <input type="hidden" name="order_id" value="{{ o.id }}">
                             <button type="submit" class="action-btn action-danger" title="Smazat objednávku">🗑️ Smazat obj.</button>
                         </form>
-                        {% endif %}
 
                         {# Smazat licenci (jen u aktivní licence) #}
                         {% if o.has_active_license and o.api_key %}
