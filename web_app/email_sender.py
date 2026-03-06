@@ -248,12 +248,24 @@ def get_activation_email_preview(user_email, password_plain=None, download_url=N
 
     if set_password_url:
         # Nový režim: žádné heslo v e-mailu, jen odkaz na nastavení hesla (menší riziko spamu)
-        body_tpl = templates.get("activation_body") or (
-            "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
-            "Přihlašovací jméno (e-mail): {email}\n\n"
-            "Pro dokončení aktivace si nastavte heslo kliknutím na odkaz:\n{set_password_url}\n\n"
-            "Po nastavení hesla se přihlaste zde: {login_url}\n\nStahujte aplikaci zde: {download_url}"
-        )
+        body_tpl = templates.get("activation_body") or ""
+        # Pokud šablona z DB nemá placeholder na odkaz, použij výchozí HTML šablonu (odkaz + pěkný mail)
+        if "{set_password_url}" not in body_tpl:
+            try:
+                from site_config_loader import DEFAULT_EMAIL_TEMPLATES
+                body_tpl = DEFAULT_EMAIL_TEMPLATES.get("activation_body") or (
+                    "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
+                    "Přihlašovací jméno (e-mail): {email}\n\n"
+                    "Pro dokončení aktivace si nastavte heslo kliknutím na odkaz:\n{set_password_url}\n\n"
+                    "Po nastavení hesla se přihlaste zde: {login_url}\n\nStahujte aplikaci zde: {download_url}"
+                )
+            except ImportError:
+                body_tpl = (
+                    "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
+                    "Přihlašovací jméno (e-mail): {email}\n\n"
+                    "Pro dokončení aktivace si nastavte heslo kliknutím na odkaz:\n{set_password_url}\n\n"
+                    "Po nastavení hesla se přihlaste zde: {login_url}\n\nStahujte aplikaci zde: {download_url}"
+                )
         heslo_text = ""  # do těla se nedává
     elif password_plain and str(password_plain).strip():
         # Zpětná kompatibilita: heslo v mailu (může jít do spamu)

@@ -1710,13 +1710,26 @@ def api_email_preview():
             if order and order_id:
                 db.update_pending_order_status(order_id, 'ACTIVE')
             
-        # Vytvoření tokenu
+        # Vytvoření tokenu (fallback na set_password_tokens pokud api_keys nemá sloupce activation_token/token_expires)
         set_password_url = None
+        base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
         if api_key:
-            # Vygenerujeme nový token přímo do tabulky api_keys (podle zadání)
-            token = db.generate_activation_token(api_key)
-            base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
-            set_password_url = f"{base}/set-password?token={token}"
+            token = None
+            try:
+                token = db.generate_activation_token(api_key)
+            except Exception:
+                pass
+            if token:
+                set_password_url = f"{base}/set-password?token={token}"
+            else:
+                # Fallback: tabulka set_password_tokens (platné i na staré DB)
+                set_pwd_token = secrets.token_urlsafe(32)
+                expires_at = time.time() + 48 * 3600
+                if db.store_set_password_token(set_pwd_token, api_key, expires_at):
+                    set_password_url = base + '/portal/set-password?token=' + set_pwd_token
+                else:
+                    if current_app and hasattr(current_app, 'logger'):
+                        current_app.logger.warning('Nepodařilo se vygenerovat aktivační token (ani api_keys, ani set_password_tokens).')
 
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
         login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
