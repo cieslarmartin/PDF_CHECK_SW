@@ -727,7 +727,23 @@ def pending_orders():
             if o['id'] not in seen_ids:
                 (orders_waiting or []).append(o)
     licenses = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
-    active_licenses = [l for l in licenses if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')] if licenses else []
+    active_licenses = []
+    if licenses:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        for l in licenses:
+            if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free'):
+                l_dict = dict(l)
+                if l_dict.get('email'):
+                    # Získání order_id k licenci
+                    cur.execute('SELECT id, invoice_path, order_display_number FROM pending_orders WHERE email = ? ORDER BY id DESC LIMIT 1', (l_dict['email'],))
+                    r = cur.fetchone()
+                    if r:
+                        l_dict['order_id'] = r['id']
+                        l_dict['invoice_path'] = r['invoice_path']
+                        l_dict['order_display_number'] = r['order_display_number']
+                active_licenses.append(l_dict)
+        conn.close()
     try:
         auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
     except Exception:
@@ -797,6 +813,22 @@ def delete_pending_order():
         flash('Objednávka #{} byla smazána.'.format(order_id), 'success')
     else:
         flash('Objednávku se nepodařilo smazat.', 'error')
+    return redirect(url_for('admin.pending_orders'))
+
+
+@admin_bp.route('/admin/delete-active-license', methods=['POST'])
+@admin_required
+def delete_active_license():
+    """Smaže uživatele (licenci) a přesměruje zpět na objednávky."""
+    api_key = request.form.get('api_key', '').strip()
+    if not api_key:
+        flash('Chybí API klíč', 'error')
+        return redirect(url_for('admin.pending_orders'))
+    db = get_db()
+    if db.admin_delete_license(api_key):
+        flash('Licence smazána', 'success')
+    else:
+        flash('Chyba při mazání licence', 'error')
     return redirect(url_for('admin.pending_orders'))
 
 

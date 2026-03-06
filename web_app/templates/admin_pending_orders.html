@@ -156,22 +156,46 @@
     <table class="table-dense">
         <thead>
             <tr>
+                <th>Objednávka</th>
                 <th>E-mail</th>
                 <th>Jméno</th>
                 <th>Tarif</th>
                 <th>Expirace</th>
+                <th>Akce</th>
             </tr>
         </thead>
         <tbody>
             {% for l in active_licenses %}
             <tr>
+                <td>{{ l.order_display_number or l.order_id or '—' }}</td>
                 <td>{{ l.email or '—' }}</td>
                 <td>{{ l.user_name or '—' }}</td>
                 <td><span style="background:#d1fae5;color:#047857;padding:4px 8px;border-radius:4px;font-size:0.85em;">{{ l.tier_name or 'Pro' }}</span></td>
                 <td>{{ (l.license_expires or '')[:10] if l.license_expires else '—' }}</td>
+                <td style="min-width:200px;">
+                    <div style="display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;">
+                        {% if l.order_id %}
+                        <a href="{{ url_for('admin.download_invoice', order_id=l.order_id) }}" class="btn btn-outline-secondary btn-sm">📄 Faktura</a>
+                        <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ l.order_id }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">🔄 Znovu</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.delete_pending_order') }}" style="display:inline;" onsubmit="return confirm('Opravdu smazat objednávku pro tuto licenci? Licence se tím NESMAŽE, jen záznam o objednávce.');">
+                            <input type="hidden" name="order_id" value="{{ l.order_id }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže objednávku.">🗑️ Obj.</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted small">Bez objednávky</span>
+                        {% endif %}
+                        <form method="post" action="{{ url_for('admin.delete_active_license') }}" style="display:inline;" onsubmit="return confirm('Opravdu SMAZAT licenci ({{ l.email }})?');">
+                            <input type="hidden" name="api_key" value="{{ l.api_key }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Smaže licenci.">🗑️ Lic.</button>
+                        </form>
+                    </div>
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="4" class="text-center text-muted" style="padding:24px;">Žádné aktivní licence (nebo pouze Trial/Free).</td></tr>
+            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné aktivní licence (nebo pouze Trial/Free).</td></tr>
             {% endfor %}
         </tbody>
     </table>
