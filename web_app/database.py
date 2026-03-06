@@ -366,6 +366,17 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_one_time_tokens_expires ON one_time_login_tokens(expires_at)')
 
+        # Jednorázové tokeny pro nastavení hesla (aktivace bez hesla v e-mailu – antispam)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS set_password_tokens (
+                token TEXT PRIMARY KEY,
+                api_key TEXT NOT NULL,
+                expires_at REAL NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_set_password_tokens_expires ON set_password_tokens(expires_at)')
+
         # FAQ – otázky a odpovědi pro web (řazení podle order_index)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS faq (
@@ -1293,6 +1304,46 @@ class Database:
                 return None, False
             api_key = row['api_key']
             cursor.execute('DELETE FROM one_time_login_tokens WHERE token = ?', (token.strip(),))
+            conn.commit()
+            return api_key, True
+        finally:
+            conn.close()
+
+    def store_set_password_token(self, token, api_key, expires_at):
+        """Uloží jednorázový token pro nastavení hesla. expires_at = Unix timestamp (float)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO set_password_tokens (token, api_key, expires_at) VALUES (?, ?, ?)',
+                (token.strip(), api_key.strip(), expires_at)
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def consume_set_password_token(self, token):
+        """
+        Jednorázově spotřebuje token pro nastavení hesla: vrátí api_key a smaže záznam.
+        Vrátí (api_key, True) při úspěchu, (None, False) při neplatném/vypršeném tokenu.
+        """
+        import time
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            now = time.time()
+            cursor.execute(
+                'SELECT api_key, expires_at FROM set_password_tokens WHERE token = ?',
+                (token.strip(),)
+            )
+            row = cursor.fetchone()
+            if not row or (row['expires_at'] or 0) <= now:
+                return None, False
+            api_key = row['api_key']
+            cursor.execute('DELETE FROM set_password_tokens WHERE token = ?', (token.strip(),))
             conn.commit()
             return api_key, True
         finally:

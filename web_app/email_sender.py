@@ -79,15 +79,38 @@ def send_email(to_email, subject, body_plain, append_footer=True):
 
 ADMIN_INFO_EMAIL = os.environ.get('ADMIN_INFO_EMAIL', 'info@dokucheck.cz')
 
+ORDER_NOTIFICATION_EMAIL = os.environ.get('ORDER_NOTIFICATION_EMAIL', 'objednavky@dokucheck.cz')
 
-def send_order_notification_to_admin(order_number, jmeno_firma, tarif, amount_czk=None):
-    """Odešle z info@dokucheck.cz na info@dokucheck.cz notifikaci o nové objednávce.
-    Tělo: číslo objednávky (Prefix+ID), jméno, tarif, částka. UTF-8 (send_message + set_content charset=utf-8)."""
-    to_email = 'info@dokucheck.cz'
+
+def send_order_notification_to_admin(order=None, **kwargs):
+    """Odešle notifikaci o nové objednávce na objednavky@dokucheck.cz.
+    Přijímá slovník objednávky (order) s poli: order_display_number, jmeno_firma, ico, email, tarif,
+    ulice, mesto, psc, dic, discount_requested, amount_czk, amount_czk_final, created_at, status.
+    Tělo e-mailu obsahuje všechny údaje od klienta."""
+    if order is None:
+        order = kwargs
+    order_number = order.get('order_display_number') or order.get('invoice_number') or order.get('id') or '—'
+    to_email = ORDER_NOTIFICATION_EMAIL
     subject = 'Nová objednávka: {}'.format(order_number)
-    body = (
-        'Nová objednávka č. {}, Zákazník: {}, Tarif: {}, Částka: {} Kč'
-    ).format(order_number or '—', jmeno_firma or '—', tarif or '—', amount_czk if amount_czk is not None else '—')
+    lines = [
+        'Nová objednávka',
+        '',
+        'Číslo objednávky: {}'.format(order_number),
+        'Jméno / Firma: {}'.format(order.get('jmeno_firma') or '—'),
+        'IČO: {}'.format(order.get('ico') or '—'),
+        'E-mail: {}'.format(order.get('email') or '—'),
+        'Tarif: {}'.format(order.get('tarif') or '—'),
+        'Ulice: {}'.format(order.get('ulice') or '—'),
+        'Město: {}'.format(order.get('mesto') or '—'),
+        'PSČ: {}'.format(order.get('psc') or '—'),
+        'DIČ: {}'.format(order.get('dic') or '—'),
+        'Požadavek na slevu: {}'.format('Ano' if order.get('discount_requested') else 'Ne'),
+        'Částka (Kč): {}'.format(order.get('amount_czk') if order.get('amount_czk') is not None else '—'),
+        'Částka po slevě (Kč): {}'.format(order.get('amount_czk_final') if order.get('amount_czk_final') is not None else '—'),
+        'Datum: {}'.format(order.get('created_at') or '—'),
+        'Status: {}'.format(order.get('status') or '—'),
+    ]
+    body = '\n'.join(lines)
     return send_email(to_email, subject, body, append_footer=False)
 
 
@@ -177,25 +200,51 @@ def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_cz
     return send_email(email, subject, body, append_footer=True)
 
 
-def send_activation_email(user_email, password_plain, download_url=None, login_url=None, user_name=None):
-    """E-mail 2: aktivace. Šablona z DB (placeholdery: {jmeno}, {email}, {heslo}, {login_url}, {download_url}). Při password_plain=None se {heslo} nahradí textem o stávajícím hesle."""
+def send_activation_email(user_email, password_plain=None, download_url=None, login_url=None, user_name=None, set_password_url=None):
+    """E-mail 2: aktivace. Bez hesla v těle (antispam): při set_password_url se pošle jen odkaz na nastavení hesla.
+    Placeholdery: {jmeno}, {email}, {heslo}, {login_url}, {download_url}, {set_password_url}.
+    - set_password_url je nastaven: tělo obsahuje odkaz na nastavení hesla, heslo se do e-mailu neposílá.
+    - set_password_url není nastaven, password_plain je: staré chování (heslo v mailu – může jít do spamu).
+    - set_password_url ani password_plain: prodloužení přístupu, text o stávajícím hesle."""
     if not download_url:
         download_url = os.environ.get('DOWNLOAD_URL', 'https://www.dokucheck.cz/download')
     if not login_url:
         login_url = 'https://www.dokucheck.cz/portal'
     jmeno_text = (user_name or user_email or '').strip() or user_email or ''
-    heslo_text = (password_plain if (password_plain is not None and str(password_plain).strip()) else
-                 'Vaše stávající heslo (použijte heslo z předchozí aktivace).')
     templates = get_email_templates()
     subject_tpl = templates.get("activation_subject") or "DokuCheck – přístup aktivní"
-    body_tpl = templates.get("activation_body") or (
-        "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
-        "Přihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\n"
-        "Odkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}"
-    )
+
+    if set_password_url:
+        # Nový režim: žádné heslo v e-mailu, jen odkaz na nastavení hesla (menší riziko spamu)
+        body_tpl = templates.get("activation_body") or (
+            "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
+            "Přihlašovací jméno (e-mail): {email}\n\n"
+            "Pro dokončení aktivace si nastavte heslo kliknutím na odkaz:\n{set_password_url}\n\n"
+            "Po nastavení hesla se přihlaste zde: {login_url}\n\nStahujte aplikaci zde: {download_url}"
+        )
+        heslo_text = ""  # do těla se nedává
+    elif password_plain and str(password_plain).strip():
+        # Zpětná kompatibilita: heslo v mailu (může jít do spamu)
+        body_tpl = templates.get("activation_body") or (
+            "Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\n"
+            "Přihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\n"
+            "Odkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}"
+        )
+        heslo_text = password_plain.strip()
+    else:
+        # Prodloužení: uživatel má heslo, jen připomínka
+        body_tpl = templates.get("activation_body") or (
+            "Dobrý den, {jmeno}!\n\nPřístup k DokuCheck byl prodloužen.\n\n"
+            "Přihlaste se stávajícím heslem zde: {login_url}\n\nStahujte aplikaci: {download_url}"
+        )
+        heslo_text = "Vaše stávající heslo (použijte heslo z předchozí aktivace)."
+
+    set_pwd_url_placeholder = (set_password_url or "").strip()
+
     def repl(t):
         return (t.replace("{jmeno}", jmeno_text).replace("{email}", user_email or '')
-                .replace("{heslo}", heslo_text).replace("{download_url}", download_url or '').replace("{login_url}", login_url or ''))
+                .replace("{heslo}", heslo_text).replace("{download_url}", download_url or '')
+                .replace("{login_url}", login_url or '').replace("{set_password_url}", set_pwd_url_placeholder))
     subject = repl(subject_tpl)
     body = repl(body_tpl)
     return send_email(user_email, subject, body, append_footer=True)

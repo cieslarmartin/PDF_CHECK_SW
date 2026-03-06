@@ -34,5 +34,8 @@ desktop_agent/agent.log
 web_app/*_result.txt
 *.bak
 
-# Instalační EXE soubory (nahrávají se přes GitHub Releases, ne do repo)
-desktop_agent/install/*.exe
+# Složka s instalátory agenta – nepushovat (nahráváte je na Git ručně)
+desktop_agent/install/
+
+# Zálohy verzí – nepushovat (nahrávání na Git je ruční přes .bat)
+web_app/zaloha_build62_filtry_issr/

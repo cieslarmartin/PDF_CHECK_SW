@@ -13,6 +13,7 @@ import os
 import subprocess
 import json
 import secrets
+import time
 from datetime import datetime, timedelta
 
 # Import databáze
@@ -902,8 +903,7 @@ def generate_invoice():
         db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
     try:
         from email_sender import send_order_notification_to_admin
-        display_id = order.get('order_display_number') or order_id
-        send_order_notification_to_admin(display_id, order.get('jmeno_firma'), order.get('tarif'), amount_czk)
+        send_order_notification_to_admin(order=order)
     except Exception:
         pass
     flash('Faktura vygenerována a uložena. Objednávka v sekci Čekající na platbu.', 'success')
@@ -1006,7 +1006,6 @@ def confirm_payment():
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.pending_orders'))
     tier_id = tier_row.get('id')
-    import string
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
@@ -1014,10 +1013,7 @@ def confirm_payment():
         return redirect(url_for('admin.pending_orders'))
     existing = db.get_license_by_email(email)
     has_password = existing and (existing.get('password_hash') or '').strip()
-    if existing and has_password:
-        password_plain = None
-    else:
-        password_plain = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+    password_plain = None  # heslo se už v e-mailu neposílá (antispam), uživatel si ho nastaví odkazem
     if existing:
         ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
         if not ok:
@@ -1033,17 +1029,24 @@ def confirm_payment():
     try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
-        login_url = 'https://www.dokucheck.cz/portal'
-        send_activation_email(email, password_plain, download_url=download_url, login_url=login_url, user_name=user_name)
+        login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
+        set_password_url = None
+        if not has_password:
+            set_pwd_token = secrets.token_urlsafe(32)
+            expires_at = time.time() + 7 * 24 * 3600  # 7 dní
+            if db.store_set_password_token(set_pwd_token, api_key, expires_at):
+                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+                set_password_url = base + '/portal/set-password?token=' + set_pwd_token
+        send_activation_email(email, password_plain=None, download_url=download_url, login_url=login_url, user_name=user_name, set_password_url=set_password_url)
         if existing:
             notify_admin('Platba potvrzena – objednávka #{} (existující účet)'.format(order_id),
                          'Přijetí platby pro objednávku #{} ({}). Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.'.format(order_id, email))
         else:
             notify_admin('Platba potvrzena – objednávka #{}'.format(order_id),
-                         'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s přístupovými údaji odeslán.'.format(order_id, email))
+                         'Přijetí platby potvrzeno pro objednávku #{} ({}). Licence vytvořena, e-mail s odkazem na nastavení hesla odeslán.'.format(order_id, email))
     except Exception:
         pass
-    flash('Platba potvrzena. ' + ('Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.' if existing else 'Licence vytvořena, e-mail s heslem odeslán.'), 'success')
+    flash('Platba potvrzena. ' + ('Licence přiřazena existujícímu účtu, aktivační e-mail odeslán.' if existing else 'Licence vytvořena, e-mail s odkazem na nastavení hesla odeslán.'), 'success')
     return redirect(url_for('admin.pending_orders'))
 
 
@@ -1069,7 +1072,6 @@ def activate_without_invoice():
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.pending_orders'))
     tier_id = tier_row.get('id')
-    import string
     user_name = (order.get('jmeno_firma') or order.get('email') or 'Uživatel').strip()
     email = (order.get('email') or '').strip()
     if not email:
@@ -1077,15 +1079,13 @@ def activate_without_invoice():
         return redirect(url_for('admin.pending_orders'))
     existing = db.get_license_by_email(email)
     has_password = existing and (existing.get('password_hash') or '').strip()
-    if existing and has_password:
-        password_plain = None
-    else:
-        password_plain = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+    password_plain = None
     if existing:
         ok = db.admin_assign_order_to_existing_license(existing['api_key'], tier_id, days=365, password_plain=password_plain, user_name=user_name)
         if not ok:
             flash('Aktualizace licence existujícího účtu se nezdařila.', 'error')
             return redirect(url_for('admin.pending_orders'))
+        api_key = existing['api_key']
     else:
         api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=password_plain)
         if not api_key:
@@ -1095,8 +1095,15 @@ def activate_without_invoice():
     try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
-        login_url = 'https://www.dokucheck.cz/portal'
-        send_activation_email(email, password_plain, download_url=download_url, login_url=login_url, user_name=user_name)
+        login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
+        set_password_url = None
+        if not has_password:
+            set_pwd_token = secrets.token_urlsafe(32)
+            expires_at = time.time() + 7 * 24 * 3600
+            if db.store_set_password_token(set_pwd_token, api_key, expires_at):
+                base = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/')
+                set_password_url = base + '/portal/set-password?token=' + set_pwd_token
+        send_activation_email(email, password_plain=None, download_url=download_url, login_url=login_url, user_name=user_name, set_password_url=set_password_url)
         notify_admin(
             'Ruční aktivace – objednávka #{}'.format(order_id),
             'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). '.format(order_id, user_name, email)

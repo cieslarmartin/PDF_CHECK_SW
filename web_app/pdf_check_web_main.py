@@ -149,15 +149,14 @@ app.config['SESSION_COOKIE_SECURE'] = False  # V produkci nastavit na True s HTT
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 
-# Flask-Mail – SMTP Seznam (info@dokucheck.cz)
+# Flask-Mail – SMTP (výchozí objednavky@dokucheck.cz; příjemce notifikací objednavky@)
 # MAIL_USERNAME a MAIL_PASSWORD: na PythonAnywhere → Web → Environment variables (nebo WSGI)
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.seznam.cz')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', '465') or 465)
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'info@dokucheck.cz')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'objednavky@dokucheck.cz')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
-# Jméno odesílatele pro zákazníky; oznámení pro admina jdou na info@dokucheck.cz
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'DokuCheck Objednávky <info@dokucheck.cz>')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'DokuCheck Objednávky <objednavky@dokucheck.cz>')
 try:
     from flask_mail import Mail
     mail = Mail(app)
@@ -3733,10 +3732,12 @@ def checkout():
             amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
             db.update_pending_order_invoice_number(order_id, order_display_number)
 
-            # 1. Notifikace na info@dokucheck.cz (UTF-8, send_message)
+            # 1. Notifikace na objednavky@dokucheck.cz (úplné údaje od klienta)
             try:
                 from email_sender import send_order_notification_to_admin
-                send_order_notification_to_admin(order_display_number, jmeno_firma, tarif, amount_czk)
+                order_dict = db.get_pending_order_by_id(order_id)
+                if order_dict:
+                    send_order_notification_to_admin(order=order_dict)
             except Exception:
                 pass
 
@@ -3878,7 +3879,8 @@ def portal():
                                license_expires_label=license_expires_label,
                                upgrade_request_email=upgrade_email,
                                pw_message=None, pw_error=False)
-    return render_template('portal_login.html')
+    success = request.args.get('set_password') == 'ok'
+    return render_template('portal_login.html', success=success)
 
 
 @app.route('/portal/logout')
@@ -3886,6 +3888,31 @@ def portal_logout():
     """Odhlášení z uživatelského portálu."""
     session.pop('portal_user', None)
     return redirect(url_for('index'))
+
+
+@app.route('/portal/set-password', methods=['GET', 'POST'])
+def portal_set_password():
+    """Nastavení hesla po aktivaci (odkaz z e-mailu bez hesla – antispam). Token je jednorázový."""
+    token = (request.args.get('token') or request.form.get('token') or '').strip()
+    if not token:
+        return render_template('portal_set_password.html', error='Chybí odkaz. Použijte odkaz z aktivačního e-mailu.', token='')
+    db = Database()
+    if request.method == 'POST':
+        new_pass = (request.form.get('new_password') or '').strip()
+        new_pass2 = (request.form.get('new_password2') or '').strip()
+        if not new_pass or not new_pass2:
+            return render_template('portal_set_password.html', error='Vyplňte heslo a potvrzení', token=token)
+        if new_pass != new_pass2:
+            return render_template('portal_set_password.html', error='Hesla se neshodují', token=token)
+        if len(new_pass) < 6:
+            return render_template('portal_set_password.html', error='Heslo musí mít alespoň 6 znaků', token=token)
+        api_key, consumed = db.consume_set_password_token(token)
+        if not consumed or not api_key:
+            return render_template('portal_set_password.html', error='Odkaz vypršel nebo byl již použit. Požádejte o nový aktivační e-mail.', token='')
+        if db.admin_set_license_password(api_key, new_pass):
+            return redirect(url_for('portal') + '?set_password=ok')
+        return render_template('portal_set_password.html', error='Nepodařilo se nastavit heslo. Zkuste to znovu.', token=token)
+    return render_template('portal_set_password.html', error=None, token=token)
 
 
 @app.route('/portal/change-password', methods=['POST'])
