@@ -1,0 +1,386 @@
+/* DokuCheck – tmavý režim (celý web). Aktivuje se při <html data-theme="dark">. */
+
+/* ---------- Landing (landing_v3) ---------- */
+[data-theme="dark"] body.bg-gray-50 {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .announce-bar {
+  background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%) !important;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+[data-theme="dark"] .nav-glass {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-bottom-color: #334155 !important;
+}
+[data-theme="dark"] .nav-glass a,
+[data-theme="dark"] .nav-glass .text-gray-500 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .nav-glass a:hover {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] #mob {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] #mob a {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] #mob a:hover {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .landing-section {
+  border: none !important;
+}
+[data-theme="dark"] .landing-section.bg-white,
+[data-theme="dark"] .landing-section.bg-gray-50 {
+  background: #0f172a !important;
+}
+[data-theme="dark"] .landing-section.landing-section-alt {
+  background: #1e293b !important;
+}
+[data-theme="dark"] .landing-section h2,
+[data-theme="dark"] .landing-section .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .landing-section .text-gray-500,
+[data-theme="dark"] .landing-section .text-gray-600,
+[data-theme="dark"] .landing-section .text-gray-400 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .card h3,
+[data-theme="dark"] .card .font-semibold.text-gray-900 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .card .text-gray-500 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .price-pop {
+  border-color: #38bdf8 !important;
+  background: linear-gradient(180deg, #0c4a6e 0%, #1e293b 40%) !important;
+}
+[data-theme="dark"] .price-badge {
+  background: #38bdf8 !important;
+  color: #0f172a !important;
+}
+[data-theme="dark"] .faq details {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .faq details summary {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .faq .text-gray-500 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] footer.bg-gray-900 {
+  background: #020617 !important;
+  color: #64748b !important;
+}
+[data-theme="dark"] footer a:hover {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] #splash-box {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] #splash-box .text-gray-500,
+[data-theme="dark"] #splash-box .text-gray-400,
+[data-theme="dark"] #splash-box .text-gray-300 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .landing-section a[style*="color:#1e5a8a"],
+[data-theme="dark"] .landing-section a[style*="color:#059669"] {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .landing-section .rounded-xl.border {
+  border-color: #334155 !important;
+  background: #1e293b !important;
+}
+[data-theme="dark"] table thead tr {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] table td {
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .coming {
+  border-color: #475569 !important;
+  background: #1e293b !important;
+}
+[data-theme="dark"] .coming-tag {
+  background: #475569 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .overflow-auto.rounded-2xl {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .bg-white.rounded-lg.border {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* ---------- Checkout ---------- */
+[data-theme="dark"] body.min-h-screen.antialiased {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .checkout-header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+[data-theme="dark"] .checkout-header .logo-doku {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .checkout-panel {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .checkout-panel h2,
+[data-theme="dark"] .checkout-panel .font-semibold {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .checkout-panel .text-gray-600,
+[data-theme="dark"] .checkout-panel .text-gray-500 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .checkout-btn-primary {
+  background: #2563eb !important;
+}
+
+/* ---------- Download ---------- */
+[data-theme="dark"] .landing-header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+[data-theme="dark"] .landing-header .logo-doku {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .landing-header a {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .landing-header a:hover {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .lp-panel {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .lp-panel .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+/* ---------- Admin (admin_base) ---------- */
+[data-theme="dark"] body {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .main-wrap .header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .main-content {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .table-container {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .table-container th {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .table-container td {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .table-container tr:hover {
+  background: #334155 !important;
+}
+[data-theme="dark"] .modal {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .form-group label {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .actions-bar h2 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .sidebar {
+  background: #0f172a !important;
+  border-right: 1px solid #334155 !important;
+}
+[data-theme="dark"] .sidebar-nav a {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .sidebar-nav a:hover,
+[data-theme="dark"] .sidebar-nav a.active {
+  background: #1e293b !important;
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .admin-card {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .admin-card .card-header {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .admin-card .card-body,
+[data-theme="dark"] .admin-card .card-footer {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .admin-card .card-footer {
+  background: #334155 !important;
+}
+[data-theme="dark"] .admin-tabs a {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .admin-tabs a:hover,
+[data-theme="dark"] .admin-tabs a.active {
+  color: #38bdf8 !important;
+  border-bottom-color: #38bdf8 !important;
+}
+
+/* ---------- Online check (app) – světlý režim přepne na light ---------- */
+[data-theme="light"] body.bg-slate-900 {
+  background: #f8fafc !important;
+  color: #1e293b !important;
+}
+[data-theme="light"] .border-b.border-slate-700 {
+  background: #fff !important;
+  border-color: #e2e8f0 !important;
+}
+[data-theme="light"] .border-b.border-slate-700 a {
+  color: #475569 !important;
+}
+[data-theme="light"] .border-b.border-slate-700 a:hover {
+  color: #1e5a8a !important;
+}
+[data-theme="light"] #drop-zone {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+[data-theme="light"] .text-slate-400 { color: #64748b !important; }
+[data-theme="light"] .text-slate-300 { color: #475569 !important; }
+[data-theme="light"] .text-slate-500 { color: #64748b !important; }
+[data-theme="light"] .bg-slate-800 { background: #e2e8f0 !important; }
+[data-theme="light"] .bg-amber-900\/40 {
+  background: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #92400e !important;
+}
+[data-theme="light"] .border-slate-600 { border-color: #cbd5e1 !important; }
+[data-theme="light"] .bg-slate-800\/50 { background: #f1f5f9 !important; }
+
+/* ---------- Portál (portal_dashboard, portal_login) ---------- */
+[data-theme="dark"] body.bg-gray-50.min-h-screen {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .portal-nav {
+  background: rgba(15, 23, 42, 0.98) !important;
+  border-bottom-color: #334155 !important;
+}
+[data-theme="dark"] .portal-nav .brand,
+[data-theme="dark"] .portal-nav .link {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .portal-nav .link:hover {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .portal-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .portal-card h2,
+[data-theme="dark"] .portal-card .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .portal-label,
+[data-theme="dark"] .portal-value,
+[data-theme="dark"] .portal-card .text-gray-600 {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .price-box {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .price-box h3 {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .input-field {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ---------- Checkout thanks (stránka Děkujeme) ---------- */
+[data-theme="dark"] body.bg-slate-900.text-slate-100 {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] body.bg-slate-900 .text-slate-300 { color: #94a3b8 !important; }
+[data-theme="dark"] body.bg-slate-900 .text-slate-500 { color: #64748b !important; }
+
+/* ---------- GDPR a VOP (container stránky) ---------- */
+[data-theme="dark"] body.pg-legal {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] body.pg-legal .container {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .container h1 {
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .container h2 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .container .subtitle,
+[data-theme="dark"] .container p,
+[data-theme="dark"] .container li {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .container .highlight {
+  background: #0c4a6e !important;
+  border-left-color: #38bdf8 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .container .disclaimer {
+  background: #422006 !important;
+  border-left-color: #f59e0b !important;
+  color: #fef3c7 !important;
+}
+[data-theme="dark"] .container .footer-links {
+  border-top-color: #334155 !important;
+}
+[data-theme="dark"] .container .footer-links a {
+  color: #38bdf8 !important;
+}

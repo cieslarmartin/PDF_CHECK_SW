@@ -6,6 +6,8 @@
     <title>Můj účet – DokuCheck</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -40,6 +42,7 @@
                 <span>Doku<span class="accent">Check</span></span>
             </a>
             <div class="flex items-center gap-4">
+                <button type="button" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded text-lg" aria-label="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
                 <a href="/" class="link">Úvod</a>
                 <a href="/app" class="link">Aplikace DokuCheck</a>
                 {% if download_url %}<a href="{{ download_url }}" target="_blank" rel="noopener" class="link">Stáhnout Agent</a>{% else %}<a href="/#ke-stazeni" class="link">Stáhnout Agent</a>{% endif %}
@@ -152,5 +155,7 @@
 
         <p class="text-gray-500 text-sm"><a href="/" class="text-[#1e5a8a] hover:underline">Zpět na úvod</a></p>
     </main>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script>(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
 </body>
 </html>

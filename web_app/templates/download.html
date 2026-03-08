@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stáhnout DokuCheck Agent</title>
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #f3f4f6; color: #374151; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -25,11 +27,12 @@
             <a href="/" class="text-xl font-bold">
                 <span class="logo-pdf">PDF</span><span class="logo-doku">Doku</span><span class="logo-pro">Check PRO</span>
             </a>
-            <nav class="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium">
+            <nav class="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium items-center">
                 <a href="/#jak">Jak to funguje</a>
                 <a href="/#cenik">Ceník</a>
                 <a href="/app">Vyzkoušet ONLINE</a>
                 <a href="/download">Stáhnout</a>
+                <button type="button" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded text-lg" aria-label="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
                 <a href="/portal">Můj účet</a>
             </nav>
         </div>
@@ -97,6 +100,8 @@
             })();
         </script>
 
+        <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+        <script>(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
         <footer class="mt-8 pt-6 border-t border-gray-200">
             <p class="text-sm text-gray-600">
                 Kontakt: {% if contact_email %}<a href="mailto:{{ contact_email }}" class="lp-link">{{ contact_email }}</a>{% else %}vyplňte v Adminu – Nastavení → Kontakt{% endif %}

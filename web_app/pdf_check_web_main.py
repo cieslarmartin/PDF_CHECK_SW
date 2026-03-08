@@ -3471,6 +3471,22 @@ def index():
     return render_template('landing_v3.html', **settings)
 
 
+@app.route('/landing-preview')
+def landing_preview():
+    """Náhled 5 vizuálních variant landingu (A–E). Pouze pro výběr vzhledu, stejná data jako landing."""
+    db = Database()
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
+    v = request.args.get('v', 'a').lower()
+    if v not in 'abcdefghijklmnop':
+        v = 'a'
+    settings['preview_variant'] = v
+    return render_template('landing_preview.html', **settings)
+
+
 @app.route('/design-a')
 def design_a():
     """Landing page – design varianta A (Gradient Glass)."""

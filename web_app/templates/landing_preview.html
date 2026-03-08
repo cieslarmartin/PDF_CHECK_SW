@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Náhled variant landingu – DokuCheck</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        .card{background:white;border:1px solid #e5e7eb;border-radius:1rem;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+        .icon-circle{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .coming{border:1px dashed #94a3b8;position:relative;}
+        .coming-tag{position:absolute;top:.75rem;right:.75rem;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#b45309;}
+        .price-pop{border:2px solid #1e5a8a;background:linear-gradient(180deg,#eff6ff 0%,#fff 30%);}
+        .price-badge{background:#1e5a8a;color:#fff;font-size:.65rem;padding:3px 10px;border-radius:0 0 8px 8px;font-weight:700;position:absolute;top:0;right:1.5rem;}
+
+        /* ---------- Společné: oddělení sekcí (kde začíná / končí) ---------- */
+        .preview-section { border-top: 2px solid #e2e8f0; }
+        .preview-section.preview-hero { border-top: none; }
+        .preview-section .section-head { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; justify-content: center; }
+        .preview-section .section-num { font-size: 0.7rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; }
+        .preview-section h2 { border-bottom: 2px solid #1e5a8a; padding-bottom: 0.35rem; display: inline-block; min-width: 0; }
+
+        /* ========== VARIANT A: Kompaktní (méně paddingu, užší sloupec) ========== */
+        body.preview-variant-a .preview-section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+        body.preview-variant-a .preview-container { max-width: 56rem !important; }
+        body.preview-variant-a .preview-section h2 { font-size: 1.25rem !important; margin-bottom: 0.75rem !important; }
+        body.preview-variant-a .preview-section .card { padding: 1rem !important; }
+        body.preview-variant-a .preview-hero { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+        body.preview-variant-a .preview-hero .preview-container { max-width: 56rem !important; }
+        body.preview-variant-a .preview-grid-3 { gap: 0.75rem !important; }
+
+        /* ========== VARIANT B: Dvousloupcový editorial (text | vizuál) ========== */
+        body.preview-variant-b .preview-section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+        body.preview-variant-b .preview-hero-inner { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 2rem !important; align-items: center !important; }
+        body.preview-variant-b .preview-hero-inner .preview-hero-text { order: 1; }
+        body.preview-variant-b .preview-hero-inner .preview-hero-img { order: 2; }
+        @media (max-width: 768px) {
+            body.preview-variant-b .preview-hero-inner { grid-template-columns: 1fr !important; }
+        }
+        body.preview-variant-b .preview-split { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 1.5rem !important; align-items: start !important; }
+        @media (max-width: 768px) {
+            body.preview-variant-b .preview-split { grid-template-columns: 1fr !important; }
+        }
+
+        /* ========== VARIANT C: Vše v kartách v mřížce ========== */
+        body.preview-variant-c .preview-section { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+        body.preview-variant-c .preview-section > .preview-container { max-width: none !important; }
+        body.preview-variant-c .preview-grid-3 { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 0.75rem !important; }
+        body.preview-variant-c .preview-grid-2 { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem !important; }
+        body.preview-variant-c .preview-section h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
+        body.preview-variant-c .card { margin-bottom: 0 !important; min-height: 120px; }
+        @media (max-width: 768px) {
+            body.preview-variant-c .preview-grid-3 { grid-template-columns: 1fr !important; }
+            body.preview-variant-c .preview-grid-2 { grid-template-columns: 1fr !important; }
+        }
+
+        /* ========== VARIANT D: Úzký pruh (max-w-2xl) ========== */
+        body.preview-variant-d .preview-container { max-width: 42rem !important; margin-left: auto !important; margin-right: auto !important; }
+        body.preview-variant-d .preview-section { padding-top: 1.75rem !important; padding-bottom: 1.75rem !important; }
+        body.preview-variant-d .preview-section h2 { font-size: 1.2rem !important; margin-bottom: 0.75rem !important; }
+
+        /* ========== VARIANT E: Bento, decentní přechody bez čáry, bez číslování ========== */
+        body.preview-variant-e .preview-section { padding-top: 1rem !important; padding-bottom: 1rem !important; border-top: none !important; }
+        body.preview-variant-e .preview-section:nth-child(odd) { background: #fff !important; }
+        body.preview-variant-e .preview-section:nth-child(even) { background: #f8fafc !important; }
+        body.preview-variant-e .preview-section .section-num { display: none !important; }
+        body.preview-variant-e .preview-section h2 { border-bottom: none !important; }
+        body.preview-variant-e .preview-bento {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 0.5rem !important;
+            max-width: 72rem !important;
+            margin: 0 auto !important;
+        }
+        body.preview-variant-e .preview-bento .bento-span-2 { grid-column: span 2 !important; }
+        body.preview-variant-e .preview-bento .bento-span-3 { grid-column: span 3 !important; }
+        body.preview-variant-e .card { padding: 0.75rem 1rem !important; margin-bottom: 0 !important; min-height: 0 !important; }
+        body.preview-variant-e .preview-section h2 { font-size: 1rem !important; margin-bottom: 0.5rem !important; }
+        @media (max-width: 768px) {
+            body.preview-variant-e .preview-bento { grid-template-columns: 1fr !important; }
+            body.preview-variant-e .preview-bento .bento-span-2 { grid-column: span 1 !important; }
+            body.preview-variant-e .preview-bento .bento-span-3 { grid-column: span 1 !important; }
+        }
+
+        /* ========== F: Pruhy (stridave bile/sede, minimalni mezery) ========== */
+        body.preview-variant-f .preview-section { padding: 1rem 0 !important; border-top-width: 3px !important; border-top-color: #cbd5e1 !important; }
+        body.preview-variant-f .preview-section:nth-child(odd) { background: #f8fafc !important; }
+        body.preview-variant-f .preview-section:nth-child(even) { background: #fff !important; }
+        body.preview-variant-f .preview-container { max-width: 64rem !important; }
+        body.preview-variant-f .preview-section h2 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
+        body.preview-variant-f .preview-hero { padding: 1.25rem 0 !important; }
+        body.preview-variant-f .preview-grid-3 { gap: 0.5rem !important; }
+        body.preview-variant-f .card { padding: 0.75rem 1rem !important; }
+
+        /* ========== G: Cislo sekce + levy accent (magazine) ========== */
+        body.preview-variant-g .preview-section { padding: 1.25rem 0 !important; padding-left: 1rem !important; border-left: 4px solid #1e5a8a !important; border-top: none !important; margin-left: 0.5rem; }
+        body.preview-variant-g .preview-section .section-num { color: #1e5a8a; font-size: 0.85rem; }
+        body.preview-variant-g .preview-container { max-width: 58rem !important; }
+        body.preview-variant-g .preview-section h2 { border-bottom: none !important; font-size: 1.15rem !important; }
+        body.preview-variant-g .preview-hero { border-left: none !important; margin-left: 0 !important; padding-left: 0 !important; }
+        body.preview-variant-g .preview-section .section-head { justify-content: flex-start !important; }
+
+        /* ========== H: Tmavy pruh nad nadpisem sekce ========== */
+        body.preview-variant-h .preview-section { padding: 0 !important; border-top: none !important; margin-bottom: 0 !important; }
+        body.preview-variant-h .preview-section .section-head { background: #0f172a !important; color: #e2e8f0 !important; margin: 0 -1.5rem 0.5rem -1.5rem !important; padding: 0.4rem 1.5rem !important; }
+        body.preview-variant-h .preview-section h2 { border: none !important; color: inherit !important; font-size: 0.95rem !important; padding: 0 !important; }
+        body.preview-variant-h .preview-section .preview-container { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+        body.preview-variant-h .preview-container { max-width: 64rem !important; }
+        body.preview-variant-h .preview-hero .section-head { display: none !important; }
+
+        /* ========== I: Karty s vyraznym stinem (bloky) ========== */
+        body.preview-variant-i .preview-section { padding: 0.75rem 0 !important; border-top: 1px solid #e2e8f0 !important; }
+        body.preview-variant-i .preview-section .preview-container { background: #fff !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(0,0,0,.06) !important; padding: 1rem 1.25rem !important; border: 1px solid #e5e7eb !important; }
+        body.preview-variant-i .preview-section h2 { font-size: 1.05rem !important; }
+        body.preview-variant-i .preview-grid-3 { gap: 0.5rem !important; }
+        body.preview-variant-i .card { box-shadow: 0 2px 8px rgba(0,0,0,.06) !important; padding: 0.75rem !important; }
+        body.preview-variant-i .preview-hero .preview-container { box-shadow: none !important; background: transparent !important; border: none !important; }
+
+        /* ========== J: Minimalni cara + small caps label ========== */
+        body.preview-variant-j .preview-section { padding: 0.6rem 0 !important; border-top: 1px solid #cbd5e1 !important; }
+        body.preview-variant-j .preview-section .section-num { font-size: 0.65rem !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; color: #64748b !important; }
+        body.preview-variant-j .preview-section h2 { border: none !important; font-size: 1rem !important; font-weight: 600 !important; }
+        body.preview-variant-j .preview-container { max-width: 52rem !important; }
+        body.preview-variant-j .preview-hero { padding: 1rem 0 !important; }
+        body.preview-variant-j .card { padding: 0.6rem 0.9rem !important; }
+
+        /* ========== K: Gradient levy pruh (vertikalni) ========== */
+        body.preview-variant-k .preview-section { padding: 0.75rem 0 !important; border-top: none !important; position: relative !important; padding-left: 0.75rem !important; }
+        body.preview-variant-k .preview-section::before { content: '' !important; position: absolute !important; left: 0 !important; top: 0.25rem !important; bottom: 0.25rem !important; width: 4px !important; background: linear-gradient(180deg, #1e5a8a, #3b82f6) !important; border-radius: 2px !important; }
+        body.preview-variant-k .preview-section h2 { border: none !important; font-size: 1.05rem !important; }
+        body.preview-variant-k .preview-container { max-width: 60rem !important; }
+        body.preview-variant-k .preview-hero::before { display: none !important; }
+        body.preview-variant-k .preview-hero { padding-left: 0 !important; }
+        body.preview-variant-k .preview-section .section-head { justify-content: flex-start !important; }
+
+        /* ========== L: Kompaktni radky, hr mezi sekcemi ========== */
+        body.preview-variant-l .preview-section { padding: 0.5rem 0 !important; border-top: 3px solid #0f172a !important; }
+        body.preview-variant-l .preview-section h2 { font-size: 0.95rem !important; border: none !important; font-weight: 700 !important; }
+        body.preview-variant-l .preview-container { max-width: 64rem !important; }
+        body.preview-variant-l .preview-grid-3 { grid-template-columns: repeat(3, 1fr) !important; gap: 0.4rem !important; }
+        body.preview-variant-l .card { padding: 0.5rem 0.75rem !important; min-height: auto !important; }
+        body.preview-variant-l .preview-hero { padding: 0.75rem 0 !important; }
+
+        /* ========== M: Dashboard – barevny horni okraj sekce ========== */
+        body.preview-variant-m .preview-section { padding: 0 !important; border-top: none !important; margin-bottom: 0 !important; }
+        body.preview-variant-m .preview-section .preview-container { border-top: 4px solid #1e5a8a !important; padding: 0.6rem 1rem 0.75rem !important; background: #fafafa !important; margin: 0 0.5rem !important; border-radius: 0 0 8px 8px !important; }
+        body.preview-variant-m .preview-section:nth-child(3n) .preview-container { border-top-color: #047857 !important; }
+        body.preview-variant-m .preview-section:nth-child(3n+1) .preview-container { border-top-color: #7c3aed !important; }
+        body.preview-variant-m .preview-section h2 { border: none !important; font-size: 0.95rem !important; margin-bottom: 0.4rem !important; }
+        body.preview-variant-m .preview-grid-3 { gap: 0.4rem !important; }
+        body.preview-variant-m .card { padding: 0.5rem 0.75rem !important; }
+        body.preview-variant-m .preview-hero .preview-container { border-top: none !important; background: transparent !important; }
+
+        /* ========== N: Dvousloupcovy editorial, podtrzeny nadpis ========== */
+        body.preview-variant-n .preview-section { padding: 0.75rem 0 !important; border-top: 2px solid #e2e8f0 !important; }
+        body.preview-variant-n .preview-section h2 { font-size: 1rem !important; border-bottom-width: 3px !important; }
+        body.preview-variant-n .preview-grid-3 { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+        body.preview-variant-n .preview-container { max-width: 64rem !important; }
+        body.preview-variant-n .card { padding: 0.75rem !important; }
+        @media (max-width: 768px) { body.preview-variant-n .preview-grid-3 { grid-template-columns: 1fr !important; } }
+
+        /* ========== O: Sklo / jemny box, kompaktni ========== */
+        body.preview-variant-o .preview-section { padding: 0.5rem 0 !important; border-top: 1px solid rgba(30, 90, 138, 0.2) !important; }
+        body.preview-variant-o .preview-section .preview-container { background: rgba(255,255,255,0.7) !important; backdrop-filter: blur(8px) !important; border: 1px solid rgba(226,232,240,0.8) !important; border-radius: 10px !important; padding: 0.75rem 1rem !important; }
+        body.preview-variant-o .preview-section h2 { font-size: 0.95rem !important; border-bottom-color: rgba(30,90,138,0.4) !important; }
+        body.preview-variant-o .preview-container { max-width: 60rem !important; }
+        body.preview-variant-o .card { padding: 0.5rem 0.75rem !important; background: rgba(255,255,255,0.9) !important; }
+        body.preview-variant-o .preview-hero .preview-container { background: transparent !important; backdrop-filter: none !important; border: none !important; }
+
+        /* ========== VARIANT P: E + dark mode (stejné rozvržení, tmavé pozadí) ========== */
+        body.preview-variant-p .preview-section { padding-top: 1rem !important; padding-bottom: 1rem !important; border-top: none !important; }
+        body.preview-variant-p .preview-section:nth-child(odd) { background: #0f172a !important; }
+        body.preview-variant-p .preview-section:nth-child(even) { background: #1e293b !important; }
+        body.preview-variant-p .preview-section .section-num { display: none !important; }
+        body.preview-variant-p .preview-section h2 { border-bottom: none !important; color: #e2e8f0 !important; }
+        body.preview-variant-p .preview-section p, body.preview-variant-p .preview-section .text-gray-500 { color: #94a3b8 !important; }
+        body.preview-variant-p .preview-section .text-gray-900 { color: #f1f5f9 !important; }
+        body.preview-variant-p .preview-bento { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 0.5rem !important; max-width: 72rem !important; margin: 0 auto !important; }
+        body.preview-variant-p .preview-bento .bento-span-2 { grid-column: span 2 !important; }
+        body.preview-variant-p .preview-bento .bento-span-3 { grid-column: span 3 !important; }
+        body.preview-variant-p .card { padding: 0.75rem 1rem !important; margin-bottom: 0 !important; min-height: 0 !important; background: #1e293b !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+        body.preview-variant-p .card h3 { color: #f1f5f9 !important; }
+        body.preview-variant-p .card p, body.preview-variant-p .card .text-gray-500 { color: #94a3b8 !important; }
+        body.preview-variant-p .icon-circle { background: linear-gradient(135deg, #3b82f6, #1e5a8a) !important; }
+        body.preview-variant-p .coming { border-color: #475569 !important; background: #1e293b !important; }
+        body.preview-variant-p .coming-tag { background: #475569 !important; color: #e2e8f0 !important; }
+        body.preview-variant-p .price-pop { border-color: #38bdf8 !important; background: linear-gradient(180deg, #0c4a6e 0%, #1e293b 30%) !important; }
+        body.preview-variant-p .price-badge { background: #38bdf8 !important; color: #0f172a !important; }
+        body.preview-variant-p .preview-section h2 { font-size: 1rem !important; margin-bottom: 0.5rem !important; }
+        body.preview-variant-p { background: #0f172a !important; color: #e2e8f0 !important; }
+        body.preview-variant-p .preview-hero { background: #0f172a !important; }
+        body.preview-variant-p .preview-hero h1, body.preview-variant-p .preview-hero .text-4xl { color: #f1f5f9 !important; }
+        body.preview-variant-p .preview-hero .text-gray-500 { color: #94a3b8 !important; }
+        body.preview-variant-p a[href="/app"], body.preview-variant-p .preview-hero a[style*="background:#1e5a8a"] { background: #2563eb !important; color: #fff !important; }
+        body.preview-variant-p .preview-hero a[style*="border-color:#1e5a8a"] { border-color: #38bdf8 !important; color: #38bdf8 !important; }
+        body.preview-variant-p .rounded-xl.border { border-color: #334155 !important; background: #1e293b !important; }
+        body.preview-variant-p .rounded-xl.border .text-gray-900 { color: #f1f5f9 !important; }
+        body.preview-variant-p .rounded-xl.border .text-gray-600 { color: #94a3b8 !important; }
+        body.preview-variant-p table thead tr { background: #1e293b !important; color: #e2e8f0 !important; }
+        body.preview-variant-p table td { border-color: #334155 !important; }
+        body.preview-variant-p details { background: #1e293b !important; border-color: #334155 !important; }
+        body.preview-variant-p details summary { color: #f1f5f9 !important; }
+        body.preview-variant-p footer { background: #020617 !important; color: #94a3b8 !important; }
+        body.preview-variant-p footer .text-white { color: #f1f5f9 !important; }
+        @media (max-width: 768px) {
+            body.preview-variant-p .preview-bento { grid-template-columns: 1fr !important; }
+            body.preview-variant-p .preview-bento .bento-span-2 { grid-column: span 1 !important; }
+            body.preview-variant-p .preview-bento .bento-span-3 { grid-column: span 1 !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased bg-gray-50 text-gray-800 preview-variant-{{ preview_variant|default('a') }}">
+
+{# Přepínač variant – fixní nahoře, 2 řádky #}
+<div class="sticky top-0 z-[100] bg-gray-900 text-white px-3 py-2 shadow-lg">
+    <div class="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+        <span class="mr-2 font-semibold text-gray-300">Varianty:</span>
+        {% for letter, label in [('a','A'),('b','B'),('c','C'),('d','D'),('e','E'),('f','F'),('g','G'),('h','H'),('i','I'),('j','J'),('k','K'),('l','L'),('m','M'),('n','N'),('o','O'),('p','P')] %}
+        <a href="{{ url_for('landing_preview', v=letter) }}" class="px-2 py-1 rounded font-medium {{ 'bg-blue-600 text-white' if preview_variant == letter else 'bg-gray-700 hover:bg-gray-600' }}">{{ letter|upper }}</a>
+        {% endfor %}
+        <a href="/" class="ml-3 text-gray-400 hover:text-white">← Web</a>
+    </div>
+    <div class="flex flex-wrap justify-center gap-x-2 mt-1 text-[10px] text-gray-400">
+        <span>A kompakt</span><span>B 2 sl.</span><span>C karty</span><span>D úzký</span><span>E bento</span>
+        <span>F pruhy</span><span>G magazine</span><span>H tmavý pruh</span><span>I stíny</span><span>J minimal</span>
+        <span>K gradient</span><span>L řádky</span><span>M dashboard</span><span>N editorial</span><span>O sklo</span><span>P E dark</span>
+    </div>
+</div>
+
+<main class="pt-4 pb-12">
+
+    {# HERO #}
+    <section class="preview-section preview-hero py-8 md:py-12 bg-white">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="preview-hero-inner flex flex-col md:flex-row md:items-center gap-10">
+                <div class="preview-hero-text flex-1">
+                    <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">ONLINE + Desktop</span>
+                    <h1 class="mb-4" style="line-height:1.1;">
+                        <span class="flex items-center gap-3">
+                            <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-12 w-12 md:h-14 md:w-14">
+                            <span class="text-4xl md:text-5xl font-black" style="color:#020617;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span>
+                        </span>
+                        <span class="block text-2xl md:text-3xl font-normal mt-2" style="color:#0f172a;">Dokumentace bez chyb pro Portál stavebníka</span>
+                    </h1>
+                    <p class="text-lg mb-6 max-w-xl text-gray-500">{{ landing_hero_subtitle|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.') }}</p>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="/app" class="px-6 py-3 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Vyzkoušet ONLINE Check</a>
+                        <a href="/download/agent" class="px-6 py-3 rounded-lg font-semibold border" style="color:#1e5a8a;border-color:#1e5a8a;">Stáhnout aplikaci</a>
+                    </div>
+                </div>
+                <div class="preview-hero-img flex-shrink-0 w-full md:w-96">
+                    <img src="{{ url_for('static', filename='assets/workflow_hero.jpg') }}" alt="" class="w-full rounded-2xl shadow-lg border border-gray-200">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# CO JE NOVÉHO #}
+    <section id="news" class="preview-section py-10 bg-white border-b border-gray-100">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">1</span><h2 class="text-lg font-bold text-center" style="color:#0f172a;">Co je nového</h2></div>
+            <div class="max-w-4xl mx-auto space-y-3">
+                {% for u in (landing_updates|default([]))[:4] %}
+                <div class="rounded-xl border p-4 flex flex-wrap items-baseline gap-x-4 gap-y-1" style="border-color:#e5e7eb;">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:#eff6ff;color:#1e5a8a;">{{ u.get('month', '')|e }}</span>
+                    <h3 class="font-semibold text-gray-900">{{ u.get('title', u.get('month', ''))|e }}</h3>
+                    <p class="text-sm text-gray-600 w-full md:flex-1">{% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}—{% endif %}</p>
+                </div>
+                {% else %}
+                <div class="rounded-xl border p-4" style="border-color:#e5e7eb;"><p class="text-sm text-gray-500">Přehled novinek v sekci Stažení.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# JAK TO FUNGUJE #}
+    <section id="jak" class="preview-section py-16 bg-gray-50">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">2</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Jak to funguje</h2></div>
+            <div class="preview-grid-3 grid md:grid-cols-3 gap-6">
+                {% set steps = [('Nahraj / vyber složku', 'Přetáhněte PDF nebo vyberte složku.'), ('Proveď kontrolu', 'Automatická kontrola PDF/A, podpisy a časových razítek.'), ('Exportuj výsledky', 'Výstupy do CSV/Excel, přehled podle složek.')] %}
+                {% for title, text in steps %}
+                <div class="card text-center">
+                    <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
+                    <span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 leading-6 mb-2">{{ loop.index }}</span>
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ title }}</h3>
+                    <p class="text-sm text-gray-500">{{ text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# SROVNÁNÍ #}
+    <section id="problem-reseni" class="preview-section py-16 bg-white">
+        <div class="preview-container max-w-4xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">3</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Jistota dokumentace před expedicí</h2></div>
+            <div class="overflow-x-auto rounded-xl border shadow-sm" style="border-color:#e5e7eb;">
+                <table class="w-full text-sm min-w-[280px]"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck</th></tr></thead>
+                <tbody>
+                    <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Chaos v expedicích</td><td class="py-3 px-5 text-emerald-600">Hromadná kontrola před odesláním</td></tr>
+                    <tr><td class="py-3 px-5 text-red-600">Žádný přehled</td><td class="py-3 px-5 text-emerald-600">Excel report, přehled podle složek</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+    </section>
+
+    {# PRO KOHO #}
+    <section id="pro-koho" class="preview-section py-16 bg-white">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">4</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Pro koho</h2></div>
+            <div class="preview-grid-3 preview-bento grid md:grid-cols-3 gap-6">
+                <div class="card bento-span-2" style="border-left:3px solid #3b82f6;">
+                    <h3 class="font-semibold text-gray-900 mb-1">Projektanti</h3>
+                    <p class="text-sm text-gray-500">Expedice bez vracení – zkontrolujte PDF/A, podpisy a razítka před odesláním.</p>
+                </div>
+                <div class="card">
+                    <h3 class="font-semibold text-gray-900 mb-1">Manažeři</h3>
+                    <p class="text-sm text-gray-500">Přehled o kvalitě dokumentace v týmu.</p>
+                </div>
+                <div class="card bento-span-3">
+                    <h3 class="font-semibold text-gray-900 mb-1">Investoři</h3>
+                    <p class="text-sm text-gray-500">Jistota, že dodaná dokumentace splňuje požadavky Portálu stavebníka.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# DVA REŽIMY #}
+    <section id="dva-rezimy" class="preview-section py-16 bg-gray-50">
+        <div class="preview-container max-w-4xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">5</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Dva režimy</h2></div>
+            <div class="preview-grid-2 grid md:grid-cols-2 gap-6">
+                <div class="card">
+                    <h3 class="font-semibold text-gray-900 mb-1">Z Agenta</h3>
+                    <p class="text-sm text-gray-500">Soubory na disku, na server jen metadata.</p>
+                </div>
+                <div class="card">
+                    <h3 class="font-semibold text-gray-900 mb-1">Cloud</h3>
+                    <p class="text-sm text-gray-500">Celé PDF na server. Rychlé vyzkoušení.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# CENÍK #}
+    <section id="cenik" class="preview-section py-16 bg-white">
+        <div class="preview-container max-w-3xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Ceník</h2></div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card flex flex-col">
+                    <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">1 290 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 mb-4">Ideální pro otestování.</p>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 mt-auto">Zakoupit Basic</a>
+                </div>
+                <div class="card price-pop flex flex-col relative">
+                    <span class="price-badge">DOPORUČUJEME</span>
+                    <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">1 990 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 mb-4">Pro řízení velkých zakázek.</p>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">Zakoupit Pro</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# PŘIPRAVUJEME #}
+    <section id="pripravujeme" class="preview-section py-10 bg-white">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">7</span><h2 class="text-xl font-bold text-center" style="color:#0f172a;">Připravujeme</h2></div>
+            <p class="text-xs text-gray-500 text-center mb-6">{{ coming_soon_intro|default('Rozšíření Agenta pro projektanty.') }}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {% for card in (coming_soon_cards|default([]))[:4] %}
+                {% set c = card.color|default('blue') %}
+                {% set col = {'blue':'#1e5a8a','purple':'#7c3aed','green':'#047857','amber':'#b45309'}.get(c, '#1e5a8a') %}
+                <div class="card coming p-3">
+                    <span class="coming-tag">COMING SOON</span>
+                    <h3 class="font-semibold text-sm" style="color:{{ col }};">{{ card.title|e }}</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ card.subtitle|e }}</p>
+                </div>
+                {% else %}
+                <div class="card coming p-3"><span class="coming-tag">COMING SOON</span><h3 class="font-semibold text-sm" style="color:#1e5a8a;">Path Checker</h3></div>
+                <div class="card coming p-3"><span class="coming-tag">COMING SOON</span><h3 class="font-semibold text-sm" style="color:#7c3aed;">Online editor</h3></div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# FAQ #}
+    <section id="faq" class="preview-section py-10 bg-white">
+        <div class="preview-container max-w-3xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">8</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Časté dotazy</h2></div>
+            {% if faq_list and faq_list|length > 0 %}
+            <div class="space-y-1">
+                {% for item in faq_list[:3] %}
+                <details class="bg-white rounded-lg border overflow-hidden" style="border-color:#e5e7eb;">
+                    <summary class="px-4 py-3 font-medium text-sm text-gray-900 cursor-pointer">{{ item.question }}</summary>
+                    <div class="px-4 pb-3 text-sm text-gray-500">{{ item.answer|e }}</div>
+                </details>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center text-sm text-gray-400">Co je DokuCheck? Jak funguje kontrola? — Odpovědi v sekci FAQ.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    {# KONTAKT #}
+    <section id="kontakt" class="preview-section py-16 bg-gray-50">
+        <div class="preview-container max-w-3xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">9</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Kontakt</h2></div>
+            <div class="card">
+                <p class="text-sm text-gray-600"><strong>Ing. Martin Cieślar</strong> · Porubská 1, Klimkovice</p>
+                <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="text-sm mt-2 inline-block" style="color:#1e5a8a;">{{ contact_email|default('info@dokucheck.app') }}</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="bg-gray-900 text-gray-400 py-6">
+    <div class="max-w-6xl mx-auto px-6 flex justify-between items-center text-sm">
+        <span class="font-black text-white">Doku<span style="color:#16A34A;">Check</span></span>
+        <span>{{ web_version|default('w26.02') }}</span>
+    </div>
+</footer>
+
+</body>
+</html>

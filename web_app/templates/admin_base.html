@@ -6,6 +6,8 @@
     <title>{% block title %}DokuCheck Admin{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -366,6 +368,7 @@
                 <span style="font-size:0.75em;color:#7f8c8d;font-weight:600;margin-left:8px;">{{ web_version|default(web_build)|default('w26.02.001') }}</span>
             </div>
             <div class="header-right">
+                <button type="button" id="admin-theme-toggle" onclick="toggleTheme(); var i=document.getElementById('admin-theme-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="btn btn-secondary btn-small" style="min-width:44px;" aria-label="Tmavý režim"><span id="admin-theme-icon">🌙</span></button>
                 {% block header_right %}
                 <a href="{{ url_for('admin.settings') }}" class="btn btn-secondary btn-small">Global Config</a>
                 {% endblock %}
@@ -382,6 +385,8 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script>(function(){ var i=document.getElementById('admin-theme-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
     <script>
     (function() {
         var sidebar = document.getElementById('adminSidebar');

@@ -6,6 +6,8 @@
     <title>ONLINE Check – DokuCheck</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -22,6 +24,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-2">
             <a href="/" class="flex items-center gap-2 text-xl font-bold text-white"><img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-6 w-6"><span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span></a>
             <div class="flex items-center gap-4">
+                <button type="button" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded text-lg" aria-label="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
                 <a href="/" class="text-slate-400 hover:text-white transition">Zpět na úvod</a>
                 <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="DokuCheck" class="h-8 w-8">
             </div>
@@ -262,5 +265,7 @@
             }
         });
     </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script>(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
 </body>
 </html>

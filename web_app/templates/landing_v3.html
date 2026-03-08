@@ -8,6 +8,8 @@
     {% if header_scripts %}{% for script in header_scripts %}{{ script|safe }}{% endfor %}{% endif %}
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -51,6 +53,13 @@
         /* ===== COMING SOON ===== */
         .coming{border:1px dashed #94a3b8;position:relative;}
         .coming-tag{position:absolute;top:.75rem;right:.75rem;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#b45309;letter-spacing:.03em;}
+        /* ===== VARIANT E: sekce bez čáry, jen decentní střídání pozadí ===== */
+        main .landing-section { border-top: none !important; border-bottom: none !important; }
+        main .landing-section:nth-of-type(odd) { background: #fff !important; }
+        main .landing-section:nth-of-type(even) { background: #f8fafc !important; }
+        [data-theme="dark"] main .landing-section:nth-of-type(odd) { background: #0f172a !important; }
+        [data-theme="dark"] main .landing-section:nth-of-type(even) { background: #1e293b !important; }
+
         /* ===== ANNOUNCEMENT BAR ===== */
         .announce-bar{background:linear-gradient(90deg,#1e3a5f 0%,#1e5a8a 50%,#174a6e 100%);color:#fff;text-align:center;padding:10px 16px;font-size:0.875rem;font-weight:500;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));}
         .announce-bar a{color:#fff;text-decoration:underline;margin-left:8px;}
@@ -105,6 +114,7 @@
             <a href="#news" class="hover:text-blue-700 transition">Novinky</a>
             <a href="/download/agent" class="hover:text-blue-700 transition">Ke&nbsp;stažení</a>
             <span class="w-px h-5 bg-gray-200"></span>
+            <button type="button" id="theme-toggle" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-lg" aria-label="Přepnout světlý / tmavý režim" title="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
             <a href="/portal" class="hover:text-blue-700 transition">Můj&nbsp;účet</a>
         </div>
         <button id="burger" class="lg:hidden p-3 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Otevřít menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
@@ -125,13 +135,15 @@
     <hr class="my-2 border-gray-100">
     <a href="#kontakt" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Kontakt</a>
     <a href="/portal" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Můj účet</a>
+    <hr class="my-2 border-gray-100">
+    <button type="button" class="mobL py-3 min-h-[44px] flex items-center w-full text-left" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon-mob'); if(i) i.textContent=getTheme()==='dark'?'☀️ Světlý režim':'🌙 Tmavý režim'; closeMob();"><span id="theme-toggle-icon-mob">🌙 Tmavý režim</span></button>
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
 <main style="padding-top:72px;">
 
     {# ============ HERO ============ #}
-    <section class="py-8 md:py-12 bg-white">
+    <section class="landing-section py-8 md:py-12">
         <div class="max-w-6xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-center gap-10 anim">
                 <div class="flex-1">
@@ -164,7 +176,7 @@
     </section>
 
     {# ============ CO JE NOVÉHO – z DB (landing_updates), řádky pod sebou ============ #}
-    <section id="news" class="py-10 bg-white border-b border-gray-100">
+    <section id="news" class="landing-section py-10">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-lg font-bold mb-4 text-center anim" style="color:#0f172a;">Co je nového</h2>
             <div class="max-w-4xl mx-auto space-y-3">
@@ -185,7 +197,7 @@
     </section>
 
     {# ============ JAK TO FUNGUJE ============ #}
-    <section id="jak" class="py-16 bg-gray-50">
+    <section id="jak" class="landing-section py-16">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">{{ landing_section_how_title|default('Jak to funguje') }}</h2>
             <div class="grid md:grid-cols-3 gap-6">
@@ -205,7 +217,7 @@
     </section>
 
     {# ============ SROVNÁNÍ ============ #}
-    <section id="problem-reseni" class="py-16 bg-white">
+    <section id="problem-reseni" class="landing-section py-16">
         <div class="max-w-4xl mx-auto px-6 anim">
             <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Jistota dokumentace před expedicí</h2>
             <div class="overflow-x-auto rounded-xl border shadow-sm" style="border-color:#e5e7eb;-webkit-overflow-scrolling:touch;">
@@ -220,7 +232,7 @@
     </section>
 
     {# ============ WORKFLOW SCHEMA ============ #}
-    <section id="workflow" class="py-16 bg-gray-50">
+    <section id="workflow" class="landing-section py-16">
         <div class="max-w-6xl mx-auto px-6 anim">
             <h2 class="text-2xl font-bold mb-3 text-center" style="color:#0f172a;">Kontrola dokumentace staveb – srovnání přístupů</h2>
             <p class="text-center text-gray-500 mb-8">Manuální kontrola vs. DokuCheck automatizace. Úspora času a nákladů.</p>
@@ -235,7 +247,7 @@
     </section>
 
     {# ============ PRO KOHO ============ #}
-    <section id="pro-koho" class="py-16 bg-white">
+    <section id="pro-koho" class="landing-section py-16">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Pro koho</h2>
             <div class="grid md:grid-cols-3 gap-6">
@@ -252,7 +264,7 @@
     </section>
 
     {# ============ DVA REŽIMY ============ #}
-    <section id="dva-rezimy" class="py-16 bg-gray-50">
+    <section id="dva-rezimy" class="landing-section py-16">
         <div class="max-w-4xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">{{ landing_section_modes_title|default('Dva režimy: Z Agenta vs Cloud') }}</h2>
             <div class="grid md:grid-cols-2 gap-6">
@@ -273,7 +285,7 @@
     </section>
 
     {# ============ CENÍK ============ #}
-    <section id="cenik" class="py-16 bg-white">
+    <section id="cenik" class="landing-section py-16">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Ceník</h2>
             {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
@@ -312,7 +324,7 @@
     </section>
 
     {# ============ STAŽENÍ ============ #}
-    <section id="download" class="py-16 bg-gray-50">
+    <section id="download" class="landing-section py-16">
         <div class="max-w-3xl mx-auto px-6 text-center anim">
             <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#1e5a8a,#1d4ed8);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></div>
             <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení aplikace</h2>
@@ -337,7 +349,7 @@
     </section>
 
     {# ============ PŘIPRAVUJEME – karty z coming_soon_cards, kompaktní mřížka ============ #}
-    <section id="pripravujeme" class="py-10 bg-white">
+    <section id="pripravujeme" class="landing-section py-10">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-xl font-bold mb-1 text-center anim" style="color:#0f172a;">Připravujeme</h2>
             <p class="text-xs text-gray-500 text-center mb-6 anim">{{ coming_soon_intro|default('Rozšíření Agenta pro projektanty.') }}</p>
@@ -366,7 +378,7 @@
 
     {# ============ PARTNEŘI ============ #}
     {% if partner_logos and partner_logos|length > 0 %}
-    <section class="py-12 bg-gray-50">
+    <section class="landing-section py-12">
         <div class="max-w-6xl mx-auto px-6">
             <h2 class="text-center text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Důvěřují nám</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -381,7 +393,7 @@
     {% endif %}
 
     {# ============ FAQ ============ #}
-    <section id="faq" class="faq py-10 bg-white">
+    <section id="faq" class="faq landing-section py-10">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-8 text-center anim" style="color:#0f172a;">Časté dotazy</h2>
             {% if faq_list %}
@@ -400,7 +412,7 @@
     </section>
 
     {# ============ KONTAKT ============ #}
-    <section id="kontakt" class="py-16 bg-gray-50">
+    <section id="kontakt" class="landing-section py-16">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-8 text-center anim" style="color:#0f172a;">Kontakt</h2>
             <div class="card anim">
@@ -443,7 +455,9 @@
     </div>
 </footer>
 
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 <script>
+(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; var m=document.getElementById('theme-toggle-icon-mob'); if(m) m.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️ Světlý režim':'🌙 Tmavý režim'; })();
 // Splash – zobrazit jen poprvé v relaci (sessionStorage)
 (function(){
     const so=document.getElementById('splash-overlay');

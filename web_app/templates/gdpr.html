@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ochrana osobních údajů (GDPR) – DokuCheck PRO</title>
+    <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.6; color: #374151; background: #f9fafb; padding: 24px; }
@@ -20,7 +22,7 @@
         .footer-links a:hover { text-decoration: underline; }
     </style>
 </head>
-<body>
+<body class="pg-legal">
     <div class="container">
         {% if custom_content %}
         {{ custom_content|safe }}
