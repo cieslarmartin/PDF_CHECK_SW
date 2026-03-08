@@ -418,7 +418,44 @@ HTML_TEMPLATE = '''
         .legend-item { display: flex; align-items: center; gap: 4px; }
 
         /* Main content */
-        #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px; }
+        #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px; min-width: 0; }
+
+        /* ===== MOBIL: sidebar jako drawer, bez šedé plochy vpravo ===== */
+        @media (max-width: 991px) {
+            body, #main-app { overflow-x: hidden; }
+            #layout { position: relative; }
+            #sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+                max-width: 85vw;
+                z-index: 1001;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease-out;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            }
+            body.app-sidebar-open #sidebar { transform: translateX(0); }
+            #app-sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 1000;
+                transition: opacity 0.2s;
+            }
+            body.app-sidebar-open #app-sidebar-overlay { display: block; }
+            #main-content { padding-left: 12px; padding-right: 12px; }
+            .app-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .app-table-wrapper .table-header,
+            .app-table-wrapper .results-container { min-width: 600px; }
+            .header-btn-menu { display: inline-flex !important; align-items: center; justify-content: center; }
+        }
+        @media (min-width: 992px) {
+            #app-sidebar-overlay { display: none !important; }
+            .header-btn-menu { display: none !important; }
+        }
 
         /* Summary */
         .summary-bar {
@@ -797,7 +834,11 @@ HTML_TEMPLATE = '''
     </script>
     <!-- ===== HLAVNÍ APLIKACE ===== -->
     <div id="main-app">
+        <div id="app-sidebar-overlay" aria-hidden="true" onclick="document.body.classList.remove('app-sidebar-open')"></div>
         <header id="header">
+            <button type="button" class="header-btn header-btn-menu" id="app-menu-toggle" onclick="document.body.classList.toggle('app-sidebar-open'); document.getElementById('app-sidebar-overlay').setAttribute('aria-hidden', document.body.classList.contains('app-sidebar-open') ? 'false' : 'true');" aria-label="Otevřít menu" style="display:none;padding:8px 12px;min-width:44px;min-height:44px;">
+                <span aria-hidden="true">☰</span>
+            </button>
             <div class="header-logo">
                 <img src="/static/logo/dokucheck-icon.svg" alt="" style="height:32px;width:32px;">
                 <div class="header-logo-text">
@@ -1005,6 +1046,7 @@ HTML_TEMPLATE = '''
 
                 <div id="only-your-checks-label" style="display:none;padding:6px 12px;background:#eff6ff;border-radius:6px;font-size:0.85em;color:#1e5a8a;margin-bottom:8px;">✓ Zobrazeny pouze vaše kontroly a historie (pod vaším přihlašovacím jménem)</div>
 
+                <div class="app-table-wrapper">
                 <div class="table-header" id="table-header-filters">
                     <div class="table-header-cell">Název souboru</div>
                     <div class="table-header-cell">
@@ -1070,6 +1112,7 @@ HTML_TEMPLATE = '''
                         <div style="font-size:3em;margin-bottom:16px;">📂</div>
                         <div>Nahrajte PDF soubory pro kontrolu</div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
