@@ -25,7 +25,7 @@
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-800">
     <nav class="portal-nav sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-3">
             <a href="/" class="flex items-center gap-2 text-xl font-bold brand">
                 <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-6 w-6">
                 <span>Doku<span class="accent">Check</span></span>
@@ -38,7 +38,7 @@
         </div>
     </nav>
 
-    <main class="max-w-md mx-auto px-6 py-12">
+    <main class="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div class="portal-card p-8">
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Uživatelský portál</h1>
             {% if success %}<p class="text-green-600 text-sm mb-4">Heslo bylo nastaveno. Nyní se můžete přihlásit.</p>{% endif %}

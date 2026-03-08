@@ -19,7 +19,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
     <nav class="border-b border-slate-700/50" style="background: #1a365d;">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-2">
             <a href="/" class="flex items-center gap-2 text-xl font-bold text-white"><img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-6 w-6"><span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span></a>
             <div class="flex items-center gap-4">
                 <a href="/" class="text-slate-400 hover:text-white transition">Zpět na úvod</a>
@@ -27,13 +27,13 @@
             </div>
         </div>
     </nav>
-    <main class="max-w-4xl mx-auto px-6 py-12">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <h1 class="text-2xl font-bold text-white mb-2">ONLINE Check</h1>
         <p class="text-slate-400 mb-4">Nahrajte až 5 PDF souborů (max. 2 MB každý). Trial: 3 kontroly za 24 h (po 5 souborech). Export a filtry zdarma.</p>
         <div class="mb-6 p-4 rounded-lg bg-amber-900/40 border border-amber-600/60 text-amber-200 text-sm">
             <strong>Bezpečnost:</strong> Soubory jsou odesílány na náš server ke kontrole. Nepoužívejte pro důvěrné dokumenty. Pro lokální kontrolu bez odeslání doporučujeme Desktop aplikaci.
         </div>
-        <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-12 text-center bg-slate-800/50 hover:border-[#007ACC] transition cursor-pointer">
+        <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-6 sm:p-12 text-center bg-slate-800/50 hover:border-[#007ACC] transition cursor-pointer">
             <p class="text-slate-400 mb-2">Přetáhněte PDF sem nebo klikněte pro výběr</p>
             <p class="text-slate-500 text-sm">Max. 5 souborů, max. 2 MB na soubor, pouze PDF</p>
             <input type="file" id="file-input" accept=".pdf,application/pdf" multiple class="hidden">
@@ -57,7 +57,7 @@
                 <span class="ml-4"></span>
                 <button type="button" id="btn-export-excel" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary text-sm">Export do Excelu</button>
             </div>
-            <div id="results-table-wrapper" class="overflow-x-auto rounded-lg border border-slate-600">
+            <div id="results-table-wrapper" class="overflow-x-auto rounded-lg border border-slate-600" style="-webkit-overflow-scrolling:touch;">
                 <table id="results-table" class="w-full text-sm">
                     <thead class="bg-slate-800 text-slate-300">
                         <tr>

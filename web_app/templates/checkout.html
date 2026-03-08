@@ -21,7 +21,7 @@
 </head>
 <body class="min-h-screen antialiased">
     <header class="checkout-header">
-        <div class="max-w-4xl mx-auto px-4 py-3">
+        <div class="max-w-4xl mx-auto px-4 py-3" style="padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right));">
             <a href="/" class="flex items-center gap-2 text-xl">
                 <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
                 <span style="font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-0.06em;"><span style="color:#020617;">Doku</span><span style="color:#16A34A;">Check</span></span>
@@ -29,7 +29,7 @@
         </div>
     </header>
 
-    <main class="max-w-lg mx-auto px-4 py-8 md:py-12">
+    <main class="max-w-lg mx-auto px-4 py-8 md:py-12" style="padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right));">
         <h1 class="text-2xl font-bold mb-2" style="color:#1f2937;">Fakturační údaje</h1>
         <p class="text-sm mb-6" style="color:#6b7280;">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
 

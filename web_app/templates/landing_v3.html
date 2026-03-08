@@ -52,7 +52,7 @@
         .coming{border:1px dashed #94a3b8;position:relative;}
         .coming-tag{position:absolute;top:.75rem;right:.75rem;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#b45309;letter-spacing:.03em;}
         /* ===== ANNOUNCEMENT BAR ===== */
-        .announce-bar{background:linear-gradient(90deg,#1e3a5f 0%,#1e5a8a 50%,#174a6e 100%);color:#fff;text-align:center;padding:10px 16px;font-size:0.875rem;font-weight:500;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;}
+        .announce-bar{background:linear-gradient(90deg,#1e3a5f 0%,#1e5a8a 50%,#174a6e 100%);color:#fff;text-align:center;padding:10px 16px;font-size:0.875rem;font-weight:500;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));}
         .announce-bar a{color:#fff;text-decoration:underline;margin-left:8px;}
         .announce-bar a:hover{color:#93c5fd;}
         /* ===== HERO VERSION BADGE (ping) ===== */
@@ -87,7 +87,7 @@
 </div>
 
 {# ============ NAVIGACE ============ #}
-<nav id="topnav" class="nav-glass fixed inset-x-0 z-50 transition-shadow" style="top:42px;">
+<nav id="topnav" class="nav-glass fixed inset-x-0 z-50 transition-shadow" style="top:42px;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);">
     <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <a href="/" class="flex items-center gap-1.5 whitespace-nowrap">
             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
@@ -107,22 +107,24 @@
             <span class="w-px h-5 bg-gray-200"></span>
             <a href="/portal" class="hover:text-blue-700 transition">Můj&nbsp;účet</a>
         </div>
-        <button id="burger" class="lg:hidden p-2 rounded-lg hover:bg-gray-100"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <button id="burger" class="lg:hidden p-3 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Otevřít menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     </div>
 </nav>
 {# Mobile menu #}
-<div id="mob" class="fixed inset-y-0 right-0 w-64 bg-white shadow-xl z-[60] p-5 flex flex-col gap-2 text-sm font-medium text-gray-600 translate-x-full transition-transform duration-300">
-    <button id="mobClose" class="self-end p-1 mb-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-    <a href="#jak" class="mobL py-2 hover:text-blue-700">Jak to funguje</a>
-    <a href="#problem-reseni" class="mobL py-2 hover:text-blue-700">Srovnání</a>
-    <a href="#pro-koho" class="mobL py-2 hover:text-blue-700">Pro koho</a>
-    <a href="#dva-rezimy" class="mobL py-2 hover:text-blue-700">Režimy</a>
-    <a href="#cenik" class="mobL py-2 hover:text-blue-700">Ceník</a>
-    <a href="#faq" class="mobL py-2 hover:text-blue-700">FAQ</a>
-    <a href="#news" class="mobL py-2 hover:text-blue-700">Novinky</a>
-    <hr class="my-1 border-gray-100">
-    <a href="#kontakt" class="mobL py-2 hover:text-blue-700">Kontakt</a>
-    <a href="/portal" class="mobL py-2 hover:text-blue-700">Můj účet</a>
+<div id="mob" class="fixed inset-y-0 right-0 w-64 bg-white shadow-xl z-[60] p-5 flex flex-col gap-0 text-sm font-medium text-gray-600 translate-x-full transition-transform duration-300" style="padding-top:max(1.25rem,env(safe-area-inset-top));">
+    <button id="mobClose" class="self-end p-2 mb-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Zavřít menu"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    <a href="#jak" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Jak to funguje</a>
+    <a href="#problem-reseni" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Srovnání</a>
+    <a href="#pro-koho" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Pro koho</a>
+    <a href="#dva-rezimy" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Režimy</a>
+    <a href="#cenik" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ceník</a>
+    <a href="#pripravujeme" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Připravujeme</a>
+    <a href="#faq" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">FAQ</a>
+    <a href="#news" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Novinky</a>
+    <a href="/download/agent" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ke stažení</a>
+    <hr class="my-2 border-gray-100">
+    <a href="#kontakt" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Kontakt</a>
+    <a href="/portal" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Můj účet</a>
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
@@ -206,8 +208,8 @@
     <section id="problem-reseni" class="py-16 bg-white">
         <div class="max-w-4xl mx-auto px-6 anim">
             <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Jistota dokumentace před expedicí</h2>
-            <div class="overflow-hidden rounded-xl border shadow-sm" style="border-color:#e5e7eb;">
-                <table class="w-full text-sm"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck</th></tr></thead>
+            <div class="overflow-x-auto rounded-xl border shadow-sm" style="border-color:#e5e7eb;-webkit-overflow-scrolling:touch;">
+                <table class="w-full text-sm min-w-[280px]"><thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck</th></tr></thead>
                 <tbody>
                     <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Chaos v expedicích, opakované vracení dokumentů</td><td class="py-3 px-5 text-emerald-600">Hromadná kontrola před odesláním</td></tr>
                     <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Stres z chyb a vracení od investora</td><td class="py-3 px-5 text-emerald-600">Strojová přesnost kontroly PDF/A a razítek</td></tr>

@@ -253,16 +253,63 @@
         .api-key { font-family: Consolas, monospace; font-size: 0.85em; background: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .api-key:hover { max-width: none; position: relative; z-index: 10; background: #e5e7eb; }
         .form-select { width: auto; min-width: 100px; }
+        /* Mobil: sidebar jako drawer */
+        .admin-sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 998;
+            transition: opacity 0.2s;
+        }
+        .admin-sidebar-overlay.show { display: block; }
+        @media (max-width: 991px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 260px;
+                max-width: 85vw;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease-out;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar .logo-text { padding-top: 12px; }
+            .header-mobile-menu {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                margin-right: 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                background: white;
+                cursor: pointer;
+                color: #374151;
+            }
+            .header-mobile-menu:hover { background: #f3f4f6; }
+            .header-mobile-menu svg { width: 22px; height: 22px; }
+            .main-content { padding: 16px; }
+        }
+        @media (min-width: 992px) {
+            .header-mobile-menu { display: none !important; }
+        }
         @media (max-width: 768px) {
-            .header { flex-direction: column; gap: 12px; }
-            .table-container { overflow-x: auto; }
+            .header { flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 12px 16px; }
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .table-container table { min-width: 600px; }
         }
         {% block extra_css %}{% endblock %}
     </style>
 </head>
 <body>
-    <aside class="sidebar">
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay" aria-hidden="true"></div>
+    <aside class="sidebar" id="adminSidebar">
         <div class="logo-text" style="display:flex;align-items:center;gap:8px;">
             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" style="height:24px;width:24px;">
             <span><span class="doku-part">Doku</span><span class="check-part">Check</span></span>
@@ -311,6 +358,9 @@
     </aside>
     <div class="main-wrap">
         <header class="header">
+            <button type="button" class="header-mobile-menu" id="adminMenuToggle" aria-label="Otevřít menu" title="Menu">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
             <div>
                 <span class="header-badge">ADMIN</span>
                 <span style="font-size:0.75em;color:#7f8c8d;font-weight:600;margin-left:8px;">{{ web_version|default(web_build)|default('w26.02.001') }}</span>
@@ -332,6 +382,26 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <script>
+    (function() {
+        var sidebar = document.getElementById('adminSidebar');
+        var overlay = document.getElementById('adminSidebarOverlay');
+        var toggle = document.getElementById('adminMenuToggle');
+        function openMenu() {
+            if (sidebar) sidebar.classList.add('open');
+            if (overlay) { overlay.classList.add('show'); overlay.setAttribute('aria-hidden', 'false'); }
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            if (sidebar) sidebar.classList.remove('open');
+            if (overlay) { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden', 'true'); }
+            document.body.style.overflow = '';
+        }
+        if (toggle) toggle.addEventListener('click', function() { sidebar && sidebar.classList.contains('open') ? closeMenu() : openMenu(); });
+        if (overlay) overlay.addEventListener('click', closeMenu);
+        document.querySelectorAll('.sidebar-nav a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
