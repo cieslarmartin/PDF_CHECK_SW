@@ -781,11 +781,18 @@ def users_licenses():
 
     # Objednávky (stejná logika jako dříve pending_orders)
     orders_raw = db.get_pending_orders(limit=500)
+    try:
+        from settings_loader import get_pricing_tarifs
+        pricing_tarifs = get_pricing_tarifs(db)
+    except Exception:
+        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
     licenses_all = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
     active_emails = {(l.get('email') or '').lower(): l for l in licenses_all if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')}
     orders = []
     for o in (orders_raw or []):
         o_dict = dict(o)
+        t = o_dict.get('tarif')
+        o_dict['tarif_label'] = (pricing_tarifs.get(t) or {}).get('label') or (t or '').upper() or '—'
         email = (o_dict.get('email') or '').lower()
         o_dict['has_active_license'] = email in active_emails
         o_dict['api_key'] = active_emails.get(email, {}).get('api_key') if email in active_emails else None
@@ -912,12 +919,14 @@ def bulk_send_payment():
             failed += 1
             continue
         try:
+            vs = (order.get('order_display_number') or order.get('invoice_number') or '').strip() or str(order['id'])
             subject, body_plain, body_html = get_order_confirmation_email_preview(
                 order_id=order['id'],
                 email=to_email,
                 jmeno_firma=order.get('jmeno_firma'),
                 tarif=order.get('tarif'),
-                amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or ''
+                amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or '',
+                vs=vs
             )
             invoice_path = None
             invoice_filename = None
@@ -1873,12 +1882,14 @@ def api_email_preview():
         if not order:
             return jsonify({'success': False, 'error': 'Objednávka nenalezena'})
         from email_sender import get_order_confirmation_email_preview
+        vs = (order.get('order_display_number') or order.get('invoice_number') or '').strip() or str(order['id'])
         subject, body_plain, body_html = get_order_confirmation_email_preview(
             order_id=order['id'],
             email=order.get('email'),
             jmeno_firma=order.get('jmeno_firma'),
             tarif=order.get('tarif'),
-            amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or ''
+            amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or '',
+            vs=vs
         )
         return jsonify({
             'success': True,

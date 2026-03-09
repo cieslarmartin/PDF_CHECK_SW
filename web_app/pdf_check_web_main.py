@@ -423,7 +423,8 @@ HTML_TEMPLATE = '''
         /* ===== MOBIL: sidebar jako drawer, bez šedé plochy vpravo ===== */
         @media (max-width: 991px) {
             body, #main-app { overflow-x: hidden; }
-            #layout { position: relative; }
+            #layout { position: relative; min-height: 0; }
+            #main-content { min-height: 0; }
             #sidebar {
                 position: fixed;
                 left: 0;
@@ -448,13 +449,28 @@ HTML_TEMPLATE = '''
             body.app-sidebar-open #app-sidebar-overlay { display: block; }
             #main-content { padding-left: 12px; padding-right: 12px; }
             .app-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .header-build { font-size: 0.65em; }
+            #header { padding: 6px 12px; flex-wrap: wrap; gap: 6px; }
             .app-table-wrapper .table-header,
             .app-table-wrapper .results-container { min-width: 600px; }
             .header-btn-menu { display: inline-flex !important; align-items: center; justify-content: center; }
+            /* Režim „Zobrazit jako desktop“ na mobilu */
+            body.app-desktop-view { overflow: auto !important; }
+            body.app-desktop-view #main-app { width: 1024px; min-width: 1024px; overflow-x: visible; }
+            body.app-desktop-view #layout { min-height: auto; }
+            body.app-desktop-view #sidebar { position: static !important; transform: none !important; width: 280px; max-width: none; box-shadow: none; z-index: auto; }
+            body.app-desktop-view #app-sidebar-overlay { display: none !important; }
+            body.app-desktop-view .header-btn-menu { display: none !important; }
+            body.app-desktop-view .header-btn-desktop-view .label-desktop { display: inline !important; }
+            body.app-desktop-view .header-btn-desktop-view .label-mobile { display: none !important; }
+            .header-btn-desktop-view .label-desktop { display: none; }
+            .header-btn-desktop-view .label-mobile { display: inline; }
+            .header-btn-desktop-view { display: inline-flex !important; align-items: center; justify-content: center; }
         }
         @media (min-width: 992px) {
             #app-sidebar-overlay { display: none !important; }
             .header-btn-menu { display: none !important; }
+            .header-btn-desktop-view { display: none !important; }
         }
 
         /* Summary */
@@ -806,6 +822,13 @@ HTML_TEMPLATE = '''
     </style>
 </head>
 <body>
+    <script>
+    (function(){
+        try {
+            if (localStorage.getItem('dokucheck-app-desktop-view') === '1') { document.body.classList.add('app-desktop-view'); }
+        } catch (e) {}
+    })();
+    </script>
     <!-- Diagnostika: zobrazí chybu JS přímo na stránce (nemusíte otevírat F12) -->
     <div id="js-error-box" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:white;padding:14px 20px;font-family:Consolas,monospace;font-size:13px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-height:50vh;overflow:auto;">
         <strong>Chyba na stránce:</strong><br>
@@ -838,6 +861,10 @@ HTML_TEMPLATE = '''
         <header id="header">
             <button type="button" class="header-btn header-btn-menu" id="app-menu-toggle" onclick="document.body.classList.toggle('app-sidebar-open'); document.getElementById('app-sidebar-overlay').setAttribute('aria-hidden', document.body.classList.contains('app-sidebar-open') ? 'false' : 'true');" aria-label="Otevřít menu" style="display:none;padding:8px 12px;min-width:44px;min-height:44px;">
                 <span aria-hidden="true">☰</span>
+            </button>
+            <button type="button" class="header-btn header-btn-desktop-view" id="app-desktop-view-btn" onclick="var b=document.body;var on=b.classList.toggle('app-desktop-view');try{localStorage.setItem('dokucheck-app-desktop-view',on?'1':'');}catch(e){}document.querySelectorAll('.header-btn-desktop-view .label-desktop, .header-btn-desktop-view .label-mobile').forEach(function(s){s.style.display=s.classList.contains('label-desktop')?(on?'inline':'none'):(on?'none':'inline');});" aria-label="Zobrazit jako desktop" style="display:none;padding:8px 10px;min-height:44px;font-size:0.75em;white-space:nowrap;">
+                <span class="label-mobile">Desktop</span>
+                <span class="label-desktop" style="display:none;">Mobil</span>
             </button>
             <div class="header-logo">
                 <img src="/static/logo/dokucheck-icon.svg" alt="" style="height:32px;width:32px;">

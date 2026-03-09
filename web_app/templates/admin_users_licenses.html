@@ -70,7 +70,7 @@
                         <div style="font-weight:500;">{{ o.jmeno_firma or '—' }}</div>
                         <div style="font-size:0.85em; color:#4b5563;">{{ o.email }}</div>
                     </td>
-                    <td>{{ (o.tarif or '—')|upper }}</td>
+                    <td>{{ o.tarif_label or (o.tarif or '—')|upper }}</td>
                     <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
                     <td>
                         {% if o.status == 'NEW_ORDER' or o.status == 'pending' %}

@@ -204,8 +204,9 @@ def notify_admin(subject, body_plain):
     return send_email(_admin_info_email(), subject, body_plain, append_footer=False)
 
 
-def get_order_confirmation_email_preview(order_id, email, jmeno_firma, tarif, amount_czk):
-    """Vrátí (předmět, tělo_plain, tělo_html) pro e-mail s platebními údaji (fakturou). Neodesílá!"""
+def get_order_confirmation_email_preview(order_id, email, jmeno_firma, tarif, amount_czk, vs=None):
+    """Vrátí (předmět, tělo_plain, tělo_html) pro e-mail s platebními údaji (fakturou). Neodesílá! vs = číslo objednávky pro zákazníka (order_display_number), jinak order_id."""
+    display_vs = (vs if vs is not None and str(vs).strip() else None) or str(order_id)
     templates = get_email_templates()
     subject_tpl = templates.get("order_confirmation_subject") or "DokuCheck – potvrzení objednávky č. {vs}"
     body_tpl = templates.get("order_confirmation_body") or ""
@@ -219,8 +220,8 @@ def get_order_confirmation_email_preview(order_id, email, jmeno_firma, tarif, am
             body_tpl = (
                 "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
             )
-    subject = subject_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
-    body = body_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
+    subject = subject_tpl.replace("{vs}", display_vs).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
+    body = body_tpl.replace("{vs}", display_vs).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
     
     body_html = None
     if '<br>' in body or '<p>' in body or 'href=' in body:
@@ -232,15 +233,16 @@ def get_order_confirmation_email_preview(order_id, email, jmeno_firma, tarif, am
         
     return subject, body, body_html
 
-def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None):
-    """E-mail 1: potvrzení objednávky. Šablona z site_config (placeholdery: jmeno, cena, vs), na konec footer."""
+def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_czk, db=None, vs=None):
+    """E-mail 1: potvrzení objednávky. Šablona z site_config (placeholdery: jmeno, cena, vs), na konec footer. vs = číslo objednávky pro zákazníka (order_display_number)."""
+    display_vs = (vs if vs is not None and str(vs).strip() else None) or str(order_id)
     templates = get_email_templates()
     subject_tpl = templates.get("order_confirmation_subject") or "DokuCheck – potvrzení objednávky č. {vs}"
     body_tpl = templates.get("order_confirmation_body") or (
         "Děkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet (VS: {vs})."
     )
-    subject = subject_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
-    body = body_tpl.replace("{vs}", str(order_id)).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
+    subject = subject_tpl.replace("{vs}", display_vs).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
+    body = body_tpl.replace("{vs}", display_vs).replace("{cena}", str(amount_czk)).replace("{jmeno}", str(jmeno_firma or ""))
     return send_email(email, subject, body, append_footer=True)
 
 
