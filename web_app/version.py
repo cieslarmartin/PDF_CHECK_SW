@@ -2,9 +2,9 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.041"
+WEB_VERSION = "w26.02.042"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 85
+WEB_BUILD = 86
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
 BUILD_NOTES = "Admin: tarif PRO/BASIC v tabulce objednávek, číslo objednávky (VS) v e-mailu o platbě sjednoceno."

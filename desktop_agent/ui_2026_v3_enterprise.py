@@ -15,6 +15,7 @@ import customtkinter as ctk
 
 from ui import _count_errors_from_result, _session_summary_text
 from version import BUILD_VERSION, AGENT_VERSION
+from license import UP_TO_DATE, UPDATE_AVAILABLE, UPDATE_REQUIRED
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -304,8 +305,12 @@ class PDFCheckUI_2026_V3:
         if gdpr_url:
             ctk.CTkButton(links_row, text="GDPR", command=lambda: webbrowser.open(gdpr_url), font=FOOTER_FONT, fg_color="transparent", text_color=ACCENT, width=40, height=18, anchor="w").pack(side=tk.LEFT)
         rc = self._get_remote_config()
-        self._update_msg_label = ctk.CTkLabel(self._remote_footer, text=rc.get("update_msg", "Používáte aktuální verzi."), font=FOOTER_FONT, text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
-        self._update_msg_label.pack(anchor=tk.W, pady=(4, 0))
+        self._update_msg_frame = ctk.CTkFrame(self._remote_footer, fg_color="transparent")
+        self._update_msg_frame.pack(anchor=tk.W, pady=(4, 0))
+        self._update_msg_label = ctk.CTkLabel(self._update_msg_frame, text=rc.get("update_msg", "Používáte aktuální verzi."), font=FOOTER_FONT, text_color=TEXT_MUTED, wraplength=SIDEBAR_W - 24)
+        self._update_msg_label.pack(anchor=tk.W)
+        self._update_notifier_label = None  # Oranžový klikací label při UPDATE_AVAILABLE; vytvoří se v _refresh_update_notifier
+        self._refresh_update_notifier()
         about_row = ctk.CTkFrame(self._remote_footer, fg_color="transparent")
         about_row.pack(anchor=tk.W, pady=(2, 0))
         ctk.CTkLabel(about_row, text=f"Build {BUILD_VERSION}", font=(FONT_STACK[0], 9), text_color=TEXT_MUTED).pack(side=tk.LEFT)
@@ -827,13 +832,80 @@ class PDFCheckUI_2026_V3:
             return
 
     def _get_remote_config(self):
-        """Vrátí slovník z serveru (disclaimer, vop_link, update_msg) nebo výchozí."""
+        """Vrátí slovník z serveru (disclaimer, vop_link, update_msg, update_state, download_url) nebo výchozí."""
         if callable(getattr(self, "on_get_remote_config", None)):
             try:
                 return self.on_get_remote_config() or {}
             except Exception:
                 pass
-        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://www.dokucheck.cz/vop", "update_msg": "Používáte aktuální verzi."}
+        return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://www.dokucheck.cz/vop", "update_msg": "Používáte aktuální verzi.", "update_state": UP_TO_DATE, "download_url": "https://www.dokucheck.cz/download"}
+
+    def _refresh_update_notifier(self):
+        """Podle update_state z remote_config zobrazí v patičce: UP_TO_DATE = text, UPDATE_AVAILABLE = oranžový klikací odkaz, UPDATE_REQUIRED = červený text."""
+        rc = self._get_remote_config()
+        state = rc.get("update_state", UP_TO_DATE)
+        download_url = (rc.get("download_url") or "").strip() or "https://www.dokucheck.cz/download"
+        FOOTER_FONT = (FONT_STACK[0], 10)
+        if getattr(self, "_update_notifier_label", None):
+            self._update_notifier_label.destroy()
+            self._update_notifier_label = None
+        if state == UPDATE_AVAILABLE:
+            self._update_msg_label.pack_forget()
+            self._update_notifier_label = ctk.CTkLabel(
+                self._update_msg_frame,
+                text="Nová verze k dispozici (stáhnout)",
+                font=FOOTER_FONT,
+                text_color=WARNING,
+                wraplength=SIDEBAR_W - 24,
+                cursor="hand2",
+            )
+            self._update_notifier_label.pack(anchor=tk.W)
+            self._update_notifier_label.bind("<Button-1>", lambda e: webbrowser.open(download_url))
+        elif state == UPDATE_REQUIRED:
+            self._update_msg_label.configure(text="Vyžadována aktualizace aplikace.", text_color=ERROR)
+            self._update_msg_label.pack(anchor=tk.W)
+        else:
+            self._update_msg_label.configure(text=rc.get("update_msg", "Používáte aktuální verzi."), text_color=TEXT_MUTED)
+            self._update_msg_label.pack(anchor=tk.W)
+
+    def _show_update_required_modal_if_needed(self):
+        """Při UPDATE_REQUIRED zobrazí modální okno přes celou aplikaci a blokuje kontrolu."""
+        rc = self._get_remote_config()
+        if rc.get("update_state") != UPDATE_REQUIRED:
+            return
+        download_url = (rc.get("download_url") or "").strip() or "https://www.dokucheck.cz/download"
+        top = ctk.CTkToplevel(self.root)
+        top.title("Vyžadována aktualizace")
+        top.configure(fg_color=BG_APP)
+        top.transient(self.root)
+        top.grab_set()
+        top.attributes("-topmost", True)
+        w, h = 520, 320
+        top.geometry(f"{w}x{h}")
+        top.minsize(w, h)
+        try:
+            sw = top.winfo_screenwidth()
+            sh = top.winfo_screenheight()
+            x = (sw - w) // 2
+            y = (sh - h) // 2
+            top.geometry(f"{w}x{h}+{x}+{y}")
+        except tk.TclError:
+            pass
+        main = ctk.CTkFrame(top, fg_color="transparent")
+        main.pack(fill=tk.BOTH, expand=True, padx=24, pady=24)
+        ctk.CTkLabel(main, text="Vyžadována aktualizace aplikace", font=(FONT_STACK[0], FS_20, "bold"), text_color=TEXT).pack(anchor=tk.W, pady=(0, 12))
+        ctk.CTkLabel(
+            main,
+            text="Kvůli změnám v legislativě nebo v požadavcích na dokumentaci je nutné nainstalovat nejnovější verzi DokuCheck agenta. Kontrola PDF bude dostupná až po aktualizaci.",
+            font=(FONT_STACK[0], FS_12),
+            text_color=TEXT_MUTED,
+            justify=tk.LEFT,
+            wraplength=w - 48,
+        ).pack(anchor=tk.W, pady=(0, 16))
+        def open_download():
+            webbrowser.open(download_url)
+        ctk.CTkButton(main, text="Stáhnout nejnovější verzi", command=open_download, font=(FONT_STACK[0], FS_14), fg_color=ACCENT).pack(anchor=tk.W, pady=(0, 8))
+        ctk.CTkLabel(main, text="Po stažení nainstalujte aplikaci a znovu ji spusťte.", font=(FONT_STACK[0], 10), text_color=TEXT_MUTED).pack(anchor=tk.W)
 
     def _get_legal_config(self):
         """Vrátí právní konfiguraci (disclaimer, vop_url, gdpr_url) z fetch_legal_config() nebo výchozí."""
@@ -1476,11 +1548,14 @@ class PDFCheckUI_2026_V3:
             self.sidebar_daily_limit.configure(text=f"Limit: {used or 0}/{limit}")
 
     def _update_analyze_send_state(self):
-        """Zapne nebo vypne „Analyzovat PDF“ podle toho, zda je uživatel přihlášen (Vyzkoušet zdarma nebo e-mail)."""
-        can = self.on_has_login() if (self.on_has_login and callable(self.on_has_login)) else True
+        """Zapne nebo vypne „Analyzovat PDF“ podle přihlášení a podle update_state (při UPDATE_REQUIRED je tlačítko disabled)."""
+        rc = self._get_remote_config()
+        update_block = rc.get("update_state") == UPDATE_REQUIRED
+        can_login = self.on_has_login() if (self.on_has_login and callable(self.on_has_login)) else True
+        can = can_login and not update_block
         if getattr(self, "check_btn", None):
             self.check_btn.configure(state=tk.NORMAL if can else tk.DISABLED)
-            if not can:
+            if not can_login:
                 self.send_btn.pack_forget()
 
     def set_license_display(self, text):
@@ -1620,4 +1695,5 @@ def create_app_2026_v3(on_check_callback, on_api_key_callback, api_url="",
     # Splash 3 s: logo, verze, copyright; pak zavřít splash a zobrazit hlavní okno (maximalizované)
     splash = _create_splash(root)
     root.after(SPLASH_DURATION_MS, lambda: _close_splash_and_show_main(splash, root))
+    root.after(SPLASH_DURATION_MS + 150, lambda: app._show_update_required_modal_if_needed())
     return root, app

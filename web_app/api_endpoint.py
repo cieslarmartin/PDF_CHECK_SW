@@ -1294,11 +1294,25 @@ def register_api_routes(app):
             update_msg = db.get_global_setting('agent_update_msg', 'Používáte aktuální verzi.')
             if not update_msg:
                 update_msg = 'Používáte aktuální verzi.'
+            base = request.url_root.rstrip('/') if request.url_root else 'https://www.dokucheck.cz'
+            try:
+                from version import AGENT_VERSION_DISPLAY
+                latest_raw = (AGENT_VERSION_DISPLAY or '').strip()
+                latest_agent_version = latest_raw.lstrip('vVwW').strip() if latest_raw else '26.02.007'
+            except Exception:
+                latest_agent_version = '26.02.007'
+            min_required_version = (db.get_global_setting('agent_min_required_version', '') or '26.01.000').strip()
+            if not min_required_version:
+                min_required_version = '26.01.000'
+            download_url = (db.get_global_setting('download_url', '') or '').strip() or (base + '/download')
             out = {
                 'disclaimer': disclaimer,
                 'vop_link': vop_link,
                 'gdpr_link': gdpr_link,
                 'update_msg': update_msg,
+                'latest_agent_version': latest_agent_version,
+                'min_required_version': min_required_version,
+                'download_url': download_url,
             }
             try:
                 out['allowed_extensions'] = get_allowed_extensions(db)
@@ -1315,6 +1329,9 @@ def register_api_routes(app):
                 'vop_link': base + '/vop',
                 'gdpr_link': base + '/gdpr',
                 'update_msg': 'Používáte aktuální verzi.',
+                'latest_agent_version': '26.02.007',
+                'min_required_version': '26.01.000',
+                'download_url': base + '/download',
                 'allowed_extensions': ['.pdf'],
                 'analysis_timeout_seconds': 300,
             }), 200
