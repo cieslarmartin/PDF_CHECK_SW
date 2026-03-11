@@ -10,5 +10,6 @@ WEB_BUILD = 86
 BUILD_NOTES = "Admin: tarif PRO/BASIC v tabulce objednávek, číslo objednávky (VS) v e-mailu o platbě sjednoceno."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
-AGENT_BUILD_ID = "52"
-AGENT_VERSION_DISPLAY = "v26.02.007"
+# TEST: build 54 pro ověření update notifieru (pak vrátit na 53).
+AGENT_BUILD_ID = "54"
+AGENT_VERSION_DISPLAY = "v26.02.008"

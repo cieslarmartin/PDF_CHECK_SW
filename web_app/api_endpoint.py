@@ -1296,14 +1296,18 @@ def register_api_routes(app):
                 update_msg = 'Používáte aktuální verzi.'
             base = request.url_root.rstrip('/') if request.url_root else 'https://www.dokucheck.cz'
             try:
-                from version import AGENT_VERSION_DISPLAY
+                from version import AGENT_VERSION_DISPLAY, AGENT_BUILD_ID
                 latest_raw = (AGENT_VERSION_DISPLAY or '').strip()
-                latest_agent_version = latest_raw.lstrip('vVwW').strip() if latest_raw else '26.02.007'
+                latest_agent_version = latest_raw.lstrip('vVwW').strip() if latest_raw else '26.02.008'
+                latest_agent_build = int(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else 54
             except Exception:
-                latest_agent_version = '26.02.007'
+                latest_agent_version = '26.02.008'
+                latest_agent_build = 54
             min_required_version = (db.get_global_setting('agent_min_required_version', '') or '26.01.000').strip()
             if not min_required_version:
                 min_required_version = '26.01.000'
+            min_required_build_str = (db.get_global_setting('agent_min_required_build', '') or '52').strip()
+            min_required_build = int(min_required_build_str) if min_required_build_str.isdigit() else 52
             download_url = (db.get_global_setting('download_url', '') or '').strip() or (base + '/download')
             out = {
                 'disclaimer': disclaimer,
@@ -1312,6 +1316,8 @@ def register_api_routes(app):
                 'update_msg': update_msg,
                 'latest_agent_version': latest_agent_version,
                 'min_required_version': min_required_version,
+                'latest_agent_build': latest_agent_build,
+                'min_required_build': min_required_build,
                 'download_url': download_url,
             }
             try:
@@ -1329,8 +1335,10 @@ def register_api_routes(app):
                 'vop_link': base + '/vop',
                 'gdpr_link': base + '/gdpr',
                 'update_msg': 'Používáte aktuální verzi.',
-                'latest_agent_version': '26.02.007',
+                'latest_agent_version': '26.02.008',
                 'min_required_version': '26.01.000',
+                'latest_agent_build': 54,
+                'min_required_build': 52,
                 'download_url': base + '/download',
                 'allowed_extensions': ['.pdf'],
                 'analysis_timeout_seconds': 300,

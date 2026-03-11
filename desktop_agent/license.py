@@ -120,20 +120,43 @@ class LicenseManager:
         return s.strip().lstrip("vVwW").strip() or "0.0.0"
 
     def _compute_update_state(self):
-        """Porovná lokální verzi agenta s latest a min_required ze serveru; nastaví remote_config['update_state'] a doplní download_url."""
+        """Porovná lokální build agenta s latest_agent_build a min_required_build ze serveru; nastaví update_state a doplní download_url."""
+        try:
+            from version import BUILD_VERSION
+            current_build = int(BUILD_VERSION) if BUILD_VERSION else 0
+        except Exception:
+            current_build = 0
+        latest_build = self._parse_int(self.remote_config.get("latest_agent_build"), 0)
+        min_build = self._parse_int(self.remote_config.get("min_required_build"), 0)
+        if latest_build > 0 or min_build > 0:
+            if current_build < min_build:
+                self.remote_config["update_state"] = UPDATE_REQUIRED
+            elif current_build < latest_build:
+                self.remote_config["update_state"] = UPDATE_AVAILABLE
+            else:
+                self.remote_config["update_state"] = UP_TO_DATE
+        else:
+            self._compute_update_state_by_version()
+        self.remote_config["download_url"] = (self.remote_config.get("download_url") or "").strip() or "https://www.dokucheck.cz/download"
+
+    def _parse_int(self, value, default=0):
+        try:
+            return int(value) if value is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    def _compute_update_state_by_version(self):
+        """Záložní porovnání podle řetězcové verze (pokud server neposílá build)."""
         try:
             from packaging.version import Version
         except ImportError:
             self.remote_config["update_state"] = UP_TO_DATE
-            self.remote_config["download_url"] = self.remote_config.get("download_url") or "https://www.dokucheck.cz/download"
             return
         try:
             from version import AGENT_VERSION
-            current_str = self._normalize_version_string(AGENT_VERSION)
-            current = Version(current_str)
+            current = Version(self._normalize_version_string(AGENT_VERSION))
         except Exception:
             self.remote_config["update_state"] = UP_TO_DATE
-            self.remote_config["download_url"] = self.remote_config.get("download_url") or "https://www.dokucheck.cz/download"
             return
         latest_str = self._normalize_version_string(self.remote_config.get("latest_agent_version") or "0.0.0")
         min_str = self._normalize_version_string(self.remote_config.get("min_required_version") or "0.0.0")
@@ -142,7 +165,6 @@ class LicenseManager:
             min_required = Version(min_str)
         except Exception:
             self.remote_config["update_state"] = UP_TO_DATE
-            self.remote_config["download_url"] = self.remote_config.get("download_url") or "https://www.dokucheck.cz/download"
             return
         if current < min_required:
             self.remote_config["update_state"] = UPDATE_REQUIRED
@@ -150,7 +172,6 @@ class LicenseManager:
             self.remote_config["update_state"] = UPDATE_AVAILABLE
         else:
             self.remote_config["update_state"] = UP_TO_DATE
-        self.remote_config["download_url"] = (self.remote_config.get("download_url") or "").strip() or "https://www.dokucheck.cz/download"
 
     def _get_default_config(self):
         """Záložní texty, pokud vypadne internet."""
@@ -162,6 +183,8 @@ class LicenseManager:
             "analysis_timeout_seconds": 300,
             "update_state": UP_TO_DATE,
             "download_url": "https://www.dokucheck.cz/download",
+            "latest_agent_build": 0,
+            "min_required_build": 0,
         }
 
     def _api_headers(self, api_key=None):
