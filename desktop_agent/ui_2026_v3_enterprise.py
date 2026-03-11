@@ -841,19 +841,25 @@ class PDFCheckUI_2026_V3:
         return {"disclaimer": "Výsledek je informativní. Za správnost odpovídá projektant.", "vop_link": "https://www.dokucheck.cz/vop", "update_msg": "Používáte aktuální verzi.", "update_state": UP_TO_DATE, "download_url": "https://www.dokucheck.cz/download"}
 
     def _refresh_update_notifier(self):
-        """Podle update_state z remote_config zobrazí v patičce: UP_TO_DATE = text, UPDATE_AVAILABLE = oranžový klikací odkaz, UPDATE_REQUIRED = červený text."""
+        """Podle update_state z remote_config zobrazí v patičce číslo verze a stav: aktuální / nová k dispozici / vyžadována aktualizace."""
         rc = self._get_remote_config()
         state = rc.get("update_state", UP_TO_DATE)
         download_url = (rc.get("download_url") or "").strip() or "https://www.dokucheck.cz/download"
+        current_ver = (AGENT_VERSION or "v0.0.0").strip()
+        latest_raw = (rc.get("latest_agent_version") or "").strip()
+        latest_display = ("v" + latest_raw) if latest_raw and not latest_raw.lower().startswith("v") else (latest_raw or "?")
+        min_raw = (rc.get("min_required_version") or "").strip()
+        min_display = ("v" + min_raw) if min_raw and not min_raw.lower().startswith("v") else (min_raw or "?")
         FOOTER_FONT = (FONT_STACK[0], 10)
         if getattr(self, "_update_notifier_label", None):
             self._update_notifier_label.destroy()
             self._update_notifier_label = None
         if state == UPDATE_AVAILABLE:
             self._update_msg_label.pack_forget()
+            text = f"Verze {current_ver} – k dispozici je nová {latest_display} (stáhnout)"
             self._update_notifier_label = ctk.CTkLabel(
                 self._update_msg_frame,
-                text="Nová verze k dispozici (stáhnout)",
+                text=text,
                 font=FOOTER_FONT,
                 text_color=WARNING,
                 wraplength=SIDEBAR_W - 24,
@@ -862,10 +868,16 @@ class PDFCheckUI_2026_V3:
             self._update_notifier_label.pack(anchor=tk.W)
             self._update_notifier_label.bind("<Button-1>", lambda e: webbrowser.open(download_url))
         elif state == UPDATE_REQUIRED:
-            self._update_msg_label.configure(text="Vyžadována aktualizace aplikace.", text_color=ERROR)
+            self._update_msg_label.configure(
+                text=f"Verze {current_ver} – vyžadována aktualizace (min. {min_display})",
+                text_color=ERROR,
+            )
             self._update_msg_label.pack(anchor=tk.W)
         else:
-            self._update_msg_label.configure(text=rc.get("update_msg", "Používáte aktuální verzi."), text_color=TEXT_MUTED)
+            self._update_msg_label.configure(
+                text=f"Verze {current_ver} – aktuální.",
+                text_color=TEXT_MUTED,
+            )
             self._update_msg_label.pack(anchor=tk.W)
 
     def _show_update_required_modal_if_needed(self):
