@@ -2180,6 +2180,62 @@ class Database:
         conn.close()
         return {'checks_today': checks_today, 'trial_batches_today': trial_today, 'active_licenses': active_licenses}
 
+    def get_recent_check_results_with_metadata(self, limit=30):
+        """Poslední kontroly z agenta (check_results) s názvem souboru a jménem podpisanta z results_json pro přehled v adminu."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT cr.id, cr.api_key, cr.batch_id, cr.file_name, cr.folder_path, cr.created_at, cr.results_json,
+                   ak.email
+            FROM check_results cr
+            LEFT JOIN api_keys ak ON ak.api_key = cr.api_key
+            ORDER BY cr.created_at DESC LIMIT ?
+        ''', (limit,))
+        rows = []
+        for row in cursor.fetchall():
+            r = dict(row)
+            signer = '—'
+            if r.get('results_json'):
+                try:
+                    data = json.loads(r['results_json'])
+                    sigs = data.get('signatures') or []
+                    if sigs and isinstance(sigs[0], dict):
+                        signer = (sigs[0].get('signer') or sigs[0].get('common_name') or '—').strip() or '—'
+                    else:
+                        signer = (data.get('signer_name') or '—').strip() or '—'
+                except Exception:
+                    pass
+            r['signer_display'] = (signer or '—')[:60]
+            rows.append(r)
+        conn.close()
+        return rows
+
+    def get_activity_log_web_trial_only(self, limit=50):
+        """Poslední kontroly na webu (zdarma) – activity_log se source_type web_trial."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, ip_address, timestamp, file_count
+            FROM activity_log WHERE source_type = 'web_trial'
+            ORDER BY timestamp DESC LIMIT ?
+        ''', (limit,))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_activity_agent_vs_web(self, days=30):
+        """Počty kontrol podle zdroje (agent vs web) za posledních N dní – pro přehled Agent vs Web."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT source_type, COUNT(*) AS batches, COALESCE(SUM(file_count), 0) AS files
+            FROM activity_log WHERE timestamp >= datetime('now', ? || ' days')
+            GROUP BY source_type
+        ''', (str(-days),))
+        by_source = {row['source_type']: {'batches': row['batches'], 'files': row['files']} for row in cursor.fetchall()}
+        conn.close()
+        return by_source
+
     def update_license_tier(self, api_key, new_tier, license_days=None):
         """Aktualizuje licenční tier pro uživatele"""
         conn = self.get_connection()
@@ -2491,6 +2547,30 @@ class Database:
         conn.commit()
         conn.close()
         return deleted
+
+    def get_free_check_usage_by_ip(self, hours=24, limit_per_hour=3):
+        """Přehled free checků podle IP: počet za poslední hodinu a za N hodin. Pro admin stránku Free check podle IP."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        one_hour_ago = (datetime.now() - timedelta(hours=1)).isoformat()
+        cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
+        cursor.execute('''
+            SELECT identifier AS ip,
+                   SUM(CASE WHEN timestamp > ? THEN 1 ELSE 0 END) AS count_1h,
+                   COUNT(*) AS count_period
+            FROM rate_limits
+            WHERE identifier_type = 'ip' AND action_type = 'free_check' AND timestamp > ?
+            GROUP BY identifier
+            ORDER BY count_period DESC
+        ''', (one_hour_ago, cutoff))
+        rows = []
+        for row in cursor.fetchall():
+            r = dict(row)
+            r['limit_per_hour'] = limit_per_hour
+            r['at_limit_1h'] = (r.get('count_1h') or 0) >= limit_per_hour
+            rows.append(r)
+        conn.close()
+        return rows
 
     # =========================================================================
     # USER LOGS & USER DEVICES (Analytics & Security)

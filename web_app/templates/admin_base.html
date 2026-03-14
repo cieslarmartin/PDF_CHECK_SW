@@ -334,6 +334,7 @@
             {# ── Aktivita ── #}
             <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Aktivita</li>
             <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>
+            <li><a href="{{ url_for('admin.free_check_usage') }}" class="{{ 'active' if active_page == 'free_check_usage' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🆓</span> Free check podle IP</a></li>
             <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📜</span> Logy</a></li>
 
             {# ── Komunikace ── #}

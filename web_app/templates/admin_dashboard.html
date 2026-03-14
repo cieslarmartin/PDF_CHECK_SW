@@ -57,6 +57,64 @@
     </div>
 </div>
 
+{# ============ AGENT VS WEB (30 dní) ============ #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – Agent vs Web (30 dní)</h3>
+    <table class="table-dense" style="width:100%;max-width:400px;">
+        <tbody>
+            <tr><td>Z agenta (souborů)</td><td><strong>{{ (activity_agent_vs_web.get('agent') or {}).get('files', 0) }}</strong></td></tr>
+            <tr><td>Na webu – zdarma (souborů)</td><td><strong>{{ (activity_agent_vs_web.get('web_trial') or {}).get('files', 0) }}</strong></td></tr>
+            <tr><td>Z agenta (dávek)</td><td>{{ (activity_agent_vs_web.get('agent') or {}).get('batches', 0) }}</td></tr>
+            <tr><td>Na webu – zdarma (dávek)</td><td>{{ (activity_agent_vs_web.get('web_trial') or {}).get('batches', 0) }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ============ KONTROLY Z AGENTA (S METADATY) + KONTROLY NA WEBU ============ #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly z agenta – poslední (soubor / podpisant)</h3>
+        <p class="text-muted small" style="margin:0 0 8px;">Z databáze check_results – název souboru a jméno autorizované osoby z podpisu.</p>
+        <div style="max-height:280px;overflow-y:auto;">
+        <table class="table-dense" style="width:100%;">
+            <thead><tr><th>Soubor</th><th>Podpisant</th><th>Účet</th><th>Datum</th></tr></thead>
+            <tbody>
+                {% for r in recent_check_results_agent[:15] %}
+                <tr>
+                    <td><small title="{{ r.file_name or '' }}">{{ (r.file_name or '—')[:25] }}{% if (r.file_name or '')|length > 25 %}…{% endif %}</small></td>
+                    <td><small title="{{ r.signer_display or '' }}">{{ (r.signer_display or '—')[:20] }}{% if (r.signer_display or '')|length > 20 %}…{% endif %}</small></td>
+                    <td><small>{{ (r.email or (r.api_key or '')[:12]) or '—' }}</small></td>
+                    <td><small>{{ (r.created_at or '—')[:16] }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted" style="padding:8px;">Zatím žádné kontroly z agenta.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly na webu (zdarma) – poslední</h3>
+        <p class="text-muted small" style="margin:0 0 8px;">Activity log – IP, datum a počet souborů. Jednotlivé názvy souborů se u webových kontrol neukládají.</p>
+        <div style="max-height:280px;overflow-y:auto;">
+        <table class="table-dense" style="width:100%;">
+            <thead><tr><th>IP</th><th>Čas</th><th>Počet souborů</th></tr></thead>
+            <tbody>
+                {% for row in recent_web_checks[:15] %}
+                <tr>
+                    <td><small style="font-family:monospace;">{{ row.ip_address or '—' }}</small></td>
+                    <td><small>{{ (row.timestamp or '—')[:16] }}</small></td>
+                    <td>{{ row.file_count }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted" style="padding:8px;">Zatím žádné kontroly na webu.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
 {# ============ ŽEBŘÍČEK + POSLEDNÍ AKTIVITA ============ #}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
     <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">

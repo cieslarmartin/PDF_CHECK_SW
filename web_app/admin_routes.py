@@ -292,6 +292,9 @@ def dashboard():
     activity_log = db.get_activity_log(limit=200)
     activity_stats = db.get_activity_stats_today()
     recent_emails = db.get_recent_email_logs(limit=10)
+    recent_check_results_agent = db.get_recent_check_results_with_metadata(limit=25)
+    recent_web_checks = db.get_activity_log_web_trial_only(limit=25)
+    activity_agent_vs_web = db.get_activity_agent_vs_web(days=30)
 
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
@@ -314,6 +317,9 @@ def dashboard():
                           activity_log=activity_log or [],
                           activity_stats=activity_stats or {},
                           recent_emails=recent_emails or [],
+                          recent_check_results_agent=recent_check_results_agent or [],
+                          recent_web_checks=recent_web_checks or [],
+                          activity_agent_vs_web=activity_agent_vs_web or {},
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
@@ -1528,6 +1534,28 @@ def analytics():
                            stats=stats, by_page=by_page, by_referrer=by_referrer,
                            by_utm=by_utm, daily=daily, days=days,
                            user=user, active_page='analytics')
+
+
+@admin_bp.route('/admin/free-check-usage')
+@admin_required
+def free_check_usage():
+    """Přehled free checků podle IP: počet za hodinu a za 24 h, limit 3/hodinu, kdo limit naplnil."""
+    db = get_db()
+    hours = int(request.args.get('hours', 24))
+    if hours not in (6, 12, 24, 48):
+        hours = 24
+    limit_per_hour = 3
+    usage = db.get_free_check_usage_by_ip(hours=hours, limit_per_hour=limit_per_hour)
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_free_check_usage.html',
+                           usage=usage,
+                           hours=hours,
+                           limit_per_hour=limit_per_hour,
+                           user=user,
+                           active_page='free_check_usage')
 
 
 @admin_bp.route('/admin/logs')
