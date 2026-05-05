@@ -39,3 +39,8 @@ desktop_agent/install/
 
 # Zálohy verzí – nepushovat (nahrávání na Git je ruční přes .bat)
 web_app/zaloha_build62_filtry_issr/
+
+# Testovaci engine data/reporty
+testovaci_engine/zdrojove PDF_testovaci/**/*.pdf
+testovaci_engine/reports/*.html
+testovaci_engine/reports/snapshots/

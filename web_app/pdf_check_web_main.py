@@ -3401,116 +3401,162 @@ def _enrich_signatures_tsa_qualified(result):
             sig['name'] = sig.get('signer', '—')
 
 
-def analyze_pdf_from_content(content):
-    """
-    Analýza PDF z bajtů (upload). Primárně podpisy ze struktury (pypdf), pak DocMDP přes reader.
-    """
-    sig_list_from_reader = []
-    reader = None
+def _get_pdfa_details(content):
+    """Doplňková web metadata: verze PDF a úroveň PDF/A."""
+    pdf_version = ''
+    conformance = ''
     try:
-        from pypdf import PdfReader
-        reader = PdfReader(io.BytesIO(content))
-        sig_list_from_reader = extract_signatures_via_reader(reader)
+        pdf_header = re.search(rb'%PDF-(\d+\.\d+)', content[:100])
+        if pdf_header:
+            pdf_version = pdf_header.group(1).decode('ascii')
     except Exception:
         pass
-    result = analyze_pdf(content)
-    if sig_list_from_reader:
-        signature_objs = [s for s in sig_list_from_reader if s.get('type') == 'SIGNATURE']
-        result['signatures'] = sig_list_from_reader
-        result['sig_count'] = len(sig_list_from_reader)
-        if signature_objs:
-            all_have_ckait = all(s.get('ckait', '—') != '—' for s in signature_objs)
-            all_have_name = all(s.get('signer', '—') != '—' for s in signature_objs)
-            result['sig'] = 'OK' if (all_have_ckait and all_have_name) else 'PARTIAL'
-            result['signer'] = signature_objs[0].get('signer', '—')
-            result['ckait'] = signature_objs[0].get('ckait', '—')
+    try:
+        conf_match = re.search(rb"pdfaid:conformance=['\"]?([ABUYabuy])['\"]?", content, re.IGNORECASE)
+        if conf_match:
+            conformance = conf_match.group(1).decode('ascii').lower()
+        if not conformance:
+            for level in (b'PDF/A-3y', b'PDF/A-3u', b'PDF/A-3b', b'PDF/A-3a'):
+                if level in content:
+                    conformance = level.decode('ascii')[-1].lower()
+                    break
+    except Exception:
+        pass
+    try:
+        pdfa_info = check_pdfa_version(content)
+        if isinstance(pdfa_info, tuple) and pdfa_info:
+            part = pdfa_info[0]
         else:
-            result['sig'] = 'PARTIAL' if result.get('sig_count') else 'FAIL'
-            result['signer'] = '—'
-            result['ckait'] = '—'
-        if any(s.get('tsa') == 'TSA' and s.get('timestamp_valid') for s in sig_list_from_reader):
-            result['tsa'] = 'TSA'
-        elif any(s.get('tsa') == 'LOCAL' for s in sig_list_from_reader):
-            result['tsa'] = 'LOCAL'
-        else:
-            result['tsa'] = 'NONE'
-    if reader is not None:
-        try:
-            docmdp_reader = detect_docmdp_lock_via_reader(reader)
-            result['docmdp_level'] = docmdp_reader['level']
-            result['issr_compatible'] = not docmdp_reader['locked']
-        except Exception:
-            pass
+            part = None
+    except Exception:
+        part = None
+    if part == 3 and conformance:
+        pdfa_level = f'A-3{conformance}'
+    elif part:
+        pdfa_level = f'A-{part}'
     else:
+        pdfa_level = None
+    return {
+        'pdfVersion': pdf_version or None,
+        'pdfaConformance': conformance or None,
+        'pdfaLevel': pdfa_level,
+    }
+
+
+def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
+    """Převede wrapped výstup sdíleného engine na plochý tvar očekávaný web UI."""
+    if not isinstance(wrapped, dict) or not wrapped.get('success'):
+        return {
+            'name': fallback_name,
+            'pdfaVersion': None,
+            'pdfaStatus': 'FAIL',
+            'pdfVersion': None,
+            'pdfaConformance': None,
+            'pdfaLevel': None,
+            'sig': 'FAIL',
+            'signer': '—',
+            'ckait': '—',
+            'tsa': 'NONE',
+            'issr_compatible': True,
+            'error': (wrapped or {}).get('error', 'Analyzer error')
+        }
+    details = _get_pdfa_details(content)
+    results = wrapped.get('results', {})
+    signatures = (results.get('signatures') or []) if isinstance(results, dict) else []
+    signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
+    signer = ', '.join(dict.fromkeys([s.get('signer', '—') for s in signature_objs if s.get('signer', '—') != '—'])) or '—'
+    ckait = ', '.join(dict.fromkeys([s.get('ckait_number', '—') for s in signature_objs if s.get('ckait_number', '—') != '—'])) or '—'
+    if signature_objs:
+        sig = 'OK' if all(s.get('signer', '—') != '—' and s.get('ckait_number', '—') != '—' for s in signature_objs) else 'PARTIAL'
+    else:
+        sig = 'PARTIAL' if signatures else 'FAIL'
+    if any(s.get('timestamp_valid') for s in signatures):
+        tsa = 'TSA'
+    elif any((s.get('date') or '—') != '—' for s in signatures):
+        tsa = 'LOCAL'
+    else:
+        tsa = 'NONE'
+    out_signatures = []
+    for i, s in enumerate(signatures, 1):
+        sig_type = s.get('type', 'SIGNATURE')
+        tsa_issuer = s.get('tsa_issuer', '—')
+        out_signatures.append({
+            'index': s.get('index', i),
+            'type': sig_type,
+            'valid': s.get('valid', False),
+            'signature_type': s.get('signature_type'),
+            'signer': s.get('signer', '—'),
+            'ckait': s.get('ckait_number', '—'),
+            'date': s.get('date', '—'),
+            'tsa': 'TSA' if s.get('timestamp_valid') else ('LOCAL' if (s.get('date') or '—') != '—' else 'NONE'),
+            'tsa_issuer': tsa_issuer,
+            'timestamp_valid': s.get('timestamp_valid', False),
+            'certificate_valid': s.get('certificate_valid', False),
+            'tsa_qualified': is_tsa_issuer_qualified(tsa_issuer) if tsa_issuer and tsa_issuer != '—' else False,
+            'name': ('Časové razítko dokumentu (' + (tsa_issuer if tsa_issuer != '—' else '—') + ')') if sig_type == 'DOCUMENT_TIMESTAMP' else s.get('signer', '—')
+        })
+    # pdfaVersion převzít z exact_version, pokud existuje
+    exact_version = ((results.get('pdf_format') or {}).get('exact_version') or '') if isinstance(results, dict) else ''
+    m = re.search(r'PDF/A-(\d)', str(exact_version))
+    pdfa_version = int(m.group(1)) if m else None
+    return {
+        'name': wrapped.get('file_name', fallback_name),
+        'pdfaVersion': pdfa_version,
+        'pdfaStatus': 'OK' if pdfa_version == 3 else 'FAIL',
+        'pdfVersion': details.get('pdfVersion'),
+        'pdfaConformance': details.get('pdfaConformance'),
+        'pdfaLevel': details.get('pdfaLevel'),
+        'sig': sig,
+        'signer': signer,
+        'ckait': ckait,
+        'tsa': tsa,
+        'sig_count': len(out_signatures),
+        'signatures': out_signatures,
+        'docmdp_level': results.get('docmdp_level'),
+        'issr_compatible': results.get('issr_compatible', True),
+    }
+
+
+def analyze_pdf_from_content(content):
+    """Analýza PDF z bajtů přes sdílený desktop engine + web adaptér."""
+    try:
+        import tempfile
+        from desktop_agent import pdf_checker as shared_engine
         try:
-            from pypdf import PdfReader
-            reader = PdfReader(io.BytesIO(content))
-            docmdp_reader = detect_docmdp_lock_via_reader(reader)
-            result['docmdp_level'] = docmdp_reader['level']
-            result['issr_compatible'] = not docmdp_reader['locked']
+            from desktop_agent.tsa_registry import is_tsa_issuer_qualified as _q
+            shared_engine.is_tsa_issuer_qualified = _q
         except Exception:
             pass
-    return result
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        try:
+            wrapped = shared_engine.analyze_pdf_file(tmp_path)
+        finally:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        return _flatten_shared_result(wrapped, content, fallback_name='upload.pdf')
+    except Exception as e:
+        return {'name': 'upload.pdf', 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'issr_compatible': True, 'error': str(e)}
 
 
 def analyze_pdf_file(filepath):
-    """Analýza souboru z disku. Primárně podpisy ze struktury PDF (pypdf)."""
+    """Analýza souboru z disku přes sdílený desktop engine + web adaptér."""
     try:
-        file_size = os.path.getsize(filepath)
-        sig_list_from_reader = []
-        reader = None
+        from desktop_agent import pdf_checker as shared_engine
         try:
-            from pypdf import PdfReader
-            reader = PdfReader(filepath)
-            sig_list_from_reader = extract_signatures_via_reader(reader)
+            from desktop_agent.tsa_registry import is_tsa_issuer_qualified as _q
+            shared_engine.is_tsa_issuer_qualified = _q
         except Exception:
             pass
+        wrapped = shared_engine.analyze_pdf_file(filepath)
         with open(filepath, 'rb') as f:
-            if file_size <= 2 * 1024 * 1024:
-                content = f.read()
-            else:
-                content = f.read(512 * 1024)
-                f.seek(-1024 * 1024, 2)
-                content += f.read()
-        result = analyze_pdf(content)
-        if sig_list_from_reader:
-            signature_objs = [s for s in sig_list_from_reader if s.get('type') == 'SIGNATURE']
-            result['signatures'] = sig_list_from_reader
-            result['sig_count'] = len(sig_list_from_reader)
-            if signature_objs:
-                all_have_ckait = all(s.get('ckait', '—') != '—' for s in signature_objs)
-                all_have_name = all(s.get('signer', '—') != '—' for s in signature_objs)
-                result['sig'] = 'OK' if (all_have_ckait and all_have_name) else 'PARTIAL'
-                result['signer'] = signature_objs[0].get('signer', '—')
-                result['ckait'] = signature_objs[0].get('ckait', '—')
-            else:
-                result['sig'] = 'PARTIAL' if result.get('sig_count') else 'FAIL'
-                result['signer'] = '—'
-                result['ckait'] = '—'
-            if any(s.get('tsa') == 'TSA' and s.get('timestamp_valid') for s in sig_list_from_reader):
-                result['tsa'] = 'TSA'
-            elif any(s.get('tsa') == 'LOCAL' for s in sig_list_from_reader):
-                result['tsa'] = 'LOCAL'
-            else:
-                result['tsa'] = 'NONE'
-        if reader is not None:
-            try:
-                docmdp_reader = detect_docmdp_lock_via_reader(reader)
-                result['docmdp_level'] = docmdp_reader['level']
-                result['issr_compatible'] = not docmdp_reader['locked']
-            except Exception:
-                pass
-        else:
-            try:
-                from pypdf import PdfReader
-                reader = PdfReader(filepath)
-                docmdp_reader = detect_docmdp_lock_via_reader(reader)
-                result['docmdp_level'] = docmdp_reader['level']
-                result['issr_compatible'] = not docmdp_reader['locked']
-            except Exception:
-                pass
-        result['name'] = os.path.basename(filepath)
-        return result
+            content = f.read()
+        out = _flatten_shared_result(wrapped, content, fallback_name=os.path.basename(filepath))
+        out['name'] = os.path.basename(filepath)
+        return out
     except Exception as e:
         return {'name': os.path.basename(filepath), 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'issr_compatible': True, 'error': str(e)}
 

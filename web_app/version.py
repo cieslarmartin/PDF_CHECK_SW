@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.043"
+WEB_VERSION = "w26.02.044"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 87
+WEB_BUILD = 88
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "Admin: tarif PRO/BASIC v tabulce objednávek, číslo objednávky (VS) v e-mailu o platbě sjednoceno."
+BUILD_NOTES = "Web sjednocen na sdílený engine desktop agenta pro konzistentní výsledky analýzy PDF."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 # TEST: build 54 pro ověření update notifieru (pak vrátit na 53).
