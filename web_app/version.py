@@ -4,7 +4,7 @@
 
 WEB_VERSION = "w26.02.053"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 97
+WEB_BUILD = 98
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
 BUILD_NOTES = "deploy.sh: REPO_ROOT ze složky skriptu; varování proti spuštění z ~/."
