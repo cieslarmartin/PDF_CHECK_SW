@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Náhled variant landingu – DokuCheck</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 1.75rem 1rem 3rem; color: #374151; line-height: 1.55; background: #f9fafb; }
+        h1 { color: #1e5a8a; font-size: 1.5rem; margin: 0 0 0.5rem; }
+        .sub { color: #6b7280; font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.15rem 1.25rem; margin: 1rem 0; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+        .card h2 { margin: 0 0 0.35rem; font-size: 1.05rem; color: #1f2937; }
+        .card p { margin: 0; font-size: 0.9rem; color: #6b7280; }
+        a.btn { display: inline-block; margin-top: 0.65rem; padding: 0.45rem 1rem; background: #1e5a8a; color: #fff !important; text-decoration: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; }
+        a.btn:hover { background: #174a6e; }
+        a.back { color: #1e5a8a; font-size: 0.9rem; }
+        .note { background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 10px; margin-top: 1.75rem; font-size: 0.88rem; color: #1e3a5f; }
+        .note strong { color: #1e5a8a; }
+        .muted { font-size: 0.8rem; color: #9ca3af; margin-top: 2rem; }
+        code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <p style="margin:0 0 1rem;"><a class="back" href="/">← Zpět na ostrý web ({{ web_version|default('?') }}, build {{ web_build|default('?') }})</a></p>
+    <h1>Náhled variant hlavní stránky</h1>
+    <p class="sub">Stejná nastavení a data z administrace jako na produkční adrese <code>/</code> – liší se jen šablonou. Vyberte variantu, projděte ji v mobilu i na počítači, pak napište, kterou máme nasadit jako ostrý landing.</p>
+
+    <div class="card">
+        <h2>Varianta A – Redesign 2026</h2>
+        <p>Font Inter, splash okno po načtení, horní oznamovací pruh, navigace s „glass“ efektem, sekce se střídáním pozadí.</p>
+        <a class="btn" href="{{ url_for('landing_nahled_varianta_a') }}">Otevřít náhled A</a>
+    </div>
+
+    <div class="card">
+        <h2>Varianta B – Klasický vzhled</h2>
+        <p>Bílý horní panel „PDF DokuCheck PRO“, modrá #1e5a8a a zelená #059669, bez splash a bez gradientového pásu nahoře.</p>
+        <a class="btn" href="{{ url_for('landing_nahled_varianta_b') }}">Otevřít náhled B</a>
+    </div>
+
+    <div class="card">
+        <h2>Varianta C – Draft / návrh</h2>
+        <p>Šablona <code>landing_v3_draft.html</code> (pracovní varianta; může se lišit texty v title od ostrého webu).</p>
+        <a class="btn" href="{{ url_for('landing_nahled_varianta_c') }}">Otevřít náhled C</a>
+    </div>
+
+    <div class="note">
+        <strong>Varianta D</strong> – rezervováno na další produkt / layout. Až bude připravená HTML šablona, doplníme např. adresu <code>/nahled/varianta-d</code> a odkaz sem.
+    </div>
+
+    <p class="muted">Ostrý web zůstává na <a href="/">/</a>, dokud není nasazena zvolená varianta vývojem.</p>
+</body>
+</html>

@@ -3652,6 +3652,45 @@ def index():
     return render_template('landing_v3.html', **settings)
 
 
+def _landing_nahled_settings():
+    """Stejná data jako pro produkční ``/`` (settings + FAQ)."""
+    db = Database()
+    st = load_settings_for_views(db) if load_settings_for_views else {}
+    try:
+        st['faq_list'] = db.get_all_faq()
+    except Exception:
+        st['faq_list'] = []
+    return st
+
+
+@app.route('/nahled')
+def landing_nahled_hub():
+    """Přehled variant hlavní stránky pro výběr před změnou produkční šablony."""
+    return render_template(
+        'landing_nahled_hub.html',
+        web_version=WEB_VERSION,
+        web_build=WEB_BUILD,
+    )
+
+
+@app.route('/nahled/varianta-a')
+def landing_nahled_varianta_a():
+    """Varianta A: současný redesign (landing_v3.html)."""
+    return render_template('landing_v3.html', **_landing_nahled_settings())
+
+
+@app.route('/nahled/varianta-b')
+def landing_nahled_varianta_b():
+    """Varianta B: klasický vzhled (landing_v3_backup.html)."""
+    return render_template('landing_v3_backup.html', **_landing_nahled_settings())
+
+
+@app.route('/nahled/varianta-c')
+def landing_nahled_varianta_c():
+    """Varianta C: náhled draft (landing_v3_draft.html)."""
+    return render_template('landing_v3_draft.html', **_landing_nahled_settings())
+
+
 @app.route('/landing-draft')
 def landing_draft():
     """Náhled landingu podle designového promptu (hero, navbar, ceník). Ostrý web zůstává na ``/``."""

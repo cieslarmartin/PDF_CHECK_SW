@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.053"
+WEB_VERSION = "w26.02.055"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 98
+WEB_BUILD = 99
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "deploy.sh: REPO_ROOT ze složky skriptu; varování proti spuštění z ~/."
+BUILD_NOTES = "Náhled landingu: /nahled + varianty A/B/C (stejná data jako /); ostrý web beze změny. Rezerva /nahled/varianta-d."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 # TEST: build 54 pro ověření update notifieru (pak vrátit na 53).
