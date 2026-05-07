@@ -24,6 +24,25 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+# #region agent debug log
+def _dbg(hypothesis_id: str, message: str, data: dict | None = None, run_id: str = "pre-fix"):
+    """NDJSON debug log for local reproduction (no secrets/PII)."""
+    try:
+        payload = {
+            "sessionId": "1b2246",
+            "runId": run_id,
+            "hypothesisId": hypothesis_id,
+            "location": "web_app/pdf_check_web_main.py",
+            "message": message,
+            "data": data or {},
+            "timestamp": int(__import__("time").time() * 1000),
+        }
+        with open(os.path.join(_PROJECT_ROOT, "debug-1b2246.log"), "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+# #endregion
+
 # NOVÉ IMPORTY PRO API:
 from api_endpoint import register_api_routes, consume_one_time_token
 from database import Database
@@ -1562,8 +1581,17 @@ async function processFilesWithProgress(files) {
             const formData = new FormData();
             formData.append('file', file);
             try {
+                // #region agent debug log
+                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J1',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_start',data:{name:file.name,size:file.size||null},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 const response = await fetch('/analyze', { method: 'POST', body: formData, headers: authHeaders });
+                // #region agent debug log
+                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J2',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_response',data:{status:response.status,ok:response.ok},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 const result = await response.json().catch(function() { return {}; });
+                // #region agent debug log
+                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J3',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_json',data:{hasError:!!(result&&result.error),error:(result&&result.error)||null,pdfaStatus:(result&&result.pdfaStatus)||null},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if (!response.ok) {
                     if (response.status === 429 && result.limit_exceeded) {
                         progressModal.classList.remove('visible');
@@ -1576,6 +1604,9 @@ async function processFilesWithProgress(files) {
                 }
                 batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, ...result });
             } catch (error) {
+                // #region agent debug log
+                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J4',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_exception',data:{err:String((error&&error.message)||error||'')},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: 'Chyba: ' + (error.message || 'síťová chyba') });
             }
         }
@@ -3526,8 +3557,19 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
 def analyze_pdf_from_content(content):
     """Analýza PDF z bajtů přes sdílený desktop engine + web adaptér."""
     try:
+        # H1: desktop_agent import / sys.path / cwd
+        _dbg("H1", "analyze_pdf_from_content:enter", {
+            "content_len": len(content) if content is not None else None,
+            "cwd": os.getcwd(),
+            "project_root_in_syspath": _PROJECT_ROOT in sys.path,
+        })
         import tempfile
-        from desktop_agent import pdf_checker as shared_engine
+        try:
+            from desktop_agent import pdf_checker as shared_engine
+            _dbg("H1", "analyze_pdf_from_content:import_desktop_agent_ok", {"desktop_agent_module": getattr(shared_engine, "__name__", "pdf_checker")})
+        except Exception as ie:
+            _dbg("H1", "analyze_pdf_from_content:import_desktop_agent_fail", {"err_type": type(ie).__name__, "err": str(ie)})
+            raise
         try:
             from desktop_agent.tsa_registry import is_tsa_issuer_qualified as _q
             shared_engine.is_tsa_issuer_qualified = _q
@@ -3537,7 +3579,13 @@ def analyze_pdf_from_content(content):
             tmp.write(content)
             tmp_path = tmp.name
         try:
+            _dbg("H4", "analyze_pdf_from_content:tmp_written", {"tmp_path": tmp_path, "tmp_exists": os.path.exists(tmp_path)})
             wrapped = shared_engine.analyze_pdf_file(tmp_path)
+            # H3: engine dependency failures will surface here
+            _dbg("H3", "analyze_pdf_from_content:engine_ok", {
+                "wrapped_success": bool(getattr(wrapped, "get", lambda *_: None)("success")) if isinstance(wrapped, dict) else None,
+                "wrapped_keys": list(wrapped.keys())[:20] if isinstance(wrapped, dict) else None,
+            })
         finally:
             try:
                 os.remove(tmp_path)
@@ -3545,6 +3593,7 @@ def analyze_pdf_from_content(content):
                 pass
         return _flatten_shared_result(wrapped, content, fallback_name='upload.pdf')
     except Exception as e:
+        _dbg("H2", "analyze_pdf_from_content:exception", {"err_type": type(e).__name__, "err": str(e)})
         return {'name': 'upload.pdf', 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'issr_compatible': True, 'error': str(e)}
 
 
@@ -4274,8 +4323,12 @@ def analyze():
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
     try:
+        # H2: limit / wrong request shape
+        _dbg("H2", "/analyze:enter", {"has_filename": bool(getattr(file, "filename", "")), "filename_ext": (file.filename or "")[-8:] if getattr(file, "filename", None) else None})
         content = file.read()
+        _dbg("H2", "/analyze:read", {"content_len": len(content)})
         if len(content) > ONLINE_DEMO_MAX_FILE_SIZE:
+            _dbg("H2", "/analyze:reject_size", {"limit": ONLINE_DEMO_MAX_FILE_SIZE, "content_len": len(content)})
             return jsonify({'error': 'Soubor je větší než 2 MB. Pro větší soubory použijte Desktop aplikaci.'}), 400
         ip = _get_client_ip()
         db = Database()
@@ -4283,6 +4336,7 @@ def analyze():
         if not paid_user:
             allowed, _ = db.check_web_trial_limit(ip)
             if not allowed:
+                _dbg("H2", "/analyze:reject_trial_limit", {})
                 return jsonify({
                     'error': 'Dosáhli jste limitu kontrol za 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
                     'limit_exceeded': True
@@ -4291,8 +4345,10 @@ def analyze():
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         result = analyze_pdf_from_content(content)
         _enrich_signatures_tsa_qualified(result)
+        _dbg("H2", "/analyze:ok", {"has_error": bool(result.get("error")), "pdfaStatus": result.get("pdfaStatus"), "sig": result.get("sig")})
         return jsonify(result)
     except Exception as e:
+        _dbg("H2", "/analyze:exception", {"err_type": type(e).__name__, "err": str(e)})
         return jsonify({'error': str(e)}), 500
 
 @app.route('/select_folder')
