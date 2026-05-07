@@ -54,7 +54,13 @@ except ImportError:
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp, get_db
-from version import WEB_BUILD, WEB_VERSION, BUILD_NOTES
+from version import (
+    WEB_BUILD,
+    WEB_VERSION,
+    BUILD_NOTES,
+    AGENT_BUILD_ID,
+    AGENT_VERSION_DISPLAY,
+)
 try:
     from tsa_registry import is_tsa_issuer_qualified
 except ImportError:
@@ -3784,9 +3790,12 @@ def app_logout():
 def app_main():
     """Hlavní aplikace – kontrola PDF (původní UI). Po přihlášení z agenta (token) se předá bootstrap_user pro auto-load."""
     bootstrap_user = session.get('portal_user')
-    web_version = web_build = agent_version = agent_build = "n/a"
+    web_version = (WEB_VERSION or "").strip() or "n/a"
+    web_build = str(WEB_BUILD) if WEB_BUILD is not None else "n/a"
+    agent_version = (AGENT_VERSION_DISPLAY or "").strip() or "n/a"
+    agent_build = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else "n/a"
     try:
-        from .settings_loader import load_settings_for_views
+        from settings_loader import load_settings_for_views
         db = Database()
         settings = load_settings_for_views(db)
         footer_disclaimer = settings.get("footer_disclaimer", "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.")
@@ -3796,10 +3805,6 @@ def app_main():
         provider_legal_note = settings.get("provider_legal_note", "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016.")
         contact_email = settings.get("contact_email", "")
         app_legal_notice = settings.get("app_legal_notice", "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.")
-        web_version = settings.get("web_version") or "n/a"
-        web_build = settings.get("web_build") or "n/a"
-        agent_version = settings.get("agent_version") or settings.get("agent_version_display") or "n/a"
-        agent_build = settings.get("agent_build") or settings.get("agent_build_id") or "n/a"
     except Exception:
         footer_disclaimer = "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost."
         provider_name = "Ing. Martin Cieślar"
@@ -3808,30 +3813,6 @@ def app_main():
         provider_legal_note = "Fyzická osoba zapsaná v živnostenském rejstříku od 22. 2. 2016."
         contact_email = ""
         app_legal_notice = "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka."
-    if web_build == "n/a" or agent_build == "n/a":
-        try:
-            from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
-            if web_build == "n/a":
-                web_version = (WEB_VERSION or "").strip() or web_version
-                web_build = str(WEB_BUILD) if WEB_BUILD is not None else web_build
-            if agent_build == "n/a":
-                agent_version = (AGENT_VERSION_DISPLAY or "").strip() or agent_version
-                agent_build = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else agent_build
-        except Exception:
-            pass
-    if web_version == "n/a" or web_build == "n/a" or agent_version == "n/a" or agent_build == "n/a":
-        try:
-            from . import version as ver
-            if web_version == "n/a":
-                web_version = getattr(ver, "WEB_VERSION", None) or web_version
-            if web_build == "n/a":
-                web_build = str(getattr(ver, "WEB_BUILD", None) or web_build)
-            if agent_version == "n/a":
-                agent_version = getattr(ver, "AGENT_VERSION_DISPLAY", None) or agent_version
-            if agent_build == "n/a":
-                agent_build = str(getattr(ver, "AGENT_BUILD_ID", None) or agent_build)
-        except Exception:
-            pass
     return render_template_string(
         HTML_TEMPLATE,
         bootstrap_user=bootstrap_user,
@@ -4454,14 +4435,6 @@ def scan_folder():
                 result['path'] = rel_path
                 results.append(result)
     return jsonify({'results': results, 'total': len(results)})
-
-# =============================================================================
-# BUILD PRO ŠABLONY (jedno místo – version.py; při změně zvyš WEB_BUILD)
-# =============================================================================
-@app.context_processor
-def inject_web_build():
-    """Do všech šablon přidá web_build a web_version (w26.02.XXX) pro zobrazení verze na webu."""
-    return {'web_build': WEB_BUILD, 'web_version': WEB_VERSION}
 
 # =============================================================================
 # REGISTRACE ADMIN BLUEPRINTU
