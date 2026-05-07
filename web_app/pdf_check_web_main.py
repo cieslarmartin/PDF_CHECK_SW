@@ -3790,6 +3790,41 @@ def app_logout():
     return jsonify({'ok': True})
 
 
+@app.route('/__diag')
+def __diag():
+    """
+    Dočasná diagnostika: který version.py skutečně načetl WSGI proces (cesta, mtime, PID).
+    Po ověření na PA odstranit tuto route a zvýšit WEB_BUILD.
+    """
+    import version as ver_module
+
+    p = os.path.abspath(getattr(ver_module, '__file__', '') or '')
+    mtime = size = inode = None
+    try:
+        if p and os.path.isfile(p):
+            st = os.stat(p)
+            mtime = st.st_mtime
+            size = st.st_size
+            inode = st.st_ino
+    except Exception:
+        pass
+    return jsonify({
+        'web_build': getattr(ver_module, 'WEB_BUILD', None),
+        'web_version': getattr(ver_module, 'WEB_VERSION', None),
+        'agent_build_id': getattr(ver_module, 'AGENT_BUILD_ID', None),
+        'agent_version_display': getattr(ver_module, 'AGENT_VERSION_DISPLAY', None),
+        'version_file': p,
+        'version_mtime': mtime,
+        'version_size': size,
+        'version_inode': inode,
+        'cwd': os.getcwd(),
+        'pid': os.getpid(),
+        'sys_path_head': sys.path[:8],
+        'project_root': _PROJECT_ROOT,
+        'web_app_dir': _WEB_APP_DIR,
+    })
+
+
 @app.route('/app')
 def app_main():
     """Hlavní aplikace – kontrola PDF (původní UI). Po přihlášení z agenta (token) se předá bootstrap_user pro auto-load."""
