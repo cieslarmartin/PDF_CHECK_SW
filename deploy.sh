@@ -4,14 +4,24 @@
 # Struktura: /home/cieslar/web_app (root s .git) → web_app/ (aplikace, requirements, wsgi)
 # Venv: /home/cieslar/web_app/venv
 #
-# Použití na PA v Bash:  cd /home/cieslar/web_app && bash deploy.sh
-# Nebo z domova:  bash /home/cieslar/web_app/deploy.sh
+# Použití na PA v Bash (vždy z kořene klonu, ne z ~/):
+#   cd /home/cieslar/web_app && bash deploy.sh
 # =============================================================================
 
 set -e
 
-REPO_ROOT="${REPO_ROOT:-/home/cieslar/web_app}"
-VENV="${VENV:-/home/cieslar/web_app/venv}"
+# Kořen klonu = složka, kde leží tento soubor (funguje i při volání bash /abs/path/deploy.sh)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "$SCRIPT_DIR/web_app/pdf_check_web_main.py" ]]; then
+  echo "CHYBA: deploy.sh musí být v kořeni klonu PDF_CHECK_SW (vedle web_app/)."
+  echo "        Aktuální: $SCRIPT_DIR"
+  echo "        Správně:  cd /home/USERNAME/PDF_CHECK_SW   # nebo /home/cieslar/web_app"
+  echo "                  bash deploy.sh"
+  echo "  (Nespouštějte kopii deploy.sh z domovské složky ~/ — ta nemusí obsahovat kontroly enginu.)"
+  exit 1
+fi
+REPO_ROOT="${REPO_ROOT:-$SCRIPT_DIR}"
+VENV="${VENV:-$REPO_ROOT/venv}"
 # Složka s aplikací (pdf_check_web_main.py, requirements.txt, wsgi)
 APP_DIR="$REPO_ROOT/web_app"
 DB_PATH="$APP_DIR/pdfcheck_results.db"
@@ -88,5 +98,6 @@ echo "[4] Restart WSGI (touch – PA načte nový kód)"
 touch "$WSGI_FILE"
 
 echo "Deploy dokončen."
-echo "  → PythonAnywhere: záložka Web → ověřte, že WSGI file = $WSGI_FILE"
-echo "  → Klikněte Reload + ověřte https://www.dokucheck.cz/__diag (JSON, web_build z version.py)"
+echo "  → PythonAnywhere: záložka Web → ověřte WSGI file = $WSGI_FILE → klikněte Reload."
+echo "  → Ověřte https://www.dokucheck.cz/__diag (JSON, web_build musí odpovídat version.py)."
+echo "  → V logu výše musí být řádky „[3] Kontrola importů“ a „desktop_agent.pdf_checker: OK“."
