@@ -1,0 +1,447 @@
+/* DokuCheck landing redesign 2026 – hero, mockup, trust bar, nav CTA, ceník doplňky */
+
+:root {
+  --color-primary: #1e5a8a;
+  --color-primary-hover: #2d7ab8;
+  --color-success: #16a34a;
+  --color-success-light: #22c55e;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f8f9fc;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+}
+
+/* Hero layout */
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: stretch;
+}
+@media (min-width: 768px) {
+  .hero-content {
+    flex-direction: row;
+    align-items: center;
+  }
+  .hero-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .hero-visual {
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 26rem;
+  }
+}
+
+/* Hero badge */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  color: #16a34a;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid #bbf7d0;
+}
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  background: #16a34a;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Hero nadpis */
+.hero-heading {
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin-bottom: 18px;
+  color: #0f172a;
+}
+.hero-heading-accent {
+  color: #1e5a8a;
+}
+
+.hero-subheading {
+  font-size: 1.125rem;
+  color: #64748b;
+  line-height: 1.55;
+  max-width: 36rem;
+  margin-bottom: 1rem;
+}
+
+/* Pricing teaser v hero */
+.hero-pricing-teaser {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.pricing-from {
+  font-size: 14px;
+  color: #64748b;
+}
+.pricing-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e5a8a;
+}
+.pricing-period {
+  font-size: 14px;
+  color: #64748b;
+}
+.pricing-annual {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+/* CTA skupina */
+.hero-cta-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.btn-large {
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  display: inline-block;
+}
+.btn-primary {
+  background: #1e5a8a;
+  color: #ffffff;
+  border: none;
+}
+.btn-primary:hover {
+  background: #2d7ab8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 90, 138, 0.3);
+}
+.btn-secondary {
+  background: transparent;
+  color: #1e5a8a;
+  border: 2px solid #e2e8f0;
+}
+.btn-secondary:hover {
+  border-color: #1e5a8a;
+  background: #f0f7ff;
+}
+
+/* Trust signály pod hero */
+.hero-trust-signals {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.trust-item {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Mockup okno */
+.mockup-window {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+.mockup-titlebar {
+  background: #f8f9fc;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.mockup-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mockup-dot.red {
+  background: #ef4444;
+}
+.mockup-dot.yellow {
+  background: #f59e0b;
+}
+.mockup-dot.green {
+  background: #22c55e;
+}
+.mockup-filename {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+.mockup-content {
+  padding: 20px;
+}
+.mockup-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+.mockup-row:last-of-type {
+  border-bottom: none;
+}
+.mockup-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.mockup-row.pass .mockup-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.mockup-row.warn .mockup-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+.mockup-row.fail .mockup-icon {
+  background: #fee2e2;
+  color: #ef4444;
+}
+.mockup-label {
+  flex: 1;
+  color: #374151;
+  min-width: 0;
+}
+.mockup-status {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.mockup-status.pass {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.mockup-status.warn {
+  background: #fef3c7;
+  color: #d97706;
+}
+.mockup-status.fail {
+  background: #fee2e2;
+  color: #ef4444;
+}
+.mockup-progress-section {
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}
+.mockup-progress-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.mockup-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.mockup-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e5a8a, #22c55e);
+  border-radius: 4px;
+}
+
+/* Trust bar pod hero */
+.trust-bar-section {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.trust-bar {
+  background: #f8f9fc;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 5%;
+}
+.trust-bar-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.trust-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+.trust-bar-number {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e5a8a;
+}
+.trust-bar-label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.trust-bar-divider {
+  width: 1px;
+  height: 36px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .trust-bar-divider {
+    display: none;
+  }
+  .trust-bar-inner {
+    justify-content: center;
+  }
+}
+
+/* Ceník doplňky */
+.price-monthly-note {
+  font-size: 15px;
+  color: #16a34a;
+  margin-bottom: 4px;
+}
+.price-monthly-note strong {
+  font-size: 22px;
+  font-weight: 800;
+}
+.price-annual {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+/* Navbar CTA */
+.btn-nav-primary {
+  background: #1e5a8a;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-nav-primary:hover {
+  background: #2d7ab8;
+  color: #fff;
+}
+.btn-nav-secondary {
+  color: #64748b;
+  padding: 8px 14px;
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-nav-secondary:hover {
+  color: #0f172a;
+}
+
+/* Dark mode (systém) – doplňuje data-theme light */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  .hero-heading {
+    color: #f8fafc;
+  }
+  .hero-subheading {
+    color: #94a3b8;
+  }
+  .mockup-window {
+    background: #151820;
+    border-color: #1e2536;
+  }
+  .mockup-titlebar {
+    background: #0c0f1a;
+    border-color: #1e2536;
+  }
+  .mockup-label {
+    color: #c8d0e0;
+  }
+  .mockup-row {
+    border-color: #1e2536;
+  }
+  .mockup-progress-section {
+    border-color: #1e2536;
+  }
+  .hero-badge {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+  }
+  .trust-bar {
+    background: #1e293b;
+    border-color: #334155;
+  }
+  .trust-bar-divider {
+    background: #334155;
+  }
+}
+
+[data-theme="dark"] .hero-heading {
+  color: #f8fafc;
+}
+[data-theme="dark"] .hero-subheading {
+  color: #94a3b8;
+}
+[data-theme="dark"] .mockup-window {
+  background: #151820;
+  border-color: #1e2536;
+}
+[data-theme="dark"] .mockup-titlebar {
+  background: #0c0f1a;
+  border-color: #1e2536;
+}
+[data-theme="dark"] .mockup-label {
+  color: #c8d0e0;
+}
+[data-theme="dark"] .mockup-row {
+  border-color: #1e2536;
+}
+[data-theme="dark"] .mockup-progress-section {
+  border-color: #1e2536;
+}
+[data-theme="dark"] .hero-badge {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+[data-theme="dark"] .trust-bar {
+  background: #1e293b;
+  border-color: #334155;
+}
+[data-theme="dark"] .trust-bar-divider {
+  background: #334155;
+}

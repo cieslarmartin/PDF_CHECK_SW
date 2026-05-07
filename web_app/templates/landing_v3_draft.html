@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ seo_meta_title|default('DokuCheck – Dokumentace bez chyb | Portál stavebníka') }}</title>
+    <title>Náhled – {{ seo_meta_title|default('DokuCheck – Dokumentace bez chyb | Portál stavebníka') }}</title>
     <meta name="description" content="{{ seo_meta_description|default('Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů pro Portál stavebníka.') }}">
     {% if header_scripts %}{% for script in header_scripts %}{{ script|safe }}{% endfor %}{% endif %}
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing-redesign.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing-hero-prompt.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -89,7 +89,6 @@
                 <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Digitální podpisy</span>
                 <span class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Časová razítka</span>
             </div>
-            <p class="text-xs text-gray-300 mb-4">{{ web_version|default('w26.02.004') }} · Portál stavebníka</p>
             <button onclick="document.getElementById('splash-overlay').classList.add('hide')" class="px-5 py-2 rounded-lg text-white text-sm font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;">Pokračovat na web</button>
         </div>
     </div>
@@ -102,15 +101,26 @@
             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
             <span class="text-lg font-black" style="color:#020617;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span>
         </a>
-        <div class="hidden lg:flex items-center gap-4 text-sm font-medium text-gray-500">
-            <a href="#jak" class="hover:text-blue-700 transition">Jak to funguje</a>
-            <a href="#cenik" class="hover:text-blue-700 transition">Ceník</a>
-            <a href="#faq" class="hover:text-blue-700 transition">FAQ</a>
-            <a href="/download/agent" class="hover:text-blue-700 transition">Ke&nbsp;stažení</a>
-            <span class="w-px h-5 bg-gray-200"></span>
-            <button type="button" id="theme-toggle" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-lg" aria-label="Přepnout světlý / tmavý režim" title="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
-            <a href="/portal" class="btn-nav-secondary">Přihlásit</a>
-            <a href="/checkout?tarif=basic" class="btn-nav-primary">Koupit licenci</a>
+        <div class="hidden lg:flex items-center gap-3 xl:gap-4 text-sm font-medium text-gray-500 flex-wrap justify-end">
+            <a href="#jak" class="hover:text-blue-700 transition shrink-0">Jak to funguje</a>
+            <a href="#cenik" class="hover:text-blue-700 transition shrink-0">Ceník</a>
+            <a href="#faq" class="hover:text-blue-700 transition shrink-0">FAQ</a>
+            <a href="/download/agent" class="hover:text-blue-700 transition shrink-0">Ke&nbsp;stažení</a>
+            <details class="relative nav-more-prompt shrink-0">
+                <summary class="hover:text-blue-700 transition cursor-pointer px-1">Více&nbsp;▾</summary>
+                <div class="nav-more-panel-prompt text-left">
+                    <a href="#problem-reseni">Srovnání</a>
+                    <a href="#pro-koho">Pro koho</a>
+                    <a href="#dva-rezimy">Režimy</a>
+                    <a href="#pripravujeme">Připravujeme</a>
+                    <a href="#news">Novinky</a>
+                    <a href="#kontakt">Kontakt</a>
+                </div>
+            </details>
+            <span class="w-px h-5 bg-gray-200 flex-shrink-0"></span>
+            <button type="button" id="theme-toggle" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-lg flex-shrink-0" aria-label="Přepnout světlý / tmavý režim" title="Tmavý režim"><span id="theme-toggle-icon">🌙</span></button>
+            <a href="/portal" class="btn-nav-secondary-prompt">Přihlásit</a>
+            <a href="/checkout?tarif=basic" class="btn-nav-primary-prompt">Koupit licenci</a>
         </div>
         <button id="burger" class="lg:hidden p-3 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Otevřít menu"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     </div>
@@ -119,96 +129,96 @@
 <div id="mob" class="fixed inset-y-0 right-0 w-64 bg-white shadow-xl z-[60] p-5 flex flex-col gap-0 text-sm font-medium text-gray-600 translate-x-full transition-transform duration-300" style="padding-top:max(1.25rem,env(safe-area-inset-top));">
     <button id="mobClose" class="self-end p-2 mb-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Zavřít menu"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     <a href="#jak" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Jak to funguje</a>
+    <a href="#cenik" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ceník</a>
+    <a href="#faq" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">FAQ</a>
+    <a href="/download/agent" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ke stažení</a>
     <a href="#problem-reseni" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Srovnání</a>
     <a href="#pro-koho" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Pro koho</a>
     <a href="#dva-rezimy" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Režimy</a>
-    <a href="#cenik" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ceník</a>
     <a href="#pripravujeme" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Připravujeme</a>
-    <a href="#faq" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">FAQ</a>
     <a href="#news" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Novinky</a>
-    <a href="/download/agent" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Ke stažení</a>
     <hr class="my-2 border-gray-100">
     <a href="#kontakt" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Kontakt</a>
-    <a href="/portal" class="mobL py-3 hover:text-blue-700 min-h-[44px] flex items-center">Můj účet</a>
+    <a href="/portal" class="mobL py-3 btn-nav-secondary-prompt min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200">Přihlásit</a>
+    <a href="/checkout?tarif=basic" class="mobL py-3 btn-nav-primary-prompt text-center min-h-[44px] flex items-center justify-center rounded-lg">Koupit licenci</a>
     <hr class="my-2 border-gray-100">
     <button type="button" class="mobL py-3 min-h-[44px] flex items-center w-full text-left" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon-mob'); if(i) i.textContent=getTheme()==='dark'?'☀️ Světlý režim':'🌙 Tmavý režim'; closeMob();"><span id="theme-toggle-icon-mob">🌙 Tmavý režim</span></button>
 </div>
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
 <main style="padding-top:72px;">
-    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
 
-    {# ============ HERO ============ #}
+    {# ============ HERO — návrh podle dokucheck-cursor-prompt (náhled na /landing-draft) ============ #}
     <section class="landing-section py-8 md:py-12">
         <div class="max-w-6xl mx-auto px-6">
-            <div class="hero-content anim">
-                <div class="hero-text">
-                    <div class="hero-badge">
-                        <span class="badge-dot"></span>
+            <div class="flex flex-col md:flex-row md:items-start gap-10 md:gap-12 anim hero-content-draft">
+                <div class="flex-1 min-w-0 hero-text-draft">
+                    <div class="hero-badge-prompt">
+                        <span class="badge-dot-prompt"></span>
                         Pro autorizované inženýry ČKAIT a projektové kanceláře
                     </div>
-                    <h1 class="hero-heading">
+                    <h1 class="hero-heading-prompt">
                         Projděte Portál stavebníka<br>
-                        <span class="hero-heading-accent">napoprvé. Bez vracení.</span>
+                        <span class="hero-heading-accent-prompt">napoprvé. Bez vracení.</span>
                     </h1>
-                    <p class="hero-subheading">
+                    <p class="hero-subheading-prompt">
                         DokuCheck automaticky ověří PDF/A-3, elektronické podpisy a časová razítka
                         ještě před odesláním dokumentace. Kontrola za 2–5 minut.
                     </p>
-                    <div class="hero-pricing-teaser">
-                        <span class="pricing-from">Od</span>
-                        <span class="pricing-amount">{{ (tarifs.basic.amount_czk|default(1290) / 12)|round|int }} Kč</span>
-                        <span class="pricing-period">/měsíc</span>
-                        <span class="pricing-annual">({{ tarifs.basic.amount_czk|default(1290) }} Kč/rok · roční licence)</span>
+                    <div class="hero-pricing-teaser-prompt">
+                        <span class="pricing-from-prompt">Od</span>
+                        <span class="pricing-amount-prompt">91 Kč</span>
+                        <span class="pricing-period-prompt">/měsíc</span>
+                        <span class="pricing-annual-prompt">(1 090 Kč/rok · roční licence)</span>
                     </div>
-                    <div class="hero-cta-group">
-                        <a href="/checkout?tarif=basic" class="btn-primary btn-large">Zakoupit licenci →</a>
-                        <a href="/app" class="btn-secondary btn-large">Vyzkoušet online zdarma</a>
+                    <div class="hero-cta-group-prompt">
+                        <a href="/checkout?tarif=basic" class="btn-primary-prompt btn-large-prompt">Zakoupit licenci →</a>
+                        <a href="/app" class="btn-secondary-prompt btn-large-prompt">Vyzkoušet online zdarma</a>
                     </div>
-                    <div class="hero-trust-signals">
-                        <span class="trust-item">✓ Žádná instalace pro online verzi</span>
-                        <span class="trust-item">✓ Data zůstávají u vás (Agent režim)</span>
-                        <span class="trust-item">✓ PostSignum · I.CA · eIdentity</span>
+                    <div class="hero-trust-signals-prompt">
+                        <span class="trust-item-prompt">✓ Žádná instalace pro online verzi</span>
+                        <span class="trust-item-prompt">✓ Data zůstávají u vás (Agent režim)</span>
+                        <span class="trust-item-prompt">✓ PostSignum · I.CA · eIdentity</span>
                     </div>
                 </div>
-                <div class="hero-visual">
-                    <div class="mockup-window">
-                        <div class="mockup-titlebar">
-                            <span class="mockup-dot red"></span>
-                            <span class="mockup-dot yellow"></span>
-                            <span class="mockup-dot green"></span>
-                            <span class="mockup-filename">projekt_bytovy_dum.pdf</span>
+                <div class="flex-shrink-0 w-full md:w-[420px] lg:w-[440px] hero-visual-draft">
+                    <div class="mockup-window-prompt">
+                        <div class="mockup-titlebar-prompt">
+                            <span class="mockup-dot-prompt red"></span>
+                            <span class="mockup-dot-prompt yellow"></span>
+                            <span class="mockup-dot-prompt green"></span>
+                            <span class="mockup-filename-prompt">projekt_bytovy_dum.pdf</span>
                         </div>
-                        <div class="mockup-content">
-                            <div class="mockup-row pass">
-                                <span class="mockup-icon">✓</span>
-                                <span class="mockup-label">Formát PDF/A-3</span>
-                                <span class="mockup-status pass">OK</span>
+                        <div class="mockup-content-prompt">
+                            <div class="mockup-row-prompt pass">
+                                <span class="mockup-icon-prompt">✓</span>
+                                <span class="mockup-label-prompt">Formát PDF/A-3</span>
+                                <span class="mockup-status-prompt pass">OK</span>
                             </div>
-                            <div class="mockup-row pass">
-                                <span class="mockup-icon">✓</span>
-                                <span class="mockup-label">Elektronický podpis (PostSignum)</span>
-                                <span class="mockup-status pass">Platný</span>
+                            <div class="mockup-row-prompt pass">
+                                <span class="mockup-icon-prompt">✓</span>
+                                <span class="mockup-label-prompt">Elektronický podpis (PostSignum)</span>
+                                <span class="mockup-status-prompt pass">Platný</span>
                             </div>
-                            <div class="mockup-row pass">
-                                <span class="mockup-icon">✓</span>
-                                <span class="mockup-label">Časové razítko TSA</span>
-                                <span class="mockup-status pass">Ověřeno</span>
+                            <div class="mockup-row-prompt pass">
+                                <span class="mockup-icon-prompt">✓</span>
+                                <span class="mockup-label-prompt">Časové razítko TSA</span>
+                                <span class="mockup-status-prompt pass">Ověřeno</span>
                             </div>
-                            <div class="mockup-row pass">
-                                <span class="mockup-icon">✓</span>
-                                <span class="mockup-label">Autorizační razítko (ČKAIT)</span>
-                                <span class="mockup-status pass">Nalezeno</span>
+                            <div class="mockup-row-prompt pass">
+                                <span class="mockup-icon-prompt">✓</span>
+                                <span class="mockup-label-prompt">Autorizační razítko (ČKAIT)</span>
+                                <span class="mockup-status-prompt pass">Nalezeno</span>
                             </div>
-                            <div class="mockup-row warn">
-                                <span class="mockup-icon">!</span>
-                                <span class="mockup-label">Klíčová slova v metadatech</span>
-                                <span class="mockup-status warn">Chybí</span>
+                            <div class="mockup-row-prompt warn">
+                                <span class="mockup-icon-prompt">!</span>
+                                <span class="mockup-label-prompt">Klíčová slova v metadatech</span>
+                                <span class="mockup-status-prompt warn">Chybí</span>
                             </div>
-                            <div class="mockup-progress-section">
-                                <div class="mockup-progress-label">Celkový stav: 4/5 kontrol prošlo</div>
-                                <div class="mockup-progress-bar">
-                                    <div class="mockup-progress-fill" style="width: 80%;"></div>
+                            <div class="mockup-progress-section-prompt">
+                                <div class="mockup-progress-label-prompt">Celkový stav: 4/5 kontrol prošlo</div>
+                                <div class="mockup-progress-bar-prompt">
+                                    <div class="mockup-progress-fill-prompt" style="width:80%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -218,31 +228,29 @@
         </div>
     </section>
 
-    <section class="landing-section trust-bar-section py-0">
-        <div class="trust-bar">
-            <div class="trust-bar-inner">
-                <div class="trust-bar-item">
-                    <span class="trust-bar-number">PDF/A-3</span>
-                    <span class="trust-bar-label">ISO 19005-3 standard</span>
-                </div>
-                <div class="trust-bar-divider"></div>
-                <div class="trust-bar-item">
-                    <span class="trust-bar-number">PostSignum</span>
-                    <span class="trust-bar-label">I.CA · eIdentity</span>
-                </div>
-                <div class="trust-bar-divider"></div>
-                <div class="trust-bar-item">
-                    <span class="trust-bar-number">MMR metodika</span>
-                    <span class="trust-bar-label">Digitální stavební řízení</span>
-                </div>
-                <div class="trust-bar-divider"></div>
-                <div class="trust-bar-item">
-                    <span class="trust-bar-number">ČKAIT</span>
-                    <span class="trust-bar-label">Autorizovaní inženýři</span>
-                </div>
+    <div class="trust-bar-prompt">
+        <div class="trust-bar-inner-prompt">
+            <div class="trust-bar-item-prompt">
+                <span class="trust-bar-number-prompt">PDF/A-3</span>
+                <span class="trust-bar-label-prompt">ISO 19005-3 standard</span>
+            </div>
+            <div class="trust-bar-divider-prompt" aria-hidden="true"></div>
+            <div class="trust-bar-item-prompt">
+                <span class="trust-bar-number-prompt">PostSignum</span>
+                <span class="trust-bar-label-prompt">I.CA · eIdentity</span>
+            </div>
+            <div class="trust-bar-divider-prompt" aria-hidden="true"></div>
+            <div class="trust-bar-item-prompt">
+                <span class="trust-bar-number-prompt">MMR metodika</span>
+                <span class="trust-bar-label-prompt">Digitální stavební řízení</span>
+            </div>
+            <div class="trust-bar-divider-prompt" aria-hidden="true"></div>
+            <div class="trust-bar-item-prompt">
+                <span class="trust-bar-number-prompt">ČKAIT</span>
+                <span class="trust-bar-label-prompt">Autorizovaní inženýři</span>
             </div>
         </div>
-    </section>
+    </div>
 
     {# ============ JAK TO FUNGUJE ============ #}
     <section id="jak" class="landing-section py-16">
@@ -321,7 +329,7 @@
                     <span class="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#d1fae5;color:#047857;">Soukromí</span>
                     <h3 class="font-semibold text-gray-900 mb-1">{{ landing_mode_agent_title|default('Z Agenta') }}</h3>
                     <p class="text-sm text-gray-500">{{ landing_mode_agent_text|default('Soubory na disku, na server jen metadata.') }}</p>
-                    <p class="text-xs mt-3 font-semibold" style="color:#059669;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
+                    <p class="text-xs mt-3 pt-3 border-t font-semibold" style="border-color:#e5e7eb;color:#047857;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
                 </div>
                 <div class="card anim" style="transition-delay:80ms;">
                     <div class="icon-circle mb-3" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg></div>
@@ -337,35 +345,36 @@
     <section id="cenik" class="landing-section py-16">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Ceník</h2>
+            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="card flex flex-col anim">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
                     <p class="text-xs text-gray-400 mb-3">{{ tarifs.basic.label|default('Basic') }}</p>
+                    <div class="price-monthly-note-prompt">jen <strong>91 Kč/měsíc</strong> při ročním předplatném</div>
                     <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="price-monthly-note">jen <strong>{{ (tarifs.basic.amount_czk|default(1290) / 12)|round|int }} Kč/měsíc</strong> při ročním předplatném</p>
-                    <p class="price-annual">{{ tarifs.basic.amount_czk|default(1290) }} Kč/rok · placeno ročně</p>
+                    <p class="price-annual-prompt mb-3">1 090 Kč/rok · placeno ročně</p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola PDF/A, metadat, podpisů, autorizované osoby a časového razítka</li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Standardní UI</li>
                     </ul>
-                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition mt-2">Zakoupit Basic</a>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition mt-auto">Zakoupit Basic</a>
                 </div>
                 <div class="card price-pop flex flex-col relative anim" style="transition-delay:80ms;">
                     <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
                     <p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
+                    <div class="price-monthly-note-prompt">jen <strong>133 Kč/měsíc</strong> při ročním předplatném</div>
                     <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="price-monthly-note">jen <strong>{{ (tarifs.standard.amount_czk|default(1990) / 12)|round|int }} Kč/měsíc</strong> při ročním předplatném</p>
-                    <p class="price-annual">{{ tarifs.standard.amount_czk|default(1990) }} Kč/rok · placeno ročně</p>
+                    <p class="price-annual-prompt mb-3">1 590 Kč/rok · placeno ročně</p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Hromadný export do Excelu (XLS)</strong></li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Sofistikované filtry chyb</strong></li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z Basic</li>
                     </ul>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg mt-2" style="background:#1e5a8a;">Zakoupit Pro</a>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg mt-auto" style="background:#1e5a8a;">Zakoupit Pro</a>
                 </div>
             </div>
             <p class="mt-6 py-3 px-5 rounded-lg text-center text-sm max-w-xl mx-auto" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f;"><strong style="color:#1e5a8a;">Při odběru 10+ licencí</strong> sleva <strong style="color:#1e5a8a;">10 %</strong> pro vaši firmu.</p>
@@ -373,39 +382,31 @@
         </div>
     </section>
 
-    {# ============ STAŽENÍ + CO JE NOVÉHO ============ #}
+    {# ============ STAŽENÍ + CO JE NOVÉHO (náhled prompt) ============ #}
     <section id="download" class="landing-section py-16">
-        <div class="max-w-3xl mx-auto px-6 text-center anim">
+        <div class="max-w-4xl mx-auto px-6 text-center anim">
             <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#1e5a8a,#1d4ed8);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></div>
-            <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení a novinky</h2>
-            <p class="text-sm text-gray-500 mb-4">Stáhněte si nejnovější verzi programu Agenta. Kontrola PDF na vašem počítači, na server jdou jen metadata.</p>
-            <div class="text-left max-w-lg mx-auto mb-6">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Přehled aktualizací</p>
-                {% for u in (landing_updates|default([]))[:5] %}
-                <p class="text-sm text-gray-600 mb-1"><span class="font-medium" style="color:#1e5a8a;">{{ u.get('month', '')|e }}</span> {% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}{{ u.get('title', '')|e }}{% endif %}</p>
-                {% else %}
-                <p class="text-sm text-gray-500">Aktuální verze a novinky v aplikaci.</p>
-                {% endfor %}
+            <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení aplikace</h2>
+            <p class="text-sm text-gray-500 mb-8">Stáhněte si nejnovější verzi programu Agenta. Kontrola PDF na vašem počítači, na server jdou jen metadata.</p>
+            <div id="news" class="text-left mb-10 pt-10 border-t" style="border-color:#e5e7eb;">
+                <h2 class="text-lg font-bold mb-4 text-center" style="color:#0f172a;">Co je nového</h2>
+                <div class="max-w-3xl mx-auto space-y-3">
+                    {% for u in (landing_updates|default([]))[:8] %}
+                    <div class="rounded-xl border p-4 text-left transition-shadow hover:shadow-md flex flex-wrap items-baseline gap-x-4 gap-y-1" style="border-color:#e5e7eb;background:#fff;">
+                        <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style="background:#eff6ff;color:#1e5a8a;">{{ u.get('month', '')|e }}</span>
+                        <h3 class="font-semibold text-gray-900">{{ u.get('title', u.get('month', ''))|e }}</h3>
+                        <p class="text-sm text-gray-600 w-full md:w-auto md:flex-1">{% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}—{% endif %}</p>
+                    </div>
+                    {% else %}
+                    <div class="rounded-xl border p-4 text-left" style="border-color:#e5e7eb;"><p class="text-sm text-gray-500 text-center">Aktuální verze a novinky v aplikaci.</p></div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="flex flex-wrap justify-center gap-3">
                 <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>Stáhnout pro Windows</a>
                 <a href="/download" class="px-6 py-3 rounded-lg border text-gray-600 hover:bg-gray-100 transition" style="border-color:#e5e7eb;">Stránka Stažení</a>
             </div>
             <p class="mt-4 text-sm text-gray-500">Aktuální verze agenta: {{ agent_version_display|default('n/a') }} (Build {{ agent_build_id|default('n/a') }})</p>
-        </div>
-        <div id="news" class="max-w-6xl mx-auto px-6 pt-12 text-left">
-            <h3 class="text-lg font-bold mb-4 text-center anim" style="color:#0f172a;">Co je nového</h3>
-            <div class="max-w-4xl mx-auto space-y-3">
-                {% for u in (landing_updates|default([]))[:8] %}
-                <div class="anim rounded-xl border p-4 text-left transition-shadow hover:shadow-md flex flex-wrap items-baseline gap-x-4 gap-y-1" style="border-color:#e5e7eb;">
-                    <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style="background:#eff6ff;color:#1e5a8a;">{{ u.get('month', '')|e }}</span>
-                    <h4 class="font-semibold text-gray-900">{{ u.get('title', u.get('month', ''))|e }}</h4>
-                    <p class="text-sm text-gray-600 w-full md:w-auto md:flex-1">{% if (u.get('items') or []) %}{{ (u.get('items') or [])|join(' ') }}{% else %}—{% endif %}</p>
-                </div>
-                {% else %}
-                <div class="anim rounded-xl border p-4 text-left" style="border-color:#e5e7eb;"><p class="text-sm text-gray-500">Přehled novinek doplníme brzy.</p></div>
-                {% endfor %}
-            </div>
         </div>
     </section>
 

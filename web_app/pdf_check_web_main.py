@@ -12,11 +12,17 @@ import io
 import logging
 import re
 import os
+import sys
 import traceback
 import json
 import subprocess
 import threading
 import webbrowser
+
+# Kořen repa (PDF_CHECK_SW): složka desktop_agent/ je vedle web_app/; WSGI na PA přidává jen web_app/ do sys.path.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 # NOVÉ IMPORTY PRO API:
 from api_endpoint import register_api_routes, consume_one_time_token
@@ -3587,6 +3593,22 @@ def index():
     return render_template('landing_v3.html', **settings)
 
 
+@app.route('/landing-draft')
+def landing_draft():
+    """Náhled landingu podle designového promptu (hero, navbar, ceník). Ostrý web zůstává na ``/``."""
+    db = Database()
+    try:
+        db.log_page_visit(request.remote_addr or request.headers.get('X-Forwarded-For', ''), '/landing-draft')
+    except Exception:
+        pass
+    settings = load_settings_for_views(db) if load_settings_for_views else {}
+    try:
+        settings['faq_list'] = db.get_all_faq()
+    except Exception:
+        settings['faq_list'] = []
+    return render_template('landing_v3_draft.html', **settings)
+
+
 @app.route('/landing-preview')
 def landing_preview():
     """Náhled 5 vizuálních variant landingu (A–E). Pouze pro výběr vzhledu, stejná data jako landing."""
@@ -4412,6 +4434,7 @@ if __name__ == '__main__':
     print("")
     kill_port(5000)
     print("  Aplikace bezi na: http://127.0.0.1:5000/")
+    print("  Náhled landingu (varianta): http://127.0.0.1:5000/landing-draft")
     print("  API bezi na: http://127.0.0.1:5000/api/")
     print("  Admin panel: http://127.0.0.1:5000/login")
     print("  Pro ukonceni stisknete CTRL+C")

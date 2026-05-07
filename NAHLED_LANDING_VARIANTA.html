@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Náhled varianty landing – DokuCheck (otevřete dvojklikem)</title>
+  <meta name="description" content="Statický náhled – stejné CSS jako /landing-draft. Odkazy na aplikaci zde jen pro rozložení (#).">
+  <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+  <link rel="stylesheet" href="web_app/static/css/theme.css">
+  <link rel="stylesheet" href="web_app/static/css/landing-hero-prompt.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{font-family:'Inter',system-ui,sans-serif;}
+    #splash-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity .5s,visibility .5s;}
+    #splash-overlay.hide{opacity:0;visibility:hidden;pointer-events:none;}
+    #splash-box{background:#fff;border-radius:1.25rem;box-shadow:0 25px 60px rgba(0,0,0,.18);padding:2.5rem 3rem;max-width:540px;width:90%;text-align:center;animation:splashPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+    @keyframes splashPop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:none}}
+    #splash-box .about{opacity:0;animation:fadeUp .5s ease .8s forwards;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .anim{opacity:0;transform:translateY(24px);transition:opacity .65s cubic-bezier(.22,1,.36,1),transform .65s cubic-bezier(.22,1,.36,1);}
+    .anim.show{opacity:1;transform:none;}
+    .nav-glass{backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);background:rgba(255,255,255,.78);border-bottom:1px solid rgba(229,231,235,.6);}
+    .nav-glass.scrolled{box-shadow:0 1px 3px rgba(0,0,0,.06);}
+    .card{background:white;border:1px solid #e5e7eb;border-radius:1rem;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:transform .25s,box-shadow .25s;}
+    .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.08);}
+    .icon-circle{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .price-pop{border:2px solid #1e5a8a;background:linear-gradient(180deg,#eff6ff 0%,#fff 30%);}
+    .price-badge{background:#1e5a8a;color:#fff;font-size:.65rem;padding:3px 10px;border-radius:0 0 8px 8px;font-weight:700;position:absolute;top:0;right:1.5rem;}
+    .faq details summary{list-style:none;cursor:pointer;}
+    .faq details summary::-webkit-details-marker{display:none;}
+    .faq .chev{transition:transform .25s;} .faq details[open] .chev{transform:rotate(180deg);}
+    .announce-bar{background:linear-gradient(90deg,#1e3a5f 0%,#1e5a8a 50%,#174a6e 100%);color:#fff;text-align:center;padding:10px 16px;font-size:0.875rem;font-weight:500;min-height:42px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:max(10px,env(safe-area-inset-top));}
+    main .landing-section { border-top: none !important; border-bottom: none !important; }
+    main .landing-section:nth-of-type(odd) { background: #fff !important; }
+    main .landing-section:nth-of-type(even) { background: #f8fafc !important; }
+    [data-theme="dark"] main .landing-section:nth-of-type(odd) { background: #0f172a !important; }
+    [data-theme="dark"] main .landing-section:nth-of-type(even) { background: #1e293b !important; }
+    .static-banner{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;padding:10px 16px;text-align:center;font-size:0.875rem;}
+  </style>
+</head>
+<body class="min-h-screen antialiased bg-gray-50 text-gray-800">
+
+<div class="static-banner">
+  Statický náhled (dvojklik na tento soubor). Odkazy typu Objednat / aplikace jsou jen demonstrační —
+  fungující web: <strong>SPOUSTIT_WEB_DOKUCHECK.bat</strong> → <strong>http://127.0.0.1:5000/landing-draft</strong>
+</div>
+
+<div class="announce-bar">
+  🔥 Aktualizováno pro nejnovější požadavky Portálu stavebníka 2026 — PDF/A-3, PostSignum, I.CA, eIdentity
+</div>
+
+<div id="splash-overlay" class="hide">
+  <div id="splash-box">
+    <div class="mb-4 flex items-center justify-center gap-2"><img src="web_app/static/logo/dokucheck-icon.svg" alt="" class="h-9 w-9"><span class="text-2xl sm:text-3xl font-black" style="color:#020617;letter-spacing:-0.06em;line-height:1.1;">Doku<span style="color:#16A34A;">Check</span></span></div>
+    <div class="about">
+      <p class="text-gray-500 text-sm mb-3">Kontrola PDF pro stavební dokumentaci</p>
+      <button onclick="document.getElementById('splash-overlay').classList.add('hide')" type="button" class="px-5 py-2 rounded-lg text-white text-sm font-semibold shadow-md" style="background:#1e5a8a;">Pokračovat na web</button>
+    </div>
+  </div>
+</div>
+
+<nav id="topnav" class="nav-glass fixed inset-x-0 z-50 transition-shadow" style="top:42px;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-1.5 whitespace-nowrap" title="Náhled">
+      <img src="web_app/static/logo/dokucheck-icon.svg" alt="" class="h-7 w-7">
+      <span class="text-lg font-black" style="color:#020617;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span>
+    </a>
+    <div class="hidden lg:flex items-center gap-3 xl:gap-4 text-sm font-medium text-gray-500 flex-wrap justify-end">
+      <a href="#jak" class="hover:text-blue-700 transition shrink-0">Jak to funguje</a>
+      <a href="#cenik" class="hover:text-blue-700 transition shrink-0">Ceník</a>
+      <a href="#faq" class="hover:text-blue-700 transition shrink-0">FAQ</a>
+      <a href="#" class="hover:text-blue-700 transition shrink-0">Ke&nbsp;stažení</a>
+      <details class="relative nav-more-prompt shrink-0">
+        <summary class="hover:text-blue-700 transition cursor-pointer px-1">Více&nbsp;▾</summary>
+        <div class="nav-more-panel-prompt text-left">
+          <a href="#problem-reseni">Srovnání</a>
+          <a href="#pro-koho">Pro koho</a>
+          <a href="#dva-rezimy">Režimy</a>
+          <a href="#pripravujeme">Připravujeme</a>
+          <a href="#news">Novinky</a>
+          <a href="#kontakt">Kontakt</a>
+        </div>
+      </details>
+      <span class="w-px h-5 bg-gray-200 flex-shrink-0"></span>
+      <button type="button" id="theme-toggle" onclick="toggleTheme(); var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=getTheme()==='dark'?'☀️':'🌙';" class="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-lg flex-shrink-0"><span id="theme-toggle-icon">🌙</span></button>
+      <a href="#" class="btn-nav-secondary-prompt">Přihlásit</a>
+      <a href="#" class="btn-nav-primary-prompt">Koupit licenci</a>
+    </div>
+    <button id="burger" type="button" class="lg:hidden p-3 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </div>
+</nav>
+
+<div id="mob" class="fixed inset-y-0 right-0 w-64 bg-white shadow-xl z-[60] p-5 flex flex-col gap-0 text-sm font-medium text-gray-600 translate-x-full transition-transform duration-300">
+  <button id="mobClose" type="button" class="self-end p-2 mb-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center">✕</button>
+  <a href="#jak" class="mobL py-3">Jak to funguje</a>
+  <a href="#cenik" class="mobL py-3">Ceník</a>
+  <a href="#faq" class="mobL py-3">FAQ</a>
+  <a href="#news" class="mobL py-3">Novinky</a>
+  <a href="#kontakt" class="mobL py-3">Kontakt</a>
+</div>
+<div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
+
+<main style="padding-top:72px;">
+
+  <section class="landing-section py-8 md:py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-col md:flex-row md:items-start gap-10 md:gap-12 anim show">
+        <div class="flex-1 min-w-0">
+          <div class="hero-badge-prompt"><span class="badge-dot-prompt"></span>Pro autorizované inženýry ČKAIT a projektové kanceláře</div>
+          <h1 class="hero-heading-prompt">Projděte Portál stavebníka<br><span class="hero-heading-accent-prompt">napoprvé. Bez vracení.</span></h1>
+          <p class="hero-subheading-prompt">DokuCheck automaticky ověří PDF/A-3, elektronické podpisy a časová razítka ještě před odesláním dokumentace. Kontrola za 2–5 minut.</p>
+          <div class="hero-pricing-teaser-prompt">
+            <span class="pricing-from-prompt">Od</span>
+            <span class="pricing-amount-prompt">91 Kč</span>
+            <span class="pricing-period-prompt">/měsíc</span>
+            <span class="pricing-annual-prompt">(1 090 Kč/rok · roční licence)</span>
+          </div>
+          <div class="hero-cta-group-prompt">
+            <a href="#" class="btn-primary-prompt btn-large-prompt">Zakoupit licenci →</a>
+            <a href="#" class="btn-secondary-prompt btn-large-prompt">Vyzkoušet online zdarma</a>
+          </div>
+          <div class="hero-trust-signals-prompt">
+            <span class="trust-item-prompt">✓ Žádná instalace pro online verzi</span>
+            <span class="trust-item-prompt">✓ Data zůstávají u vás (Agent režim)</span>
+            <span class="trust-item-prompt">✓ PostSignum · I.CA · eIdentity</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0 w-full md:w-[420px]">
+          <div class="mockup-window-prompt">
+            <div class="mockup-titlebar-prompt">
+              <span class="mockup-dot-prompt red"></span><span class="mockup-dot-prompt yellow"></span><span class="mockup-dot-prompt green"></span>
+              <span class="mockup-filename-prompt">projekt_bytovy_dum.pdf</span>
+            </div>
+            <div class="mockup-content-prompt">
+              <div class="mockup-row-prompt pass"><span class="mockup-icon-prompt">✓</span><span class="mockup-label-prompt">Formát PDF/A-3</span><span class="mockup-status-prompt pass">OK</span></div>
+              <div class="mockup-row-prompt pass"><span class="mockup-icon-prompt">✓</span><span class="mockup-label-prompt">Elektronický podpis (PostSignum)</span><span class="mockup-status-prompt pass">Platný</span></div>
+              <div class="mockup-row-prompt pass"><span class="mockup-icon-prompt">✓</span><span class="mockup-label-prompt">Časové razítko TSA</span><span class="mockup-status-prompt pass">Ověřeno</span></div>
+              <div class="mockup-row-prompt pass"><span class="mockup-icon-prompt">✓</span><span class="mockup-label-prompt">Autorizační razítko (ČKAIT)</span><span class="mockup-status-prompt pass">Nalezeno</span></div>
+              <div class="mockup-row-prompt warn"><span class="mockup-icon-prompt">!</span><span class="mockup-label-prompt">Klíčová slova v metadatech</span><span class="mockup-status-prompt warn">Chybí</span></div>
+              <div class="mockup-progress-section-prompt">
+                <div class="mockup-progress-label-prompt">Celkový stav: 4/5 kontrol prošlo</div>
+                <div class="mockup-progress-bar-prompt"><div class="mockup-progress-fill-prompt" style="width:80%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="trust-bar-prompt">
+    <div class="trust-bar-inner-prompt">
+      <div class="trust-bar-item-prompt"><span class="trust-bar-number-prompt">PDF/A-3</span><span class="trust-bar-label-prompt">ISO 19005-3 standard</span></div>
+      <div class="trust-bar-divider-prompt"></div>
+      <div class="trust-bar-item-prompt"><span class="trust-bar-number-prompt">PostSignum</span><span class="trust-bar-label-prompt">I.CA · eIdentity</span></div>
+      <div class="trust-bar-divider-prompt"></div>
+      <div class="trust-bar-item-prompt"><span class="trust-bar-number-prompt">MMR metodika</span><span class="trust-bar-label-prompt">Digitální stavební řízení</span></div>
+      <div class="trust-bar-divider-prompt"></div>
+      <div class="trust-bar-item-prompt"><span class="trust-bar-number-prompt">ČKAIT</span><span class="trust-bar-label-prompt">Autorizovaní inženýři</span></div>
+    </div>
+  </div>
+
+  <section id="jak" class="landing-section py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-10 text-center anim show" style="color:#0f172a;">Jak to funguje</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card text-center anim show">
+          <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
+          <span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 leading-6 mb-2">1</span>
+          <h3 class="font-semibold text-gray-900 mb-1">Nahraj / vyber složku</h3>
+          <p class="text-sm text-gray-500">Přetáhněte PDF nebo vyberte složku s dokumenty.</p>
+        </div>
+        <div class="card text-center anim show">
+          <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+          <span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 leading-6 mb-2">2</span>
+          <h3 class="font-semibold text-gray-900 mb-1">Proveď kontrolu</h3>
+          <p class="text-sm text-gray-500">Automatická kontrola PDF/A, podpisy a časových razítek.</p>
+        </div>
+        <div class="card text-center anim show">
+          <div class="icon-circle mx-auto mb-4" style="background:linear-gradient(135deg,#059669,#047857)"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+          <span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-500 leading-6 mb-2">3</span>
+          <h3 class="font-semibold text-gray-900 mb-1">Exportuj výsledky</h3>
+          <p class="text-sm text-gray-500">Výstupy do CSV/Excel, přehled podle složek.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="problem-reseni" class="landing-section py-16">
+    <div class="max-w-4xl mx-auto px-6 anim show">
+      <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Jistota dokumentace před expedicí</h2>
+      <div class="overflow-x-auto rounded-xl border shadow-sm" style="border-color:#e5e7eb;">
+        <table class="w-full text-sm min-w-[280px]">
+          <thead><tr style="background:#0f172a;color:#e5e7eb;"><th class="text-left py-3 px-5 font-semibold">Ruční kontrola</th><th class="text-left py-3 px-5 font-semibold">DokuCheck</th></tr></thead>
+          <tbody>
+            <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Chaos v expedicích</td><td class="py-3 px-5 text-emerald-600">Hromadná kontrola před odesláním</td></tr>
+            <tr class="border-b border-gray-100"><td class="py-3 px-5 text-red-600">Stres z chyb</td><td class="py-3 px-5 text-emerald-600">Strojová přesnost kontroly PDF/A a razítek</td></tr>
+            <tr><td class="py-3 px-5 text-red-600">Žádný přehled</td><td class="py-3 px-5 text-emerald-600">Excel report, přehled podle složek</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="workflow" class="landing-section py-16">
+    <div class="max-w-6xl mx-auto px-6 anim show">
+      <h2 class="text-2xl font-bold mb-3 text-center" style="color:#0f172a;">Kontrola dokumentace staveb</h2>
+      <div class="overflow-auto rounded-2xl shadow-lg border bg-white" style="max-height:85vh;border-color:#e5e7eb;">
+        <img src="web_app/static/assets/workflow_schema.svg" alt="Workflow schéma" class="block w-full min-w-[800px] h-auto">
+      </div>
+    </div>
+  </section>
+
+  <section id="pro-koho" class="landing-section py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-10 text-center anim show" style="color:#0f172a;">Pro koho</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card anim show" style="border-left:3px solid #3b82f6">
+          <div class="icon-circle mb-3" style="background:#3b82f615"><svg class="w-5 h-5" style="color:#3b82f6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+          <h3 class="font-semibold text-gray-900 mb-1">Projektanti</h3><p class="text-sm text-gray-500">Expedice bez vracení.</p></div>
+        <div class="card anim show" style="border-left:3px solid #8b5cf6">
+          <div class="icon-circle mb-3" style="background:#8b5cf615"><svg class="w-5 h-5" style="color:#8b5cf6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+          <h3 class="font-semibold text-gray-900 mb-1">Manažeři</h3><p class="text-sm text-gray-500">Přehled o kvalitě v týmu.</p></div>
+        <div class="card anim show" style="border-left:3px solid #059669">
+          <div class="icon-circle mb-3" style="background:#05966915"><svg class="w-5 h-5" style="color:#059669" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+          <h3 class="font-semibold text-gray-900 mb-1">Investoři</h3><p class="text-sm text-gray-500">Jistota souladu s portálem.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dva-rezimy" class="landing-section py-16">
+    <div class="max-w-4xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-10 text-center anim show" style="color:#0f172a;">Dva režimy: Z Agenta vs Cloud</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="card anim show">
+          <h3 class="font-semibold text-gray-900 mb-1">Z Agenta</h3>
+          <p class="text-sm text-gray-500">Soubory na disku, na server jen metadata.</p>
+          <p class="text-xs mt-3 pt-3 border-t font-semibold" style="border-color:#e5e7eb;color:#047857;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
+        </div>
+        <div class="card anim show">
+          <h3 class="font-semibold text-gray-900 mb-1">Cloud</h3>
+          <p class="text-sm text-gray-500">Celé PDF na server. Rychlé vyzkoušení.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cenik" class="landing-section py-16">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-10 text-center anim show" style="color:#0f172a;">Ceník</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="card flex flex-col anim show">
+          <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
+          <p class="text-xs text-gray-400 mb-3">BASIC</p>
+          <div class="price-monthly-note-prompt">jen <strong>91 Kč/měsíc</strong> při ročním předplatném</div>
+          <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">1 290 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+          <p class="price-annual-prompt mb-3">1 090 Kč/rok · placeno ročně</p>
+          <a href="#" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 mt-auto">Zakoupit Basic</a>
+        </div>
+        <div class="card price-pop flex flex-col relative anim show">
+          <span class="price-badge">DOPORUČUJEME</span>
+          <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
+          <p class="text-xs text-gray-400 mb-3">PRO</p>
+          <div class="price-monthly-note-prompt">jen <strong>133 Kč/měsíc</strong> při ročním předplatném</div>
+          <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">1 990 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+          <p class="price-annual-prompt mb-3">1 590 Kč/rok · placeno ročně</p>
+          <a href="#" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">Zakoupit Pro</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="landing-section py-16">
+    <div class="max-w-4xl mx-auto px-6 text-center anim show">
+      <h2 class="text-2xl font-bold mb-2" style="color:#0f172a;">Stažení aplikace</h2>
+      <p class="text-sm text-gray-500 mb-8">Nejnovější Agent pro Windows.</p>
+      <div id="news" class="text-left mb-10 pt-10 border-t" style="border-color:#e5e7eb;">
+        <h2 class="text-lg font-bold mb-4 text-center" style="color:#0f172a;">Co je nového</h2>
+        <div class="space-y-3 max-w-xl mx-auto">
+          <div class="rounded-xl border p-4 text-sm text-gray-600" style="border-color:#e5e7eb;background:#fff;">Ukázkový řádek novinek (na živém webu z administrace).</div>
+          <div class="rounded-xl border p-4 text-sm text-gray-600" style="border-color:#e5e7eb;background:#fff;">Druhý ukázkový řádek.</div>
+        </div>
+      </div>
+      <a href="#" class="inline-flex px-6 py-3 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Stáhnout pro Windows (náhled)</a>
+    </div>
+  </section>
+
+  <section id="pripravujeme" class="landing-section py-10">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <h2 class="text-xl font-bold mb-2" style="color:#0f172a;">Připravujeme</h2>
+      <p class="text-sm text-gray-500">Karty z administrace se zobrazí na živém webu.</p>
+    </div>
+  </section>
+
+  <section id="faq" class="faq landing-section py-10">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Časté dotazy</h2>
+      <div class="space-y-1">
+        <details class="bg-white rounded-lg border shadow-sm overflow-hidden" style="border-color:#e5e7eb;">
+          <summary class="px-4 py-3 font-medium text-sm text-gray-900 flex justify-between items-center">Jak funguje licence?<svg class="chev w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+          <div class="px-4 pb-3 text-sm text-gray-500">Po zaplacení vám aktivujeme licenci (ukázková odpověď v statickém náhledu).</div>
+        </details>
+        <details class="bg-white rounded-lg border shadow-sm overflow-hidden" style="border-color:#e5e7eb;">
+          <summary class="px-4 py-3 font-medium text-sm text-gray-900 flex justify-between items-center">Co je režim Z Agenta?<svg class="chev w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></summary>
+          <div class="px-4 pb-3 text-sm text-gray-500">Soubory zůstávají u vás, na server jdou jen výsledky kontroly.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="kontakt" class="landing-section py-16">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2 class="text-2xl font-bold mb-8 text-center" style="color:#0f172a;">Kontakt</h2>
+      <div class="card">
+        <p class="text-sm text-gray-600"><strong>Ing. Martin Cieślar</strong></p>
+        <p class="text-sm text-gray-500 mt-2"><a href="mailto:info@dokucheck.app" class="underline" style="color:#1e5a8a;">info@dokucheck.app</a></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bg-gray-900 text-gray-400 py-8">
+  <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm">
+    <div class="flex items-center gap-2"><img src="web_app/static/logo/dokucheck-icon.svg" alt="" class="h-6 w-6"><span class="font-black text-white">Doku<span style="color:#16A34A;">Check</span></span></div>
+    <div class="text-gray-500">Statický náhled · živá data na serveru</div>
+  </div>
+</footer>
+
+<script>
+(function(){var k='dokucheck-theme';function get(){try{return localStorage.getItem(k)||'light';}catch(e){return 'light';}}function set(t){t=t==='dark'?'dark':'light';try{localStorage.setItem(k,t);}catch(e){}document.documentElement.setAttribute('data-theme',t);return t;}set(get());window.toggleTheme=function(){return set(get()==='dark'?'light':'dark');};window.getTheme=function(){return get();};})();
+(function(){var i=document.getElementById('theme-toggle-icon');if(i)i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙';})();
+var nav=document.getElementById('topnav');window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',scrollY>10);},{passive:true});
+var mob=document.getElementById('mob'),bg=document.getElementById('mobBg');
+document.getElementById('burger').onclick=function(){mob.style.transform='translateX(0)';bg.classList.remove('hidden');};
+function closeMob(){mob.style.transform='';bg.classList.add('hidden');}
+document.getElementById('mobClose').onclick=closeMob;bg.onclick=closeMob;
+document.querySelectorAll('.mobL').forEach(function(a){a.onclick=closeMob;});
+document.querySelectorAll('a[href^="#"]').forEach(function(a){if(a.getAttribute('href').length<2)return;a.addEventListener('click',function(e){var t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();var y=t.getBoundingClientRect().top+scrollY-70;window.scrollTo({top:y,behavior:'smooth'});}});});
+</script>
+</body>
+</html>
