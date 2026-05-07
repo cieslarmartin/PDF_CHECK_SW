@@ -29,12 +29,12 @@ echo Pridavam vsechny soubory...
 git add .
 
 git diff --staged --quiet
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
   echo.
   set /p commit_msg="Popis zmen (Enter = 'Update'): "
   if "!commit_msg!"=="" set commit_msg=Update
   git commit -m "!commit_msg!"
-  if %ERRORLEVEL% NEQ 0 (
+  if errorlevel 1 (
     echo.
     echo [CHYBA] Commit se nepovedl. Zkontrolujte hlasku vyse.
     pause
@@ -48,7 +48,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo Odesilam na GitHub...
 git push origin main
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
   echo.
   echo [CHYBA] Push se nepovedl. Pokud to chce prihlaseni, bude potreba nastavit pristup (token/SSH).
   pause
