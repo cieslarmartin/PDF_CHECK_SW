@@ -56,7 +56,37 @@ echo "[2] Aktivace venv a instalace závislostí"
 source "$VENV/bin/activate"
 pip install -q -r "$APP_DIR/requirements.txt"
 
-echo "[3] Restart WSGI (touch – PA načte nový kód)"
+if [ ! -d "$REPO_ROOT/desktop_agent" ]; then
+  echo "CHYBA: Chybí $REPO_ROOT/desktop_agent — cloudová kontrola PDF na webu potřebuje sdílený engine z celého klonu repa."
+  exit 1
+fi
+
+echo "[3] Kontrola importů (stejné pořadí cest jako ve web_app po startu)"
+export DEPLOY_CHECK_ROOT="$REPO_ROOT"
+export DEPLOY_CHECK_APP="$APP_DIR"
+python << 'PYCHECK'
+import os
+import sys
+
+root = os.environ["DEPLOY_CHECK_ROOT"]
+app = os.environ["DEPLOY_CHECK_APP"]
+sys.path.insert(0, app)
+sys.path.append(root)
+import version as v
+print("    version:", v.WEB_VERSION, "build=", v.WEB_BUILD)
+try:
+    from desktop_agent import pdf_checker as _pc
+    assert _pc is not None
+    print("    desktop_agent.pdf_checker: OK")
+except Exception as e:
+    print("    CHYBA importu engine:", type(e).__name__, e)
+    print("    Záložka Web na PA musí používat WSGI:", os.path.join(app, "wsgi_pythonanywhere.py"))
+    sys.exit(1)
+PYCHECK
+
+echo "[4] Restart WSGI (touch – PA načte nový kód)"
 touch "$WSGI_FILE"
 
-echo "Deploy dokončen. V záložce Web na PA klikněte Reload, pokud se stránka sama neobnoví."
+echo "Deploy dokončen."
+echo "  → PythonAnywhere: záložka Web → ověřte, že WSGI file = $WSGI_FILE"
+echo "  → Klikněte Reload + ověřte https://www.dokucheck.cz/__diag (JSON, web_build z version.py)"
