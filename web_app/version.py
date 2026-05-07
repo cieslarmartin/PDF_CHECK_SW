@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.049"
+WEB_VERSION = "w26.02.050"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 93
+WEB_BUILD = 94
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "/app: verze vždy z version.py; odstraněna duplicitní context_processor pro build."
+BUILD_NOTES = "Oprava sys.path: vždy načíst web_app/version.py (ne omyl. version v kořeni klonu na PA)."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 # TEST: build 54 pro ověření update notifieru (pak vrátit na 53).

@@ -4,6 +4,12 @@
 import json
 import logging
 import os
+import sys
+
+# Aby „from version import …“ vždy mířilo na web_app/version.py, ne na případný version.py v kořeni repa.
+_web_app_dir = os.path.dirname(os.path.abspath(__file__))
+if _web_app_dir not in sys.path:
+    sys.path.insert(0, _web_app_dir)
 
 logger = logging.getLogger(__name__)
 

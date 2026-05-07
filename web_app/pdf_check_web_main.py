@@ -19,10 +19,14 @@ import subprocess
 import threading
 import webbrowser
 
-# Kořen repa (PDF_CHECK_SW): složka desktop_agent/ je vedle web_app/; WSGI na PA přidává jen web_app/ do sys.path.
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Nejdřív musí být ve sys.path složka web_app (tento soubor), jinak „import version“ může načíst
+# omylem /home/.../version.py v kořeni klonu (starý WEB_BUILD), pokud tam někde vznikl.
+_WEB_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+if _WEB_APP_DIR not in sys.path:
+    sys.path.insert(0, _WEB_APP_DIR)
+_PROJECT_ROOT = os.path.dirname(_WEB_APP_DIR)
 if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
+    sys.path.append(_PROJECT_ROOT)
 
 # #region agent debug log
 def _dbg(hypothesis_id: str, message: str, data: dict | None = None, run_id: str = "pre-fix"):

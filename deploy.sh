@@ -42,6 +42,10 @@ echo "[1] Git: fetch + reset na origin/main"
 git fetch origin main
 git reset --hard origin/main
 
+if [ -f "$REPO_ROOT/version.py" ]; then
+  echo "VAROVÁNÍ: Existuje $REPO_ROOT/version.py — může stínit web_app/version.py a držet starý WEB_BUILD. Soubor smažte nebo přejmenujte."
+fi
+
 if [ -f /tmp/pdfcheck_results.db.bak ]; then
   echo "[1b] Obnovení databáze ze zálohy"
   cp /tmp/pdfcheck_results.db.bak "$DB_PATH"
