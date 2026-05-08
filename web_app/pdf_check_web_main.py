@@ -3638,7 +3638,7 @@ def count_pdfs_in_folder(folder_path):
 
 @app.route('/')
 def index():
-    """Landing page DokuCheck – verze V3. Texty a promo z global_settings. FAQ dynamicky z tabulky faq."""
+    """Landing page DokuCheck – produkce: landing_preview (varianta H). Texty a promo z global_settings. FAQ dynamicky z tabulky faq."""
     db = Database()
     try:
         db.log_page_visit(request.remote_addr or request.headers.get('X-Forwarded-For', ''), '/')
@@ -3649,7 +3649,9 @@ def index():
         settings['faq_list'] = db.get_all_faq()
     except Exception:
         settings['faq_list'] = []
-    return render_template('landing_v3.html', **settings)
+    settings['preview_variant'] = 'h'
+    settings['show_variant_switcher'] = False
+    return render_template('landing_preview.html', **settings)
 
 
 def _landing_nahled_settings():

@@ -215,20 +215,22 @@
 <body class="min-h-screen antialiased bg-gray-50 text-gray-800 preview-variant-{{ preview_variant|default('a') }}">
 
 {# Přepínač variant – fixní nahoře, 2 řádky #}
-<div class="sticky top-0 z-[100] bg-gray-900 text-white px-3 py-2 shadow-lg">
-    <div class="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-        <span class="mr-2 font-semibold text-gray-300">Varianty:</span>
-        {% for letter, label in [('a','A'),('b','B'),('c','C'),('d','D'),('e','E'),('f','F'),('g','G'),('h','H'),('i','I'),('j','J'),('k','K'),('l','L'),('m','M'),('n','N'),('o','O'),('p','P')] %}
-        <a href="{{ url_for('landing_preview', v=letter) }}" class="px-2 py-1 rounded font-medium {{ 'bg-blue-600 text-white' if preview_variant == letter else 'bg-gray-700 hover:bg-gray-600' }}">{{ letter|upper }}</a>
-        {% endfor %}
-        <a href="/" class="ml-3 text-gray-400 hover:text-white">← Web</a>
+{% if show_variant_switcher|default(true) %}
+    <div class="sticky top-0 z-[100] bg-gray-900 text-white px-3 py-2 shadow-lg">
+        <div class="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+            <span class="mr-2 font-semibold text-gray-300">Varianty:</span>
+            {% for letter, label in [('a','A'),('b','B'),('c','C'),('d','D'),('e','E'),('f','F'),('g','G'),('h','H'),('i','I'),('j','J'),('k','K'),('l','L'),('m','M'),('n','N'),('o','O'),('p','P')] %}
+            <a href="{{ url_for('landing_preview', v=letter) }}" class="px-2 py-1 rounded font-medium {{ 'bg-blue-600 text-white' if preview_variant == letter else 'bg-gray-700 hover:bg-gray-600' }}">{{ letter|upper }}</a>
+            {% endfor %}
+            <a href="/" class="ml-3 text-gray-400 hover:text-white">← Web</a>
+        </div>
+        <div class="flex flex-wrap justify-center gap-x-2 mt-1 text-[10px] text-gray-400">
+            <span>A kompakt</span><span>B 2 sl.</span><span>C karty</span><span>D úzký</span><span>E bento</span>
+            <span>F pruhy</span><span>G magazine</span><span>H tmavý pruh</span><span>I stíny</span><span>J minimal</span>
+            <span>K gradient</span><span>L řádky</span><span>M dashboard</span><span>N editorial</span><span>O sklo</span><span>P E dark</span>
+        </div>
     </div>
-    <div class="flex flex-wrap justify-center gap-x-2 mt-1 text-[10px] text-gray-400">
-        <span>A kompakt</span><span>B 2 sl.</span><span>C karty</span><span>D úzký</span><span>E bento</span>
-        <span>F pruhy</span><span>G magazine</span><span>H tmavý pruh</span><span>I stíny</span><span>J minimal</span>
-        <span>K gradient</span><span>L řádky</span><span>M dashboard</span><span>N editorial</span><span>O sklo</span><span>P E dark</span>
-    </div>
-</div>
+{% endif %}
 
 <main class="pt-4 pb-12">
 
