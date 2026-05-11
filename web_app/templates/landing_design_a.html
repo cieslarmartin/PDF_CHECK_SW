@@ -210,11 +210,11 @@
     <section id="cenik" class="py-16 bg-white">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center anim" style="color:#0f172a;">Ceník</h2>
-            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="card flex flex-col anim">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.basic.label|default('Basic') }}</p>
-                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola Z Agenta</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>PDF/A, podpisy, razítka</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Standardní UI</li></ul>
                     <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Zakoupit Basic</a>
@@ -222,7 +222,7 @@
                 <div class="card price-pop flex flex-col relative anim" style="transition-delay:80ms;">
                     <span class="price-badge">DOPORUČUJEME</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Export do Excelu</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Sofistikované filtry</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z Basic</li></ul>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg" style="background:#1e5a8a;">Zakoupit Pro</a>

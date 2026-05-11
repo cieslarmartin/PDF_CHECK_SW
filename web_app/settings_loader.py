@@ -30,8 +30,8 @@ DEFAULTS = {
     # Ceny a Tarify (čísla)
     "trial_limit_total_files": 10,
     # Landing – hero a CTA
-    "landing_hero_title": "DokuCheck – Dokumentace bez chyb pro Portál stavebníka",
-    "landing_hero_subtitle": "Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů během minut.",
+    "landing_hero_title": "DokuCheck: Vaše jistota při každém podání na Portál stavebníka.",
+    "landing_hero_subtitle": "Získejte 100% jistotu, že vaše dokumentace splňuje standardy PDF/A-3 a náležitosti elektronických podpisů dle vyhlášky č. 131/2024 Sb. Hromadná strojová kontrola přímo na vašem disku.",
     "landing_hero_badge": "ONLINE + Desktop",
     "landing_cta_primary": "Vyzkoušet ONLINE Check",
     "landing_cta_secondary": "Stáhnout aplikaci zdarma",
@@ -41,29 +41,29 @@ DEFAULTS = {
     "landing_mode_agent_text": "Soubory na disku, na server jen metadata.",
     "landing_mode_cloud_title": "Cloud",
     "landing_mode_cloud_text": "Celé PDF na server. Rychlé vyzkoušení.",
-    "landing_tarif_basic_desc": "Ideální pro otestování v pilotním provozu.",
+    "landing_tarif_basic_desc": "Ideální pro menší zakázky a samostatné projektanty.",
     "landing_tarif_standard_desc": "Plné funkce, export, historie.",
     "landing_tarif_premium_desc": "Na míru pro větší týmy.",
     # Právní – krátké texty (dlouhé VOP/GDPR mají fallback v šabloně nebo prázdné = zobraz šablonu)
     "footer_disclaimer": "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.",
     "app_legal_notice": "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.",
     # Systém – SEO, e-maily, Agent
-    "seo_meta_title": "DokuCheck – Dokumentace bez chyb | Portál stavebníka",
-    "seo_meta_description": "Rychlá kontrola PDF/PDF-A, podpisy a souladu dokumentů pro Portál stavebníka.",
+    "seo_meta_title": "DokuCheck: Vaše jistota při každém podání na Portál stavebníka.",
+    "seo_meta_description": "Hromadná kontrola PDF/A-3, elektronických podpisů a časových razítek pro Portál stavebníka. Režim Z Agenta: práce lokálně na disku.",
     "analysis_timeout_seconds": 300,
     "email_order_confirmation_subject": "DokuCheck – potvrzení objednávky č. {order_id}",
     "email_order_confirmation_body": "",
     "email_welcome_subject": "Vítejte v DokuCheck",
     "email_welcome_body": "",
-    # Upozornění na webu (pilotní provoz, SmartScreen)
-    "pilot_notice_text": "Aplikace je v pilotním provozu.\nHláška systému SmartScreen je očekávaná (aplikace prochází certifikací).",
-    "show_pilot_notice": True,
+    # Upozornění na webu (volitelné; defaultně skryté)
+    "pilot_notice_text": "",
+    "show_pilot_notice": False,
 }
 
 # Výchozí hodnoty pro JSON klíče
 DEFAULT_PRICING_TARIFS = {
-    "basic": {"label": "BASIC", "amount_czk": 1290},
-    "standard": {"label": "PRO", "amount_czk": 1990},
+    "basic": {"label": "BASIC", "amount_czk": 1090},
+    "standard": {"label": "PRO", "amount_czk": 1590},
 }
 
 DEFAULT_LANDING_HOW_STEPS = [
@@ -75,7 +75,7 @@ DEFAULT_LANDING_HOW_STEPS = [
 DEFAULT_LANDING_FAQ = [
     {"q": "Co kontroluje DokuCheck?", "a": "PDF/A-3, elektronické podpisy, časová razítka a soulad s Portálem stavebníka."},
     {"q": "Jaký je rozdíl mezi Z Agenta a Cloud?", "a": "Z Agenta: soubory na disku, na server jen metadata. Cloud: celé PDF na server (demo)."},
-    {"q": "Mohu zrušit předplatné?", "a": "Ano, předplatné se neobnoví po ukončení období."},
+    {"q": "Jak funguje licence?", "a": "Licence je roční. Po objednávce obdržíte fakturu e-mailem. Po zaplacení vám aktivujeme přístup."},
     {"q": "Kde najdu Můj účet?", "a": "Portál – historie a nastavení."},
 ]
 

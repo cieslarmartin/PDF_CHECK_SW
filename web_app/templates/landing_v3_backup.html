@@ -200,11 +200,11 @@
         <section id="cenik" class="mb-14">
             <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Ceník</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="max-width:720px;margin:0 auto;">
-                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col">
                     <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">PROJEKTANT</h3>
                     <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.basic.label|default('Basic') }}</p>
-                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} Kč</p>
+                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} Kč</p>
                     <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
                     <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
                     <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
@@ -219,7 +219,7 @@
                     <span class="lp-v3-badge absolute top-4 right-4" style="background:#1e5a8a;color:white;padding:4px 10px;border-radius:0 0 8px 8px;font-size:0.7em;font-weight:700;">DOPORUČUJEME PRO ATELIÉRY</span>
                     <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Z BASIC +</h3>
                     <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} Kč</p>
+                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} Kč</p>
                     <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
                     <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
                     <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">

@@ -63,11 +63,11 @@
                     <button type="button" id="btn-jak-nainstalovat" class="lp-link font-medium underline cursor-pointer">Jak nainstalovat?</button>
                 </p>
                 <div id="jak-nainstalovat" class="hidden mt-3 p-3 rounded-lg bg-amber-100/80 text-sm border border-amber-200">
-                    <p class="font-medium mb-2">Windows SmartScreen:</p>
+                    <p class="font-medium mb-2">Instalace ve Windows:</p>
                     <ol class="list-decimal list-inside space-y-1">
                         <li>Po stažení .exe klikněte na soubor.</li>
                         <li>Uvidíte hlášku „Windows chrání váš počítač“ – klikněte <strong>Více informací</strong>.</li>
-                        <li>Poté zvolte <strong>Přesto spustit</strong>. Aplikace prochází certifikací.</li>
+                        <li>Poté zvolte <strong>Přesto spustit</strong>.</li>
                     </ol>
                 </div>
             </div>
@@ -76,6 +76,10 @@
                 <a href="{{ download_url or '#' }}" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold lp-btn-primary transition text-white no-underline {% if not download_url %}opacity-70 pointer-events-none{% endif %}">
                     {% if download_url %}🪟 Stáhnout pro Windows (.exe){% else %}Odkaz na stažení bude doplněn v Adminu{% endif %}
                 </a>
+            </p>
+            <p class="mb-6 text-sm text-gray-600 flex items-start gap-2">
+                <span aria-hidden="true">🔒</span>
+                <span>Vaše PDF data neopouštějí váš počítač. DokuCheck Agent analyzuje metadata lokálně pro maximální ochranu duševního vlastnictví.</span>
             </p>
             {% if agent_version_display or agent_build_id %}
             <p class="mb-6 text-sm text-gray-500">Verze agenta: {{ agent_version_display|default('') }}{% if agent_build_id %} (Build {{ agent_build_id }}){% endif %}</p>

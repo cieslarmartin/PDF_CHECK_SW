@@ -136,7 +136,7 @@
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
 <main style="padding-top:72px;">
-    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
 
     {# ============ HERO ============ #}
     <section class="landing-section py-8 md:py-12">
@@ -157,9 +157,9 @@
                     </p>
                     <div class="hero-pricing-teaser">
                         <span class="pricing-from">Od</span>
-                        <span class="pricing-amount">{{ (tarifs.basic.amount_czk|default(1290) / 12)|round|int }} Kč</span>
-                        <span class="pricing-period">/měsíc</span>
-                        <span class="pricing-annual">({{ tarifs.basic.amount_czk|default(1290) }} Kč/rok · roční licence)</span>
+                        <span class="pricing-amount">{{ tarifs.basic.amount_czk|default(1090) }} Kč</span>
+                        <span class="pricing-period">/rok</span>
+                        <span class="pricing-annual">(roční licence)</span>
                     </div>
                     <div class="hero-cta-group">
                         <a href="/checkout?tarif=basic" class="btn-primary btn-large">Zakoupit licenci →</a>
@@ -341,9 +341,9 @@
                 <div class="card flex flex-col anim">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
                     <p class="text-xs text-gray-400 mb-3">{{ tarifs.basic.label|default('Basic') }}</p>
-                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="price-monthly-note">jen <strong>{{ (tarifs.basic.amount_czk|default(1290) / 12)|round|int }} Kč/měsíc</strong> při ročním předplatném</p>
-                    <p class="price-annual">{{ tarifs.basic.amount_czk|default(1290) }} Kč/rok · placeno ročně</p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    {# pouze roční licence – bez měsíčních přepočtů #}
+                    <p class="price-annual">{{ tarifs.basic.amount_czk|default(1090) }} Kč/rok · placeno ročně</p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
@@ -356,9 +356,9 @@
                     <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
                     <p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="price-monthly-note">jen <strong>{{ (tarifs.standard.amount_czk|default(1990) / 12)|round|int }} Kč/měsíc</strong> při ročním předplatném</p>
-                    <p class="price-annual">{{ tarifs.standard.amount_czk|default(1990) }} Kč/rok · placeno ročně</p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    {# pouze roční licence – bez měsíčních přepočtů #}
+                    <p class="price-annual">{{ tarifs.standard.amount_czk|default(1590) }} Kč/rok · placeno ročně</p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Hromadný export do Excelu (XLS)</strong></li>

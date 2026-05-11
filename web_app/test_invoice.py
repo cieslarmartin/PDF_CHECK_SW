@@ -34,7 +34,7 @@ TEST_JMENO_FIRMA = 'Pán s diakritikou řůščś'
 TEST_ICO = str(random.randint(10000000, 99999999))
 TEST_EMAIL = 'test.odberatel@example.cz'
 TEST_TARIF = 'standard'
-TEST_AMOUNT_CZK = 1990
+TEST_AMOUNT_CZK = 1590
 
 
 def main():

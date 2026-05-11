@@ -176,11 +176,11 @@
     <section id="cenik" class="py-16 bg-gray-50">
         <div class="max-w-3xl mx-auto px-6">
             <h2 class="text-2xl font-bold mb-10 text-center text-gray-900 mf">Ceník</h2>
-            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+            {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="bcard flex flex-col mf">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.basic.label|default('Basic') }}</p>
-                    <p class="text-3xl font-extrabold text-gray-900 mb-1">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-sm font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold text-gray-900 mb-1">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-sm font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Z Agenta</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>PDF/A, podpisy, razítka</li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Standardní UI</li></ul>
                     <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-xl text-center font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Zakoupit Basic</a>
@@ -188,7 +188,7 @@
                 <div class="bcard ppop flex flex-col relative mf" style="transition-delay:100ms;">
                     <span class="ppop-tag">DOPORUČUJEME</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3><p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-3xl font-extrabold text-blue-700 mb-1">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-sm font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold text-blue-700 mb-1">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-sm font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Pro řízení zakázek.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1"><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Excel export</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Filtry chyb</strong></li><li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z Basic</li></ul>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-xl text-center font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition">Zakoupit Pro</a>

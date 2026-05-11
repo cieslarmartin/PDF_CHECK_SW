@@ -13,7 +13,7 @@ import hmac
 
 # =============================================================================
 # LICENCE TIERS (úrovně) – podle cenové politiky: Free, Basic, Pro (+ Trial v DB)
-# Basic = PROJEKTANT (1290 Kč/rok), Pro = VEDOUCÍ PROJEKTANT (1990 Kč/rok)
+# Basic = PROJEKTANT (1090 Kč/rok), Pro = VEDOUCÍ PROJEKTANT (1590 Kč/rok)
 # ENTERPRISE = zachován pro zpětnou kompatibilitu, chová se jako Pro
 # =============================================================================
 
@@ -104,7 +104,7 @@ FEATURE_TIERS: Dict[str, List[LicenseTier]] = {
 
 
 # =============================================================================
-# LIMITY – podle cenové politiky (Basic 1290 Kč, Pro 1990 Kč)
+# LIMITY – podle cenové politiky (Basic 1090 Kč, Pro 1590 Kč)
 # Denní kvóta: BASIC 500 souborů/den, PRO 1000 souborů/den, GOD (Admin) neomezeno (-1).
 # Free: 5 souborů, 1 zařízení. Basic: 100 souborů/dávka, 500/den, bez Excel.
 # Pro: neomezeno dávka, 1000/den, 3 zařízení, export Excel.

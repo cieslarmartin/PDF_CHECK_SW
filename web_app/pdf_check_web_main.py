@@ -54,7 +54,7 @@ try:
     from settings_loader import get_pricing_tarifs, get_email_order_confirmation_subject, load_settings_for_views, DEFAULT_PRICING_TARIFS
 except ImportError:
     get_pricing_tarifs = get_email_order_confirmation_subject = load_settings_for_views = None
-    DEFAULT_PRICING_TARIFS = {"basic": {"label": "BASIC", "amount_czk": 1290}, "standard": {"label": "PRO", "amount_czk": 1990}}
+    DEFAULT_PRICING_TARIFS = {"basic": {"label": "BASIC", "amount_czk": 1090}, "standard": {"label": "PRO", "amount_czk": 1590}}
 
 # NOVÉ: Admin systém
 from admin_routes import admin_bp, get_db
@@ -3946,7 +3946,7 @@ def download_agent():
 
 @app.route('/download')
 def download():
-    """Stránka stažení desktop agenta na doméně (PA). Kontakt a pilotní upozornění z global_settings."""
+    """Stránka stažení desktop agenta na doméně (PA). Kontakt a volitelné upozornění z global_settings."""
     db = Database()
     contact_email = db.get_global_setting('contact_email', '') or ''
     contact_phone = db.get_global_setting('contact_phone', '') or ''
@@ -3974,7 +3974,7 @@ def online_check():
 
 
 # Fallback částky a štítky – odvozeno z DEFAULT_PRICING_TARIFS (jediný zdroj cen = DB / Admin)
-TARIF_AMOUNTS_FALLBACK = {k: v.get("amount_czk", 1990) for k, v in DEFAULT_PRICING_TARIFS.items()}
+TARIF_AMOUNTS_FALLBACK = {k: v.get("amount_czk", 1590) for k, v in DEFAULT_PRICING_TARIFS.items()}
 TARIF_LABELS_FALLBACK = {k: v.get("label", k.upper()) for k, v in DEFAULT_PRICING_TARIFS.items()}
 
 
@@ -4014,7 +4014,7 @@ def checkout():
     pricing = get_pricing_tarifs(db) if get_pricing_tarifs else TARIF_AMOUNTS_FALLBACK
     if isinstance(pricing, dict) and all(isinstance(v, dict) for v in pricing.values()):
         tarif_labels = {k: v.get('label', k.upper()) for k, v in pricing.items()}
-        tarif_amounts = {k: v.get('amount_czk', 1990) for k, v in pricing.items()}
+        tarif_amounts = {k: v.get('amount_czk', 1590) for k, v in pricing.items()}
     else:
         tarif_labels = TARIF_LABELS_FALLBACK
         tarif_amounts = TARIF_AMOUNTS_FALLBACK
@@ -4037,13 +4037,13 @@ def checkout():
             return redirect(url_for('checkout', tarif=tarif))
         # Číslo objednávky = číslo faktury = variabilní symbol (čistě číselné, např. 2602001)
         order_display_number = db.get_next_order_number()
-        amount_czk_initial = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+        amount_czk_initial = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1590))
         order_id = db.insert_pending_order(jmeno_firma, ico, email, tarif, status='NEW_ORDER',
                                            order_display_number=order_display_number,
                                            ulice=ulice, mesto=mesto, psc=psc, dic=dic,
                                            discount_requested=discount_request, amount_czk=amount_czk_initial)
         if order_id:
-            amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+            amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1590))
             db.update_pending_order_invoice_number(order_id, order_display_number)
 
             # 1. Notifikace na objednavky@dokucheck.cz (úplné údaje od klienta)
@@ -4131,7 +4131,7 @@ def checkout():
     if tarif not in tarif_labels:
         tarif = 'standard'
     payment_instructions = db.get_global_setting('payment_instructions', '') or ''
-    amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1990))
+    amount_czk = tarif_amounts.get(tarif, tarif_amounts.get('standard', 1590))
     tier_label = tarif_labels.get(tarif, 'PRO')
     tier_row = db.get_tier_by_name(tarif)
     order_summary = {
@@ -4189,7 +4189,7 @@ def portal():
         exp = (lic or {}).get('license_expires')
         license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
         upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
-        pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+        pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
         portal_stats = db.get_portal_user_activity_stats(api_key)
         portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
         download_url = db.get_global_setting('download_url', '') or ''
@@ -4298,7 +4298,7 @@ def _portal_dashboard_with_message(message, error=True):
     exp = (lic or {}).get('license_expires')
     license_expires_label = exp[:10] if exp and len(exp) >= 10 else (exp or 'Neomezeno')
     upgrade_email = os.environ.get('UPGRADE_REQUEST_EMAIL') or db.get_global_setting('contact_email', '')
-    pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+    pricing_tarifs = get_pricing_tarifs(db) if get_pricing_tarifs else db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
     portal_stats = db.get_portal_user_activity_stats(api_key)
     portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
     download_url = db.get_global_setting('download_url', '') or ''

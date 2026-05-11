@@ -673,8 +673,8 @@ def send_test_email_route():
     try:
         from email_sender import send_email
         templates = get_email_templates()
-        subject = (templates.get('order_confirmation_subject') or 'Test').replace('{vs}', '999').replace('{cena}', '1990').replace('{jmeno}', 'Test Firma')
-        body = (templates.get('order_confirmation_body') or 'Test').replace('{vs}', '999').replace('{cena}', '1990').replace('{jmeno}', 'Test Firma')
+        subject = (templates.get('order_confirmation_subject') or 'Test').replace('{vs}', '999').replace('{cena}', '1590').replace('{jmeno}', 'Test Firma')
+        body = (templates.get('order_confirmation_body') or 'Test').replace('{vs}', '999').replace('{cena}', '1590').replace('{jmeno}', 'Test Firma')
         footer = templates.get('footer_text', '')
         if footer:
             body = (body.rstrip() + '\n\n' + footer.strip()).strip()
@@ -791,7 +791,7 @@ def users_licenses():
         from settings_loader import get_pricing_tarifs
         pricing_tarifs = get_pricing_tarifs(db)
     except Exception:
-        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
     licenses_all = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
     active_emails = {(l.get('email') or '').lower(): l for l in licenses_all if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')}
     orders = []
@@ -872,7 +872,7 @@ def apply_discount():
     # Přegenerovat fakturu s novou cenou
     try:
         order_updated = db.get_pending_order_by_id(order_id)
-        new_amount = order_updated.get('amount_czk_final') or order_updated.get('amount_czk') or 1990
+        new_amount = order_updated.get('amount_czk_final') or order_updated.get('amount_czk') or 1590
         tarif = order_updated.get('tarif') or 'standard'
         from admin_routes import _admin_generate_invoice_for_order
         filepath, err = _admin_generate_invoice_for_order(db, order_id, order_updated, new_amount, tarif)
@@ -1140,7 +1140,7 @@ def generate_invoice():
     except Exception:
         pricing = {}
     tarif = order.get('tarif') or 'standard'
-    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1990) if isinstance(pricing, dict) else 1990
+    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1590) if isinstance(pricing, dict) else 1590
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
         flash('Vygenerování PDF faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
@@ -1179,7 +1179,7 @@ def regenerate_invoice():
     except Exception:
         pricing = {}
     tarif = order.get('tarif') or 'standard'
-    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1990) if isinstance(pricing, dict) else 1990
+    amount_czk = pricing.get(tarif, {}).get('amount_czk', 1590) if isinstance(pricing, dict) else 1590
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
         flash('Přegenerování faktury se nezdařilo: {}. Zkontrolujte font (DejaVuSans) a logy.'.format(err), 'error')
@@ -1653,7 +1653,7 @@ def _settings_for_admin(db):
     s['allow_new_registrations'] = db.get_setting_bool('allow_new_registrations', True)
     s['trial_limit_total_files'] = db.get_setting_int('trial_limit_total_files', 10)
     s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
-    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
     s['payment_instructions'] = db.get_global_setting('payment_instructions', '')
     s['pilot_notice_text'] = db.get_global_setting('pilot_notice_text', '') or ''
     s['show_pilot_notice'] = db.get_setting_bool('show_pilot_notice', True)
@@ -1738,9 +1738,9 @@ def settings():
             try:
                 price_basic = request.form.get('price_basic', '')
                 price_pro = request.form.get('price_pro', '')
-                pricing = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}})
+                pricing = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
                 if not isinstance(pricing, dict):
-                    pricing = {'basic': {'label': 'BASIC', 'amount_czk': 1290}, 'standard': {'label': 'PRO', 'amount_czk': 1990}}
+                    pricing = {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}}
                 if price_basic.strip():
                     amt = int(price_basic)
                     if 'basic' not in pricing:

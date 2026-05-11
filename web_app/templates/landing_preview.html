@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Náhled variant landingu – DokuCheck</title>
+    <title>{{ seo_meta_title|default('DokuCheck: Vaše jistota při každém podání na Portál stavebníka.') }}</title>
+    <meta name="description" content="{{ seo_meta_description|default('Hromadná kontrola PDF/A-3, elektronických podpisů a časových razítek pro Portál stavebníka. Režim Z Agenta: práce lokálně na disku.') }}">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -252,9 +253,9 @@
             <a href="/download/agent" class="hover:text-blue-700">Ke stažení</a>
             <span class="w-px h-5 bg-gray-200"></span>
             <a href="/portal" class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700">Přihlásit</a>
-            <a href="/checkout?tarif=basic" class="px-3 py-1.5 rounded-lg text-white" style="background:#1e5a8a;">Koupit licenci</a>
+            <a href="/checkout?tarif=standard" class="px-3 py-1.5 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Aktivovat licenci PRO</a>
         </div>
-        <a href="#cenik" class="md:hidden px-3 py-1.5 rounded-lg text-white text-sm font-semibold" style="background:#1e5a8a;">Ceník</a>
+        <a href="/checkout?tarif=standard" class="md:hidden px-3 py-1.5 rounded-lg text-white text-sm font-semibold" style="background:#1e5a8a;">Aktivovat PRO</a>
     </div>
 </nav>
 
@@ -274,7 +275,7 @@
                             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-12 w-12 md:h-14 md:w-14">
                             <span class="text-4xl md:text-5xl font-black" style="color:#020617;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span>
                         </span>
-                        <span class="block text-2xl md:text-3xl font-normal mt-2" style="color:#0f172a;">Dokumentace bez chyb pro Portál stavebníka</span>
+                        <span class="block text-2xl md:text-3xl font-normal mt-2" style="color:#0f172a;">{{ landing_hero_title|default('DokuCheck: Vaše jistota při každém podání na Portál stavebníka.') }}</span>
                     </h1>
                     <p class="text-lg mb-3 max-w-xl text-gray-600">
                         {{ landing_hero_subtitle|default('DokuCheck automaticky ověří PDF/A-3, elektronické podpisy a časová razítka ještě před odesláním dokumentace. Kontrola za 2–5 minut.') }}
@@ -285,8 +286,8 @@
                         <li><strong>Jak:</strong> online rychlé vyzkoušení, plná práce u vás na disku přes desktop Agenta.</li>
                     </ul>
                     <div class="flex flex-wrap gap-3">
-                        <a href="/app" class="px-6 py-3 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Vyzkoušet ONLINE Check</a>
-                        <a href="/download/agent" class="px-6 py-3 rounded-lg font-semibold border" style="color:#1e5a8a;border-color:#1e5a8a;">Stáhnout aplikaci</a>
+                        <a href="/checkout?tarif=standard" class="px-6 py-3 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Aktivovat licenci PRO</a>
+                        <a href="/app" class="px-6 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50">Vyzkoušet ONLINE (Cloud)</a>
                     </div>
                     <div class="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
                         <span>✓ Žádná instalace pro online verzi</span>
@@ -301,32 +302,35 @@
         </div>
     </section>
 
-    {# TRUST BAR (jako ve V3) #}
+    {# LEGISLATIVA & TRUST SIGNALS #}
     <section class="preview-section py-0 bg-white">
         <div class="preview-container max-w-6xl mx-auto px-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 py-5">
-                <div class="rounded-xl border p-4 text-center" style="border-color:#e5e7eb;">
+                <a class="rounded-xl border p-4 text-center hover:bg-gray-50 transition" style="border-color:#e5e7eb;" href="https://www.iso.org/standard/57229.html" target="_blank" rel="noopener noreferrer">
                     <div class="font-extrabold text-gray-900">PDF/A-3</div>
-                    <div class="text-xs text-gray-500">ISO 19005-3 standard</div>
-                </div>
-                <div class="rounded-xl border p-4 text-center" style="border-color:#e5e7eb;">
-                    <div class="font-extrabold text-gray-900">PostSignum</div>
-                    <div class="text-xs text-gray-500">I.CA · eIdentity</div>
-                </div>
-                <div class="rounded-xl border p-4 text-center" style="border-color:#e5e7eb;">
-                    <div class="font-extrabold text-gray-900">MMR metodika</div>
+                    <div class="text-xs text-gray-500">ISO 19005-3</div>
+                </a>
+                <a class="rounded-xl border p-4 text-center hover:bg-gray-50 transition" style="border-color:#e5e7eb;" href="https://www.zakonyprolidi.cz/cs/2024-131" target="_blank" rel="noopener noreferrer">
+                    <div class="font-extrabold text-gray-900">Vyhláška 131/2024 Sb.</div>
+                    <div class="text-xs text-gray-500">Dokumentace staveb</div>
+                </a>
+                <a class="rounded-xl border p-4 text-center hover:bg-gray-50 transition" style="border-color:#e5e7eb;" href="https://mmr.gov.cz/cs/ministerstvo/stavebni-pravo/digitalni-stavebni-rizeni" target="_blank" rel="noopener noreferrer">
+                    <div class="font-extrabold text-gray-900">Metodika MMR</div>
                     <div class="text-xs text-gray-500">Digitální stavební řízení</div>
-                </div>
+                </a>
                 <div class="rounded-xl border p-4 text-center" style="border-color:#e5e7eb;">
-                    <div class="font-extrabold text-gray-900">ČKAIT</div>
-                    <div class="text-xs text-gray-500">Autorizovaní inženýři</div>
+                    <div class="font-extrabold text-gray-900">Trust</div>
+                    <div class="text-xs text-gray-500">ČKAIT · PostSignum · I.CA · eIdentity</div>
                 </div>
             </div>
+            <p class="text-xs text-gray-500 pb-4 text-center max-w-4xl mx-auto">
+                Uvedené odkazy a informace o metodikách mají pouze informativní charakter. Provozovatel neodpovídá za aktuálnost verzí na externích portálech; pro oficiální znění vždy konzultujte Portál stavebníka nebo aktuální Sbírku zákonů.
+            </p>
         </div>
     </section>
 
-    {# CO JE NOVÉHO #}
-    <section id="news" class="preview-section py-10 bg-white border-b border-gray-100">
+    {# CO JE NOVÉHO (na mobilu skryto – CTA musí být výš) #}
+    <section id="news" class="preview-section py-10 bg-white border-b border-gray-100 hidden md:block">
         <div class="preview-container max-w-6xl mx-auto px-6">
             <div class="section-head"><span class="section-num">1</span><h2 class="text-lg font-bold text-center" style="color:#0f172a;">Co je nového</h2></div>
             <div class="max-w-4xl mx-auto space-y-3">
@@ -435,7 +439,7 @@
     </section>
 
     {# CENÍK – stejný zdroj jako checkout: pricing_tarifs z DB (load_settings_for_views) #}
-    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
+    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
     <section id="cenik" class="preview-section py-16 bg-white">
         <div class="preview-container max-w-3xl mx-auto px-6">
             <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Ceník</h2></div>
@@ -443,7 +447,7 @@
                 <div class="card flex flex-col">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.basic.label|default('BASIC') }}</p>
-                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování a menší zakázky. Získáte workflow a exporty.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         <li>✓ Kontrola PDF/A + podpisů + TSA</li>
@@ -456,37 +460,16 @@
                     <span class="price-badge">DOPORUČUJEME</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.standard.label|default('PRO') }}</p>
-                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Pro řízení velkých zakázek a týmové expedice.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         <li>✓ Vše z Basic</li>
-                        <li>✓ Pokročilé filtry chyb</li>
-                        <li>✓ Víc zařízení / větší dávky</li>
+                        <li>✓ <strong>Hromadná validace složek</strong></li>
+                        <li>✓ <strong>Pokročilé XLS reporty chyb</strong></li>
+                        <li>✓ <strong>Metadata zůstávají lokálně (režim Z Agenta)</strong></li>
                     </ul>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">Zakoupit Pro</a>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    {# PŘIPRAVUJEME #}
-    <section id="pripravujeme" class="preview-section py-10 bg-white">
-        <div class="preview-container max-w-6xl mx-auto px-6">
-            <div class="section-head"><span class="section-num">7</span><h2 class="text-xl font-bold text-center" style="color:#0f172a;">Připravujeme</h2></div>
-            <p class="text-xs text-gray-500 text-center mb-6">{{ coming_soon_intro|default('Rozšíření Agenta pro projektanty.') }}</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {% for card in (coming_soon_cards|default([]))[:4] %}
-                {% set c = card.color|default('blue') %}
-                {% set col = {'blue':'#1e5a8a','purple':'#7c3aed','green':'#047857','amber':'#b45309'}.get(c, '#1e5a8a') %}
-                <div class="card coming p-3">
-                    <span class="coming-tag">COMING SOON</span>
-                    <h3 class="font-semibold text-sm" style="color:{{ col }};">{{ card.title|e }}</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ card.subtitle|e }}</p>
-                </div>
-                {% else %}
-                <div class="card coming p-3"><span class="coming-tag">COMING SOON</span><h3 class="font-semibold text-sm" style="color:#1e5a8a;">Path Checker</h3></div>
-                <div class="card coming p-3"><span class="coming-tag">COMING SOON</span><h3 class="font-semibold text-sm" style="color:#7c3aed;">Online editor</h3></div>
-                {% endfor %}
             </div>
         </div>
     </section>
@@ -517,6 +500,35 @@
             <div class="card">
                 <p class="text-sm text-gray-600"><strong>Ing. Martin Cieślar</strong> · Porubská 1, Klimkovice</p>
                 <a href="mailto:{{ contact_email|default('info@dokucheck.app') }}" class="text-sm mt-2 inline-block" style="color:#1e5a8a;">{{ contact_email|default('info@dokucheck.app') }}</a>
+            </div>
+        </div>
+    </section>
+
+    {# PLÁN ROZVOJE (přesun sekce Připravujeme do paty) #}
+    <section id="plan-rozvoje" class="preview-section py-10 bg-white">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">10</span><h2 class="text-xl font-bold text-center" style="color:#0f172a;">Plán rozvoje</h2></div>
+            <div class="card max-w-4xl mx-auto">
+                <p class="text-sm text-gray-600">
+                    Plně kompatibilní s certifikačními autoritami <strong>PostSignum</strong>, <strong>I.CA</strong> a <strong>eIdentity</strong>.
+                </p>
+                <details class="mt-4">
+                    <summary class="cursor-pointer font-semibold text-gray-900">Zobrazit plán rozvoje</summary>
+                    <p class="text-xs text-gray-500 mt-2">{{ coming_soon_intro|default('Rozšíření Agenta pro projektanty.') }}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
+                        {% for card in (coming_soon_cards|default([])) %}
+                        {% set c = card.color|default('blue') %}
+                        {% set col = {'blue':'#1e5a8a','purple':'#7c3aed','green':'#047857','amber':'#b45309'}.get(c, '#1e5a8a') %}
+                        <div class="card coming p-3">
+                            <span class="coming-tag">PLÁN</span>
+                            <h3 class="font-semibold text-sm" style="color:{{ col }};">{{ card.title|e }}</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ card.subtitle|e }}</p>
+                        </div>
+                        {% else %}
+                        <div class="card coming p-3"><span class="coming-tag">PLÁN</span><h3 class="font-semibold text-sm" style="color:#1e5a8a;">Rozšíření Agenta</h3></div>
+                        {% endfor %}
+                    </div>
+                </details>
             </div>
         </div>
     </section>

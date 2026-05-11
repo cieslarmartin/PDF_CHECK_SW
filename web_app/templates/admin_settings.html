@@ -137,8 +137,8 @@
             <div class="card-header">Ceny licencí (propisují se do Ceníku na webu a do Objednávky)</div>
             <div class="card-body">
                 {% set pt = settings.pricing_tarifs or {} %}
-                {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1290) %}
-                {% set price_pro_val = (pt.get('standard') or {}).get('amount_czk', 1990) %}
+                {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1090) %}
+                {% set price_pro_val = (pt.get('standard') or {}).get('amount_czk', 1590) %}
                 <label class="admin-settings-label">Cena licence BASIC (Kč)</label>
                 <input type="number" name="price_basic" class="form-control admin-settings-input" value="{{ price_basic_val }}" min="0" step="1">
                 <label class="admin-settings-label">Cena licence PRO (Kč)</label>
@@ -157,13 +157,13 @@
                 <textarea name="payment_instructions" class="form-control admin-settings-textarea" rows="4" placeholder="Po odeslání objednávky vám e-mailem zašleme platební údaje...">{{ settings.payment_instructions|e }}</textarea>
             </div>
             <div class="card-body">
-                <div class="card-header">Upozornění na webu (pilotní provoz, SmartScreen)</div>
-                <p class="small text-muted mb-3">Text se zobrazí u tlačítka Stáhnout na hlavní stránce a na stránce /download. Po ukončení pilotního provozu upozornění skryjte přepínačem.</p>
+                <div class="card-header">Upozornění u stažení (volitelné)</div>
+                <p class="small text-muted mb-3">Text se zobrazí u tlačítka Stáhnout na hlavní stránce a na stránce /download. Nechte vypnuté, pokud upozornění nepotřebujete.</p>
                 <label class="admin-settings-label">Text upozornění (řádky oddělte Enterem)</label>
-                <textarea name="pilot_notice_text" class="form-control admin-settings-textarea" rows="3" placeholder="Aplikace je v pilotním provozu.&#10;Hláška systému SmartScreen je očekávaná...">{{ settings.pilot_notice_text|e }}</textarea>
+                <textarea name="pilot_notice_text" class="form-control admin-settings-textarea" rows="3" placeholder="Např.: Instalátor je určen pro Windows 10/11.">{{ settings.pilot_notice_text|e }}</textarea>
                 <label class="d-flex align-items-center gap-2 mt-3">
                     <input type="checkbox" name="show_pilot_notice" value="1" {% if settings.show_pilot_notice %}checked{% endif %} class="form-check-input">
-                    <span class="admin-settings-label mb-0">Zobrazit upozornění na webu (odškrtněte, až bude aplikace finální)</span>
+                    <span class="admin-settings-label mb-0">Zobrazit upozornění u stažení</span>
                 </label>
             </div>
             <div class="card-footer">
