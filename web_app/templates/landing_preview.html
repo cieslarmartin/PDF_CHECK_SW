@@ -245,17 +245,21 @@
             <img src="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}" alt="" class="h-7 w-7">
             <span class="text-lg font-black" style="color:#020617;letter-spacing:-0.06em;">Doku<span style="color:#16A34A;">Check</span></span>
         </a>
-        <div class="hidden md:flex items-center gap-4 text-sm font-semibold text-gray-600">
-            <a href="#jak" class="hover:text-blue-700">Jak to funguje</a>
+        <div class="hidden md:flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-600">
+            <a href="#metody-prace" class="hover:text-blue-700">Metody práce</a>
+            <a href="#jak" class="hover:text-blue-700">Návod a bezpečnost</a>
             <a href="#workflow" class="hover:text-blue-700">Schéma</a>
             <a href="#cenik" class="hover:text-blue-700">Ceník</a>
             <a href="#faq" class="hover:text-blue-700">FAQ</a>
             <a href="/download/agent" class="hover:text-blue-700">Ke stažení</a>
             <span class="w-px h-5 bg-gray-200"></span>
             <a href="/portal" class="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700">Přihlásit</a>
-            <a href="/checkout?tarif=standard" class="px-3 py-1.5 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Aktivovat licenci PRO</a>
+            <a href="/checkout" class="px-3 py-1.5 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Aktivovat licenci PRO (Desktop Agent)</a>
         </div>
-        <a href="/checkout?tarif=standard" class="md:hidden px-3 py-1.5 rounded-lg text-white text-sm font-semibold" style="background:#1e5a8a;">Aktivovat PRO</a>
+        <div class="flex md:hidden items-center gap-2">
+            <a href="/download" class="px-2.5 py-1.5 rounded-lg text-xs font-bold border-2 shrink-0" style="color:#1e5a8a;border-color:#1e5a8a;">Stáhnout</a>
+            <a href="/checkout" class="px-3 py-1.5 rounded-lg text-white text-sm font-semibold shrink-0" style="background:#1e5a8a;">PRO</a>
+        </div>
     </div>
 </nav>
 
@@ -267,7 +271,7 @@
             <div class="preview-hero-inner flex flex-col md:flex-row md:items-center gap-10">
                 <div class="preview-hero-text flex-1">
                     <div class="flex flex-wrap items-center gap-2 mb-4">
-                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">ONLINE + Desktop</span>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold" style="background:#eff6ff;color:#1e5a8a;">Webové DEMO + Desktop Agent</span>
                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Pro autorizované inženýry ČKAIT a projektové kanceláře</span>
                     </div>
                     <h1 class="mb-4" style="line-height:1.1;">
@@ -283,20 +287,56 @@
                     <ul class="text-sm text-gray-600 max-w-xl mb-6 space-y-1">
                         <li><strong>Co kontrolujeme:</strong> PDF/A, podpisy (PAdES), kvalifikovaná časová razítka, základní chyby metadat.</li>
                         <li><strong>Proč:</strong> méně vracení dokumentace, méně stresu, přehled v týmu a export do Excelu.</li>
-                        <li><strong>Jak:</strong> online rychlé vyzkoušení, plná práce u vás na disku přes desktop Agenta.</li>
+                        <li><strong>Jak:</strong> rychlé vyzkoušení jako <strong>Online DEMO</strong> v prohlížeči, plná kontrola u vás na disku přes <strong>Desktop Agenta</strong>.</li>
                     </ul>
-                    <div class="flex flex-wrap gap-3">
-                        <a href="/checkout?tarif=standard" class="px-6 py-3 rounded-lg text-white font-semibold" style="background:#1e5a8a;">Aktivovat licenci PRO</a>
-                        <a href="/app" class="px-6 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50">Vyzkoušet ONLINE (Cloud)</a>
+                    <div class="flex flex-wrap gap-3 items-stretch">
+                        <a href="/checkout" class="px-6 py-3 rounded-lg text-white font-semibold text-center" style="background:#1e5a8a;">Aktivovat licenci PRO (Desktop Agent)</a>
+                        <a href="/app" class="px-6 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 text-center">Vyzkoušet Online DEMO</a>
                     </div>
-                    <div class="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
-                        <span>✓ Žádná instalace pro online verzi</span>
-                        <span>✓ Data zůstávají u vás (Agent režim)</span>
+                    <a href="/download" class="mt-2 inline-flex w-full sm:w-auto min-h-[48px] items-center justify-center px-6 py-3 rounded-lg font-bold text-center border-2 no-underline transition hover:bg-blue-50" style="color:#1e5a8a;border-color:#1e5a8a;">Stáhnout Desktop Agenta (Windows)</a>
+                    <p class="mt-2 max-w-xl text-xs text-gray-500">Pro kontrolu dokumentů na disku potřebujete aplikaci Agent — stáhněte ji zdarma; licenci můžete doplnit kdykoli po instalaci.</p>
+                    <p class="mt-3 max-w-xl text-sm text-gray-600">Agent je bezpečný nástroj pro velké projekty, kde data neopouštějí váš PC.</p>
+                    <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
+                        <span>✓ Online DEMO bez instalace</span>
+                        <span>✓ Data u vás (Desktop Agent)</span>
                         <span>✓ PostSignum · I.CA · eIdentity</span>
                     </div>
                 </div>
                 <div class="preview-hero-img flex-shrink-0 w-full md:w-96">
                     <img src="{{ url_for('static', filename='assets/workflow_hero.jpg') }}" alt="" class="w-full rounded-2xl shadow-lg border border-gray-200">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# METODY PRÁCE: Agent vs webové DEMO #}
+    <section id="metody-prace" class="preview-section py-12 md:py-14 bg-gray-50 border-y border-gray-100">
+        <div class="preview-container max-w-6xl mx-auto px-6">
+            <div class="section-head"><span class="section-num">&nbsp;</span><h2 class="text-2xl font-bold text-center w-full" style="color:#0f172a;">Metody práce</h2></div>
+            <p class="text-center text-sm text-gray-600 max-w-2xl mx-auto mb-8">Dvě varianty kontroly dokumentace — zvolte podle stupně rizika a objemu dokumentů.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card border-2 p-6 text-left" style="border-color:#1e5a8a;">
+                    <div class="text-xs font-bold uppercase tracking-wide mb-2" style="color:#1e5a8a;">Desktop Agent</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Produkce a velké zakázky</h3>
+                    <p class="text-sm text-gray-600 mb-4">Analyzujte PDF/A-3 a podklady <strong>lokálně na vašem PC</strong>. Vhodné pro hromadné zpracování složek a citlivé projektové dokumenty.</p>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-5 list-none pl-0">
+                        <li>✓ <strong>Žádné odesílání výkresů/PDF na server</strong> — práce výhradně u vás</li>
+                        <li>✓ Hromadná kontrola a exporty při vyšší licenci PRO</li>
+                        <li>✓ Nejvyšší ochrana duševního vlastnictví při práci Agenta</li>
+                    </ul>
+                    <a href="/download" class="inline-block px-5 py-2.5 rounded-lg font-semibold text-white" style="background:#1e5a8a;">Stáhnout Agenta</a>
+                </div>
+                <div class="card p-6 text-left relative border border-amber-200 bg-amber-50/40">
+                    <span class="absolute top-4 right-4 text-[10px] font-bold uppercase px-2 py-1 rounded-full bg-amber-200 text-amber-950">Omezené DEMO</span>
+                    <div class="text-xs font-bold uppercase tracking-wide mb-2 text-amber-800">Webové rozhraní</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Rychlá ukázka v prohlížeči</h3>
+                    <p class="text-sm text-gray-600 mb-4"><strong>Omezené DEMO</strong> pro základní vyzkoušení — není náhrada za práci Agenta v produkčním provozu. Soubory mohou projít serverem při DEMO.</p>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-5 list-none pl-0">
+                        <li>✓ Bez instalace — vhodné jen na krátký test</li>
+                        <li>✓ Platí limity počtu souborů a velikosti (DEMO)</li>
+                        <li>✗ Nevhodné pro utajované či celé dílčí dokumentace zakázky</li>
+                    </ul>
+                    <a href="/app" class="inline-block px-5 py-2.5 rounded-lg font-semibold border border-gray-300 text-gray-800 bg-white hover:bg-gray-50">Otevřít Online DEMO</a>
                 </div>
             </div>
         </div>
@@ -347,10 +387,27 @@
         </div>
     </section>
 
-    {# JAK TO FUNGUJE #}
+    {# NÁVOD A BEZPEČNOST (dříve „Jak to funguje“) #}
     <section id="jak" class="preview-section py-16 bg-gray-50">
         <div class="preview-container max-w-6xl mx-auto px-6">
-            <div class="section-head"><span class="section-num">2</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Jak to funguje</h2></div>
+            <div class="section-head"><span class="section-num">2</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">{{ landing_section_how_title|default('Návod a bezpečnost') }}</h2></div>
+            <p class="text-center text-sm text-gray-500 max-w-2xl mx-auto mb-6">Pro ostrý nástroj použijte Desktop Agent — web je pouze omezená ukázka (DEMO).</p>
+
+            <div id="agent-rychly-navod" class="max-w-3xl mx-auto mb-10 rounded-2xl border bg-white p-6 shadow-sm" style="border-color:#e5e7eb;">
+                <h3 class="text-lg font-bold text-gray-900 mb-1">Jak začít s Desktop Agentem</h3>
+                <p class="text-xs text-gray-500 mb-4">Stručný postup — pod kroky najdete odkaz na podrobný návod (instalace, Windows, licence).</p>
+                <ol class="text-sm text-gray-700 space-y-3 list-decimal pl-5 mb-5">
+                    <li><strong>Stáhněte Agenta</strong> — tlačítko výše na stránce nebo stránka <a href="/download" class="font-semibold underline" style="color:#1e5a8a;">Ke stažení</a> (instalátor pro Windows).</li>
+                    <li><strong>Nainstalujte a spusťte</strong> aplikaci na počítači, kde máte projektové PDF.</li>
+                    <li><strong>Přihlaste se</strong> e-mailem a heslem z portálu, nebo použijte API klíč z licence (po zaplacení vám přístup aktivujeme).</li>
+                    <li><strong>Spusťte kontrolu</strong> — vyberte složku nebo soubory; výsledky uvidíte v přehledu (export do Excelu u tarifu PRO).</li>
+                </ol>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="/download" class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-white text-sm" style="background:#1e5a8a;">Stáhnout Agenta</a>
+                    <a href="/download#podrobny-navod" class="text-sm font-semibold underline" style="color:#1e5a8a;">Podrobný návod (3 kroky, instalace, licence) →</a>
+                </div>
+            </div>
+
             <div class="preview-grid-3 grid md:grid-cols-3 gap-6">
                 {% for step in landing_how_steps|default([{"title":"Nahraj / vyber složku","text":"Přetáhněte PDF nebo vyberte složku s dokumenty."},{"title":"Proveď kontrolu","text":"Automatická kontrola PDF/A-3, elektronických podpisů a kvalifikovaných časových razítek."},{"title":"Exportuj výsledky","text":"Výstupy do CSV/Excel, přehled podle složek a rychlé filtrování chyb."}]) %}
                 <div class="card text-center">
@@ -420,21 +477,11 @@
         </div>
     </section>
 
-    {# DVA REŽIMY #}
-    <section id="dva-rezimy" class="preview-section py-16 bg-gray-50">
-        <div class="preview-container max-w-4xl mx-auto px-6">
-            <div class="section-head"><span class="section-num">5</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Dva režimy</h2></div>
-            <div class="preview-grid-2 grid md:grid-cols-2 gap-6">
-                <div class="card">
-                    <h3 class="font-semibold text-gray-900 mb-1">Z Agenta</h3>
-                    <p class="text-sm text-gray-500">Soubory zůstávají u vás na disku. Na server jdou jen metadata a výsledky (přehled chyb). Ideální pro reálnou práci v projektech.</p>
-                </div>
-                <div class="card">
-                    <h3 class="font-semibold text-gray-900 mb-1">Cloud</h3>
-                    <p class="text-sm text-gray-500">Celé PDF se odešle na server pro rychlé vyzkoušení bez instalace. Vhodné pro jednorázovou kontrolu nebo test.</p>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 text-center mt-5">Pozn.: „Z Agenta“ = práce lokálně. „Cloud“ = celé PDF jde na server.</p>
+    {# Doplňkové upřesnění režimů - odkaz na Metody práce #}
+    <section id="dva-rezimy" class="preview-section py-10 bg-white border-t border-gray-100">
+        <div class="preview-container max-w-3xl mx-auto px-6 text-center">
+            <p class="text-sm text-gray-600 mb-3"><strong>Desktop Agent:</strong> data u vás, vhodná pro produkční expedici. <strong>Webové DEMO:</strong> rychlé vyzkoušení prohlížečem.</p>
+            <a href="#metody-prace" class="text-sm font-semibold" style="color:#1e5a8a;">Podrobné srovnání v sekci Metody práce</a>
         </div>
     </section>
 

@@ -3951,13 +3951,18 @@ def download():
     contact_email = db.get_global_setting('contact_email', '') or ''
     contact_phone = db.get_global_setting('contact_phone', '') or ''
     settings = load_settings_for_views(db) if load_settings_for_views else {}
+    agent_display = (settings.get('agent_version_display') or '').strip()
+    agent_build = (settings.get('agent_build_id') or '').strip()
+    dl_updated = (settings.get('download_agent_updated_at') or '').strip()
     return render_template('download.html',
         contact_email=contact_email, contact_phone=contact_phone,
         download_url=settings.get('download_url', ''),
         pilot_notice_text=settings.get('pilot_notice_text', ''),
-        show_pilot_notice=settings.get('show_pilot_notice', True),
-        agent_build_id=settings.get('agent_build_id', ''),
-        agent_version_display=settings.get('agent_version_display', ''),
+        show_pilot_notice=bool(settings.get('show_pilot_notice', False)),
+        agent_build_id=agent_build,
+        agent_version_display=agent_display,
+        agent_version=agent_display,
+        download_agent_updated_at=dl_updated,
         download_whats_new=settings.get('download_whats_new', ''))
 
 

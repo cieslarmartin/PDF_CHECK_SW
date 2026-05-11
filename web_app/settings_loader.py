@@ -32,15 +32,15 @@ DEFAULTS = {
     # Landing – hero a CTA
     "landing_hero_title": "DokuCheck: Vaše jistota při každém podání na Portál stavebníka.",
     "landing_hero_subtitle": "Získejte 100% jistotu, že vaše dokumentace splňuje standardy PDF/A-3 a náležitosti elektronických podpisů dle vyhlášky č. 131/2024 Sb. Hromadná strojová kontrola přímo na vašem disku.",
-    "landing_hero_badge": "ONLINE + Desktop",
+    "landing_hero_badge": "Webové DEMO + Desktop Agent",
     "landing_cta_primary": "Vyzkoušet ONLINE Check",
     "landing_cta_secondary": "Stáhnout aplikaci zdarma",
-    "landing_section_how_title": "Jak to funguje",
-    "landing_section_modes_title": "Dva režimy: Z Agenta vs Cloud",
+    "landing_section_how_title": "Návod a bezpečnost",
+    "landing_section_modes_title": "Dva režimy: Agent vs webové DEMO",
     "landing_mode_agent_title": "Z Agenta",
     "landing_mode_agent_text": "Soubory na disku, na server jen metadata.",
-    "landing_mode_cloud_title": "Cloud",
-    "landing_mode_cloud_text": "Celé PDF na server. Rychlé vyzkoušení.",
+    "landing_mode_cloud_title": "Webové DEMO",
+    "landing_mode_cloud_text": "Omezená ukázka v prohlížeči — rychlé vyzkoušení, celé PDF může projít přes server (DEMO).",
     "landing_tarif_basic_desc": "Ideální pro menší zakázky a samostatné projektanty.",
     "landing_tarif_standard_desc": "Plné funkce, export, historie.",
     "landing_tarif_premium_desc": "Na míru pro větší týmy.",
@@ -58,6 +58,7 @@ DEFAULTS = {
     # Upozornění na webu (volitelné; defaultně skryté)
     "pilot_notice_text": "",
     "show_pilot_notice": False,
+    "download_agent_updated_at": "",
 }
 
 # Výchozí hodnoty pro JSON klíče
