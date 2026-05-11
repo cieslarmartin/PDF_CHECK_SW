@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>DokuCheck – Mobilní Admin</title>
+
+  <!-- PWA: linkovat pouze v této privátní admin šabloně -->
+  <link rel="manifest" href="/admin/m-dashboard/manifest.json" />
+
+  <!-- Tailwind pouze zde (privátní admin UI) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: "#0b1220",
+            panel: "#0f1a2e",
+            panel2: "#101f3a",
+            stroke: "rgba(255,255,255,.10)",
+            text: "#e5e7eb",
+            muted: "rgba(229,231,235,.75)",
+            good: "#22c55e",
+            warn: "#f59e0b",
+            bad: "#ef4444",
+            brand: "#22c55e"
+          }
+        }
+      }
+    };
+  </script>
+</head>
+
+<body class="min-h-screen bg-bg text-text">
+  <div class="mx-auto max-w-md px-4 pb-24 pt-5">
+    <header class="mb-4">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="text-xs text-muted">DokuCheck</div>
+          <h1 class="text-xl font-extrabold tracking-tight">Mobilní Admin</h1>
+        </div>
+        <a href="/admin/dashboard"
+           class="shrink-0 rounded-xl border border-stroke bg-panel2 px-3 py-2 text-sm font-semibold hover:bg-panel">
+          Zpět na desktop
+        </a>
+      </div>
+      <div class="mt-3 flex items-center gap-2">
+        <span id="healthDot" class="inline-flex h-2.5 w-2.5 rounded-full bg-warn"></span>
+        <span id="healthText" class="text-sm text-muted">Kontroluji server…</span>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <section class="mb-4 rounded-2xl border border-stroke bg-panel p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-bold">Dnes</h2>
+        <button id="btnRefresh"
+                class="rounded-xl border border-stroke bg-panel2 px-3 py-2 text-sm font-semibold hover:bg-panel">
+          Obnovit
+        </button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-2xl border border-stroke bg-panel2 p-3">
+          <div class="text-xs text-muted">Objednávky</div>
+          <div id="todayOrdersCount" class="mt-1 text-2xl font-extrabold">—</div>
+          <div id="todayOrdersAmount" class="mt-1 text-xs text-muted">—</div>
+        </div>
+        <div class="rounded-2xl border border-stroke bg-panel2 p-3">
+          <div class="text-xs text-muted">Aktivní licence</div>
+          <div id="activeLicensesCount" class="mt-1 text-2xl font-extrabold">—</div>
+          <div class="mt-1 text-xs text-muted">aktivní & neexp.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agent control -->
+    <section class="mb-4 rounded-2xl border border-stroke bg-panel p-4">
+      <div class="mb-2 flex items-center justify-between">
+        <h2 class="text-base font-bold">Agent Control</h2>
+        <span id="agentSaved" class="text-xs text-muted"></span>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-muted">AGENT_BUILD_ID</label>
+          <input id="agentBuild"
+                 class="mt-1 w-full rounded-xl border border-stroke bg-panel2 px-3 py-3 text-base outline-none focus:border-white/30"
+                 inputmode="numeric"
+                 placeholder="např. 54" />
+        </div>
+        <div>
+          <label class="text-xs text-muted">AGENT_VERSION</label>
+          <input id="agentVersion"
+                 class="mt-1 w-full rounded-xl border border-stroke bg-panel2 px-3 py-3 text-base outline-none focus:border-white/30"
+                 placeholder="např. v26.02.008" />
+        </div>
+      </div>
+      <button id="btnAgentUpdate"
+              class="mt-3 w-full rounded-2xl bg-brand px-4 py-3 text-base font-extrabold text-black hover:opacity-90">
+        Update
+      </button>
+      <p class="mt-2 text-xs text-muted">
+        Ukládá se do DB (override). Veřejný web ani landing se nemění – jen metadata pro download / updater.
+      </p>
+    </section>
+
+    <!-- Orders -->
+    <section class="rounded-2xl border border-stroke bg-panel p-4">
+      <div class="mb-2 flex items-center justify-between">
+        <h2 class="text-base font-bold">Poslední objednávky</h2>
+        <span class="text-xs text-muted">posledních 5</span>
+      </div>
+      <div id="ordersList" class="space-y-3"></div>
+      <div id="ordersEmpty" class="hidden rounded-2xl border border-stroke bg-panel2 p-3 text-sm text-muted">
+        Žádné objednávky.
+      </div>
+    </section>
+  </div>
+
+  <div class="fixed inset-x-0 bottom-0 z-50 border-t border-stroke bg-panel/90 backdrop-blur">
+    <div class="mx-auto flex max-w-md items-center justify-between px-4 py-3">
+      <a href="/admin/users-licenses"
+         class="rounded-2xl border border-stroke bg-panel2 px-4 py-3 text-sm font-bold hover:bg-panel">
+        Licence & objednávky
+      </a>
+      <a href="/logout"
+         class="rounded-2xl bg-red-500 px-4 py-3 text-sm font-extrabold text-white hover:opacity-90">
+        Odhlásit
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmtCzk = (n) => {
+      try { return new Intl.NumberFormat('cs-CZ').format(n) + ' Kč'; }
+      catch (_) { return String(n) + ' Kč'; }
+    };
+
+    function setHealth(ok, text) {
+      $('healthDot').className = 'inline-flex h-2.5 w-2.5 rounded-full ' + (ok ? 'bg-good' : 'bg-bad');
+      $('healthText').textContent = text;
+    }
+
+    async function apiGet(url) {
+      const r = await fetch(url, { credentials: 'same-origin' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(j && j.error ? j.error : 'Chyba API');
+      }
+      return j;
+    }
+
+    async function apiPost(url, payload) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {}),
+        credentials: 'same-origin'
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(j && j.error ? j.error : 'Chyba API');
+      }
+      return j;
+    }
+
+    function renderOrders(items) {
+      const list = $('ordersList');
+      list.innerHTML = '';
+      if (!items || !items.length) {
+        $('ordersEmpty').classList.remove('hidden');
+        return;
+      }
+      $('ordersEmpty').classList.add('hidden');
+      for (const o of items) {
+        const id = o.id;
+        const title = (o.order_display_number || o.invoice_number || ('#' + id));
+        const amount = o.amount_czk_final ?? o.amount_czk;
+        const amountText = (amount !== null && amount !== undefined && amount !== '') ? fmtCzk(Number(amount)) : '—';
+        const status = (o.status || '—');
+        const email = (o.email || '—');
+        const created = (o.created_at || '—');
+
+        const el = document.createElement('div');
+        el.className = 'rounded-2xl border border-stroke bg-panel2 p-3';
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-sm font-extrabold">${title}</div>
+              <div class="mt-0.5 text-xs text-muted">${email}</div>
+              <div class="mt-1 flex flex-wrap gap-2 text-xs">
+                <span class="rounded-lg border border-stroke px-2 py-1 text-muted">${status}</span>
+                <span class="rounded-lg border border-stroke px-2 py-1 text-muted">${amountText}</span>
+                <span class="rounded-lg border border-stroke px-2 py-1 text-muted">${created}</span>
+              </div>
+            </div>
+            <button class="btnSend shrink-0 rounded-xl bg-brand px-3 py-2 text-sm font-extrabold text-black hover:opacity-90"
+                    data-order-id="${id}">
+              Odeslat
+            </button>
+          </div>
+          <div class="mt-2 text-xs text-muted">Odeslání platebních údajů (+ faktura, pokud existuje).</div>
+        `;
+        list.appendChild(el);
+      }
+
+      for (const btn of document.querySelectorAll('.btnSend')) {
+        btn.addEventListener('click', async (e) => {
+          const b = e.currentTarget;
+          const oid = b.getAttribute('data-order-id');
+          b.disabled = true;
+          const old = b.textContent;
+          b.textContent = 'Odesílám…';
+          try {
+            await apiPost('/admin/api/mobile/order/send-payment', { order_id: oid });
+            b.textContent = 'Odesláno';
+            b.classList.remove('bg-brand');
+            b.classList.add('bg-white/10', 'text-text');
+            setTimeout(() => { b.textContent = old; b.disabled = false; b.classList.remove('bg-white/10','text-text'); b.classList.add('bg-brand'); }, 2200);
+          } catch (err) {
+            alert(String(err && err.message ? err.message : err));
+            b.textContent = old;
+            b.disabled = false;
+          }
+        });
+      }
+    }
+
+    async function loadAll() {
+      try {
+        const h = await apiGet('/admin/api/mobile/health');
+        setHealth(!!(h.server_ok && h.db_ok), (h.server_ok && h.db_ok) ? 'Server OK, DB OK' : 'Problém se serverem nebo DB');
+      } catch (_) {
+        setHealth(false, 'Nejde načíst stav serveru');
+      }
+      try {
+        const s = await apiGet('/admin/api/mobile/summary');
+        $('todayOrdersCount').textContent = String(s.today_orders_count ?? '—');
+        $('todayOrdersAmount').textContent = (s.today_orders_amount_czk != null) ? ('Součet: ' + fmtCzk(Number(s.today_orders_amount_czk))) : '—';
+        $('activeLicensesCount').textContent = String(s.active_licenses_count ?? '—');
+
+        if (s.agent_build_id != null) $('agentBuild').value = String(s.agent_build_id);
+        if (s.agent_version_display != null) $('agentVersion').value = String(s.agent_version_display);
+
+        renderOrders(s.last_orders || []);
+      } catch (err) {
+        alert(String(err && err.message ? err.message : err));
+      }
+    }
+
+    $('btnRefresh').addEventListener('click', loadAll);
+
+    $('btnAgentUpdate').addEventListener('click', async () => {
+      const build = $('agentBuild').value.trim();
+      const ver = $('agentVersion').value.trim();
+      $('agentSaved').textContent = '';
+      try {
+        await apiPost('/admin/api/mobile/agent-version', { agent_build_id: build, agent_version_display: ver });
+        $('agentSaved').textContent = 'Uloženo do DB.';
+        setTimeout(() => $('agentSaved').textContent = '', 2500);
+      } catch (err) {
+        alert(String(err && err.message ? err.message : err));
+      }
+    });
+
+    // SW: registrovat pouze zde (privátní admin šablona)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/admin/m-dashboard/service-worker.js').catch(() => {});
+      });
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>
+

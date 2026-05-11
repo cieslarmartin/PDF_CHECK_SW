@@ -7,7 +7,7 @@
 #
 # Spuštění: python pdf_check_web_main.py
 
-from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for, session, flash, current_app
+from flask import Flask, request, jsonify, render_template_string, render_template, Response, redirect, url_for, session, flash, current_app, send_from_directory, make_response
 import io
 import logging
 import re
@@ -57,7 +57,7 @@ except ImportError:
     DEFAULT_PRICING_TARIFS = {"basic": {"label": "BASIC", "amount_czk": 1090}, "standard": {"label": "PRO", "amount_czk": 1590}}
 
 # NOVÉ: Admin systém
-from admin_routes import admin_bp, get_db
+from admin_routes import admin_bp, get_db, admin_required
 from version import (
     WEB_BUILD,
     WEB_VERSION,
@@ -99,6 +99,34 @@ def kill_port(port=5000):
 
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
+
+# =============================================================================
+# PRIVÁTNÍ MOBILNÍ ADMIN (PWA) – pouze pro admina, bez dopadu na veřejný web
+# =============================================================================
+
+@app.route('/admin/m-dashboard', methods=['GET'])
+@admin_required
+def admin_mobile_dashboard():
+    """Privátní mobilní dashboard (PWA)."""
+    return render_template('admin/mobile_app.html')
+
+
+@app.route('/admin/m-dashboard/manifest.json', methods=['GET'])
+@admin_required
+def admin_mobile_manifest():
+    resp = make_response(send_from_directory('static/admin_mobile_pwa', 'manifest.json'))
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+@app.route('/admin/m-dashboard/service-worker.js', methods=['GET'])
+@admin_required
+def admin_mobile_service_worker():
+    resp = make_response(send_from_directory('static/admin_mobile_pwa', 'service-worker.js'))
+    resp.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 # Kanonická doména a HTTPS (obcházení problému s DNS přesměrováním na Wedosu)
 CANONICAL_HOST = 'www.dokucheck.cz'

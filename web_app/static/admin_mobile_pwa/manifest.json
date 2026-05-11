@@ -1,0 +1,17 @@
+{
+  "name": "DokuCheck – Mobilní Admin",
+  "short_name": "DokuCheck Admin",
+  "start_url": "/admin/m-dashboard",
+  "scope": "/admin/m-dashboard",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "/static/logo/dokucheck-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}
+

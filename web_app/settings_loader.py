@@ -196,8 +196,11 @@ def load_settings_for_views(db):
         from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"
         out["web_build"] = str(WEB_BUILD) if WEB_BUILD is not None else "n/a"
-        out["agent_build_id"] = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else "51"
-        out["agent_version_display"] = (AGENT_VERSION_DISPLAY or "").strip() or "v26.03.0xx"
+        # Agent: primárně DB override (global_settings), fallback na version.py
+        agent_build_override = (db.get_global_setting("agent_build_id", "") or "").strip()
+        agent_ver_override = (db.get_global_setting("agent_version_display", "") or "").strip()
+        out["agent_build_id"] = agent_build_override or (str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else "51")
+        out["agent_version_display"] = agent_ver_override or ((AGENT_VERSION_DISPLAY or "").strip() or "v26.03.0xx")
         out["agent_version"] = out["agent_version_display"]
         out["agent_build"] = out["agent_build_id"]
     except (ImportError, AttributeError) as e:

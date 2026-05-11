@@ -2012,6 +2012,175 @@ def settings():
 # API ENDPOINTS PRO ADMIN AKCE
 # =============================================================================
 
+@admin_bp.route('/admin/api/mobile/health', methods=['GET'])
+@admin_required
+def api_mobile_health():
+    """Privátní mobilní dashboard: health check (server + DB)."""
+    db_ok = False
+    try:
+        db = get_db()
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT 1')
+        _ = cur.fetchone()
+        conn.close()
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return jsonify({
+        'server_ok': True,
+        'db_ok': db_ok,
+        'ts': datetime.utcnow().isoformat(timespec='seconds') + 'Z',
+    })
+
+
+@admin_bp.route('/admin/api/mobile/summary', methods=['GET'])
+@admin_required
+def api_mobile_summary():
+    """Privátní mobilní dashboard: dnešní prodeje, aktivní licence, poslední objednávky + agent metadata."""
+    db = get_db()
+
+    # Dnešní prodeje = pending_orders vytvořené dnes (počet + součet amount_czk_final/amount_czk)
+    today_orders_count = 0
+    today_orders_amount = 0
+    try:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT
+                COUNT(*) AS c,
+                COALESCE(SUM(COALESCE(amount_czk_final, amount_czk)), 0) AS s
+            FROM pending_orders
+            WHERE date(created_at, 'localtime') = date('now', 'localtime')
+        ''')
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            today_orders_count = int(row['c'] or 0)
+            try:
+                today_orders_amount = int(float(row['s'] or 0))
+            except Exception:
+                today_orders_amount = 0
+    except Exception:
+        pass
+
+    # Aktivní licence (stejně jako desktop dashboard)
+    active_licenses_count = 0
+    try:
+        licenses = db.admin_get_all_licenses()
+        active_licenses_count = sum(1 for l in (licenses or []) if l.get('is_active') and not l.get('is_expired'))
+    except Exception:
+        active_licenses_count = 0
+
+    # Posledních 5 objednávek
+    last_orders = []
+    try:
+        last_orders = db.get_pending_orders(limit=5) or []
+    except Exception:
+        last_orders = []
+
+    # Agent metadata (DB override)
+    agent_build_id = (db.get_global_setting('agent_build_id', '') or '').strip()
+    agent_version_display = (db.get_global_setting('agent_version_display', '') or '').strip()
+    if not agent_build_id or not agent_version_display:
+        try:
+            from version import AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
+            if not agent_build_id:
+                agent_build_id = str(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else ''
+            if not agent_version_display:
+                agent_version_display = (AGENT_VERSION_DISPLAY or '').strip()
+        except Exception:
+            pass
+
+    return jsonify({
+        'today_orders_count': today_orders_count,
+        'today_orders_amount_czk': today_orders_amount,
+        'active_licenses_count': active_licenses_count,
+        'last_orders': last_orders,
+        'agent_build_id': agent_build_id,
+        'agent_version_display': agent_version_display,
+    })
+
+
+@admin_bp.route('/admin/api/mobile/agent-version', methods=['POST'])
+@admin_required
+def api_mobile_agent_version():
+    """Uloží agent metadata do DB override (global_settings)."""
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Očekávám JSON.'}), 400
+    data = request.get_json(silent=True) or {}
+    build_raw = (data.get('agent_build_id') or '').strip()
+    ver_raw = (data.get('agent_version_display') or '').strip()
+    if not build_raw or not ver_raw:
+        return jsonify({'success': False, 'error': 'Vyplňte AGENT_BUILD_ID i AGENT_VERSION.'}), 400
+    try:
+        int(build_raw)
+    except ValueError:
+        return jsonify({'success': False, 'error': 'AGENT_BUILD_ID musí být číslo.'}), 400
+    db = get_db()
+    db.set_global_setting('agent_build_id', build_raw)
+    db.set_global_setting('agent_version_display', ver_raw)
+    return jsonify({'success': True})
+
+
+@admin_bp.route('/admin/api/mobile/order/send-payment', methods=['POST'])
+@admin_required
+def api_mobile_order_send_payment():
+    """Manuální odeslání e-mailu s platebními údaji (+ faktura, pokud existuje) pro jednu objednávku."""
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Očekávám JSON.'}), 400
+    data = request.get_json(silent=True) or {}
+    order_id = (data.get('order_id') or '').strip()
+    if not order_id:
+        return jsonify({'success': False, 'error': 'Chybí order_id.'}), 400
+
+    db = get_db()
+    order = db.get_pending_order_by_id(order_id)
+    if not order:
+        return jsonify({'success': False, 'error': 'Objednávka nenalezena.'}), 404
+    to_email = (order.get('email') or '').strip()
+    if not to_email:
+        return jsonify({'success': False, 'error': 'Objednávka nemá e-mail příjemce.'}), 400
+
+    try:
+        from email_sender import get_order_confirmation_email_preview, send_email_with_attachment
+        vs = (order.get('order_display_number') or order.get('invoice_number') or '').strip() or str(order.get('id') or order_id)
+        subject, body_plain, body_html = get_order_confirmation_email_preview(
+            order_id=order['id'],
+            email=to_email,
+            jmeno_firma=order.get('jmeno_firma'),
+            tarif=order.get('tarif'),
+            amount_czk=order.get('amount_czk_final') or order.get('amount_czk') or '',
+            vs=vs
+        )
+        invoice_path = None
+        invoice_filename = None
+        if order.get('invoice_path') and os.path.isfile(order.get('invoice_path')):
+            invoice_path = order.get('invoice_path')
+            invoice_filename = 'faktura_{}.pdf'.format((order.get('invoice_number') or order.get('order_display_number') or '').strip() or str(order_id))
+        ok = send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body_plain=body_plain,
+            body_html=body_html,
+            attachment_path=invoice_path,
+            attachment_filename=invoice_filename,
+            append_footer=True
+        )
+        if ok:
+            db.log_email(to_email, subject, 'success')
+            db.update_pending_order_status(order_id, 'payment_sent')
+            return jsonify({'success': True})
+        db.log_email(to_email, subject, 'error')
+        return jsonify({'success': False, 'error': 'Odeslání e-mailu selhalo. Zkontrolujte SMTP.'}), 500
+    except Exception as e:
+        try:
+            db.log_email(to_email, 'MOBILE_SEND_PAYMENT_ERROR', 'error')
+        except Exception:
+            pass
+        return jsonify({'success': False, 'error': 'Chyba při odesílání e-mailu: {}'.format(str(e))}), 500
+
+
 @admin_bp.route('/admin/api/email-preview', methods=['GET'])
 @admin_required
 def api_email_preview():

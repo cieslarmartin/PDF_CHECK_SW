@@ -1296,10 +1296,18 @@ def register_api_routes(app):
                 update_msg = 'Používáte aktuální verzi.'
             base = request.url_root.rstrip('/') if request.url_root else 'https://www.dokucheck.cz'
             try:
-                from version import AGENT_VERSION_DISPLAY, AGENT_BUILD_ID
-                latest_raw = (AGENT_VERSION_DISPLAY or '').strip()
-                latest_agent_version = latest_raw.lstrip('vVwW').strip() if latest_raw else '26.02.008'
-                latest_agent_build = int(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else 54
+                # DB override má přednost (global_settings), fallback na version.py
+                build_override = (db.get_global_setting('agent_build_id', '') or '').strip()
+                ver_override = (db.get_global_setting('agent_version_display', '') or '').strip()
+                if build_override or ver_override:
+                    latest_raw = ver_override
+                    latest_agent_version = (latest_raw or '').lstrip('vVwW').strip() if latest_raw else '26.02.008'
+                    latest_agent_build = int(build_override) if (build_override and build_override.isdigit()) else 54
+                else:
+                    from version import AGENT_VERSION_DISPLAY, AGENT_BUILD_ID
+                    latest_raw = (AGENT_VERSION_DISPLAY or '').strip()
+                    latest_agent_version = latest_raw.lstrip('vVwW').strip() if latest_raw else '26.02.008'
+                    latest_agent_build = int(AGENT_BUILD_ID) if AGENT_BUILD_ID is not None else 54
             except Exception:
                 latest_agent_version = '26.02.008'
                 latest_agent_build = 54
