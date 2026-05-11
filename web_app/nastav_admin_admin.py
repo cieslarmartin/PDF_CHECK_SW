@@ -12,14 +12,19 @@ db = Database()
 # Pokud už existuje účet s emailem "admin", nastavíme mu heslo "admin"
 user = db.get_admin_by_email('admin')
 if user:
-    db.update_admin_user(user['id'], password='admin')
-    print('OK: Heslo pro admin nastaveno na "admin".')
+    db.update_admin_user(
+        user['id'],
+        password='admin',
+        otp_email=(user.get('otp_email') or '').strip() or 'cieslar@dokucheck.cz',
+    )
+    print('OK: Heslo pro admin nastaveno na "admin", doplněn otp_email pokud chyběl.')
 else:
     success, msg = db.create_admin_user(
         email='admin',
         password='admin',
         role='ADMIN',
-        display_name='Admin'
+        display_name='Admin',
+        otp_email='cieslar@dokucheck.cz',
     )
     if success:
         print('OK: Admin účet vytvořen. Přihlášení: admin / admin')

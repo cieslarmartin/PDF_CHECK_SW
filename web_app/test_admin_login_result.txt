@@ -1,14 +1,13 @@
 === Test admin přístupu (dashboard) ===
 
-Účet: admin@admin.cz
+Účet: admin
 Heslo: admin
 
-OK – Přihlášení funguje.
+OK – První krok (heslo) funguje.
   Uživatel: Admin, role: ADMIN
+  OTP e-mail v DB: cieslar@dokucheck.cz
 
-Přístup k dashboardu a admin funkcím:
-  1. Otevřete v prohlížeči: /login
-  2. Zadejte e-mail: admin@admin.cz
-  3. Zadejte heslo: admin
-  4. Po přihlášení: /admin nebo /admin/dashboard
-  (Licence, Tiery, Čeká na platbu, Trial, Logy, Nastavení, Změna hesla, atd.)
+Přístup k dashboardu:
+  1. /login – jméno admin, heslo admin
+  2. Kód z e-mailu na stránce /login/verify-code
+  3. Poté /admin nebo /admin/dashboard

@@ -226,7 +226,10 @@ def inject_web_build():
 # NOVÉ: Secret key pro sessions (admin panel)
 import os
 app.secret_key = os.environ.get('SECRET_KEY', 'pdfcheck_secret_key_2025_change_in_production')
-app.config['SESSION_COOKIE_SECURE'] = False  # V produkci nastavit na True s HTTPS
+# Na PythonAnywhere s HTTPS nastavte SESSION_COOKIE_SECURE=1 v proměnných prostředí
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '').strip().lower() in (
+    '1', 'true', 'yes', 'on',
+)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 

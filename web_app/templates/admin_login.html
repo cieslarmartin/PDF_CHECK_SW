@@ -135,7 +135,8 @@
             <div class="logo-subtitle">Admin Panel</div>
         </div>
 
-        <h2>Prihlaseni</h2>
+        <h2>Přihlášení do administrace</h2>
+        <p style="color:#6b7280;font-size:0.88em;margin:-12px 0 20px;text-align:center;">Po hesle obdržíte kód e-mailem.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -147,25 +148,23 @@
 
         <form method="POST" action="{{ url_for('admin.login') }}">
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="text" id="email" name="email" required placeholder="admin nebo email"
-                       placeholder="admin@example.com" autofocus>
+                <label for="email">Přihlašovací jméno</label>
+                <input type="text" id="email" name="email" required placeholder="admin" autofocus autocomplete="username">
             </div>
 
             <div class="form-group">
                 <label for="password">Heslo</label>
-                <input type="password" id="password" name="password" required
-                       placeholder="Vase heslo">
+                <input type="password" id="password" name="password" required placeholder="Heslo" autocomplete="current-password">
             </div>
 
-            <button type="submit" class="btn">Prihlasit se</button>
+            <button type="submit" class="btn">Pokračovat</button>
         </form>
 
         <div class="footer">
-            <a href="/">Zpet na hlavni stranku</a>
+            <a href="/">Zpět na hlavní stránku</a>
             <br><br>
-            DokuCheck v42<br>
-            &copy; 2025 Ing. Martin Cieslar
+            DokuCheck<br>
+            &copy; 2025 Ing. Martin Cieślar
         </div>
     </div>
 </body>

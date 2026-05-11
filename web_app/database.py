@@ -158,6 +158,29 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_admin_email ON admin_users(email)')
 
+        # Migrace: admin_users.otp_email (kam poslat OTP; přihlašovací email může být např. „admin“)
+        cursor.execute('PRAGMA table_info(admin_users)')
+        _admin_cols = [r[1] for r in cursor.fetchall()]
+        if 'otp_email' not in _admin_cols:
+            cursor.execute('ALTER TABLE admin_users ADD COLUMN otp_email TEXT')
+
+        # Jednorázové kódy pro druhý krok admin přihlášení (e-mail OTP)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS admin_login_challenges (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                admin_user_id INTEGER NOT NULL,
+                code_hash TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                created_ip TEXT,
+                used_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (admin_user_id) REFERENCES admin_users(id)
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_admin_challenges_user ON admin_login_challenges(admin_user_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_admin_challenges_expires ON admin_login_challenges(expires_at)')
+
         # User analytics & security: request log (every request)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_logs (
@@ -2693,6 +2716,200 @@ class Database:
     # ADMIN SYSTÉM (NOVÉ v41)
     # =========================================================================
 
+    def _hash_login_otp_code(self, code: str) -> str:
+        """Uložení 6místného OTP: salt$sha256(salt+code) — neukládat čistý kód."""
+        salt = secrets.token_hex(8)
+        h = hashlib.sha256((salt + (code or '').strip()).encode('utf-8')).hexdigest()
+        return f"{salt}${h}"
+
+    def _verify_login_otp_code(self, code: str, stored: str) -> bool:
+        try:
+            salt, hexd = stored.split('$', 1)
+            want = hashlib.sha256((salt + (code or '').strip()).encode('utf-8')).hexdigest()
+            return secrets.compare_digest(want, hexd)
+        except (ValueError, AttributeError):
+            return False
+
+    def _find_admin_row_for_login(self, login_identifier: str):
+        """Vrátí řádek admin_users včetně password_hash nebo None."""
+        raw = (login_identifier or '').strip()
+        if not raw:
+            return None
+        rl = raw.lower()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        if rl in ('admin', 'admin@admin.cz'):
+            cursor.execute('''
+                SELECT id, email, password_hash, role, display_name, is_active, otp_email
+                FROM admin_users
+                WHERE (is_active = 1 OR is_active IS NULL)
+                  AND LOWER(email) IN ('admin', 'admin@admin.cz')
+                ORDER BY CASE WHEN LOWER(email) = 'admin' THEN 0 ELSE 1 END
+                LIMIT 1
+            ''')
+        else:
+            cursor.execute('''
+                SELECT id, email, password_hash, role, display_name, is_active, otp_email
+                FROM admin_users
+                WHERE (is_active = 1 OR is_active IS NULL)
+                  AND LOWER(email) = LOWER(?)
+                LIMIT 1
+            ''', (raw,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def verify_admin_password_step(self, login_identifier: str, password: str) -> tuple:
+        """
+        Ověří heslo bez nastavení last_login (první krok před e-mailovým OTP).
+        Vrací (True, user_dict bez password_hash) nebo (False, chybová zpráva).
+        """
+        user = self._find_admin_row_for_login(login_identifier)
+        if not user:
+            return False, 'Neplatný e-mail nebo heslo'
+        if not user.get('is_active'):
+            return False, 'Účet je deaktivován'
+        if not self._verify_password(password, user['password_hash']):
+            return False, 'Neplatný e-mail nebo heslo'
+        del user['password_hash']
+        return True, user
+
+    def record_admin_last_login(self, user_id: int) -> None:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
+            (user_id,),
+        )
+        conn.commit()
+        conn.close()
+
+    def check_admin_bruteforce_ip(self, ip: str, max_failures: int = 40, window_minutes: int = 15) -> tuple:
+        """
+        Omezí opakované pokusy o přihlášení z jedné IP (heslo i OTP).
+        Vrací (True, '') nebo (False, zpráva pro uživatele).
+        """
+        ident = (ip or 'unknown').strip()[:200] or 'unknown'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''DELETE FROM rate_limits WHERE action_type = 'admin_login_fail'
+               AND timestamp < datetime('now', '-' || ? || ' minutes')''',
+            (str(window_minutes + 60),),
+        )
+        cursor.execute(
+            '''SELECT COUNT(*) AS c FROM rate_limits
+               WHERE action_type = 'admin_login_fail' AND identifier = ?
+                 AND timestamp > datetime('now', '-' || ? || ' minutes')''',
+            (ident, str(window_minutes)),
+        )
+        n = int(cursor.fetchone()['c'])
+        if n >= max_failures:
+            conn.commit()
+            conn.close()
+            return False, 'Příliš mnoho neúspěšných pokusů. Zkuste to znovu později.'
+        conn.commit()
+        conn.close()
+        return True, ''
+
+    def record_admin_login_failure(self, ip: str) -> None:
+        ident = (ip or 'unknown').strip()[:200] or 'unknown'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''INSERT INTO rate_limits (identifier, identifier_type, action_type)
+               VALUES (?, 'ip', 'admin_login_fail')''',
+            (ident,),
+        )
+        conn.commit()
+        conn.close()
+
+    def invalidate_open_admin_challenges(self, admin_user_id: int) -> None:
+        """Zneplatní nevyřízené výzvy OTP pro daného admina (nový kód = staré neplatné)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''UPDATE admin_login_challenges SET used_at = CURRENT_TIMESTAMP
+               WHERE admin_user_id = ? AND used_at IS NULL''',
+            (admin_user_id,),
+        )
+        conn.commit()
+        conn.close()
+
+    def create_admin_login_challenge(self, admin_user_id: int, plain_code: str, client_ip: str = None) -> int:
+        self.invalidate_open_admin_challenges(admin_user_id)
+        code_hash = self._hash_login_otp_code(plain_code)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''INSERT INTO admin_login_challenges
+               (admin_user_id, code_hash, expires_at, attempts, created_ip)
+               VALUES (?, ?, ?, 0, ?)''',
+            (admin_user_id, code_hash, expires_at.isoformat(sep=' ', timespec='seconds'),
+             (client_ip or '')[:100] or None),
+        )
+        cid = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return cid
+
+    def verify_admin_login_challenge(self, challenge_id: int, admin_user_id: int, plain_code: str) -> tuple:
+        """
+        Ověří OTP pro druhý krok. Vrací (True, user_dict) nebo (False, None, chybová zpráva).
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''SELECT id, admin_user_id, code_hash, expires_at, attempts, used_at
+               FROM admin_login_challenges WHERE id = ?''',
+            (challenge_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return False, None, 'Platnost ověření vypršela. Přihlaste se znovu.'
+        ch = dict(row)
+        if int(ch['admin_user_id']) != int(admin_user_id):
+            conn.close()
+            return False, None, 'Neplatný požadavek.'
+        if ch.get('used_at'):
+            conn.close()
+            return False, None, 'Tento kód již byl použit. Přihlaste se znovu.'
+        try:
+            exp = datetime.fromisoformat(str(ch['expires_at']).replace('Z', '+00:00'))
+            if exp.tzinfo:
+                exp = exp.replace(tzinfo=None)
+        except (ValueError, TypeError):
+            exp = datetime.utcnow() + timedelta(days=365)
+        if datetime.utcnow() > exp:
+            conn.close()
+            return False, None, 'Platnost kódu vypršela. Přihlaste se znovu.'
+        attempts = int(ch['attempts'] or 0)
+        if attempts >= 5:
+            conn.close()
+            return False, None, 'Příliš mnoho chybných pokusů. Přihlaste se znovu.'
+        new_attempts = attempts + 1
+        cursor.execute(
+            'UPDATE admin_login_challenges SET attempts = ? WHERE id = ?',
+            (new_attempts, challenge_id),
+        )
+        if not self._verify_login_otp_code(plain_code, ch['code_hash']):
+            conn.commit()
+            conn.close()
+            return False, None, 'Neplatný kód.'
+        cursor.execute(
+            '''UPDATE admin_login_challenges SET used_at = CURRENT_TIMESTAMP
+               WHERE id = ?''',
+            (challenge_id,),
+        )
+        conn.commit()
+        conn.close()
+        user = self.get_admin_by_id(admin_user_id)
+        if not user:
+            return False, None, 'Chyba účtu.'
+        return True, user, ''
+
     def _hash_password(self, password: str) -> str:
         """Vytvoří hash hesla s náhodnou solí"""
         salt = secrets.token_hex(16)
@@ -2719,15 +2936,16 @@ class Database:
             return False
 
     def create_admin_user(self, email: str, password: str, role: str = 'USER',
-                          display_name: str = None) -> tuple:
+                          display_name: str = None, otp_email: str = None) -> tuple:
         """
         Vytvoří nového admin uživatele
 
         Args:
-            email: Email uživatele (unikátní)
+            email: Přihlašovací identifikátor (e-mail nebo např. „admin“)
             password: Heslo v čitelné formě
             role: 'USER' nebo 'ADMIN'
             display_name: Zobrazované jméno
+            otp_email: Kam poslat jednorázový kód při přihlášení (volitelné)
 
         Returns:
             tuple: (success: bool, message: str)
@@ -2737,11 +2955,14 @@ class Database:
 
         try:
             password_hash = self._hash_password(password)
+            disp = display_name
+            if not disp:
+                disp = email.split('@')[0] if '@' in str(email) else str(email)
 
             cursor.execute('''
-                INSERT INTO admin_users (email, password_hash, role, display_name)
-                VALUES (?, ?, ?, ?)
-            ''', (email, password_hash, role.upper(), display_name or email.split('@')[0]))
+                INSERT INTO admin_users (email, password_hash, role, display_name, otp_email)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (email, password_hash, role.upper(), disp, (otp_email or '').strip() or None))
 
             conn.commit()
             return True, "Uživatel vytvořen"
@@ -2754,47 +2975,16 @@ class Database:
 
     def verify_admin_login(self, email: str, password: str) -> tuple:
         """
-        Ověří přihlášení admin uživatele
+        Ověří přihlášení admin uživatele (heslo) a zapíše last_login.
+        Pro dvoufázové přihlášení použijte verify_admin_password_step bez zápisu last_login.
 
         Returns:
             tuple: (success: bool, user_dict or error_message)
         """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute('''
-            SELECT id, email, password_hash, role, display_name, is_active
-            FROM admin_users
-            WHERE email = ?
-        ''', (email,))
-
-        row = cursor.fetchone()
-
-        if not row:
-            conn.close()
-            return False, "Neplatný email nebo heslo"
-
-        user = dict(row)
-
-        if not user['is_active']:
-            conn.close()
-            return False, "Účet je deaktivován"
-
-        if not self._verify_password(password, user['password_hash']):
-            conn.close()
-            return False, "Neplatný email nebo heslo"
-
-        # Aktualizuj last_login
-        cursor.execute('''
-            UPDATE admin_users SET last_login = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ''', (user['id'],))
-        conn.commit()
-        conn.close()
-
-        # Odstraň hash z výsledku
-        del user['password_hash']
-        return True, user
+        ok, res = self.verify_admin_password_step(email, password)
+        if ok:
+            self.record_admin_last_login(res['id'])
+        return ok, res
 
     def get_admin_by_email(self, email: str) -> dict:
         """Vrátí admin uživatele podle emailu"""
@@ -2802,7 +2992,7 @@ class Database:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, email, role, display_name, created_at, last_login, is_active
+            SELECT id, email, role, display_name, created_at, last_login, is_active, otp_email
             FROM admin_users
             WHERE email = ?
         ''', (email,))
@@ -2818,7 +3008,7 @@ class Database:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, email, role, display_name, created_at, last_login, is_active
+            SELECT id, email, role, display_name, created_at, last_login, is_active, otp_email
             FROM admin_users
             WHERE id = ?
         ''', (user_id,))
@@ -2834,7 +3024,7 @@ class Database:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, email, role, display_name, created_at, last_login, is_active
+            SELECT id, email, role, display_name, created_at, last_login, is_active, otp_email
             FROM admin_users
             ORDER BY created_at DESC
         ''')
@@ -2848,7 +3038,7 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        allowed_fields = ['email', 'role', 'display_name', 'is_active']
+        allowed_fields = ['email', 'role', 'display_name', 'is_active', 'otp_email']
         updates = []
         values = []
 

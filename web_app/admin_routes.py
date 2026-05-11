@@ -100,31 +100,23 @@ def _get_env_labels(db):
 
 
 def login_required(f):
-    """Dekorátor: DOČASNĚ VYPNOUT – vždy propustí (viz admin_required)."""
+    """Vyžaduje dokončené admin přihlášení (session admin_user)."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'admin_user' not in session:
-            session['admin_user'] = {
-                'id': 0,
-                'email': 'admin@admin.cz',
-                'role': 'ADMIN',
-                'display_name': 'Admin (bez přihlášení)',
-            }
+        if 'admin_user' not in session or not session.get('admin_user', {}).get('id'):
+            flash('Pro tuto akci se musíte přihlásit.', 'warning')
+            return redirect(url_for('admin.login'))
         return f(*args, **kwargs)
     return decorated_function
 
 
 def admin_required(f):
-    """Dekorátor: DOČASNĚ VYPNOUT – vždy propustí bez přihlášení (heslo vyřešíme až na konci projektu)."""
+    """Vyžaduje aktivní admin session (stejné jako login_required pro admin blueprint)."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'admin_user' not in session:
-            session['admin_user'] = {
-                'id': 0,
-                'email': 'admin@admin.cz',
-                'role': 'ADMIN',
-                'display_name': 'Admin (bez přihlášení)',
-            }
+        if 'admin_user' not in session or not session.get('admin_user', {}).get('id'):
+            flash('Pro přístup do administrace se musíte přihlásit.', 'warning')
+            return redirect(url_for('admin.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -133,44 +125,86 @@ def admin_required(f):
 # VÝCHOZÍ ADMIN A PŘÍSTUP K DASHBOARDU
 # =============================================================================
 
-# Výchozí přihlašovací údaje pro admin dashboard (login + všechny admin funkce)
-DEFAULT_ADMIN_EMAIL = 'admin@admin.cz'
+# Výchozí přihlašovací údaje (první krok) + kam poslat OTP (druhý krok)
+DEFAULT_ADMIN_LOGIN = 'admin'
 DEFAULT_ADMIN_PASSWORD = 'admin'
+DEFAULT_OTP_EMAIL = 'cieslar@dokucheck.cz'
+# Zpětná kompatibilita: starý e-mail v DB lze použít k přihlášení (viz database._find_admin_row_for_login)
+LEGACY_ADMIN_EMAIL = 'admin@admin.cz'
 
 
 def get_default_admin_credentials():
-    """Vrátí (email, heslo) pro přístup k admin dashboardu a všem admin funkcím."""
-    return (DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD)
+    """Vrátí (přihlašovací jméno, heslo) pro dokumentaci / skripty."""
+    return (DEFAULT_ADMIN_LOGIN, DEFAULT_ADMIN_PASSWORD)
+
+
+def _bootstrap_admin_row(db):
+    """Vrátí řádek výchozího admin účtu (admin nebo admin@admin.cz) nebo None."""
+    u = db.get_admin_by_email(DEFAULT_ADMIN_LOGIN)
+    if u:
+        return u
+    return db.get_admin_by_email(LEGACY_ADMIN_EMAIL)
 
 
 def ensure_default_admin():
     """
-    Zajistí, že v DB existuje admin účet admin@admin.cz s heslem 'admin'.
-    NATVRDO: vždy nastaví zahashované heslo 'admin' (PBKDF2-HMAC-SHA256 dle database.py).
-    Volá se při načtení přihlašovací stránky – po přihlášení máte přístup k dashboardu
-    (/admin, /admin/dashboard) a všem admin funkcím.
+    Jednorázově zajistí výchozí admin účet (přihlášení: admin / heslo: admin),
+    OTP na DEFAULT_OTP_EMAIL. Nepřepisuje heslo při každém načtení stránky.
     """
     db = get_db()
-    user = db.get_admin_by_email(DEFAULT_ADMIN_EMAIL)
+    user = _bootstrap_admin_row(db)
     if user:
-        db.update_admin_user(user['id'], password=DEFAULT_ADMIN_PASSWORD)
+        updates = {}
+        if user.get('email', '').lower() == LEGACY_ADMIN_EMAIL.lower():
+            updates['email'] = DEFAULT_ADMIN_LOGIN
+        if not (user.get('otp_email') or '').strip():
+            updates['otp_email'] = DEFAULT_OTP_EMAIL
+        if updates:
+            db.update_admin_user(user['id'], **updates)
         return True
     success, _ = db.create_admin_user(
-        email=DEFAULT_ADMIN_EMAIL,
+        email=DEFAULT_ADMIN_LOGIN,
         password=DEFAULT_ADMIN_PASSWORD,
         role='ADMIN',
-        display_name='Admin'
+        display_name='Administrátor',
+        otp_email=DEFAULT_OTP_EMAIL,
     )
     return success
 
 
 def reset_default_admin_password():
-    """Nastaví heslo účtu admin@admin.cz na 'admin'. Vrací True pokud účet existoval a byl aktualizován."""
+    """Nastaví heslo výchozího účtu (admin) na 'admin'. Vrací True pokud účet existoval."""
     db = get_db()
-    user = db.get_admin_by_email(DEFAULT_ADMIN_EMAIL)
+    user = _bootstrap_admin_row(db)
     if not user:
         return False
     return db.update_admin_user(user['id'], password=DEFAULT_ADMIN_PASSWORD)
+
+
+def _admin_otp_recipient(user_dict):
+    """Adresa pro odeslání OTP (sloupec otp_email, jinak přihlašovací email)."""
+    if not user_dict:
+        return ''
+    return (user_dict.get('otp_email') or user_dict.get('email') or '').strip()
+
+
+def _send_admin_login_otp(to_addr, plain_code):
+    """Odešle jednorázový kód pro druhý krok přihlášení do administrace."""
+    try:
+        from email_sender import send_email as _send
+    except ImportError:
+        _send = None
+    if not _send or not to_addr:
+        return False
+    subject = 'DokuCheck – kód pro přihlášení do administrace'
+    body = (
+        'Dobrý den,\n\n'
+        'požádali jste o přihlášení do administrace DokuCheck.\n\n'
+        'Váš jednorázový kód: {}\n\n'
+        'Platnost kódu je 10 minut. Pokud jste o přihlášení nežádali, tento e-mail ignorujte.\n\n'
+        '— DokuCheck'
+    ).format(plain_code)
+    return bool(_send(to_addr, subject, body, append_footer=True))
 
 
 # =============================================================================
@@ -179,37 +213,118 @@ def reset_default_admin_password():
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Přihlašovací stránka"""
+    """Přihlašovací stránka (1. krok: heslo → 2. kód e-mailem)."""
     ensure_default_admin()
+    if session.get('admin_user', {}).get('id'):
+        return redirect(url_for('admin.dashboard'))
+
+    if request.method == 'GET':
+        session.pop('admin_otp_challenge_id', None)
+        session.pop('admin_otp_user_id', None)
+
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
 
         if not email or not password:
-            flash('Vyplňte email a heslo', 'error')
+            flash('Vyplňte přihlašovací jméno a heslo.', 'error')
             return render_template('admin_login.html')
 
         db = get_db()
-        success, result = db.verify_admin_login(email, password)
-        user_exists = db.get_admin_by_email(email) is not None
+        ip = request.remote_addr or ''
+        ok_rate, rate_msg = db.check_admin_bruteforce_ip(ip)
+        if not ok_rate:
+            flash(rate_msg, 'error')
+            return render_template('admin_login.html')
+
+        success, result = db.verify_admin_password_step(email, password)
 
         if success:
-            session['admin_user'] = result
+            to_addr = _admin_otp_recipient(result)
+            if not to_addr or '@' not in to_addr:
+                flash(
+                    'Účtu chybí platná e-mailová adresa pro ověřovací kód. Kontaktujte správce serveru.',
+                    'error',
+                )
+                return render_template('admin_login.html')
+            plain = f'{secrets.randbelow(900000) + 100000:06d}'
+            try:
+                ch_id = db.create_admin_login_challenge(result['id'], plain, client_ip=ip)
+            except Exception as ex:
+                current_app.logger.exception('admin OTP challenge: %s', ex)
+                flash('Nepodařilo se vytvořit ověření. Zkuste to znovu.', 'error')
+                return render_template('admin_login.html')
+            if not _send_admin_login_otp(to_addr, plain):
+                db.record_admin_login_failure(ip)
+                flash(
+                    'Nepodařilo se odeslat ověřovací e-mail. Zkontrolujte SMTP v nastavení serveru a zkuste to znovu.',
+                    'error',
+                )
+                return render_template('admin_login.html')
+            session['admin_otp_challenge_id'] = ch_id
+            session['admin_otp_user_id'] = result['id']
             session.permanent = True
-            flash(f'Vítejte, {result.get("display_name", email)}!', 'success')
-            return redirect(url_for('admin.dashboard'))
-        else:
-            print("LOGIN ATTEMPT: Email [{}], Password length [{}]".format(email, len(password)))
-            print("DB STATUS: Existuje uživatel? [{}], Výsledek verify_admin_login: [{}]".format(user_exists, success))
-            flash(result, 'error')
+            flash(
+                f'Na adresu {to_addr} byl odeslán ověřovací kód. Zadejte jej na další stránce.',
+                'info',
+            )
+            return redirect(url_for('admin.login_verify_code'))
+        db.record_admin_login_failure(ip)
+        print('LOGIN ATTEMPT: Email [{}], Password length [{}]'.format(email, len(password)))
+        flash(result, 'error')
 
     return render_template('admin_login.html')
+
+
+@admin_bp.route('/login/verify-code', methods=['GET', 'POST'])
+def login_verify_code():
+    """2. krok: zadání jednorázového kódu z e-mailu."""
+    if session.get('admin_user', {}).get('id'):
+        return redirect(url_for('admin.dashboard'))
+    ch_id = session.get('admin_otp_challenge_id')
+    uid = session.get('admin_otp_user_id')
+    if not ch_id or not uid:
+        flash('Nejprve se přihlaste heslem.', 'warning')
+        return redirect(url_for('admin.login'))
+
+    db = get_db()
+    ip = request.remote_addr or ''
+
+    if request.method == 'POST':
+        ok_rate, rate_msg = db.check_admin_bruteforce_ip(ip)
+        if not ok_rate:
+            flash(rate_msg, 'error')
+            return render_template('admin_login_verify.html')
+        code = (request.form.get('otp_code') or '').strip().replace(' ', '')
+        if not code or len(code) > 12:
+            flash('Zadejte kód z e-mailu.', 'error')
+            db.record_admin_login_failure(ip)
+            return render_template('admin_login_verify.html')
+        ok, user, err = db.verify_admin_login_challenge(int(ch_id), int(uid), code)
+        if ok and user:
+            db.record_admin_last_login(user['id'])
+            session.pop('admin_otp_challenge_id', None)
+            session.pop('admin_otp_user_id', None)
+            session['admin_user'] = user
+            session.permanent = True
+            flash('Vítejte, {}!'.format(user.get('display_name') or user.get('email', '')), 'success')
+            return redirect(url_for('admin.dashboard'))
+        db.record_admin_login_failure(ip)
+        flash(err or 'Ověření se nezdařilo.', 'error')
+        if err and ('znovu' in (err or '').lower() or 'vypršela' in (err or '').lower()):
+            session.pop('admin_otp_challenge_id', None)
+            session.pop('admin_otp_user_id', None)
+            return redirect(url_for('admin.login'))
+
+    return render_template('admin_login_verify.html')
 
 
 @admin_bp.route('/logout')
 def logout():
     """Odhlášení"""
     session.pop('admin_user', None)
+    session.pop('admin_otp_challenge_id', None)
+    session.pop('admin_otp_user_id', None)
     flash('Byli jste odhlášeni', 'info')
     return redirect(url_for('admin.login'))
 
@@ -2711,15 +2826,15 @@ def init_test_data():
     Inicializuje testovací data
 
     Volej tuto funkci pro vytvoření testovacích účtů:
-    - admin@admin.cz / admin (výchozí přístup k dashboardu – viz ensure_default_admin)
+    - admin / admin + druhý krok kód e-mailem (viz ensure_default_admin, DEFAULT_OTP_EMAIL)
     - tester-basic@test.cz / test123 / BASIC license
     - tester-pro@test.cz / test123 / PRO license
     """
     db = get_db()
 
-    # Výchozí admin pro dashboard: admin@admin.cz / admin
+    # Výchozí admin pro dashboard: admin / admin + OTP e-mailem
     ensure_default_admin()
-    print("Admin (dashboard): admin@admin.cz / admin")
+    print("Admin (dashboard): přihlášení admin / admin, poté kód na e-mail z účtu (otp_email).")
 
     # Vytvoř testovací licence
     # Basic tester

@@ -4,8 +4,8 @@ Test přihlášení admina a přístupu k dashboardu.
 Spusť z složky web_app:  python test_admin_login.py
 
 Použití:
-  - admin@admin.cz / admin
-  - Po přihlášení na /login máte přístup k /admin (dashboard) a všem admin funkcím.
+  - Přihlášení: admin / admin, poté šestimístný kód z e-mailu (viz otp_email v DB).
+  - Po dokončení obou kroků máte přístup k /admin (dashboard).
 """
 import os
 import sys
@@ -18,7 +18,7 @@ from admin_routes import (
     ensure_default_admin,
     reset_default_admin_password,
     get_default_admin_credentials,
-    DEFAULT_ADMIN_EMAIL,
+    DEFAULT_ADMIN_LOGIN,
     DEFAULT_ADMIN_PASSWORD,
 )
 from database import Database
@@ -41,18 +41,17 @@ def main():
     log()
 
     db = Database()
-    success, result = db.verify_admin_login(email, password)
+    success, result = db.verify_admin_password_step(email, password)
 
     if success:
-        log("OK – Přihlášení funguje.")
+        log("OK – První krok (heslo) funguje.")
         log(f"  Uživatel: {result.get('display_name', email)}, role: {result.get('role')}")
+        log(f"  OTP e-mail v DB: {result.get('otp_email') or '(stejný jako přihlašovací jméno – doplní ensure_default_admin)'}")
         log()
-        log("Přístup k dashboardu a admin funkcím:")
-        log("  1. Otevřete v prohlížeči: /login")
-        log("  2. Zadejte e-mail: admin@admin.cz")
-        log("  3. Zadejte heslo: admin")
-        log("  4. Po přihlášení: /admin nebo /admin/dashboard")
-        log("  (Licence, Tiery, Čeká na platbu, Trial, Logy, Nastavení, Změna hesla, atd.)")
+        log("Přístup k dashboardu:")
+        log("  1. /login – jméno admin, heslo admin")
+        log("  2. Kód z e-mailu na stránce /login/verify-code")
+        log("  3. Poté /admin nebo /admin/dashboard")
     else:
         log("CHYBA – Přihlášení selhalo.")
         log(f"  Důvod: {result}")
