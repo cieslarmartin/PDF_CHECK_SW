@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.063"
+WEB_VERSION = "w26.02.065"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 107
+WEB_BUILD = 109
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "Landing (varianta H): doplněn plný věcný obsah (banner, navigace, trust bar, workflow schéma, rozšířené sekce); bez splash okna."
+BUILD_NOTES = "Admin: přesměrování /admin/, /login/ atd. na cestu bez koncového lomítka (404). Statistiky: výjimky /login, /logout, /setup."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 # TEST: build 54 pro ověření update notifieru (pak vrátit na 53).

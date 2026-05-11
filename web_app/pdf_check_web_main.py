@@ -156,8 +156,31 @@ def enforce_https_and_www():
         return redirect(target, code=301)
 
 
+@app.before_request
+def redirect_admin_login_trailing_slash():
+    """`/admin/` a `/login/` bez tohoto vrací Flask 404 (strict_slashes). Přesměrování na cestu bez koncového lomítka."""
+    p = request.path or ''
+    if len(p) <= 1 or not p.endswith('/'):
+        return None
+    if (
+        p == '/admin/'
+        or p.startswith('/admin/')
+        or p == '/login/'
+        or p.startswith('/login/')
+        or p == '/logout/'
+        or p.startswith('/logout/')
+        or p == '/setup/'
+        or p.startswith('/setup/')
+    ):
+        target = p.rstrip('/')
+        qs = request.query_string.decode() if request.query_string else ''
+        loc = target + ('?' + qs if qs else '')
+        return redirect(loc, code=308)
+    return None
+
+
 _TRACK_PATHS = {'/', '/app', '/checkout', '/portal', '/portal/dashboard', '/online-check', '/download/agent'}
-_SKIP_PREFIXES = ('/static/', '/admin/', '/api/', '/favicon')
+_SKIP_PREFIXES = ('/static/', '/admin', '/api/', '/favicon', '/login', '/logout', '/setup')
 
 @app.after_request
 def track_page_view(response):

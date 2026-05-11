@@ -434,15 +434,17 @@
         </div>
     </section>
 
-    {# CENÍK #}
+    {# CENÍK – stejný zdroj jako checkout: pricing_tarifs z DB (load_settings_for_views) #}
+    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1290},"standard":{"label":"PRO","amount_czk":1990}}) %}
     <section id="cenik" class="preview-section py-16 bg-white">
         <div class="preview-container max-w-3xl mx-auto px-6">
             <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Ceník</h2></div>
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="card flex flex-col">
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
-                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">1 290 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="text-sm text-gray-500 mb-4">Ideální pro otestování a menší zakázky. Získáte workflow a exporty.</p>
+                    <p class="text-xs text-gray-400 mb-1">{{ tarifs.basic.label|default('BASIC') }}</p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1290) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování a menší zakázky. Získáte workflow a exporty.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         <li>✓ Kontrola PDF/A + podpisů + TSA</li>
                         <li>✓ Export do Excelu</li>
@@ -453,8 +455,9 @@
                 <div class="card price-pop flex flex-col relative">
                     <span class="price-badge">DOPORUČUJEME</span>
                     <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
-                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">1 990 <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="text-sm text-gray-500 mb-4">Pro řízení velkých zakázek a týmové expedice.</p>
+                    <p class="text-xs text-gray-400 mb-1">{{ tarifs.standard.label|default('PRO') }}</p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1990) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Pro řízení velkých zakázek a týmové expedice.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         <li>✓ Vše z Basic</li>
                         <li>✓ Pokročilé filtry chyb</li>
