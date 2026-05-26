@@ -391,11 +391,12 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_one_time_tokens_expires ON one_time_login_tokens(expires_at)')
 
         # Jednorázové tokeny pro nastavení hesla (aktivace bez hesla v e-mailu – antispam)
+        # expires_at NULL = bez časové expirace (platí do prvního použití)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS set_password_tokens (
                 token TEXT PRIMARY KEY,
                 api_key TEXT NOT NULL,
-                expires_at REAL NOT NULL,
+                expires_at REAL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -615,6 +616,45 @@ class Database:
                      'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
                     ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
                 ''')
+        except Exception:
+            pass
+
+        self._migrate_set_password_tokens_nullable_expires(cursor)
+
+    def _migrate_set_password_tokens_nullable_expires(self, cursor):
+        """Migrace: expires_at v set_password_tokens může být NULL (= bez časové expirace)."""
+        try:
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='set_password_tokens'"
+            )
+            if not cursor.fetchone():
+                return
+            cursor.execute('PRAGMA table_info(set_password_tokens)')
+            rows = cursor.fetchall()
+            expires_notnull = 0
+            for row in rows:
+                if row[1] == 'expires_at':
+                    expires_notnull = row[3]
+                    break
+            if expires_notnull == 0:
+                return
+            cursor.execute('''
+                CREATE TABLE set_password_tokens_new (
+                    token TEXT PRIMARY KEY,
+                    api_key TEXT NOT NULL,
+                    expires_at REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('''
+                INSERT INTO set_password_tokens_new (token, api_key, expires_at, created_at)
+                SELECT token, api_key, expires_at, created_at FROM set_password_tokens
+            ''')
+            cursor.execute('DROP TABLE set_password_tokens')
+            cursor.execute('ALTER TABLE set_password_tokens_new RENAME TO set_password_tokens')
+            cursor.execute(
+                'CREATE INDEX IF NOT EXISTS idx_set_password_tokens_expires ON set_password_tokens(expires_at)'
+            )
         except Exception:
             pass
 
@@ -1366,8 +1406,8 @@ class Database:
         finally:
             conn.close()
 
-    def store_set_password_token(self, token, api_key, expires_at):
-        """Uloží jednorázový token pro nastavení hesla. expires_at = Unix timestamp (float)."""
+    def store_set_password_token(self, token, api_key, expires_at=None):
+        """Uloží jednorázový token pro nastavení hesla. expires_at = Unix timestamp (float) nebo None = bez expirace."""
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
@@ -1397,7 +1437,10 @@ class Database:
                 (token.strip(),)
             )
             row = cursor.fetchone()
-            if not row or (row['expires_at'] or 0) <= now:
+            if not row:
+                return None, False
+            exp = row['expires_at']
+            if exp is not None and exp <= now:
                 return None, False
             api_key = row['api_key']
             cursor.execute('DELETE FROM set_password_tokens WHERE token = ?', (token.strip(),))
@@ -1407,11 +1450,10 @@ class Database:
             conn.close()
 
     def generate_activation_token(self, api_key):
-        """Vytvoří bezpečný token a uloží ho do db s platností 48h (přidáno pro přímé použití dle požadavku)."""
+        """Vytvoří bezpečný token v api_keys (token_expires NULL = bez časové expirace)."""
         import secrets
-        from datetime import datetime, timedelta
         token = secrets.token_urlsafe(32)
-        expires = (datetime.now() + timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
+        expires = None
         conn = self.get_connection()
         try:
             conn.execute('UPDATE api_keys SET activation_token = ?, token_expires = ? WHERE api_key = ?', (token, expires, api_key))

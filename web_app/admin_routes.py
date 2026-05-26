@@ -1398,8 +1398,7 @@ def confirm_payment():
         set_password_url = None
         if not has_password:
             set_pwd_token = secrets.token_urlsafe(32)
-            expires_at = time.time() + 7 * 24 * 3600  # 7 dní
-            db.store_set_password_token(set_pwd_token, api_key, expires_at)
+            db.store_set_password_token(set_pwd_token, api_key, expires_at=None)
 
         if existing:
             notify_admin('Platba potvrzena – objednávka #{} (existující účet)'.format(order_id),
@@ -1462,8 +1461,7 @@ def activate_without_invoice():
         set_password_url = None
         if not has_password:
             set_pwd_token = secrets.token_urlsafe(32)
-            expires_at = time.time() + 7 * 24 * 3600
-            db.store_set_password_token(set_pwd_token, api_key, expires_at)
+            db.store_set_password_token(set_pwd_token, api_key, expires_at=None)
         
         notify_admin(
             'Ruční aktivace – objednávka #{}'.format(order_id),
@@ -1501,7 +1499,10 @@ def preview_activation_email():
         import time
         conn = db.get_connection()
         cur = conn.cursor()
-        cur.execute('SELECT token FROM set_password_tokens WHERE api_key = ? AND expires_at > ? ORDER BY expires_at DESC LIMIT 1', (api_key, time.time()))
+        cur.execute(
+            'SELECT token FROM set_password_tokens WHERE api_key = ? AND (expires_at IS NULL OR expires_at > ?) ORDER BY created_at DESC LIMIT 1',
+            (api_key, time.time()),
+        )
         row = cur.fetchone()
         conn.close()
         if row:
@@ -2259,8 +2260,7 @@ def api_email_preview():
             else:
                 # Fallback: tabulka set_password_tokens (platné i na staré DB)
                 set_pwd_token = secrets.token_urlsafe(32)
-                expires_at = time.time() + 48 * 3600
-                if db.store_set_password_token(set_pwd_token, api_key, expires_at):
+                if db.store_set_password_token(set_pwd_token, api_key, expires_at=None):
                     set_password_url = base + '/portal/set-password?token=' + set_pwd_token
                 else:
                     if current_app and hasattr(current_app, 'logger'):
