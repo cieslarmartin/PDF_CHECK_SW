@@ -344,7 +344,7 @@
                     <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     {# pouze roční licence – bez měsíčních přepočtů #}
                     <p class="price-annual">{{ tarifs.basic.amount_czk|default(1090) }} Kč/rok · placeno ročně</p>
-                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
+                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_basic_desc|default('Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Kontrola PDF/A, metadat, podpisů, autorizované osoby a časového razítka</li>
@@ -354,16 +354,16 @@
                 </div>
                 <div class="card price-pop flex flex-col relative anim" style="transition-delay:80ms;">
                     <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
-                    <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
+                    <h3 class="font-bold text-gray-900 mt-3">ATELIÉR</h3>
                     <p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
                     <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     {# pouze roční licence – bez měsíčních přepočtů #}
                     <p class="price-annual">{{ tarifs.standard.amount_czk|default(1590) }} Kč/rok · placeno ročně</p>
-                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
+                    <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Hromadný export do Excelu (XLS)</strong></li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Sofistikované filtry chyb</strong></li>
-                        <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z Basic</li>
+                        <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z tarifu Projektant</li>
                     </ul>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg mt-2" style="background:#1e5a8a;">Zakoupit Pro</a>
                 </div>

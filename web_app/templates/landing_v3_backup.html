@@ -206,7 +206,7 @@
                     <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.basic.label|default('Basic') }}</p>
                     <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} Kč</p>
                     <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
-                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_basic_desc|default('Ideální pro otestování v pilotním provozu.') }}</p>
+                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_basic_desc|default('Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.') }}</p>
                     <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
                         <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Kontrola Z Agenta – soubory na disku, na server jen metadata</li>
                         <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Kontrola PDF/A, metadat, podpisů, autorizované osoby a časového razítka</li>
@@ -217,15 +217,15 @@
                 </div>
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col relative border-2" style="border-color:#1e5a8a;background:linear-gradient(180deg, #f0f9ff 0%, #ffffff 24%);">
                     <span class="lp-v3-badge absolute top-4 right-4" style="background:#1e5a8a;color:white;padding:4px 10px;border-radius:0 0 8px 8px;font-size:0.7em;font-weight:700;">DOPORUČUJEME PRO ATELIÉRY</span>
-                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">Z BASIC +</h3>
+                    <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">ATELIÉR</h3>
                     <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.standard.label|default('Pro') }}</p>
                     <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} Kč</p>
                     <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
-                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_standard_desc|default('Nástroj pro řízení velkých zakázek a koordinaci týmu. Vše pod kontrolou v jednom reportu.') }}</p>
+                    <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
                         <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:600;">✓</span> Hromadný export do Excelu (XLS)</li>
                         <li class="flex items-start gap-2"><span style="color:#1e5a8a;font-weight:600;">✓</span> Sofistikované filtry chyb</li>
-                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Vše z Basic</li>
+                        <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Vše z tarifu Projektant</li>
                     </ul>
                     <p class="text-xs py-3 border-t mt-auto" style="color:#059669;font-weight:600;border-color:#e5e7eb;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition mt-2">Zakoupit Pro</a>

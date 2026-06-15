@@ -2,9 +2,9 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.071"
+WEB_VERSION = "w26.02.072"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 115
+WEB_BUILD = 116
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
 BUILD_NOTES = "Aktivační odkaz na nastavení hesla bez časové expirace (platí do prvního použití)."

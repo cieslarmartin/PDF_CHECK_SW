@@ -495,22 +495,21 @@
                     <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.basic.label|default('BASIC') }}</p>
                     <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_basic_desc|default('Ideální pro otestování a menší zakázky. Získáte workflow a exporty.') }}</p>
+                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_basic_desc|default('Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         <li>✓ Kontrola PDF/A + podpisů + TSA</li>
-                        <li>✓ Export do Excelu</li>
                         <li>✓ Základní filtry chyb</li>
                     </ul>
                     <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 mt-auto">Zakoupit Basic</a>
                 </div>
                 <div class="card price-pop flex flex-col relative">
-                    <span class="price-badge">DOPORUČUJEME</span>
-                    <h3 class="font-bold text-gray-900 mt-3">Z BASIC +</h3>
+                    <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
+                    <h3 class="font-bold text-gray-900 mt-3">ATELIÉR</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.standard.label|default('PRO') }}</p>
                     <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
-                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Pro řízení velkých zakázek a týmové expedice.') }}</p>
+                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
-                        <li>✓ Vše z Basic</li>
+                        <li>✓ Vše z tarifu Projektant</li>
                         <li>✓ <strong>Hromadná validace složek</strong></li>
                         <li>✓ <strong>Pokročilé XLS reporty chyb</strong></li>
                         <li>✓ <strong>Metadata zůstávají lokálně (režim Z Agenta)</strong></li>

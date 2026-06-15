@@ -13,7 +13,7 @@ import hmac
 
 # =============================================================================
 # LICENCE TIERS (úrovně) – podle cenové politiky: Free, Basic, Pro (+ Trial v DB)
-# Basic = PROJEKTANT (1090 Kč/rok), Pro = VEDOUCÍ PROJEKTANT (1590 Kč/rok)
+# Basic = PROJEKTANT (1090 Kč/rok), Pro = ATELIÉR (1590 Kč/rok)
 # ENTERPRISE = zachován pro zpětnou kompatibilitu, chová se jako Pro
 # =============================================================================
 
@@ -43,7 +43,7 @@ TIER_COLORS = {
 
 
 # =============================================================================
-# FEATURE FLAGS – podle cenové politiky: Basic (PROJEKTANT) vs Pro (VEDOUCÍ PROJEKTANT)
+# FEATURE FLAGS – podle cenové politiky: Basic (PROJEKTANT) vs Pro (ATELIÉR)
 # Basic: kontrola PDF, podpisy, 100 souborů/dávka, BEZ exportu Excel.
 # Pro: vše + export Excel/CSV, vyšší limity, 3 zařízení.
 # =============================================================================

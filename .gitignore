@@ -44,3 +44,6 @@ web_app/zaloha_build62_filtry_issr/
 testovaci_engine/zdrojove PDF_testovaci/**/*.pdf
 testovaci_engine/reports/*.html
 testovaci_engine/reports/snapshots/
+
+# Lokální knihovna zkopírovaných log a obrázků (pro výběr, necommitovat)
+pouzite_obrazky/

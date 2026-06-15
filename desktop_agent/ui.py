@@ -89,13 +89,26 @@ def _format_result_summary(filename, status, result):
     lines.append(f"PDF/A verze: {pdfa_version}")
 
     sig_count = display.get('signature_count', 0)
+    ts_count = display.get('timestamp_count', 0)
     signatures = display.get('signatures') or results_inner.get('signatures') or []
-    valid_sig = sum(1 for s in signatures if s.get('valid'))
-    invalid_sig = len(signatures) - valid_sig
-    if sig_count == 0:
+    sig_objs = [s for s in signatures if s.get('type') != 'DOCUMENT_TIMESTAMP']
+    ts_objs = [s for s in signatures if s.get('type') == 'DOCUMENT_TIMESTAMP']
+    valid_sig = sum(1 for s in sig_objs if s.get('valid'))
+    invalid_sig = len(sig_objs) - valid_sig
+    if sig_count == 0 and not sig_objs:
         lines.append("Podpisy: 0")
     else:
-        lines.append(f"Podpisy: {valid_sig} platných, {invalid_sig} neplatných")
+        n_sig = sig_count or len(sig_objs)
+        lines.append(f"Podpisy: {valid_sig} platných, {invalid_sig} neplatných (celkem {n_sig})")
+    if ts_count > 0 or ts_objs:
+        n_ts = ts_count or len(ts_objs)
+        valid_ts = sum(1 for s in ts_objs if s.get('valid'))
+        lines.append(f"Časová razítka dokumentu: {valid_ts} platných (celkem {n_ts})")
+
+    warnings = display.get('warnings') or results_inner.get('warnings') or []
+    if display.get('orphan_document_timestamp') or results_inner.get('orphan_document_timestamp'):
+        if 'Časové razítko není vloženo do podpisu' not in ' '.join(warnings):
+            warnings = list(warnings) + ['Časové razítko není vloženo do podpisu (razítko dokumentu je samostatně).']
 
     # Validation errors as bullet points
     errors = []
@@ -105,7 +118,9 @@ def _format_result_summary(filename, status, result):
             errors.append(err)
     if pdf_format.get('exact_version') and 'ne PDF/A' in str(pdf_format.get('exact_version', '')):
         errors.append("Dokument není ve formátu PDF/A.")
-    for s in signatures:
+    for w in warnings:
+        errors.append(w)
+    for s in sig_objs:
         if not s.get('valid'):
             name = s.get('name') or s.get('signer', '—') if isinstance(s, dict) else '—'
             errors.append(f"Neplatný podpis: {name}")
@@ -141,10 +156,11 @@ def _result_cell_podpis(result):
     if result.get("skipped"):
         return "Přeskočeno", "muted"
     sigs = (result.get("results") or {}).get("signatures") or []
-    valid = sum(1 for s in sigs if s.get("valid"))
-    if not sigs:
+    sig_objs = [s for s in sigs if s.get("type") != "DOCUMENT_TIMESTAMP"]
+    valid = sum(1 for s in sig_objs if s.get("valid"))
+    if not sig_objs:
         return " ✗ ", "fail"
-    return (" ✓ ", "ok") if valid == len(sigs) else (f" ✗ {len(sigs)-valid}", "fail")
+    return (" ✓ ", "ok") if valid == len(sig_objs) else (f" ✗ {len(sig_objs)-valid}", "fail")
 
 
 def _result_cell_razitko(result):
@@ -154,8 +170,9 @@ def _result_cell_razitko(result):
     if result.get("skipped"):
         return "Přeskočeno", "muted"
     sigs = (result.get("results") or {}).get("signatures") or []
-    has_tsa = any(s.get("timestamp_valid") for s in sigs)
-    if not sigs:
+    sig_objs = [s for s in sigs if s.get("type") != "DOCUMENT_TIMESTAMP"]
+    has_tsa = any(s.get("timestamp_valid") for s in sig_objs)
+    if not sig_objs:
         return "—", "muted"
     return (" ✓ ", "ok") if has_tsa else (" ✗ ", "fail")
 
@@ -174,8 +191,12 @@ def _count_errors_from_result(result):
     if pdf_format.get('exact_version') and 'ne PDF/A' in str(pdf_format.get('exact_version', '')):
         errors += 1
     for s in (results_inner.get('signatures') or []):
+        if s.get('type') == 'DOCUMENT_TIMESTAMP':
+            continue
         if not s.get('valid'):
             errors += 1
+    if results_inner.get('orphan_document_timestamp'):
+        errors += 1
     return errors
 
 

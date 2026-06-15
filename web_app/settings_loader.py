@@ -41,8 +41,8 @@ DEFAULTS = {
     "landing_mode_agent_text": "Soubory na disku, na server jen metadata.",
     "landing_mode_cloud_title": "Webové DEMO",
     "landing_mode_cloud_text": "Omezená ukázka v prohlížeči — rychlé vyzkoušení, celé PDF může projít přes server (DEMO).",
-    "landing_tarif_basic_desc": "Ideální pro menší zakázky a samostatné projektanty.",
-    "landing_tarif_standard_desc": "Plné funkce, export, historie.",
+    "landing_tarif_basic_desc": "Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.",
+    "landing_tarif_standard_desc": "Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.",
     "landing_tarif_premium_desc": "Na míru pro větší týmy.",
     # Právní – krátké texty (dlouhé VOP/GDPR mají fallback v šabloně nebo prázdné = zobraz šablonu)
     "footer_disclaimer": "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.",

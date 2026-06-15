@@ -71,6 +71,130 @@ CA_KEYWORDS = [
 ]
 
 
+def _normalize_pdf_name(val):
+    """Normalizuje PDF jméno (/ETSI.RFC3161 → ETSI.RFC3161)."""
+    if val is None:
+        return ''
+    s = str(val).strip()
+    if s.startswith('/'):
+        s = s[1:]
+    return s
+
+
+def _classify_signature_type(v_dict):
+    """Určí SIGNATURE vs DOCUMENT_TIMESTAMP z PDF slovníku podpisu/razítka."""
+    if _normalize_pdf_name(v_dict.get('/Type')) == 'DocTimeStamp':
+        return 'DOCUMENT_TIMESTAMP'
+    subfilter = _normalize_pdf_name(v_dict.get('/SubFilter'))
+    if subfilter == 'ETSI.RFC3161':
+        return 'DOCUMENT_TIMESTAMP'
+    if subfilter in ('adbe.pkcs7.detached', 'ETSI.CAdES.detached'):
+        return 'SIGNATURE'
+    return 'SIGNATURE'
+
+
+def _extract_tsa_issuer_from_timestamp_token(pkcs7):
+    """Extrahuje název TSA z PKCS7 samostatného časového razítka dokumentu (DocTimeStamp)."""
+    if not pkcs7 or len(pkcs7) < 50:
+        return '—'
+    try:
+        tsa_oid = bytes.fromhex('060b2a864886f70d010910020e')
+        issuer = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid)
+        if issuer != '—':
+            return issuer
+        pkcs7_hex = pkcs7.hex()
+        found_cns = []
+        for typ in ['0c', '13', '1e']:
+            for length in range(5, 80):
+                hex_len = format(length, '02x')
+                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                for m in re.finditer(pattern, pkcs7_hex, re.I):
+                    try:
+                        raw = bytes.fromhex(m.group(1))
+                        cn = raw.decode('utf-16-be', errors='ignore') if typ == '1e' else raw.decode('utf-8', errors='ignore')
+                        cn = cn.strip()
+                        if len(cn) > 3:
+                            low = cn.lower()
+                            score = (10 if ('tsa' in low or 'tsu' in low) else 0) + (
+                                5 if any(k in low for k in ('postsignum', 'i.ca', 'eidentity')) else 0
+                            )
+                            found_cns.append((score, m.start(), cn))
+                    except Exception:
+                        pass
+        if found_cns:
+            found_cns.sort(key=lambda x: (-x[0], x[1]))
+            return found_cns[0][2] or '—'
+    except Exception:
+        pass
+    return '—'
+
+
+def _extract_generalized_time_from_pkcs7(pkcs7):
+    """Najde GeneralizedTime v PKCS7 a vrátí YYYY-MM-DD HH:MM."""
+    try:
+        text = pkcs7.decode('latin-1', errors='ignore')
+        m = re.search(r'(\d{14})Z', text)
+        if m:
+            d = m.group(1)
+            return f"{d[:4]}-{d[4:6]}-{d[6:8]} {d[8:10]}:{d[10:12]}"
+    except Exception:
+        pass
+    return '—'
+
+
+def _fill_doc_timestamp_from_pkcs7(pkcs7, sig_info):
+    """Vyplní metadata samostatného časového razítka dokumentu (ETSI.RFC3161 / DocTimeStamp)."""
+    if not pkcs7 or len(pkcs7) < 50:
+        return
+    try:
+        issuer = _extract_tsa_issuer_from_timestamp_token(pkcs7)
+        sig_info['tsa_issuer'] = issuer
+        sig_info['signer'] = '—'
+        sig_info['ckait'] = '—'
+        if issuer != '—':
+            sig_info['tsa'] = 'TSA'
+            sig_info['timestamp_valid'] = True
+            sig_info['valid'] = True
+            sig_info['certificate_valid'] = True
+        if sig_info.get('date', '—') == '—':
+            date = _extract_generalized_time_from_pkcs7(pkcs7)
+            if date != '—':
+                sig_info['date'] = date
+    except Exception:
+        pass
+
+
+def _file_level_tsa_status(signatures):
+    """File-level stav razítka – pouze z objektů typu SIGNATURE (ne DocTimeStamp)."""
+    signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
+    if not signature_objs:
+        return 'NONE'
+    if all(s.get('timestamp_valid') for s in signature_objs):
+        return 'TSA'
+    if any(s.get('timestamp_valid') for s in signature_objs):
+        return 'PARTIAL'
+    if any(s.get('tsa') == 'LOCAL' or (s.get('date') or '—') != '—' for s in signature_objs):
+        return 'LOCAL'
+    return 'NONE'
+
+
+def _compute_orphan_document_timestamp(signatures):
+    """True pokud existuje platné razítko dokumentu, ale žádný podpis nemá vložené TSA."""
+    signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
+    doc_ts = [s for s in signatures if s.get('type') == 'DOCUMENT_TIMESTAMP']
+    has_embedded_tsa = any(s.get('timestamp_valid') for s in signature_objs)
+    has_valid_doc_ts = any(s.get('valid') for s in doc_ts)
+    return bool(has_valid_doc_ts and not has_embedded_tsa)
+
+
+def _build_signature_warnings(signatures):
+    """Sestaví seznam varování k podpisům/razítkům."""
+    warnings = []
+    if _compute_orphan_document_timestamp(signatures):
+        warnings.append('Časové razítko není vloženo do podpisu (razítko dokumentu je samostatně).')
+    return warnings
+
+
 def _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=None):
     """Vyplní signer, ckait, tsa, tsa_issuer, timestamp_valid, signature_type v sig_info z PKCS7 bajtů."""
     if not pkcs7 or len(pkcs7) < 50:
@@ -176,13 +300,7 @@ def extract_signatures_via_reader(reader):
                 'timestamp_valid': False,
                 'certificate_valid': False,
             }
-            subfilter = v_dict.get('/SubFilter')
-            if subfilter is not None:
-                subfilter = str(subfilter).strip()
-                if subfilter == 'ETSI.RFC3161':
-                    sig_info['type'] = 'DOCUMENT_TIMESTAMP'
-                elif subfilter in ('adbe.pkcs7.detached', 'ETSI.CAdES.detached'):
-                    sig_info['type'] = 'SIGNATURE'
+            sig_info['type'] = _classify_signature_type(v_dict)
             m = v_dict.get('/M')
             if m is not None:
                 m_str = str(m)
@@ -199,13 +317,19 @@ def extract_signatures_via_reader(reader):
                     pkcs7 = contents_obj.original_bytes
                 if isinstance(pkcs7, (bytes, bytearray)):
                     pkcs7 = bytes(pkcs7)
-                    _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
+                    if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
+                        _fill_doc_timestamp_from_pkcs7(pkcs7, sig_info)
+                    else:
+                        _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
                 elif isinstance(contents_obj, (str, bytes)):
                     raw = contents_obj if isinstance(contents_obj, bytes) else contents_obj.encode('latin-1')
                     if len(raw) > 10 and raw[:2] != b'30':
                         try:
                             pkcs7 = bytes.fromhex(raw.decode('ascii', errors='ignore'))
-                            _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
+                            if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
+                                _fill_doc_timestamp_from_pkcs7(pkcs7, sig_info)
+                            else:
+                                _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date'))
                         except Exception:
                             pass
             signatures.append(sig_info)
@@ -262,6 +386,9 @@ def extract_all_signatures(content):
 
         # /SubFilter – rozlišení Document Timestamp vs. Digitální podpis (neovlivňuje FAIL u razítka)
         subfilter_match = re.search(rb'/SubFilter\s*/([^\s\[\]<>()/]+)', subfilter_window)
+        type_match = re.search(rb'/Type\s*/([^\s\[\]<>()/]+)', subfilter_window)
+        if type_match and type_match.group(1).decode('ascii', errors='ignore').strip() == 'DocTimeStamp':
+            sig_info['type'] = 'DOCUMENT_TIMESTAMP'
         if subfilter_match:
             subfilter_val = subfilter_match.group(1).decode('ascii', errors='ignore').strip()
             if subfilter_val == 'ETSI.RFC3161':
@@ -283,69 +410,74 @@ def extract_all_signatures(content):
                 pkcs7 = bytes.fromhex(hex_data)
                 pkcs7_hex = pkcs7.hex()
 
-                # TSA OID
+                if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
+                    _fill_doc_timestamp_from_pkcs7(pkcs7, sig_info)
+                # TSA OID (jen u podpisu)
                 tsa_oid = bytes.fromhex('060b2a864886f70d010910020e')
-                if tsa_oid in pkcs7:
+                if sig_info['type'] != 'DOCUMENT_TIMESTAMP' and tsa_oid in pkcs7:
                     sig_info['tsa'] = 'TSA'
                     sig_info['timestamp_valid'] = True
                     sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid)
-                elif m_match:
+                elif sig_info['type'] != 'DOCUMENT_TIMESTAMP' and m_match:
                     sig_info['tsa'] = 'LOCAL'
                     sig_info['timestamp_valid'] = False
 
-                # === ČKAIT/ČKA z OU (Organizational Unit) ===
-                for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
-                    if sig_info['ckait'] != '—':
-                        break
-                    hex_len = format(length, '02x')
-                    ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
-                    ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
-                    if ou_match:
-                        try:
-                            value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                            if re.match(rf'^\d{{{length}}}$', value):
-                                sig_info['ckait'] = value
-                                sig_info['signature_type'] = sig_type
-                        except:
-                            pass
-
-                # === JMÉNO Z CN (Common Name) ===
-                found_cns = []
-                for typ in ['0c', '13', '1e']:
-                    for length in range(5, 80):
+                if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
+                    pass
+                else:
+                    # === ČKAIT/ČKA z OU (Organizational Unit) ===
+                    for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
+                        if sig_info['ckait'] != '—':
+                            break
                         hex_len = format(length, '02x')
-                        pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
-                        for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
+                        ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
+                        ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
+                        if ou_match:
                             try:
-                                raw_bytes = bytes.fromhex(cn_match.group(1))
-                                if typ == '1e':
-                                    cn = raw_bytes.decode('utf-16-be', errors='ignore')
-                                else:
-                                    cn = raw_bytes.decode('utf-8', errors='ignore')
-                                if len(cn) > 3:
-                                    is_ca = any(kw in cn.lower() for kw in CA_KEYWORDS)
-                                    has_space = ' ' in cn
-                                    found_cns.append({
-                                        'name': cn,
-                                        'is_ca': is_ca,
-                                        'has_space': has_space,
-                                        'position': cn_match.start(),
-                                        'type': typ
-                                    })
+                                value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
+                                if re.match(rf'^\d{{{length}}}$', value):
+                                    sig_info['ckait'] = value
+                                    sig_info['signature_type'] = sig_type
                             except:
                                 pass
-                best_cn = None
-                for cn_info in sorted(found_cns, key=lambda x: (x['is_ca'], not x['has_space'], x['position'])):
-                    if not cn_info['is_ca']:
-                        best_cn = cn_info['name']
-                        break
-                if best_cn:
-                    sig_info['signer'] = best_cn
+
+                    # === JMÉNO Z CN (Common Name) ===
+                    found_cns = []
+                    for typ in ['0c', '13', '1e']:
+                        for length in range(5, 80):
+                            hex_len = format(length, '02x')
+                            pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                            for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
+                                try:
+                                    raw_bytes = bytes.fromhex(cn_match.group(1))
+                                    if typ == '1e':
+                                        cn = raw_bytes.decode('utf-16-be', errors='ignore')
+                                    else:
+                                        cn = raw_bytes.decode('utf-8', errors='ignore')
+                                    if len(cn) > 3:
+                                        is_ca = any(kw in cn.lower() for kw in CA_KEYWORDS)
+                                        has_space = ' ' in cn
+                                        found_cns.append({
+                                            'name': cn,
+                                            'is_ca': is_ca,
+                                            'has_space': has_space,
+                                            'position': cn_match.start(),
+                                            'type': typ
+                                        })
+                                except:
+                                    pass
+                    best_cn = None
+                    for cn_info in sorted(found_cns, key=lambda x: (x['is_ca'], not x['has_space'], x['position'])):
+                        if not cn_info['is_ca']:
+                            best_cn = cn_info['name']
+                            break
+                    if best_cn:
+                        sig_info['signer'] = best_cn
             except:
                 pass
 
         # FALLBACK: /Name
-        if sig_info['signer'] == '—':
+        if sig_info['type'] != 'DOCUMENT_TIMESTAMP' and sig_info['signer'] == '—':
             all_names = list(re.finditer(rb'/Name\s*\(([^)]*)\)', search_area))
             best_name = None
             best_score = -100
@@ -427,21 +559,15 @@ def check_signature_data(content):
 
 
 def check_timestamp(content):
-    """Kontrola časového razítka"""
+    """Kontrola časového razítka u podpisů (ne u samostatných DocTimeStamp)."""
     try:
         if b'/Type /Sig' not in content and b'/Type/Sig' not in content:
             return 'NONE'
         signatures = extract_all_signatures(content)
-        if not signatures:
+        signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
+        if not signature_objs:
             return 'NONE'
-        tsas = [s['tsa'] for s in signatures]
-        if all(t == 'TSA' for t in tsas):
-            return 'TSA'
-        elif any(t == 'TSA' for t in tsas):
-            return 'PARTIAL'
-        elif any(t == 'LOCAL' for t in tsas):
-            return 'LOCAL'
-        return 'NONE'
+        return _file_level_tsa_status(signature_objs)
     except:
         return 'NONE'
 
@@ -601,7 +727,6 @@ def analyze_pdf(content):
     """Kompletní analýza PDF. Status podpisu vychází pouze z objektů typu SIGNATURE (ne z DOCUMENT_TIMESTAMP)."""
     pdfa_version, pdfa_status = check_pdfa_version(content)
     sig_data = check_signature_data(content)
-    tsa = check_timestamp(content)
     docmdp = detect_docmdp_lock(content)
     signature_objs = [s for s in sig_data.get('signatures', []) if s.get('type') == 'SIGNATURE']
     if sig_data['has_signature'] and signature_objs:
@@ -612,15 +737,19 @@ def analyze_pdf(content):
         sig_status = 'PARTIAL'
     else:
         sig_status = 'FAIL'
+    all_sigs = sig_data.get('signatures', [])
     return {
         'pdfaVersion': pdfa_version,
         'pdfaStatus': pdfa_status,
         'sig': sig_status,
         'signer': sig_data['signer_name'],
         'ckait': sig_data['ckait_number'],
-        'tsa': tsa,
-        'sig_count': sig_data.get('sig_count', 0),
-        'signatures': sig_data.get('signatures', []),
+        'tsa': _file_level_tsa_status(all_sigs),
+        'sig_count': len([s for s in all_sigs if s.get('type') == 'SIGNATURE']),
+        'timestamp_count': len([s for s in all_sigs if s.get('type') == 'DOCUMENT_TIMESTAMP']),
+        'signatures': all_sigs,
+        'orphan_document_timestamp': _compute_orphan_document_timestamp(all_sigs),
+        'warnings': _build_signature_warnings(all_sigs),
         'docmdp_level': docmdp['level'],
         'issr_compatible': not docmdp['locked'],
     }
@@ -653,7 +782,8 @@ def analyze_pdf_file(filepath):
         if sig_list_from_reader:
             signature_objs = [s for s in sig_list_from_reader if s.get('type') == 'SIGNATURE']
             analysis['signatures'] = sig_list_from_reader
-            analysis['sig_count'] = len(sig_list_from_reader)
+            analysis['sig_count'] = len(signature_objs)
+            analysis['timestamp_count'] = len(sig_list_from_reader) - len(signature_objs)
             if signature_objs:
                 all_have_ckait = all(s.get('ckait', '—') != '—' for s in signature_objs)
                 all_have_name = all(s.get('signer', '—') != '—' for s in signature_objs)
@@ -661,15 +791,12 @@ def analyze_pdf_file(filepath):
                 analysis['signer'] = signature_objs[0].get('signer', '—')
                 analysis['ckait'] = signature_objs[0].get('ckait', '—')
             else:
-                analysis['sig'] = 'PARTIAL' if analysis.get('sig_count') else 'FAIL'
+                analysis['sig'] = 'PARTIAL' if analysis.get('timestamp_count') else 'FAIL'
                 analysis['signer'] = '—'
                 analysis['ckait'] = '—'
-            if any(s.get('tsa') == 'TSA' and s.get('timestamp_valid') for s in sig_list_from_reader):
-                analysis['tsa'] = 'TSA'
-            elif any(s.get('tsa') == 'LOCAL' for s in sig_list_from_reader):
-                analysis['tsa'] = 'LOCAL'
-            else:
-                analysis['tsa'] = 'NONE'
+            analysis['tsa'] = _file_level_tsa_status(sig_list_from_reader)
+            analysis['orphan_document_timestamp'] = _compute_orphan_document_timestamp(sig_list_from_reader)
+            analysis['warnings'] = _build_signature_warnings(sig_list_from_reader)
         # Preferenční detekce DocMDP přes strukturu PDF (AcroForm / Sig / Lock, TransformParams)
         if reader is not None:
             try:
@@ -717,6 +844,10 @@ def analyze_pdf_file(filepath):
             })
         docmdp_level = analysis.get('docmdp_level')
         issr_compatible = analysis.get('issr_compatible', True)
+        orphan_ts = analysis.get('orphan_document_timestamp', False)
+        warnings = analysis.get('warnings') or []
+        sig_only_count = len([s for s in signatures if s.get('type') == 'SIGNATURE'])
+        ts_only_count = len([s for s in signatures if s.get('type') == 'DOCUMENT_TIMESTAMP'])
         return {
             'success': True,
             'file_name': filename,
@@ -729,14 +860,21 @@ def analyze_pdf_file(filepath):
                 'file_info': {'filename': filename, 'size': file_size, 'hash': file_hash},
                 'docmdp_level': docmdp_level,
                 'issr_compatible': issr_compatible,
+                'orphan_document_timestamp': orphan_ts,
+                'warnings': warnings,
+                'signature_count': sig_only_count,
+                'timestamp_count': ts_only_count,
             },
             'display': {
                 'pdf_version': pdf_format['exact_version'],
                 'is_pdf_a3': pdf_format['is_pdf_a3'],
-                'signature_count': len(signatures),
+                'signature_count': sig_only_count,
+                'timestamp_count': ts_only_count,
                 'signatures': signatures,
                 'docmdp_level': docmdp_level,
                 'issr_compatible': issr_compatible,
+                'orphan_document_timestamp': orphan_ts,
+                'warnings': warnings,
             }
         }
     except Exception as e:

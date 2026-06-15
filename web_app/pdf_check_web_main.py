@@ -775,7 +775,7 @@ HTML_TEMPLATE = '''
         .signatures-detail.visible { display: block; }
         .signature-row {
             display: grid;
-            grid-template-columns: 40px 2fr 1.2fr 80px 1fr;
+            grid-template-columns: 40px 2fr 1.2fr 90px 80px 1fr;
             gap: 8px;
             padding: 6px 8px;
             background: white;
@@ -792,6 +792,13 @@ HTML_TEMPLATE = '''
         .sig-tsa { text-align: center; }
         .tsa-issuer-text { font-size: 0.7em; color: #6b7280; margin-top: 2px; word-break: break-word; }
         .sig-date { color: #6b7280; font-size: 0.9em; }
+        .file-warning {
+            background: #fff7ed;
+            border-top: 1px solid #fed7aa;
+            color: #c2410c;
+            font-size: 0.75em;
+            padding: 6px 12px 6px 32px;
+        }
 
         /* Badges */
         .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600; }
@@ -2024,9 +2031,19 @@ function renderFileRow(file, batchId, indent = 0) {
         const errEsc = (file.error + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         return '<div class="file-row-wrapper"><div class="file-row"><div class="file-name" style="padding-left:' + indent + 'px">' + (file.name || 'soubor') + '</div><div class="file-cell" style="grid-column: 2 / -1; color:#dc2626;">' + errEsc + '</div></div></div>';
     }
-    const sigCount = file.sig_count || (file.signatures ? file.signatures.length : 0);
-    const hasMultipleSigs = sigCount > 1;
+    const sigCount = file.sig_count != null ? file.sig_count : (file.signatures ? file.signatures.filter(function(s) { return s.type !== 'DOCUMENT_TIMESTAMP'; }).length : 0);
+    const tsCount = file.timestamp_count != null ? file.timestamp_count : (file.signatures ? file.signatures.filter(function(s) { return s.type === 'DOCUMENT_TIMESTAMP'; }).length : 0);
+    const totalEntries = (file.signatures ? file.signatures.length : 0) || (sigCount + tsCount);
+    const hasMultipleSigs = totalEntries > 1;
     const fileId = 'file-' + batchId + '-' + Math.random().toString(36).substr(2, 9);
+
+    function expandLabel() {
+        if (!hasMultipleSigs) return '';
+        var parts = [];
+        if (sigCount > 0) parts.push(sigCount + (sigCount === 1 ? ' podpis' : ' podpisy'));
+        if (tsCount > 0) parts.push(tsCount + (tsCount === 1 ? ' razítko' : ' razítka'));
+        return '▶ ' + parts.join(' + ');
+    }
 
     let html = '<div class="file-row-wrapper">';
     html += '<div class="file-row' + (hasMultipleSigs ? ' has-sigs' : '') + '" ' + (hasMultipleSigs ? 'onclick="toggleSignatures(\\'' + fileId + '\\')"' : '') + '>';
@@ -2035,13 +2052,13 @@ function renderFileRow(file, batchId, indent = 0) {
     html += '<div class="file-cell">' + getSigBadge(file) + '</div>';
 
     if (hasMultipleSigs) {
-        html += '<div class="file-cell file-signer sig-expandable">▶ ' + sigCount + ' podpisy</div>';
+        html += '<div class="file-cell file-signer sig-expandable">' + expandLabel() + '</div>';
     } else {
         html += '<div class="file-cell file-signer">' + (file.signer || '—') + '</div>';
     }
 
     html += '<div class="file-cell file-ckait">' + (hasMultipleSigs ? '—' : (file.ckait || '—')) + '</div>';
-    const tsaCell = getTsaBadge(file) + (sigCount === 1 && file.signatures && file.signatures[0] && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
+    const tsaCell = getTsaBadge(file) + (sigCount === 1 && tsCount === 0 && file.signatures && file.signatures[0] && file.signatures[0].tsa_issuer && file.signatures[0].tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + (file.signatures[0].tsa_issuer + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '</div>' : '');
     html += '<div class="file-cell">' + tsaCell + '</div>';
     html += '<div class="file-cell">' + getIssrBadge(file) + '</div></div>';
 
@@ -2056,11 +2073,16 @@ function renderFileRow(file, batchId, indent = 0) {
             html += '<div class="sig-index">' + icon + '</div>';
             html += '<div class="sig-name">' + esc(label) + '</div>';
             html += '<div class="sig-ckait">' + (isTs ? '—' : esc(sig.ckait_number || sig.ckait || '—')) + '</div>';
+            html += '<div class="sig-podpis">' + getSigBadgeForSig(sig) + '</div>';
             html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig) + (sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + esc(sig.tsa_issuer) + '</div>' : '') + '</div>';
             html += '<div class="sig-date">' + esc(sig.date || '—') + '</div>';
             html += '</div>';
         }
         html += '</div>';
+    }
+    if (file.orphan_document_timestamp || (file.warnings && file.warnings.length)) {
+        var warnText = (file.warnings && file.warnings.length) ? file.warnings.join(' ') : 'Časové razítko není vloženo do podpisu.';
+        html += '<div class="file-warning">⚠ ' + (warnText + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
     }
 
     html += '</div>';
@@ -2167,6 +2189,14 @@ function getTsaBadgeForSig(sig) {
     }
     if (tsa === 'LOCAL') return '<span class="badge badge-red">LOK</span>';
     return '<span class="badge badge-red">Bez razítka</span>';
+}
+function getSigBadgeForSig(sig) {
+    if (!sig) return '<span class="badge badge-gray">—</span>';
+    if (sig.type === 'DOCUMENT_TIMESTAMP') return '<span class="badge badge-orange">Razítko dokumentu</span>';
+    var signer = sig.signer || sig.name || '—';
+    var ckait = sig.ckait_number || sig.ckait || '—';
+    if (signer !== '—' && ckait !== '—') return '<span class="badge badge-green">Autor. osoba</span>';
+    return '<span class="badge badge-red">Podpis (ne autor.)</span>';
 }
 
 // ===== SIGNATURES EXPAND =====
@@ -3571,12 +3601,20 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
         sig = 'OK' if all(s.get('signer', '—') != '—' and s.get('ckait_number', '—') != '—' for s in signature_objs) else 'PARTIAL'
     else:
         sig = 'PARTIAL' if signatures else 'FAIL'
-    if any(s.get('timestamp_valid') for s in signatures):
-        tsa = 'TSA'
-    elif any((s.get('date') or '—') != '—' for s in signatures):
-        tsa = 'LOCAL'
+    timestamp_objs = [s for s in signatures if s.get('type') == 'DOCUMENT_TIMESTAMP']
+    if signature_objs:
+        if all(s.get('timestamp_valid') for s in signature_objs):
+            tsa = 'TSA'
+        elif any(s.get('timestamp_valid') for s in signature_objs):
+            tsa = 'PARTIAL'
+        elif any((s.get('date') or '—') != '—' for s in signature_objs):
+            tsa = 'LOCAL'
+        else:
+            tsa = 'NONE'
     else:
         tsa = 'NONE'
+    orphan_ts = bool(results.get('orphan_document_timestamp')) if isinstance(results, dict) else False
+    warnings = list(results.get('warnings') or []) if isinstance(results, dict) else []
     out_signatures = []
     for i, s in enumerate(signatures, 1):
         sig_type = s.get('type', 'SIGNATURE')
@@ -3611,8 +3649,11 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
         'signer': signer,
         'ckait': ckait,
         'tsa': tsa,
-        'sig_count': len(out_signatures),
+        'sig_count': len(signature_objs),
+        'timestamp_count': len(timestamp_objs),
         'signatures': out_signatures,
+        'orphan_document_timestamp': orphan_ts,
+        'warnings': warnings,
         'docmdp_level': results.get('docmdp_level'),
         'issr_compatible': results.get('issr_compatible', True),
     }
