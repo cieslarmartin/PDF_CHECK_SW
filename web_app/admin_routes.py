@@ -2701,7 +2701,7 @@ def api_welcome_package():
     pwd_line = f"Heslo: {pwd_plain}\n" if pwd_plain else "Heslo: (není uloženo – tlačítko „Heslo“ v řádku)\n"
     max_batch = lic.get('max_batch_size')
     max_devices = lic.get('max_devices')
-    active_devices = lic.get('active_devices', 0)
+    active_devices = db.count_user_devices_non_blocked(api_key)
     limits = lic.get('limits') or {}
     daily_limit = limits.get('daily_files_limit')
     max_file_mb = limits.get('max_file_size_mb')
@@ -2838,7 +2838,7 @@ def api_toggle_license():
 @admin_bp.route('/admin/api/license/reset-devices', methods=['POST'])
 @admin_required
 def api_reset_devices():
-    """Resetuje zařízení pro licenci"""
+    """Resetuje všechna zařízení pro licenci (user_devices + legacy device_activations)."""
     db = get_db()
 
     api_key = request.form.get('api_key', '').strip()
@@ -2846,12 +2846,87 @@ def api_reset_devices():
     if not api_key:
         return jsonify({'success': False, 'error': 'Chybí API klíč'}), 400
 
-    deleted = db.admin_reset_devices(api_key)
+    result = db.admin_reset_devices(api_key)
+    total = result.get('user_devices', 0) + result.get('device_activations', 0)
 
     return jsonify({
         'success': True,
-        'message': f'Odstraněno {deleted} zařízení'
+        'message': f'Odstraněno {total} záznamů zařízení (user_devices: {result.get("user_devices", 0)}, legacy: {result.get("device_activations", 0)})',
+        'deleted': result,
     })
+
+
+@admin_bp.route('/admin/api/license/user-devices', methods=['GET'])
+@admin_required
+def api_get_user_devices():
+    """Seznam počítačů vázaných na licenci (tabulka user_devices – rozhoduje o přihlášení agenta)."""
+    db = get_db()
+    api_key = (request.args.get('api_key') or '').strip()
+    if not api_key:
+        return jsonify({'success': False, 'error': 'Chybí API klíč'}), 400
+
+    license_info = db.get_user_license(api_key)
+    if not license_info:
+        return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
+
+    devices = db.get_user_devices_list(api_key)
+    active_count = db.count_user_devices_non_blocked(api_key)
+    max_devices = license_info.get('max_devices', 1)
+    legacy_count = db.count_active_devices(api_key)
+
+    return jsonify({
+        'success': True,
+        'email': license_info.get('email'),
+        'user_name': license_info.get('user_name'),
+        'tier_name': license_info.get('tier_name'),
+        'max_devices': max_devices,
+        'active_count': active_count,
+        'legacy_device_activations': legacy_count,
+        'at_limit': max_devices is not None and int(max_devices or 0) >= 0 and active_count >= int(max_devices or 0),
+        'devices': devices,
+    })
+
+
+@admin_bp.route('/admin/api/license/user-device/remove', methods=['POST'])
+@admin_required
+def api_remove_user_device():
+    """Odstraní jedno zařízení z user_devices."""
+    db = get_db()
+    api_key = (request.form.get('api_key') or '').strip()
+    machine_id = (request.form.get('machine_id') or '').strip()
+    if not api_key or not machine_id:
+        return jsonify({'success': False, 'error': 'Chybí API klíč nebo ID zařízení'}), 400
+    if not db.remove_user_device(api_key, machine_id):
+        return jsonify({'success': False, 'error': 'Zařízení nenalezeno'}), 404
+    return jsonify({'success': True, 'message': 'Zařízení odstraněno'})
+
+
+@admin_bp.route('/admin/api/license/user-device/unblock', methods=['POST'])
+@admin_required
+def api_unblock_user_device():
+    """Odblokuje zařízení v user_devices."""
+    db = get_db()
+    api_key = (request.form.get('api_key') or '').strip()
+    machine_id = (request.form.get('machine_id') or '').strip()
+    if not api_key or not machine_id:
+        return jsonify({'success': False, 'error': 'Chybí API klíč nebo ID zařízení'}), 400
+    if not db.unblock_user_device(api_key, machine_id):
+        return jsonify({'success': False, 'error': 'Zařízení nenalezeno'}), 404
+    return jsonify({'success': True, 'message': 'Zařízení odblokováno'})
+
+
+@admin_bp.route('/admin/api/license/user-device/block', methods=['POST'])
+@admin_required
+def api_block_user_device():
+    """Zablokuje zařízení v user_devices."""
+    db = get_db()
+    api_key = (request.form.get('api_key') or '').strip()
+    machine_id = (request.form.get('machine_id') or '').strip()
+    if not api_key or not machine_id:
+        return jsonify({'success': False, 'error': 'Chybí API klíč nebo ID zařízení'}), 400
+    if not db.block_user_device(api_key, machine_id):
+        return jsonify({'success': False, 'error': 'Zařízení nenalezeno'}), 404
+    return jsonify({'success': True, 'message': 'Zařízení zablokováno'})
 
 
 @admin_bp.route('/admin/api/license/delete', methods=['POST'])
@@ -2952,10 +3027,10 @@ def api_git_pull():
 @admin_bp.route('/admin/api/license/<api_key>/devices', methods=['GET'])
 @admin_required
 def api_get_devices(api_key):
-    """Vrátí seznam zařízení pro licenci"""
+    """Vrátí seznam zařízení pro licenci (user_devices – stejný zdroj jako login agenta)."""
     db = get_db()
 
-    devices = db.get_active_devices(api_key)
+    devices = db.get_user_devices_list(api_key)
 
     return jsonify({
         'success': True,

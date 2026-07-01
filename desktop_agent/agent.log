@@ -7648,3 +7648,32 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-07-01 23:32:52,057 - INFO - Analýza dokončena: test_standard.pdf
 2026-07-01 23:32:54,051 - INFO - Odesílám 6 výsledků na server (jeden request)...
 2026-07-01 23:32:55,519 - INFO - Batch úspěšně odeslán: batch_20260701_213255_70330022 - Uloženo 6 souborů
+2026-07-01 23:56:00,419 - INFO - Přihlášení e-mailem a heslem...
+2026-07-01 23:56:01,528 - WARNING - Přihlášení selhalo: Licence limit reached. Contact support.
+2026-07-01 23:56:08,305 - INFO - Přihlášení e-mailem a heslem...
+2026-07-01 23:56:09,232 - WARNING - Přihlášení selhalo: Licence limit reached. Contact support.
+2026-07-02 00:04:29,850 - INFO - Přihlášení e-mailem a heslem...
+2026-07-02 00:04:30,769 - WARNING - Přihlášení selhalo: Neplatný e-mail nebo heslo
+2026-07-02 00:04:37,163 - INFO - Přihlášení e-mailem a heslem...
+2026-07-02 00:04:39,236 - INFO - Přihlášeno.
+2026-07-02 00:04:45,503 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa1.pdf
+2026-07-02 00:04:45,504 - WARNING - incorrect startxref pointer(1)
+2026-07-02 00:04:45,505 - WARNING - parsing for Object Streams
+2026-07-02 00:04:45,505 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-07-02 00:04:45,509 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2.pdf
+2026-07-02 00:04:45,510 - WARNING - incorrect startxref pointer(1)
+2026-07-02 00:04:45,510 - WARNING - parsing for Object Streams
+2026-07-02 00:04:45,511 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-07-02 00:04:45,512 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_bez casoveho.pdf
+2026-07-02 00:04:45,526 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-07-02 00:04:45,529 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_sign.pdf
+2026-07-02 00:04:45,547 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-07-02 00:04:45,548 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa3.pdf
+2026-07-02 00:04:45,549 - WARNING - incorrect startxref pointer(1)
+2026-07-02 00:04:45,549 - WARNING - parsing for Object Streams
+2026-07-02 00:04:45,550 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-07-02 00:04:45,551 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_standard.pdf
+2026-07-02 00:04:45,552 - INFO - Analýza dokončena: test_standard.pdf
+2026-07-02 00:04:46,394 - INFO - Odesílám 6 výsledků na server (jeden request)...
+2026-07-02 00:04:47,661 - INFO - Batch úspěšně odeslán: batch_20260701_220447_7d94ee1b - Uloženo 6 souborů
+2026-07-02 00:06:46,797 - INFO - Agent ukončen

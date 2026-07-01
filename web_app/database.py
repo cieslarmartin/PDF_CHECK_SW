@@ -2754,6 +2754,21 @@ class Database:
         conn.close()
         return n
 
+    def remove_user_device(self, user_id, machine_id):
+        """Odstraní záznam zařízení z user_devices (uvolní slot pro přihlášení)."""
+        if not user_id or not machine_id:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            DELETE FROM user_devices
+            WHERE user_id = ? AND machine_id = ?
+        ''', (user_id, str(machine_id).strip()))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return deleted
+
     # =========================================================================
     # ADMIN SYSTÉM (NOVÉ v41)
     # =========================================================================
@@ -3688,7 +3703,7 @@ class Database:
                     ak.license_tier,
                     ak.tier_id,
                     ak.license_expires,
-                    ak.max_devices,
+                    COALESCE(lt.max_devices, ak.max_devices, 1) AS max_devices,
                     ak.rate_limit_hour,
                     ak.created_at,
                     ak.is_active,
@@ -3698,10 +3713,11 @@ class Database:
                     ak.allow_excel_export,
                     ak.password_plain_stored,
                     lt.name AS tier_name_override,
-                    (SELECT COUNT(*) FROM device_activations da
-                     WHERE da.api_key = ak.api_key AND da.is_active = 1) as active_devices,
-                    (SELECT GROUP_CONCAT(COALESCE(device_name, hwid), ', ') FROM device_activations da
-                     WHERE da.api_key = ak.api_key AND da.is_active = 1) as device_names,
+                    (SELECT COUNT(*) FROM user_devices ud
+                     WHERE ud.user_id = ak.api_key AND (ud.is_blocked = 0 OR ud.is_blocked IS NULL)) as active_devices,
+                    (SELECT GROUP_CONCAT(COALESCE(ud.machine_name, substr(ud.machine_id, 1, 8)), ', ')
+                     FROM user_devices ud
+                     WHERE ud.user_id = ak.api_key AND (ud.is_blocked = 0 OR ud.is_blocked IS NULL)) as device_names,
                     (SELECT COUNT(*) FROM check_results cr
                      WHERE cr.api_key = ak.api_key) as total_checks,
                     (SELECT MAX(timestamp) FROM user_logs ul WHERE ul.user_id = ak.api_key) as last_active,
@@ -3717,8 +3733,8 @@ class Database:
             sel = ['ak.id', 'ak.api_key', 'ak.user_name', 'ak.email', 'ak.license_tier', 'ak.license_expires',
                    'ak.max_devices', 'ak.rate_limit_hour', 'ak.created_at', 'ak.is_active', 'ak.max_batch_size',
                    'ak.allow_signatures', 'ak.allow_timestamp', 'ak.allow_excel_export',
-                   '(SELECT COUNT(*) FROM device_activations da WHERE da.api_key = ak.api_key AND da.is_active = 1) as active_devices',
-                   '(SELECT GROUP_CONCAT(COALESCE(device_name, hwid), ", ") FROM device_activations da WHERE da.api_key = ak.api_key AND da.is_active = 1) as device_names',
+                   '(SELECT COUNT(*) FROM user_devices ud WHERE ud.user_id = ak.api_key AND (ud.is_blocked = 0 OR ud.is_blocked IS NULL)) as active_devices',
+                   '(SELECT GROUP_CONCAT(COALESCE(ud.machine_name, substr(ud.machine_id, 1, 8)), ", ") FROM user_devices ud WHERE ud.user_id = ak.api_key AND (ud.is_blocked = 0 OR ud.is_blocked IS NULL)) as device_names',
                    '(SELECT COUNT(*) FROM check_results cr WHERE cr.api_key = ak.api_key) as total_checks']
             if 'tier_id' in cols:
                 sel.append('ak.tier_id')
@@ -3751,20 +3767,20 @@ class Database:
         conn.close()
         return licenses
 
-    def admin_reset_devices(self, api_key: str) -> int:
-        """Resetuje všechna zařízení pro daný API klíč (admin funkce)"""
+    def admin_reset_devices(self, api_key: str) -> dict:
+        """Resetuje všechna zařízení pro daný API klíč (user_devices + device_activations)."""
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        cursor.execute('''
-            DELETE FROM device_activations
-            WHERE api_key = ?
-        ''', (api_key,))
+        cursor.execute('DELETE FROM user_devices WHERE user_id = ?', (api_key,))
+        user_deleted = cursor.rowcount
 
-        deleted = cursor.rowcount
+        cursor.execute('DELETE FROM device_activations WHERE api_key = ?', (api_key,))
+        legacy_deleted = cursor.rowcount
+
         conn.commit()
         conn.close()
-        return deleted
+        return {'user_devices': user_deleted, 'device_activations': legacy_deleted}
 
     def admin_delete_license(self, api_key: str) -> bool:
         """Smaže licenci a všechna související data (admin funkce)"""
