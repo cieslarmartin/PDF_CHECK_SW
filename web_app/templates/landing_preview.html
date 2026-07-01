@@ -535,7 +535,7 @@
             <div class="section-head"><span class="section-num">8</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Časté dotazy</h2></div>
             {% if faq_list and faq_list|length > 0 %}
             <div class="space-y-1">
-                {% for item in faq_list[:8] %}
+                {% for item in faq_list %}
                 <details class="bg-white rounded-lg border overflow-hidden" style="border-color:#e5e7eb;">
                     <summary class="px-4 py-3 font-medium text-sm text-gray-900 cursor-pointer">{{ item.question }}</summary>
                     <div class="px-4 pb-3 text-sm text-gray-500">{{ item.answer|e }}</div>

@@ -120,6 +120,12 @@
                 </a>
             </div>
 
+            <div class="mt-8 p-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700">
+                <p class="font-semibold mb-2" style="color:#1e5a8a;">Pro IT administrátory (firemní síť)</p>
+                <p class="mb-2">Přihlášení Desktop Agenta vyžaduje odchozí <strong>HTTPS (port 443)</strong> na doménu <strong>www.dokucheck.cz</strong>. Obecný přístup na internet nestačí — firewall musí povolit tuto konkrétní doménu.</p>
+                <p>Podrobný postup, test připojení a řešení SSL inspekce: <a href="/#faq" class="lp-link font-medium">časté dotazy (FAQ)</a>.</p>
+            </div>
+
             {% if not download_url %}
             <p class="mt-6 text-sm text-gray-500">
                 Odkaz na stažení nastavte v Adminu (Nastavení → Základní → download_url). Poté se zde zobrazí aktivní primární stažení.
@@ -133,7 +139,7 @@
             <p class="text-sm text-gray-600">
                 Kontakt: {% if contact_email %}<a href="mailto:{{ contact_email }}" class="lp-link">{{ contact_email }}</a>{% else %}vyplňte v Adminu – Nastavení → Kontakt{% endif %}
                 {% if contact_phone %} · {{ contact_phone }}{% endif %}
-                · <a href="/vop" class="lp-link">VOP</a> · <a href="/gdpr" class="lp-link">GDPR</a>
+                · <a href="/vop" class="lp-link">VOP</a> · <a href="/gdpr" class="lp-link">GDPR</a> · <a href="/#faq" class="lp-link">FAQ</a>
             </p>
         </footer>
     </main>

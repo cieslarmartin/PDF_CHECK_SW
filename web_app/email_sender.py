@@ -5,10 +5,13 @@ import os
 from flask import current_app
 
 try:
-    from site_config_loader import get_email_templates
+    from site_config_loader import get_email_templates, ACTIVATION_NETWORK_NOTE_HTML, ACTIVATION_NETWORK_NOTE_PLAIN, FAQ_PAGE_URL
 except ImportError:
     def get_email_templates():
         return {}
+    FAQ_PAGE_URL = "https://www.dokucheck.cz/#faq"
+    ACTIVATION_NETWORK_NOTE_HTML = ""
+    ACTIVATION_NETWORK_NOTE_PLAIN = ""
 
 
 def _apply_footer(body_plain, footer_text):
@@ -246,6 +249,20 @@ def send_order_confirmation_email(order_id, email, jmeno_firma, tarif, amount_cz
     return send_email(email, subject, body, append_footer=True)
 
 
+def _append_activation_network_note(body):
+    """Doplní poznámku o firemní síti / FAQ, pokud v těle ještě není."""
+    if not body:
+        return body
+    low = body.lower()
+    if 'firemní síť' in low or 'dokucheck.cz/#faq' in low or FAQ_PAGE_URL in body:
+        return body
+    if '<' in body and ACTIVATION_NETWORK_NOTE_HTML:
+        return body.rstrip() + ACTIVATION_NETWORK_NOTE_HTML
+    if ACTIVATION_NETWORK_NOTE_PLAIN:
+        return body.rstrip() + ACTIVATION_NETWORK_NOTE_PLAIN
+    return body
+
+
 def get_activation_email_preview(user_email, password_plain=None, download_url=None, login_url=None, user_name=None, set_password_url=None):
     """Vrátí (předmět, tělo_plain, tělo_html) pro aktivační e-mail – pro náhled v administraci. Neodesílá!"""
     if not download_url:
@@ -302,6 +319,7 @@ def get_activation_email_preview(user_email, password_plain=None, download_url=N
     
     subject = repl(subject_tpl)
     body = repl(body_tpl)
+    body = _append_activation_network_note(body)
     
     # Podpora HTML:
     body_html = None

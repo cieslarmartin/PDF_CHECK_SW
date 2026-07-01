@@ -5,12 +5,24 @@ import os
 
 SITE_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'site_config.json')
 
+FAQ_PAGE_URL = "https://www.dokucheck.cz/#faq"
+
+ACTIVATION_NETWORK_NOTE_HTML = (
+    '<p style="font-size:12px;color:#6b7280;margin-top:16px;line-height:1.5;">'
+    'Používáte firemní síť? IT administrátor musí povolit odchozí HTTPS na '
+    '<strong>www.dokucheck.cz</strong>. Podrobnosti v '
+    f'<a href="{FAQ_PAGE_URL}" style="color:#1e5a8a;">častých dotazech (FAQ)</a>.</p>'
+)
+ACTIVATION_NETWORK_NOTE_PLAIN = (
+    f"\n\n(Používáte firemní síť? IT musí povolit odchozí HTTPS na www.dokucheck.cz – viz FAQ: {FAQ_PAGE_URL})"
+)
+
 DEFAULT_EMAIL_TEMPLATES = {
     "footer_text": "<div style=\"color:#6b7280; font-size:12px; margin-top:20px; border-top:1px solid #e5e7eb; padding-top:10px;\">DokuCheck – Dokumentace bez chyb | <a href=\"https://www.dokucheck.cz\" style=\"color:#1e5a8a;\">www.dokucheck.cz</a><br>Tato zpráva byla odeslána automaticky.</div>",
     "order_confirmation_subject": "DokuCheck – potvrzení objednávky č. {vs}",
     "order_confirmation_body": "<div style=\"font-family:sans-serif; color:#374151; line-height:1.5;\"><h2 style=\"color:#1e5a8a; margin-top:0;\">Děkujeme za objednávku</h2><p>Dobrý den,</p><p>pro aktivaci zašlete prosím <strong>{cena} Kč</strong> na náš účet. <br>Variabilní symbol: <strong>{vs}</strong></p><p>Platební údaje a fakturu najdete v příloze tohoto e-mailu.</p><p>Zákazník: {jmeno}</p></div>",
     "activation_subject": "DokuCheck – přístup aktivní",
-    "activation_body": "<div style=\"font-family:sans-serif; color:#374151; line-height:1.5;\"><h2 style=\"color:#16A34A; margin-top:0;\">Vaše platba byla přijata!</h2><p>Dobrý den, {jmeno},</p><p>přístup k aplikaci DokuCheck je nyní aktivní.</p><p><strong>Přihlašovací e-mail:</strong> {email}</p><p><a href=\"{set_password_url}\" style=\"display:inline-block; padding:10px 20px; background:#1e5a8a; color:white; text-decoration:none; border-radius:5px; margin:10px 0; font-weight:bold;\">Nastavit heslo k účtu</a></p><p>Poté se můžete přihlásit do Portálu: <br><a href=\"{login_url}\" style=\"color:#1e5a8a;\">{login_url}</a></p><p>Desktop aplikaci pro Windows stáhnete zde: <br><a href=\"{download_url}\" style=\"color:#1e5a8a;\">{download_url}</a></p></div>",
+    "activation_body": "<div style=\"font-family:sans-serif; color:#374151; line-height:1.5;\"><h2 style=\"color:#16A34A; margin-top:0;\">Vaše platba byla přijata!</h2><p>Dobrý den, {jmeno},</p><p>přístup k aplikaci DokuCheck je nyní aktivní.</p><p><strong>Přihlašovací e-mail:</strong> {email}</p><p><a href=\"{set_password_url}\" style=\"display:inline-block; padding:10px 20px; background:#1e5a8a; color:white; text-decoration:none; border-radius:5px; margin:10px 0; font-weight:bold;\">Nastavit heslo k účtu</a></p><p>Poté se můžete přihlásit do Portálu: <br><a href=\"{login_url}\" style=\"color:#1e5a8a;\">{login_url}</a></p><p>Desktop aplikaci pro Windows stáhnete zde: <br><a href=\"{download_url}\" style=\"color:#1e5a8a;\">{download_url}</a></p>" + ACTIVATION_NETWORK_NOTE_HTML + "</div>",
 }
 
 
