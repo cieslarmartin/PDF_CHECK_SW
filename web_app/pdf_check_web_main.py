@@ -1673,7 +1673,7 @@ async function processFilesWithProgress(files) {
                     batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: result.error || 'Chyba kontroly' });
                     continue;
                 }
-                batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, ...result });
+                batch.files.push({ ...result, path: file.webkitRelativePath || file.name, name: file.name });
             } catch (error) {
                 // #region agent debug log
                 fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J4',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_exception',data:{err:String((error&&error.message)||error||'')},timestamp:Date.now()})}).catch(()=>{});
@@ -4007,7 +4007,7 @@ def app_main():
 
 @app.route('/download/agent')
 def download_agent():
-    """Redirect na stažení .exe agenta – skrývá GitHub URL před uživatelem."""
+    """Redirect na stažení agenta (Microsoft Store nebo /download) – skrývá cílovou URL před uživatelem."""
     db = Database()
     download_url = db.get_global_setting('download_url', '') or ''
     if download_url:
@@ -4466,6 +4466,7 @@ def analyze_batch():
             r = analyze_pdf_from_content(content)
             _enrich_signatures_tsa_qualified(r)
             r['filename'] = file.filename
+            r['name'] = file.filename
             results.append(r)
 
         if not paid_user:
@@ -4506,6 +4507,8 @@ def analyze():
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         result = analyze_pdf_from_content(content)
         _enrich_signatures_tsa_qualified(result)
+        if file.filename:
+            result['name'] = file.filename
         _dbg("H2", "/analyze:ok", {"has_error": bool(result.get("error")), "pdfaStatus": result.get("pdfaStatus"), "sig": result.get("sig")})
         return jsonify(result)
     except Exception as e:

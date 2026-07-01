@@ -2,5 +2,5 @@ agent:
   auto_send: true
   show_results_window: true
 api:
-  key: sk_tier_84b79a264a6f88999651709add3bdc40
+  key: sk_tier_f794a4df9442ca0994e59ccc6836055d
   url: https://www.dokucheck.cz

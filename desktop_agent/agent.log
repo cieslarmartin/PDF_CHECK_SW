@@ -7430,3 +7430,221 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-03-11 07:54:31,270 - INFO - Ověřuji licenci se serverem...
 2026-03-11 07:54:34,096 - INFO - Agent běží
 2026-03-11 07:54:53,080 - INFO - Agent ukončen
+2026-06-15 13:38:51,757 - INFO - PDF DokuCheck Agent spuštěn
+2026-06-15 13:38:51,757 - INFO - Spouštím GUI...
+2026-06-15 13:38:52,534 - INFO - Ověřuji licenci se serverem...
+2026-06-15 13:38:54,729 - INFO - Agent běží
+2026-06-15 13:39:07,481 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/blatak jen casove razitko/04Z_01.1.60-07 Elektroinstalace-4.NP (002).pdf
+2026-06-15 13:39:07,587 - INFO - Analýza dokončena: 04Z_01.1.60-07 Elektroinstalace-4.NP (002).pdf
+2026-06-15 13:39:07,587 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/blatak jen casove razitko/04Z_01.1.60-07 Elektroinstalace-4.NP.pdf
+2026-06-15 13:39:07,629 - INFO - Analýza dokončena: 04Z_01.1.60-07 Elektroinstalace-4.NP.pdf
+2026-06-15 13:39:08,658 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-06-15 13:39:11,325 - INFO - Batch úspěšně odeslán: batch_20260615_113909_f573b9c9 - Uloženo 2 souborů
+2026-06-15 14:47:00,109 - INFO - Agent ukončen
+2026-06-25 12:27:41,552 - INFO - PDF DokuCheck Agent spuštěn
+2026-06-25 12:27:41,553 - INFO - Spouštím GUI...
+2026-06-25 12:27:42,385 - INFO - Ověřuji licenci se serverem...
+2026-06-25 12:27:45,849 - INFO - Agent běží
+2026-06-25 12:28:01,896 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace/razitko_bez_podpisu.pdf
+2026-06-25 12:28:04,644 - INFO - Analýza dokončena: razitko_bez_podpisu.pdf
+2026-06-25 12:28:04,645 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace/RD_CPK_FIN.pdf
+2026-06-25 12:29:26,594 - INFO - Agent ukončen
+2026-06-25 12:29:48,021 - INFO - PDF DokuCheck Agent spuštěn
+2026-06-25 12:29:48,021 - INFO - Spouštím GUI...
+2026-06-25 12:29:48,514 - INFO - Ověřuji licenci se serverem...
+2026-06-25 12:29:50,174 - INFO - Agent běží
+2026-06-25 12:30:03,699 - INFO - Kontrola souboru: d:/Zakazky/26_02_Polanka/podklady01/Polanka_3959_situace.pdf
+2026-06-25 12:30:03,748 - INFO - Analýza dokončena: Polanka_3959_situace.pdf
+2026-06-25 12:30:03,748 - INFO - Kontrola souboru: d:/Zakazky/26_02_Polanka/podklady01/Rozhodnuti_ de_leni_ p.c_.1224.pdf
+2026-06-25 12:30:03,811 - INFO - Analýza dokončena: Rozhodnuti_ de_leni_ p.c_.1224.pdf
+2026-06-25 12:30:18,732 - INFO - Kontrola souboru: d:/Zakazky/26_02_Polanka/podklady01/Polanka_3959_situace.pdf
+2026-06-25 12:30:18,734 - INFO - Analýza dokončena: Polanka_3959_situace.pdf
+2026-06-25 12:30:33,684 - INFO - Kontrola souboru: d:/Zakazky/26_02_Polanka/podklady01/Polanka_3959_situace.pdf
+2026-06-25 12:30:33,686 - INFO - Analýza dokončena: Polanka_3959_situace.pdf
+2026-06-25 12:30:33,691 - INFO - Kontrola souboru: d:/Zakazky/26_02_Polanka/podklady01/Rozhodnuti_ de_leni_ p.c_.1224.pdf
+2026-06-25 12:30:33,749 - INFO - Analýza dokončena: Rozhodnuti_ de_leni_ p.c_.1224.pdf
+2026-06-25 12:30:39,593 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-06-25 12:30:40,844 - INFO - Batch úspěšně odeslán: batch_20260625_103037_0cfdaaa5 - Uloženo 2 souborů
+2026-06-25 12:32:21,665 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\test_signed_casove.pdf
+2026-06-25 12:32:23,357 - INFO - Analýza dokončena: test_signed_casove.pdf
+2026-06-25 12:32:23,358 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Př04_Souhlas_GP_casove_razitko.pdf
+2026-06-25 12:32:24,897 - INFO - Analýza dokončena: Př04_Souhlas_GP_casove_razitko.pdf
+2026-06-25 12:32:24,898 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Př04_Souhlas_GP.pdf
+2026-06-25 12:32:25,994 - INFO - Analýza dokončena: Př04_Souhlas_GP.pdf
+2026-06-25 12:32:25,994 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\test_signed.pdf
+2026-06-25 12:32:27,422 - INFO - Analýza dokončena: test_signed.pdf
+2026-06-25 12:32:27,422 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\RD_CPK_FIN_sign.pdf
+2026-06-25 12:32:53,323 - INFO - Analýza dokončena: RD_CPK_FIN_sign.pdf
+2026-06-25 12:32:53,323 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\razitko_bez_podpisu_signed.pdf
+2026-06-25 12:32:54,522 - INFO - Analýza dokončena: razitko_bez_podpisu_signed.pdf
+2026-06-25 12:32:54,522 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\razitko_bez_podpisu.pdf
+2026-06-25 12:32:54,529 - INFO - Analýza dokončena: razitko_bez_podpisu.pdf
+2026-06-25 12:32:54,529 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\CIESLAR_cestne_prohlaseni_-_vii.beh_-_2019-2021_podepsany.pdf
+2026-06-25 12:32:56,360 - INFO - Analýza dokončena: CIESLAR_cestne_prohlaseni_-_vii.beh_-_2019-2021_podepsany.pdf
+2026-06-25 12:32:56,361 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\CIESLAR_cestne_prohlaseni_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:32:57,653 - INFO - Analýza dokončena: CIESLAR_cestne_prohlaseni_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:32:57,654 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\cestne_prohlaseni_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:32:59,177 - INFO - Analýza dokončena: cestne_prohlaseni_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:32:59,178 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\registracni_list_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:33:00,128 - INFO - Analýza dokončena: registracni_list_-_vii.beh_-_2019-2021.pdf
+2026-06-25 12:33:00,129 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\RD_CPK_FIN.pdf
+2026-06-25 12:33:15,255 - INFO - Analýza dokončena: RD_CPK_FIN.pdf
+2026-06-25 12:33:15,256 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Pracovni smlouva CHVAT\priloha_1702921410_0_Dopis_vyzva a poruseni zakona_Cieslar.pdf
+2026-06-25 12:33:17,080 - INFO - Analýza dokončena: priloha_1702921410_0_Dopis_vyzva a poruseni zakona_Cieslar.pdf
+2026-06-25 12:33:17,081 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Pracovni smlouva CHVAT\21-Cdo-3980-2016-K rozsahu zákazu výdělečné činnosti § 304.pdf
+2026-06-25 12:33:18,563 - INFO - Analýza dokončena: 21-Cdo-3980-2016-K rozsahu zákazu výdělečné činnosti § 304.pdf
+2026-06-25 12:33:18,564 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Pracovni smlouva CHVAT\skener Sharp_20260323_110536.pdf
+2026-06-25 12:33:20,947 - INFO - Analýza dokončena: skener Sharp_20260323_110536.pdf
+2026-06-25 12:33:20,947 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\IČO\vypis-1313636.pdf
+2026-06-25 12:33:22,045 - INFO - Analýza dokončena: vypis-1313636.pdf
+2026-06-25 12:33:22,046 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\celozivotni vzdelanavi_2026\AIVESTA_2026-01-16_Martin_Cieślar.pdf
+2026-06-25 12:33:25,725 - INFO - Analýza dokončena: AIVESTA_2026-01-16_Martin_Cieślar.pdf
+2026-06-25 12:33:25,725 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG_1_sign.pdf
+2026-06-25 12:33:27,173 - INFO - Analýza dokončena: D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG_1_sign.pdf
+2026-06-25 12:33:27,173 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG.pdf
+2026-06-25 12:33:28,196 - INFO - Analýza dokončena: D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG.pdf
+2026-06-25 12:33:28,196 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG_1.pdf
+2026-06-25 12:33:29,872 - INFO - Analýza dokončena: D1.1-04 Půdorys 1.NP _ Výkres.pdfLUONG_1.pdf
+2026-06-25 12:33:29,872 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\KD12-8.12.2025.pdf
+2026-06-25 12:33:31,550 - INFO - Analýza dokončena: KD12-8.12.2025.pdf
+2026-06-25 12:33:31,550 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\PDF_A3_Report_20251205.pdf
+2026-06-25 12:33:32,413 - INFO - Analýza dokončena: PDF_A3_Report_20251205.pdf
+2026-06-25 12:33:32,413 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_pdfa2_bez casoveho.pdf
+2026-06-25 12:33:33,396 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-06-25 12:33:33,397 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_pdfa2_sign.pdf
+2026-06-25 12:33:34,448 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-06-25 12:33:34,448 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_pdfa3.pdf
+2026-06-25 12:33:35,298 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:35,298 - WARNING - parsing for Object Streams
+2026-06-25 12:33:35,299 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-06-25 12:33:35,299 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_pdfa2.pdf
+2026-06-25 12:33:35,943 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:35,943 - WARNING - parsing for Object Streams
+2026-06-25 12:33:35,944 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-06-25 12:33:35,944 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_pdfa1.pdf
+2026-06-25 12:33:36,705 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:36,705 - WARNING - parsing for Object Streams
+2026-06-25 12:33:36,707 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-06-25 12:33:36,707 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\test_standard.pdf
+2026-06-25 12:33:37,472 - INFO - Analýza dokončena: test_standard.pdf
+2026-06-25 12:33:37,472 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\4__B__MZ_STZ_r04_(PDFA).pdf
+2026-06-25 12:33:40,981 - INFO - Analýza dokončena: 4__B__MZ_STZ_r04_(PDFA).pdf
+2026-06-25 12:33:40,981 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\4__B__MZ_STZ_r04.pdf
+2026-06-25 12:33:45,432 - INFO - Analýza dokončena: 4__B__MZ_STZ_r04.pdf
+2026-06-25 12:33:45,433 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\test_pdfa1.pdf
+2026-06-25 12:33:46,096 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:46,096 - WARNING - parsing for Object Streams
+2026-06-25 12:33:46,097 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-06-25 12:33:46,098 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\test_pdfa2.pdf
+2026-06-25 12:33:46,609 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:46,609 - WARNING - parsing for Object Streams
+2026-06-25 12:33:46,610 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-06-25 12:33:46,610 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\test_pdfa3.pdf
+2026-06-25 12:33:47,383 - WARNING - incorrect startxref pointer(1)
+2026-06-25 12:33:47,383 - WARNING - parsing for Object Streams
+2026-06-25 12:33:47,384 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-06-25 12:33:47,384 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\files\pdf3a\test_standard.pdf
+2026-06-25 12:33:48,336 - INFO - Analýza dokončena: test_standard.pdf
+2026-06-25 12:33:48,336 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\tstovací\4__B__MZ_STZ_r04_(PDFA).pdf
+2026-06-25 12:33:51,555 - INFO - Analýza dokončena: 4__B__MZ_STZ_r04_(PDFA).pdf
+2026-06-25 12:33:51,555 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\tstovací\01.1.10-10 Řez A1 - nový stav_R02_(PDFA).pdf
+2026-06-25 12:33:53,414 - INFO - Analýza dokončena: 01.1.10-10 Řez A1 - nový stav_R02_(PDFA).pdf
+2026-06-25 12:33:53,414 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\tstovací\4__B__MZ_STZ_r04.pdf
+2026-06-25 12:33:55,324 - INFO - Analýza dokončena: 4__B__MZ_STZ_r04.pdf
+2026-06-25 12:33:55,324 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\PDF3\tstovací\01.1.10-10 Řez A1 - nový stav_R02.pdf
+2026-06-25 12:33:57,988 - INFO - Analýza dokončena: 01.1.10-10 Řez A1 - nový stav_R02.pdf
+2026-06-25 12:33:57,988 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\Autorizace_Pozem_stavby_Cieslar_Martin_ORIGINAL.pdf
+2026-06-25 12:34:04,445 - INFO - Analýza dokončena: Autorizace_Pozem_stavby_Cieslar_Martin_ORIGINAL.pdf
+2026-06-25 12:34:04,446 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\Chvalek_Martin_Ing_arch.pdf
+2026-06-25 12:34:05,978 - INFO - Analýza dokončena: Chvalek_Martin_Ing_arch.pdf
+2026-06-25 12:34:05,980 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\Cieslar_VS_diplom.pdf
+2026-06-25 12:34:07,188 - INFO - Analýza dokončena: Cieslar_VS_diplom.pdf
+2026-06-25 12:34:07,188 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\7_Certifikat BIM_buildingSMART\Certifikat_EN_Cieslar.pdf
+2026-06-25 12:34:08,798 - INFO - Analýza dokončena: Certifikat_EN_Cieslar.pdf
+2026-06-25 12:34:08,799 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\7_Certifikat BIM_buildingSMART\Certifikat_CZ_Cieslar.pdf
+2026-06-25 12:34:11,198 - INFO - Analýza dokončena: Certifikat_CZ_Cieslar.pdf
+2026-06-25 12:34:11,198 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\fidic\Cieslar_FIDIC_red_book_certifikat.pdf
+2026-06-25 12:34:12,428 - INFO - Analýza dokončena: Cieslar_FIDIC_red_book_certifikat.pdf
+2026-06-25 12:34:12,428 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\fidic\Cieslar_FIDIC_red_book_potvrzeni_ucasti_CKAIT.pdf
+2026-06-25 12:34:14,008 - INFO - Analýza dokončena: Cieslar_FIDIC_red_book_potvrzeni_ucasti_CKAIT.pdf
+2026-06-25 12:34:14,008 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\fidic\Cieslar_FIDIC_yellow_book_certifikat.pdf
+2026-06-25 12:34:15,208 - INFO - Analýza dokončena: Cieslar_FIDIC_yellow_book_certifikat.pdf
+2026-06-25 12:34:15,208 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\certifikáty\fidic\Cieslar_FIDIC_yellow_book_potvrzeni_ucasti_CKAIT.pdf
+2026-06-25 12:34:16,751 - INFO - Analýza dokončena: Cieslar_FIDIC_yellow_book_potvrzeni_ucasti_CKAIT.pdf
+2026-06-25 12:34:16,752 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Zivotopis\novy\CV_Martin_Cieslar_r04.pdf
+2026-06-25 12:34:18,200 - INFO - Analýza dokončena: CV_Martin_Cieslar_r04.pdf
+2026-06-25 12:34:18,200 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Zivotopis\novy\CV_Martin_Cieslar_r03.pdf
+2026-06-25 12:34:19,441 - INFO - Analýza dokončena: CV_Martin_Cieslar_r03.pdf
+2026-06-25 12:34:19,441 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Zivotopis\novy\CV_Martin_Cieslar_Modern_Corporate_jednosloupcovy_r03.pdf
+2026-06-25 12:34:20,914 - INFO - Analýza dokončena: CV_Martin_Cieslar_Modern_Corporate_jednosloupcovy_r03.pdf
+2026-06-25 12:34:20,914 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Zivotopis\novy\Profesni_CV_Martin Chválek_2025.pdf
+2026-06-25 12:34:22,149 - INFO - Analýza dokončena: Profesni_CV_Martin Chválek_2025.pdf
+2026-06-25 12:34:22,150 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\BIM_Certifikáty\Cieslar_BIM_osvedceni_o_profesni_kvalifikaci_36-191-R_el_original.pdf
+2026-06-25 12:34:27,865 - INFO - Analýza dokončena: Cieslar_BIM_osvedceni_o_profesni_kvalifikaci_36-191-R_el_original.pdf
+2026-06-25 12:34:27,865 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\BIM_Certifikáty\Cieslar_BIM_osvedceni_o_profesni_kvalifikaci_36-191-R.pdf
+2026-06-25 12:34:30,616 - INFO - Analýza dokončena: Cieslar_BIM_osvedceni_o_profesni_kvalifikaci_36-191-R.pdf
+2026-06-25 12:34:30,616 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\celozivotni vzdelanavi_2024\Potvrzení o absolvování konference NSZ a digitalizace.pdf
+2026-06-25 12:34:31,808 - INFO - Analýza dokončena: Potvrzení o absolvování konference NSZ a digitalizace.pdf
+2026-06-25 12:34:31,809 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\celozivotni vzdelanavi_2024\Potvrzení o účasti na webináři Portál stavebníka_05.06.2024.pdf
+2026-06-25 12:34:33,101 - INFO - Analýza dokončena: Potvrzení o účasti na webináři Portál stavebníka_05.06.2024.pdf
+2026-06-25 12:34:33,101 - INFO - Kontrola souboru: p:/Pracovni_slozka/Autorizace\Elektronicke_autorizacni_razitko\protokol_o_vydani.pdf
+2026-06-25 12:34:34,272 - INFO - Analýza dokončena: protokol_o_vydani.pdf
+2026-06-26 20:36:09,898 - INFO - Odesílám 56 výsledků na server (jeden request)...
+2026-06-26 20:36:14,261 - INFO - Batch úspěšně odeslán: batch_20260626_183610_61cd8dd5 - Uloženo 56 souborů
+2026-06-26 20:37:07,543 - INFO - Agent ukončen
+2026-07-01 23:14:23,083 - INFO - PDF DokuCheck Agent spuštěn
+2026-07-01 23:14:23,084 - INFO - Spouštím GUI...
+2026-07-01 23:14:23,846 - INFO - Ověřuji licenci se serverem...
+2026-07-01 23:14:25,711 - INFO - Agent běží
+2026-07-01 23:24:06,942 - INFO - Agent ukončen
+2026-07-01 23:27:35,638 - INFO - PDF DokuCheck Agent spuštěn
+2026-07-01 23:27:35,638 - INFO - Spouštím GUI...
+2026-07-01 23:27:36,412 - INFO - Ověřuji licenci se serverem...
+2026-07-01 23:27:38,935 - INFO - Agent běží
+2026-07-01 23:27:40,770 - INFO - Agent ukončen
+2026-07-01 23:28:19,518 - INFO - PDF DokuCheck Agent spuštěn
+2026-07-01 23:28:19,519 - INFO - Spouštím GUI...
+2026-07-01 23:28:19,904 - INFO - Ověřuji licenci se serverem...
+2026-07-01 23:28:22,002 - INFO - Agent běží
+2026-07-01 23:29:08,152 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa1.pdf
+2026-07-01 23:29:08,232 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:29:08,232 - WARNING - parsing for Object Streams
+2026-07-01 23:29:08,233 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-07-01 23:29:08,234 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2.pdf
+2026-07-01 23:29:08,242 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:29:08,242 - WARNING - parsing for Object Streams
+2026-07-01 23:29:08,243 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-07-01 23:29:08,243 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_bez casoveho.pdf
+2026-07-01 23:29:08,272 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-07-01 23:29:08,272 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_sign.pdf
+2026-07-01 23:29:08,296 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-07-01 23:29:08,296 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa3.pdf
+2026-07-01 23:29:08,304 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:29:08,304 - WARNING - parsing for Object Streams
+2026-07-01 23:29:08,305 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-07-01 23:29:08,305 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_standard.pdf
+2026-07-01 23:29:08,311 - INFO - Analýza dokončena: test_standard.pdf
+2026-07-01 23:29:09,994 - INFO - Odesílám 6 výsledků na server (jeden request)...
+2026-07-01 23:29:11,018 - ERROR - Chyba při odesílání batch: Licence limit reached. Contact support.
+2026-07-01 23:32:42,822 - INFO - Přihlášení e-mailem a heslem...
+2026-07-01 23:32:43,920 - INFO - Přihlášeno.
+2026-07-01 23:32:52,015 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa1.pdf
+2026-07-01 23:32:52,016 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:32:52,016 - WARNING - parsing for Object Streams
+2026-07-01 23:32:52,017 - INFO - Analýza dokončena: test_pdfa1.pdf
+2026-07-01 23:32:52,022 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2.pdf
+2026-07-01 23:32:52,022 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:32:52,022 - WARNING - parsing for Object Streams
+2026-07-01 23:32:52,023 - INFO - Analýza dokončena: test_pdfa2.pdf
+2026-07-01 23:32:52,024 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_bez casoveho.pdf
+2026-07-01 23:32:52,037 - INFO - Analýza dokončena: test_pdfa2_bez casoveho.pdf
+2026-07-01 23:32:52,037 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa2_sign.pdf
+2026-07-01 23:32:52,053 - INFO - Analýza dokončena: test_pdfa2_sign.pdf
+2026-07-01 23:32:52,054 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_pdfa3.pdf
+2026-07-01 23:32:52,055 - WARNING - incorrect startxref pointer(1)
+2026-07-01 23:32:52,055 - WARNING - parsing for Object Streams
+2026-07-01 23:32:52,056 - INFO - Analýza dokončena: test_pdfa3.pdf
+2026-07-01 23:32:52,056 - INFO - Kontrola souboru: C:/CURSOR_SOUBORY/Claude/testovaci PDF/testovaci_PDF/test_standard.pdf
+2026-07-01 23:32:52,057 - INFO - Analýza dokončena: test_standard.pdf
+2026-07-01 23:32:54,051 - INFO - Odesílám 6 výsledků na server (jeden request)...
+2026-07-01 23:32:55,519 - INFO - Batch úspěšně odeslán: batch_20260701_213255_70330022 - Uloženo 6 souborů

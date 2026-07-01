@@ -599,11 +599,30 @@ function openWelcomePackageModal(btn) {
     openModal('welcomePackageModal');
     var fd = new FormData();
     fd.append('api_key', apiKey);
-    fetch('/admin/api/license/welcome-package', { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
+    fetch('/admin/api/license/welcome-package', { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function(r) {
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (!r.ok) {
+                if (ct.indexOf('application/json') >= 0) {
+                    return r.json().then(function(data) {
+                        throw new Error(data.error || ('HTTP ' + r.status));
+                    });
+                }
+                throw new Error('Server vrátil HTTP ' + r.status + ' (pravděpodobně není nasazená nejnovější verze webu – obnovte stránku a zkuste znovu).');
+            }
+            if (ct.indexOf('application/json') < 0) {
+                throw new Error('Server nevrátil JSON (zkontrolujte nasazení webu na serveru).');
+            }
+            return r.json();
+        })
         .then(function(data) {
+            if (!data.success) {
+                document.getElementById('welcomePackageContent').textContent = data.error || 'Chyba';
+                document.getElementById('welcomePackageCopyBtn').style.display = 'none';
+                return;
+            }
             lastWelcomePackageText = data.email_body || '';
-            document.getElementById('welcomePackageContent').textContent = lastWelcomePackageText || (data.error || 'Chyba');
+            document.getElementById('welcomePackageContent').textContent = lastWelcomePackageText || 'Žádná data';
             document.getElementById('welcomePackageCopyBtn').style.display = lastWelcomePackageText ? 'inline-block' : 'none';
         })
         .catch(function(e) { document.getElementById('welcomePackageContent').textContent = 'Chyba: ' + e.message; });

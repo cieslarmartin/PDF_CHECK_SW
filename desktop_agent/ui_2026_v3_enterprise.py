@@ -82,7 +82,7 @@ else:
     _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.png")
 LOGO_ICO_PATH = os.path.join(_AGENT_DIR, "logo", "logo.ico")
-NO_DETAIL_MSG = "Výsledky kontroly jednotlivých PDF se v této aplikaci nezobrazují.\nStav uvidíte po odeslání na server."
+NO_DETAIL_MSG = "Výsledky kontroly jednotlivých PDF se v této aplikaci nezobrazují.\nPo odeslání na server uvidíte stav ve webovém portálu."
 
 SPLASH_DURATION_MS = 3000
 
@@ -167,6 +167,7 @@ class PDFCheckUI_2026_V3:
         self.queue_display = []
         self.batches = []  # [{"label": "Dávka - HH:MM", "qidx_start": int, "qidx_end": int, "root_iid": str|None}, ...]
         self.session_files_checked = 0
+        self.session_files_sent = 0
         self.start_time = None
         self.total_files = 0
         self.processed_files = 0
@@ -328,27 +329,27 @@ class PDFCheckUI_2026_V3:
         metrics_row.grid_columnconfigure(1, weight=1)
         metrics_row.grid_columnconfigure(2, weight=1)
         metrics_row.grid_columnconfigure(3, weight=1)
-        self.metric_dnes = ctk.CTkLabel(metrics_row, text="Dnes: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT)
+        self.metric_dnes = ctk.CTkLabel(metrics_row, text="Dnes analyzováno: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT)
         self.metric_dnes.grid(row=0, column=0, sticky="w", padx=8, pady=6)
-        self.metric_ok = ctk.CTkLabel(metrics_row, text="Úspěšnost: —", font=(FONT_STACK[0], FS_14, "bold"), text_color=SUCCESS)
+        self.metric_ok = ctk.CTkLabel(metrics_row, text="Dnes odesláno: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=SUCCESS)
         self.metric_ok.grid(row=0, column=1, sticky="w", padx=8, pady=6)
-        self.metric_chyby = ctk.CTkLabel(metrics_row, text="Chyby: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=ERROR)
+        self.metric_chyby = ctk.CTkLabel(metrics_row, text="Ve frontě: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT_MUTED)
         self.metric_chyby.grid(row=0, column=2, sticky="w", padx=8, pady=6)
-        self.metric_pdfa = ctk.CTkLabel(metrics_row, text="PDF/A-3 OK: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=TEXT_MUTED)
+        self.metric_pdfa = ctk.CTkLabel(metrics_row, text="Čeká na odeslání: 0", font=(FONT_STACK[0], FS_14, "bold"), text_color=WARNING)
         self.metric_pdfa.grid(row=0, column=3, sticky="w", padx=8, pady=6)
 
-        # Command bar
-        bar = ctk.CTkFrame(main, fg_color=BG_CARD, height=44, corner_radius=0)
+        # Command bar – výrazná primární akce (Analyzovat / Odeslat)
+        bar = ctk.CTkFrame(main, fg_color=BG_CARD, height=62, corner_radius=0)
         bar.grid(row=1, column=0, sticky="ew")
         bar.grid_propagate(False)
         main.grid_rowconfigure(1, weight=0)
         ctk.CTkButton(bar, text="Přidat soubory", command=self.add_files, font=(FONT_STACK[0], FS_12), width=100, fg_color=ACCENT).pack(side=tk.LEFT, padx=6, pady=4)
         ctk.CTkButton(bar, text="+ Složka", command=self.add_folder, font=(FONT_STACK[0], FS_12), width=72, fg_color=ACCENT).pack(side=tk.LEFT, padx=2, pady=4)
         ctk.CTkButton(bar, text="VYMAZAT VŠE", command=self.clear_queue, font=(FONT_STACK[0], FS_12), width=100, fg_color=BORDER).pack(side=tk.LEFT, padx=2, pady=4)
-        self.check_btn = ctk.CTkButton(bar, text="Analyzovat PDF", command=self.on_check_clicked, font=(FONT_STACK[0], FS_14, "bold"), fg_color=ACCENT, height=32)
-        self.check_btn.pack(side=tk.RIGHT, padx=4, pady=6)
-        self.send_btn = ctk.CTkButton(bar, text="Odeslat metadata na server", command=self._on_send_metadata_clicked, font=(FONT_STACK[0], FS_12, "bold"), fg_color=SUCCESS, height=28)
-        self.send_btn.pack(side=tk.RIGHT, padx=4, pady=6)
+        self.check_btn = ctk.CTkButton(bar, text="Analyzovat PDF", command=self.on_check_clicked, font=(FONT_STACK[0], FS_16, "bold"), fg_color=ACCENT, height=44, width=190)
+        self.check_btn.pack(side=tk.RIGHT, padx=6, pady=8)
+        self.send_btn = ctk.CTkButton(bar, text="Odeslat na server", command=self._on_send_metadata_clicked, font=(FONT_STACK[0], FS_14, "bold"), fg_color=SUCCESS, height=44, width=210)
+        self.send_btn.pack(side=tk.RIGHT, padx=6, pady=8)
         self.send_btn.pack_forget()
 
         # Content: queue širší + detail + "Jak to funguje"
@@ -404,10 +405,12 @@ class PDFCheckUI_2026_V3:
         self.queue_tree.heading("#0", text="Položka")
         self.queue_tree.heading("status", text="Stav")
         self.queue_tree.column("#0", minwidth=200, stretch=True)
-        self.queue_tree.column("status", width=52, minwidth=52)
+        self.queue_tree.column("status", width=220, minwidth=180)
         self.queue_tree.tag_configure("ok", foreground=SUCCESS)
         self.queue_tree.tag_configure("error", foreground=ERROR)
         self.queue_tree.tag_configure("pending", foreground=TEXT_MUTED)
+        self.queue_tree.tag_configure("ready", foreground=WARNING)
+        self.queue_tree.tag_configure("sent", foreground=SUCCESS)
         scroll = tk.Scrollbar(self._tree_container, command=self.queue_tree.yview, bg=TREEVIEW_BG, troughcolor=TREEVIEW_BG, activebackground=BORDER)
         self.queue_tree.configure(yscrollcommand=scroll.set)
         self.queue_tree.grid(row=0, column=0, sticky="nsew")
@@ -443,9 +446,9 @@ class PDFCheckUI_2026_V3:
         steps = [
             "1. Přidejte PDF",
             "2. Zaškrtněte položky",
-            "3. Analyzovat PDF",
-            "4. Prohlédněte výsledky",
-            "5. Odeslat metadata na server",
+            "3. Analyzovat PDF (lokálně)",
+            "4. Odeslat na server",
+            "5. Výsledky na webu",
         ]
         for i, s in enumerate(steps):
             ctk.CTkLabel(timeline, text=s, font=(FONT_STACK[0], FS_12), text_color=TEXT_MUTED, anchor="w").grid(row=i + 1, column=0, sticky="w", padx=10, pady=2)
@@ -720,6 +723,9 @@ class PDFCheckUI_2026_V3:
         self.tasks = []
         self.queue_display = []
         self.batches = []
+        self.session_files_checked = 0
+        self.session_files_sent = 0
+        self._last_display_result = None
         for iid in self.queue_tree.get_children(""):
             self.queue_tree.delete(iid)
         self._tree_iid_to_qidx.clear()
@@ -730,15 +736,30 @@ class PDFCheckUI_2026_V3:
         self._update_progress_idle()
 
     def _badge_text(self, item):
-        """Vrátí (text pro pilulku, barva). Pilulky: ✓ zelená / ✗ červená."""
+        """Vrátí (text stavu, barva). Dvoustupňový tok: lokální analýza → odeslání na server."""
+        if item.get("sent"):
+            return "Odesláno na server", SUCCESS
         r = item.get("result")
         if not r or not isinstance(r, dict):
-            return "…", TEXT_MUTED
+            return "Čeká na analýzu", TEXT_MUTED
         if r.get("skipped"):
-            return "…", TEXT_MUTED
+            return "Přeskočeno", TEXT_MUTED
         if r.get("success"):
-            return "✓", SUCCESS
-        return "✗", ERROR
+            return "Analýza hotová – odeslat", WARNING
+        return "Chyba analýzy", ERROR
+
+    def _status_tag(self, item):
+        """Tag pro barvu řádku ve stromu."""
+        if item.get("sent"):
+            return "sent"
+        r = item.get("result")
+        if not r or not isinstance(r, dict):
+            return "pending"
+        if r.get("skipped"):
+            return "pending"
+        if r.get("success"):
+            return "ready"
+        return "error"
 
     def _item_passes_filter(self, item):
         if self._queue_filter == "all":
@@ -1136,12 +1157,7 @@ class PDFCheckUI_2026_V3:
             self.queue_tree.insert(parent_iid, "end", iid=file_iid, text=display_name, values=(badge_text,))
             self._tree_iid_to_qidx[file_iid] = qidx
             self._qidx_to_tree_iid[qidx] = file_iid
-            if badge_text == "✓":
-                self.queue_tree.item(file_iid, tags=("ok",))
-            elif badge_text == "✗":
-                self.queue_tree.item(file_iid, tags=("error",))
-            else:
-                self.queue_tree.item(file_iid, tags=("pending",))
+            self.queue_tree.item(file_iid, tags=(self._status_tag(item),))
 
         def _expand(iid):
             self.queue_tree.item(iid, open=True)
@@ -1161,12 +1177,7 @@ class PDFCheckUI_2026_V3:
             badge_text, _ = self._badge_text(item)
             name = item.get("filename", "")
             self.queue_tree.item(file_iid, text="%s  📄 %s" % (chk, name), values=(badge_text,))
-            if badge_text == "✓":
-                self.queue_tree.item(file_iid, tags=("ok",))
-            elif badge_text == "✗":
-                self.queue_tree.item(file_iid, tags=("error",))
-            else:
-                self.queue_tree.item(file_iid, tags=("pending",))
+            self.queue_tree.item(file_iid, tags=(self._status_tag(item),))
         self._queue_tree_style.configure(
             "Queue.Treeview",
             rowheight=TREE_ROWHEIGHT,
@@ -1280,23 +1291,37 @@ class PDFCheckUI_2026_V3:
         self.detail_text.configure(state="disabled")
 
     def _update_stats(self):
-        total = len([q for q in self.queue_display if q.get("status") not in ("pending", None)])
-        ok = len([q for q in self.queue_display if q.get("status") == "success"])
-        pct = int(round(100 * ok / total)) if total else 0
-        errs = sum(_count_errors_from_result(q.get("result")) for q in self.queue_display)
-        pdfa_ok = sum(1 for q in self.queue_display if q.get("result") and isinstance(q.get("result"), dict) and (q.get("result").get("results") or {}).get("pdf_format", {}).get("is_pdf_a3"))
-        self.metric_dnes.configure(text=f"Dnes: {self.session_files_checked}")
-        self.metric_ok.configure(text=f"Úspěšnost: {pct}%" if total else "Úspěšnost: —")
-        self.metric_chyby.configure(text=f"Chyby: {errs}")
-        self.metric_pdfa.configure(text=f"PDF/A-3 OK: {pdfa_ok}")
+        in_queue = len(self.queue_display)
+        waiting_send = len([
+            q for q in self.queue_display
+            if q.get("result") and isinstance(q.get("result"), dict)
+            and q.get("result").get("success") and not q.get("sent")
+        ])
+        self.metric_dnes.configure(text=f"Dnes analyzováno: {self.session_files_checked}")
+        self.metric_ok.configure(text=f"Dnes odesláno: {self.session_files_sent}")
+        self.metric_chyby.configure(text=f"Ve frontě: {in_queue}")
+        self.metric_pdfa.configure(text=f"Čeká na odeslání: {waiting_send}")
 
     def on_check_clicked(self):
         if self.on_has_login and callable(self.on_has_login) and not self.on_has_login():
             self.show_message("Pro analýzu a odeslání na server se nejprve přihlaste („Vyzkoušet zdarma“ nebo e-mail v sidebaru).", msg_type="warning")
             return
-        checked = [(q["path"], i) for i, q in enumerate(self.queue_display) if q.get("checked")]
+        waiting_send = [
+            q for q in self.queue_display
+            if q.get("result") and isinstance(q.get("result"), dict)
+            and q.get("result").get("success") and not q.get("sent")
+        ]
+        checked = [(q["path"], i) for i, q in enumerate(self.queue_display) if q.get("checked") and not q.get("sent")]
         if not checked:
-            self.show_message("Přidejte a zaškrtněte položky ke kontrole.", msg_type="warning")
+            if waiting_send:
+                self.show_message(
+                    "Lokální analýza je hotová. Pokračujte tlačítkem „Odeslat na server“ – finální výsledky uvidíte na webu.",
+                    msg_type="info",
+                )
+                if getattr(self, "send_btn", None) and self._last_display_result:
+                    self.send_btn.pack(side=tk.RIGHT, padx=6, pady=8)
+            else:
+                self.show_message("Přidejte a zaškrtněte položky ke kontrole.", msg_type="warning")
             return
         if self.is_running:
             return
@@ -1431,11 +1456,9 @@ class PDFCheckUI_2026_V3:
         self.progress_label.configure(text="Ruším…", text_color=WARNING)
 
     def _on_send_metadata_clicked(self):
-        """Tlačítko „Odeslat metadata na server“ – zobrazí se po dokončení lokální analýzy."""
+        """Tlačítko „Odeslat na server“ – odešle výsledky lokální analýzy na portál."""
         if self._last_display_result:
             self._on_send_confirm(True, self._last_display_result)
-            self.send_btn.pack_forget()
-            self._last_display_result = None
 
     def show_progress(self):
         import time
@@ -1497,7 +1520,7 @@ class PDFCheckUI_2026_V3:
             if 0 <= qidx < len(self.queue_display):
                 self.queue_display[qidx]["result"] = res
                 self.queue_display[qidx]["status"] = "success" if res.get("success") else "error"
-                self.queue_display[qidx]["checked"] = not res.get("success")
+                # Po lokální analýze ponechat zaškrtnuté – další krok je odeslání na server
         self.update_queue_display()
         self._update_stats()
         success_count = sum(1 for _, r in results_with_qidx if r.get("success"))
@@ -1509,16 +1532,24 @@ class PDFCheckUI_2026_V3:
         self.detail_text.configure(state="disabled")
         upload_error = result.get("upload_error")
         can_send = self.on_has_login and callable(self.on_has_login) and self.on_has_login()
-        if can_send and self.on_send_batch_callback and results_with_qidx:
+        if can_send and self.on_send_batch_callback and results_with_qidx and success_count > 0:
             self.detail_text.configure(state="normal")
-            self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\nKlikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu.")
+            self.detail_text.insert(
+                "0.0",
+                f"Krok 1 hotov: lokální analýza metadat ({success_count} souborů) | Čas: {time_str}\n\n"
+                "Krok 2: Klikněte na „Odeslat na server“. Finální výsledky kontroly uvidíte ve webovém portálu.",
+            )
             self.detail_text.configure(state="disabled")
             self._last_display_result = result
-            self.send_btn.pack(side=tk.RIGHT, padx=4, pady=6)
+            self.send_btn.pack(side=tk.RIGHT, padx=6, pady=8)
+            self.show_message(
+                f"Analýza metadat dokončena ({success_count} souborů). Nyní odešlete data na server.",
+                msg_type="info",
+            )
             return
         self.detail_text.configure(state="normal")
         self.detail_text.insert("0.0", f"Hotovo: {success_count} souborů | Čas: {time_str}\n\n" + (
-            "Klikněte na „Odeslat metadata na server“ pro odeslání výsledků do portálu." if can_send else
+            "Klikněte na „Odeslat na server“ pro odeslání výsledků do portálu." if can_send else
             "Pro odeslání na server se přihlaste („Vyzkoušet zdarma“ nebo e-mail v sidebaru)."
         ))
         self.detail_text.configure(state="disabled")
@@ -1526,7 +1557,7 @@ class PDFCheckUI_2026_V3:
             self.show_message(upload_error, msg_type="warning")
 
     def _on_send_confirm(self, send_yes, result):
-        """Callback po kliknutí Ano/Ne u odeslání na server."""
+        """Odešle metadata na server a po úspěchu vyčistí frontu (denní statistiky zůstanou)."""
         self.clear_message()
         results_with_qidx = result.get("results_with_qidx", [])
         upload_error = result.get("upload_error")
@@ -1537,18 +1568,54 @@ class PDFCheckUI_2026_V3:
                 if out and len(out) >= 2 and not out[0]:
                     upload_error = out[1]
                 elif out and len(out) >= 1 and out[0]:
+                    sent_count = sum(1 for _, r in results_with_qidx if r.get("success"))
+                    self.session_files_sent += sent_count
                     for qidx, _ in results_with_qidx:
                         if 0 <= qidx < len(self.queue_display):
                             self.queue_display[qidx]["sent"] = True
-                    if not self.is_running:
-                        self._update_progress_idle()
-                    # Po úspěšném odeslání vymazat frontu a připravit na další vložení
-                    self.clear_results_and_queue()
+                    self.update_queue_display()
+                    self._update_stats()
+                    self.detail_text.configure(state="normal")
+                    self.detail_text.delete("0.0", "end")
+                    self.detail_text.insert(
+                        "0.0",
+                        f"Metadata byla odeslána na server ({sent_count} souborů).\n\n"
+                        "Výsledky kontroly najdete ve webovém portálu (tlačítko Web v postranním panelu).",
+                    )
+                    self.detail_text.configure(state="disabled")
+                    self.show_message(
+                        "Metadata byla odeslána na server. Výsledky najdete ve webovém portálu.",
+                        msg_type="info",
+                    )
+                    self._last_display_result = None
+                    self.send_btn.pack_forget()
+                    self.root.after(800, self._reset_queue_keep_session)
+                    self._open_web()
             except Exception as e:
                 upload_error = str(e)
-            self._open_web()
+                self.show_message(f"Odeslání se nezdařilo: {upload_error}", msg_type="error")
         if upload_error and ("limit" in upload_error.lower() or "vyčerpán" in upload_error.lower()):
             self.show_message(upload_error, msg_type="warning")
+        elif upload_error:
+            self.show_message(upload_error, msg_type="error")
+
+    def _reset_queue_keep_session(self):
+        """Vyprázdní frontu a strom, ale zachová denní statistiky analyzováno/odesláno."""
+        self.tasks = []
+        self.queue_display = []
+        self.batches = []
+        self.selected_qidx = None
+        self._last_display_result = None
+        for iid in self.queue_tree.get_children(""):
+            self.queue_tree.delete(iid)
+        self._tree_iid_to_qidx.clear()
+        self._tree_iid_to_task_ix.clear()
+        self._qidx_to_tree_iid.clear()
+        if getattr(self, "send_btn", None):
+            self.send_btn.pack_forget()
+        self._update_stats()
+        self._show_session_summary()
+        self._update_progress_idle()
 
     def display_error(self, msg):
         self.detail_text.configure(state="normal")
@@ -1589,11 +1656,8 @@ class PDFCheckUI_2026_V3:
         self._update_analyze_send_state()
 
     def clear_results_and_queue(self):
-        self.tasks = []
-        self.queue_display = []
-        self.session_files_checked = 0
-        self.update_queue_display()
-        self._show_session_summary()
+        """Vymaže frontu včetně stromu; denní statistiky zachová."""
+        self._reset_queue_keep_session()
 
     def open_web_after_check(self):
         self._open_web()

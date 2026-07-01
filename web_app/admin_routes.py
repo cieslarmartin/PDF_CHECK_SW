@@ -2695,19 +2695,41 @@ def api_welcome_package():
     user_name = lic.get('user_name') or ''
     tier_name = lic.get('tier_name') or 'Standard'
     base_url = request.host_url.rstrip('/') if request else 'https://www.dokucheck.cz'
-    download_url = base_url + '/download'
+    download_url = (db.get_global_setting('download_url', '') or '').strip() or (base_url + '/download')
     login_url = base_url + '/portal'
     pwd_plain = db.get_license_password_plain(api_key)
-    pwd_line = f"Heslo: {pwd_plain}\n\n" if pwd_plain else "Heslo: (není uloženo – použijte tlačítko „Změnit heslo“ pro nastavení)\n\n"
+    pwd_line = f"Heslo: {pwd_plain}\n" if pwd_plain else "Heslo: (není uloženo – tlačítko „Heslo“ v řádku)\n"
+    max_batch = lic.get('max_batch_size')
+    max_devices = lic.get('max_devices')
+    active_devices = lic.get('active_devices', 0)
+    limits = lic.get('limits') or {}
+    daily_limit = limits.get('daily_files_limit')
+    max_file_mb = limits.get('max_file_size_mb')
+    expires = lic.get('license_expires') or 'Neomezeno'
+    is_active = 'Ano' if lic.get('is_active') else 'Ne'
+    excel = 'Ano' if lic.get('allow_excel_export') else 'Ne'
+    batch_txt = str(max_batch) if max_batch is not None and int(max_batch or 0) >= 0 else 'Neomezeno'
+    devices_txt = f"{active_devices}/{max_devices}" if max_devices is not None and int(max_devices or 0) >= 0 else f"{active_devices}/∞"
+    daily_txt = str(daily_limit) if daily_limit is not None and int(daily_limit or 0) >= 0 else 'Neomezeno'
+    file_mb_txt = str(max_file_mb) if max_file_mb is not None and int(max_file_mb or 0) >= 0 else 'Neomezeno'
     email_body = (
-        f"Účet (e-mail): {email}\n"
+        f"=== ÚČET ===\n"
+        f"E-mail: {email}\n"
         f"Jméno: {user_name or '—'}\n"
-        f"Licence: {tier_name}\n"
+        f"Tarif: {tier_name}\n"
+        f"Aktivní: {is_active}\n"
+        f"Platnost do: {expires}\n\n"
+        f"=== LIMITY ===\n"
+        f"Max. souborů v dávce: {batch_txt}\n"
+        f"Denní limit souborů: {daily_txt}\n"
+        f"Max. velikost souboru: {file_mb_txt} MB\n"
+        f"Zařízení (aktivní/limit): {devices_txt}\n"
+        f"Export Excel: {excel}\n\n"
+        f"=== PŘÍSTUP ===\n"
         f"API klíč: {api_key}\n"
-        f"{pwd_line}"
-        f"Odkaz na stažení: {download_url}\n"
-        f"Odkaz na přihlášení: {login_url}\n\n"
-        "Pro změnu hesla použijte tlačítko „Změnit heslo“ v řádku uživatele."
+        f"{pwd_line}\n"
+        f"Stažení agenta: {download_url}\n"
+        f"Portál: {login_url}\n"
     )
     return jsonify({
         'success': True,
@@ -2716,6 +2738,10 @@ def api_welcome_package():
         'tier_name': tier_name,
         'api_key': api_key,
         'download_url': download_url,
+        'max_batch_size': max_batch,
+        'max_devices': max_devices,
+        'active_devices': active_devices,
+        'daily_files_limit': daily_limit,
     })
 
 

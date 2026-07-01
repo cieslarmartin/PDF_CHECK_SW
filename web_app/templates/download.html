@@ -61,7 +61,11 @@
                 {% set ver_label = agent_version_display or agent_version or '' %}
                 <a href="{{ download_url or '#' }}" class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 rounded-xl text-lg font-bold lp-btn-primary transition text-white no-underline shadow-md {% if not download_url %}opacity-70 pointer-events-none{% endif %}">
                     {% if download_url %}
+                        {% if 'microsoft.com' in download_url %}
+                        Stáhnout z Microsoft Store{% if ver_label %} (v{{ ver_label }}){% endif %}
+                        {% else %}
                         Stáhnout Agenta{% if ver_label %} (v{{ ver_label }}){% endif %}
+                        {% endif %}
                     {% else %}
                         Nastavte download_url v Adminu
                     {% endif %}
@@ -87,12 +91,12 @@
                 <div class="rounded-xl border p-4 bg-white text-center" style="border-color:#e5e7eb;">
                     <div class="mx-auto w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mb-2" style="background:#1e5a8a;">1</div>
                     <p class="font-medium text-gray-900 text-sm mb-1">Stáhněte</p>
-                    <p class="text-xs text-gray-600">Klikněte na tlačítko výše a uložte instalátor (.exe) do počítače.</p>
+                    <p class="text-xs text-gray-600">Klikněte na tlačítko výše – otevře se Microsoft Store (nebo stránka stažení podle nastavení v Adminu).</p>
                 </div>
                 <div class="rounded-xl border p-4 bg-white text-center" style="border-color:#e5e7eb;">
                     <div class="mx-auto w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mb-2" style="background:#1e5a8a;">2</div>
                     <p class="font-medium text-gray-900 text-sm mb-1">Nainstalujte a spusťte</p>
-                    <p class="text-xs text-gray-600">Spusťte instalátor a dokončete průvodce. Při hlášce Windows zvolte „Více informací“ → „Přesto spustit“, pokud se objeví.</p>
+                    <p class="text-xs text-gray-600">Ve Store zvolte Získat / Install. Po instalaci spusťte DokuCheck z nabídky Start nebo z Microsoft Store.</p>
                 </div>
                 <div class="rounded-xl border p-4 bg-white text-center" style="border-color:#e5e7eb;">
                     <div class="mx-auto w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mb-2" style="background:#1e5a8a;">3</div>
@@ -116,9 +120,9 @@
                 <div id="jak-nainstalovat" class="hidden mt-3 p-3 rounded-lg bg-amber-100/80 text-sm border border-amber-200">
                     <p class="font-medium mb-2">Instalace ve Windows:</p>
                     <ol class="list-decimal list-inside space-y-1">
-                        <li>Po stažení .exe klikněte na soubor.</li>
-                        <li>Uvidíte hlášku „Windows chrání váš počítač“ – klikněte <strong>Více informací</strong>.</li>
-                        <li>Poté zvolte <strong>Přesto spustit</strong>.</li>
+                        <li>Otevřete Microsoft Store přes tlačítko výše.</li>
+                        <li>Klikněte na <strong>Získat</strong> nebo <strong>Install</strong>.</li>
+                        <li>Po instalaci spusťte DokuCheck a přihlaste se.</li>
                     </ol>
                 </div>
             </div>

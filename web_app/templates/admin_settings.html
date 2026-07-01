@@ -48,11 +48,11 @@
     <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="save_download_url">
         <div class="admin-card">
-            <div class="card-header">URL pro stažení nejnovější verze (GitHub Release)</div>
+            <div class="card-header">URL pro stažení agenta (Microsoft Store)</div>
             <div class="card-body">
-                <p class="small text-muted mb-3">Odkaz na instalátor (.exe). Použije se na hlavní stránce u všech tlačítek „Stáhnout“. Pokud prázdné, použije se stránka /download.</p>
+                <p class="small text-muted mb-3">Odkaz na Microsoft Store (nebo jiný oficiální kanál). Použije se na hlavní stránce u všech tlačítek „Stáhnout“. Pokud prázdné, použije se stránka /download.</p>
                 <label class="admin-settings-label">download_url</label>
-                <input type="url" name="download_url" class="form-control admin-settings-input" value="{{ settings.download_url|e }}" placeholder="https://github.com/UZIVATEL/REPO/releases/latest/download/NAZEV.exe" style="max-width:100%;">
+                <input type="url" name="download_url" class="form-control admin-settings-input" value="{{ settings.download_url|e }}" placeholder="https://apps.microsoft.com/detail/9N88TSSMV07Z" style="max-width:100%;">
                 <label class="admin-settings-label mt-2">Datum poslední aktualizace Agenta (download_agent_updated_at) – zobrazí se na /download, např. 11. 5. 2026</label>
                 <input type="text" name="download_agent_updated_at" class="form-control admin-settings-input" value="{{ settings.download_agent_updated_at|default('', true)|e }}" placeholder="např. 11. 5. 2026">
             </div>

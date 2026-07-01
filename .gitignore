@@ -37,6 +37,13 @@ web_app/*_result.txt
 # Složka s instalátory agenta – nepushovat (nahráváte je na Git ručně)
 desktop_agent/install/
 
+# MSIX balíčky pro Microsoft Store – nahrávání ručně přes Partner Center
+desktop_agent/store/output/*.msix
+desktop_agent/store/build/
+
+# Záloha agenta před UI úpravami (build 54)
+desktop_agent/zaloha_build54_pred_ui_upravami/
+
 # Zálohy verzí – nepushovat (nahrávání na Git je ruční přes .bat)
 web_app/zaloha_build62_filtry_issr/
 
