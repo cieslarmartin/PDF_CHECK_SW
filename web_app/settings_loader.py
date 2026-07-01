@@ -80,7 +80,16 @@ DEFAULT_LANDING_FAQ = [
     {"q": "Kde najdu Můj účet?", "a": "Portál – historie a nastavení."},
 ]
 
-DEFAULT_TOP_PROMO_BAR = {"text": "", "background_color": "#1e5a8a", "is_active": False}
+DEFAULT_TOP_PROMO_BAR = {
+    "text": "Novinka: DokuCheck je oficiálně v Microsoft Store — ověřená instalace, bez SmartScreen a ručního .exe.",
+    "background_color": "#0f172a",
+    "is_active": True,
+}
+
+DEFAULT_DOWNLOAD_WHATS_NEW = (
+    "Microsoft Store — Desktop Agent je nyní dostupný v oficiálním obchodě Microsoft.\n"
+    "Bezpečná instalace, automatické aktualizace a důvěryhodný kanál pro projektanty a firmy."
+)
 
 DEFAULT_EXIT_INTENT_POPUP = {"title": "", "body": "", "button_text": "Zavřít", "is_active": False}
 
@@ -90,6 +99,13 @@ DEFAULT_HEADER_SCRIPTS = []
 
 # Přehled aktualizací pro landing – sekce „Co je nového“ (měsíc, název, odrážky).
 DEFAULT_LANDING_UPDATES = [
+    {
+        "month": "07/2026",
+        "title": "Microsoft Store",
+        "items": [
+            "Desktop Agent je nyní dostupný v oficiálním obchodě Microsoft. Spolupráce se Store znamená bezpečnou instalaci, automatické aktualizace a důvěryhodný kanál pro projektanty a firmy.",
+        ],
+    },
     {
         "month": "03/2026",
         "title": "Březen 2026",
@@ -164,7 +180,7 @@ def load_settings_for_views(db):
     out["legal_gdpr_html"] = db.get_global_setting("legal_gdpr_html", "")
     out["download_url"] = db.get_global_setting("download_url", "") or ""
     out["pilot_notice_text"] = db.get_global_setting("pilot_notice_text", DEFAULTS.get("pilot_notice_text", "")) or DEFAULTS.get("pilot_notice_text", "")
-    out["show_pilot_notice"] = db.get_setting_bool("show_pilot_notice", DEFAULTS.get("show_pilot_notice", True))
+    out["show_pilot_notice"] = db.get_setting_bool("show_pilot_notice", DEFAULTS.get("show_pilot_notice", False))
     # Sekce Připravujeme (Coming Soon) na hlavní stránce – dynamický seznam karet z JSON nebo z 4 starých klíčů
     out["coming_soon_intro"] = db.get_global_setting("coming_soon_intro", "") or "Rozšíření Agenta, která řeší reálné potřeby projektantů: kontrola cest a názvů souborů a úpravy PDF včetně podepisování přímo v systému."
     cards_json = db.get_setting_json("coming_soon_cards", None)
@@ -191,7 +207,7 @@ def load_settings_for_views(db):
     out["landing_updates"] = db.get_setting_json("landing_updates", DEFAULT_LANDING_UPDATES)
     if not isinstance(out["landing_updates"], list):
         out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
-    out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or ""
+    out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or DEFAULT_DOWNLOAD_WHATS_NEW
     try:
         from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"

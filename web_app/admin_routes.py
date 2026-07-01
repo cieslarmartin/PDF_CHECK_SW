@@ -38,6 +38,7 @@ try:
     from settings_loader import DEFAULT_LANDING_UPDATES
 except ImportError:
     DEFAULT_LANDING_UPDATES = [
+        {"month": "07/2026", "title": "Microsoft Store", "items": ["Desktop Agent je nyní dostupný v oficiálním obchodě Microsoft."]},
         {"month": "03/2026", "title": "Březen 2026", "items": ["Přidána funkce rozpoznání certifikační autority (PostSignum, I.CA, eIdentity)."]},
         {"month": "02/2026", "title": "Únor 2026", "items": ["Rozpoznání zamčeného souboru (DocMDP Level 1) – ISSŘ."]},
     ]
@@ -1772,7 +1773,7 @@ def _settings_for_admin(db):
     s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
     s['payment_instructions'] = db.get_global_setting('payment_instructions', '')
     s['pilot_notice_text'] = db.get_global_setting('pilot_notice_text', '') or ''
-    s['show_pilot_notice'] = db.get_setting_bool('show_pilot_notice', True)
+    s['show_pilot_notice'] = db.get_setting_bool('show_pilot_notice', False)
     s['landing_how_steps'] = db.get_setting_json('landing_how_steps', [])
     s['landing_faq'] = db.get_setting_json('landing_faq', [])
     s['legal_vop_html'] = db.get_global_setting('legal_vop_html', '')

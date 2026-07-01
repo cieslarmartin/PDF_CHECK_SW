@@ -1,0 +1,13 @@
+{# Promo box Microsoft Store – include s download_url v kontextu #}
+<div class="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950" role="status">
+    <p class="font-semibold mb-2 flex items-center gap-2 text-sm">
+        <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+        Novinka: DokuCheck v Microsoft Store
+    </p>
+    <p class="text-sm mb-3 text-emerald-900">Desktop Agent je nyní dostupný v oficiálním obchodě Microsoft. Ověřená instalace, automatické aktualizace a důvěryhodný kanál pro projektanty a firmy.</p>
+    {% if download_url %}
+    <a href="{{ download_url }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white no-underline shadow-sm transition hover:opacity-90" style="background:#1e5a8a;">Otevřít v Microsoft Store</a>
+    {% else %}
+    <a href="/download/agent" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white no-underline shadow-sm transition hover:opacity-90" style="background:#1e5a8a;">Ke stažení</a>
+    {% endif %}
+</div>

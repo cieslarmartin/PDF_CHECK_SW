@@ -74,9 +74,17 @@
 <body class="min-h-screen antialiased bg-gray-50 text-gray-800">
 
 {# ============ TOP ANNOUNCEMENT BAR ============ #}
-<div class="announce-bar">
-    🔥 Aktualizováno pro nejnovější požadavky Portálu stavebníka 2026 — PDF/A-3, PostSignum, I.CA, eIdentity
+{% set promo = top_promo_bar|default({}) %}
+{% set promo_text = (promo.get('text') or '')|trim %}
+{% if promo.get('is_active') and promo_text %}
+<div class="announce-bar" style="background: {{ promo.get('background_color', '#0f172a') }};">
+    {{ promo_text }}
 </div>
+{% else %}
+<div class="announce-bar">
+    Novinka: DokuCheck je oficiálně v Microsoft Store — ověřená instalace, bez SmartScreen a ručního .exe.
+</div>
+{% endif %}
 
 {# ============ SPLASH – okno s about info ============ #}
 <div id="splash-overlay">
@@ -388,7 +396,7 @@
                 {% endfor %}
             </div>
             <div class="flex flex-wrap justify-center gap-3">
-                <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>Stáhnout pro Windows</a>
+                <a href="/download/agent" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold shadow-md transition hover:shadow-lg" style="background:#1e5a8a;"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>Stáhnout z Microsoft Store</a>
                 <a href="/download" class="px-6 py-3 rounded-lg border text-gray-600 hover:bg-gray-100 transition" style="border-color:#e5e7eb;">Stránka Stažení</a>
             </div>
             <p class="mt-4 text-sm text-gray-500">Aktuální verze agenta: {{ agent_version_display|default('n/a') }} (Build {{ agent_build_id|default('n/a') }})</p>
