@@ -59,6 +59,25 @@ DEFAULTS = {
     "pilot_notice_text": "",
     "show_pilot_notice": False,
     "download_agent_updated_at": "",
+    # Checkout – celá stránka /checkout
+    "checkout_page_title": "Fakturační údaje",
+    "checkout_intro_text": "Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e-mailem. Po zaplacení aktivujeme účet.",
+    "checkout_order_title": "Vaše objednávka",
+    "checkout_period_label": "/ rok",
+    "checkout_after_order_note": "Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.",
+    "checkout_discount_label": "Objednávám více než 10 licencí (žádost o množstevní slevu)",
+    "checkout_submit_button": "Odeslat a vystavit fakturu",
+    "checkout_back_link": "Zpět na ceník",
+    # Ceník na hlavní stránce (sekce #cenik)
+    "pricing_section_title": "Ceník",
+    "pricing_volume_note": "Při odběru 10+ licencí sleva 10 % pro vaši firmu.",
+    "pricing_basic_card_title": "PROJEKTANT",
+    "pricing_pro_card_title": "ATELIÉR",
+    "pricing_pro_badge": "DOPORUČUJEME PRO ATELIÉRY",
+    "pricing_basic_features": "Kontrola PDF/A + podpisů + TSA\nZákladní filtry chyb",
+    "pricing_pro_features": "Vše z tarifu Projektant\nHromadná validace složek\nPokročilé XLS reporty chyb\nMetadata zůstávají lokálně (režim Z Agenta)",
+    "pricing_basic_button": "Zakoupit Basic",
+    "pricing_pro_button": "Zakoupit Pro",
 }
 
 # Výchozí hodnoty pro JSON klíče
@@ -208,6 +227,8 @@ def load_settings_for_views(db):
     if not isinstance(out["landing_updates"], list):
         out["landing_updates"] = list(DEFAULT_LANDING_UPDATES)
     out["download_whats_new"] = db.get_global_setting("download_whats_new", "") or DEFAULT_DOWNLOAD_WHATS_NEW
+    cpt = get_checkout_pricing_texts(db)
+    out.update(cpt)
     try:
         from version import WEB_VERSION, WEB_BUILD, AGENT_BUILD_ID, AGENT_VERSION_DISPLAY
         out["web_version"] = (WEB_VERSION or "").strip() or "w26.02.001"
@@ -227,6 +248,43 @@ def load_settings_for_views(db):
         out["agent_version_display"] = "v26.03.0xx"
         out["agent_version"] = out["agent_version_display"]
         out["agent_build"] = out["agent_build_id"]
+    return out
+
+
+# Klíče editovatelných textů checkoutu a ceníku (Admin → Texty checkoutu a ceníku)
+CHECKOUT_PRICING_TEXT_KEYS = [
+    "checkout_page_title",
+    "checkout_intro_text",
+    "checkout_order_title",
+    "checkout_period_label",
+    "checkout_after_order_note",
+    "checkout_discount_label",
+    "checkout_submit_button",
+    "checkout_back_link",
+    "pricing_section_title",
+    "pricing_volume_note",
+    "pricing_basic_card_title",
+    "pricing_pro_card_title",
+    "pricing_pro_badge",
+    "pricing_basic_features",
+    "pricing_pro_features",
+    "pricing_basic_button",
+    "pricing_pro_button",
+]
+
+
+def get_checkout_pricing_texts(db) -> dict:
+    """Editovatelné texty checkoutu a ceníku z DB s fallbackem na DEFAULTS.
+
+    Navíc připraví pricing_basic_features_list / pricing_pro_features_list
+    (jedna výhoda na řádek → seznam) pro šablony.
+    """
+    out = {}
+    for key in CHECKOUT_PRICING_TEXT_KEYS:
+        default = DEFAULTS.get(key, "")
+        out[key] = (db.get_global_setting(key, default) or "").strip() or default
+    out["pricing_basic_features_list"] = [x.strip() for x in (out.get("pricing_basic_features") or "").split("\n") if x.strip()]
+    out["pricing_pro_features_list"] = [x.strip() for x in (out.get("pricing_pro_features") or "").split("\n") if x.strip()]
     return out
 
 

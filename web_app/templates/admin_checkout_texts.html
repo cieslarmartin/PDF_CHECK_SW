@@ -1,30 +1,69 @@
 {% extends "admin_base.html" %}
-{% block title %}Texty checkoutu – DokuCheck Admin{% endblock %}
+{% block title %}Texty checkoutu a ceníku – DokuCheck Admin{% endblock %}
 {% block content %}
-<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Texty checkoutu</h2>
-<p style="margin-bottom:20px;color:#6b7280;">Úpravy textů na stránce objednávky (checkout). Body pod tarifem (✓) upravíte v <a href="{{ url_for('admin.tiers') }}">Tier definice</a> u každého tarifu v poli „Checkout body“.</p>
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Texty checkoutu a ceníku</h2>
+<p style="margin-bottom:20px;color:#6b7280;">Úpravy textů na stránce objednávky (checkout) a v sekci Ceník na hlavní stránce. Body pod tarifem (✓) na checkoutu upravíte v <a href="{{ url_for('admin.tiers') }}">Tier definice</a> u každého tarifu v poli „Checkout body“. Ceny a popisky tarifů upravíte v Nastavení → Správa prodeje.</p>
 
 <form method="post" action="{{ url_for('admin.checkout_texts') }}">
     <div class="admin-card" style="max-width:640px;">
-        <div class="card-header">Blok „Vaše objednávka“ na stránce checkout</div>
+        <div class="card-header">Stránka checkout (/checkout)</div>
         <div class="card-body">
+            <label class="admin-settings-label">Nadpis stránky</label>
+            <input type="text" name="checkout_page_title" class="form-control admin-settings-input" value="{{ checkout_page_title|e }}" placeholder="Fakturační údaje">
+            <label class="admin-settings-label">Úvodní text (pod nadpisem)</label>
+            <textarea name="checkout_intro_text" class="form-control admin-settings-input" rows="2" placeholder="Vyplňte údaje pro vystavení faktury…">{{ checkout_intro_text|e }}</textarea>
             <label class="admin-settings-label">Nadpis bloku objednávky</label>
             <input type="text" name="checkout_order_title" class="form-control admin-settings-input" value="{{ checkout_order_title|e }}" placeholder="Vaše objednávka">
             <p class="small text-muted mt-1">Zobrazí se nad názvem tarifu a částkou (např. „Vaše objednávka“).</p>
             <label class="admin-settings-label">Popisek období (pod částkou)</label>
             <input type="text" name="checkout_period_label" class="form-control admin-settings-input" value="{{ checkout_period_label|e }}" placeholder="/ rok">
             <p class="small text-muted mt-1">Např. „/ rok“ nebo „/ měsíc“. Zobrazí se pod cenou.</p>
+            <label class="admin-settings-label">Poznámka po objednávce (modrý box)</label>
+            <textarea name="checkout_after_order_note" class="form-control admin-settings-input" rows="2" placeholder="Po odeslání objednávky vám e-mailem zašleme platební údaje…">{{ checkout_after_order_note|e }}</textarea>
+            <label class="admin-settings-label">Popisek zaškrtávátka množstevní slevy</label>
+            <input type="text" name="checkout_discount_label" class="form-control admin-settings-input" value="{{ checkout_discount_label|e }}" placeholder="Objednávám více než 10 licencí (žádost o množstevní slevu)">
+            <label class="admin-settings-label">Text tlačítka odeslání</label>
+            <input type="text" name="checkout_submit_button" class="form-control admin-settings-input" value="{{ checkout_submit_button|e }}" placeholder="Odeslat a vystavit fakturu">
+            <label class="admin-settings-label">Text odkazu zpět na ceník</label>
+            <input type="text" name="checkout_back_link" class="form-control admin-settings-input" value="{{ checkout_back_link|e }}" placeholder="Zpět na ceník">
+        </div>
+    </div>
+
+    <div class="admin-card mt-4" style="max-width:640px;">
+        <div class="card-header">Ceník na hlavní stránce (sekce #cenik)</div>
+        <div class="card-body">
+            <label class="admin-settings-label">Nadpis sekce</label>
+            <input type="text" name="pricing_section_title" class="form-control admin-settings-input" value="{{ pricing_section_title|e }}" placeholder="Ceník">
+            <label class="admin-settings-label">Poznámka o množstevní slevě (pod kartami; prázdné = skryto)</label>
+            <input type="text" name="pricing_volume_note" class="form-control admin-settings-input" value="{{ pricing_volume_note|e }}" placeholder="Při odběru 10+ licencí sleva 10 % pro vaši firmu.">
+            <hr style="margin:14px 0;border-color:#e5e7eb;">
+            <label class="admin-settings-label">Karta 1 (Basic) – nadpis</label>
+            <input type="text" name="pricing_basic_card_title" class="form-control admin-settings-input" value="{{ pricing_basic_card_title|e }}" placeholder="PROJEKTANT">
+            <label class="admin-settings-label">Karta 1 (Basic) – výhody (jedna na řádek)</label>
+            <textarea name="pricing_basic_features" class="form-control admin-settings-input" rows="3" placeholder="Kontrola PDF/A + podpisů + TSA&#10;Základní filtry chyb">{{ pricing_basic_features|e }}</textarea>
+            <label class="admin-settings-label">Karta 1 (Basic) – text tlačítka</label>
+            <input type="text" name="pricing_basic_button" class="form-control admin-settings-input" value="{{ pricing_basic_button|e }}" placeholder="Zakoupit Basic">
+            <hr style="margin:14px 0;border-color:#e5e7eb;">
+            <label class="admin-settings-label">Karta 2 (Pro) – nadpis</label>
+            <input type="text" name="pricing_pro_card_title" class="form-control admin-settings-input" value="{{ pricing_pro_card_title|e }}" placeholder="ATELIÉR">
+            <label class="admin-settings-label">Karta 2 (Pro) – štítek nad kartou</label>
+            <input type="text" name="pricing_pro_badge" class="form-control admin-settings-input" value="{{ pricing_pro_badge|e }}" placeholder="DOPORUČUJEME PRO ATELIÉRY">
+            <label class="admin-settings-label">Karta 2 (Pro) – výhody (jedna na řádek)</label>
+            <textarea name="pricing_pro_features" class="form-control admin-settings-input" rows="4" placeholder="Vše z tarifu Projektant&#10;Hromadná validace složek&#10;Pokročilé XLS reporty chyb">{{ pricing_pro_features|e }}</textarea>
+            <label class="admin-settings-label">Karta 2 (Pro) – text tlačítka</label>
+            <input type="text" name="pricing_pro_button" class="form-control admin-settings-input" value="{{ pricing_pro_button|e }}" placeholder="Zakoupit Pro">
+            <p class="small text-muted mt-2">Ceny (Kč/rok) a popisky tarifů se upravují v <strong>Nastavení → Správa prodeje</strong> (pricing_tarifs, landing_tarif_*_desc).</p>
         </div>
         <div class="card-footer">
-            <button type="submit" class="btn btn-primary btn-sm">Uložit texty checkoutu</button>
+            <button type="submit" class="btn btn-primary btn-sm">Uložit texty checkoutu a ceníku</button>
         </div>
     </div>
 </form>
 
 <div class="admin-card mt-4" style="max-width:640px;">
-    <div class="card-header">Body (✓) u tarifu</div>
+    <div class="card-header">Body (✓) u tarifu na checkoutu</div>
     <div class="card-body">
-        <p class="text-sm" style="color:#6b7280;">Výhody zobrazené pod cenou („Až 500000 souborů v dávce“, „Kontrola elektronických podpisů“, „Časová razítka“, „Až 1 zařízení“) upravíte v záložce <strong>Tier definice</strong>: u každého tieru otevřete Upravit a vyplňte pole <strong>Checkout body (jedna výhoda na řádek)</strong>. Prázdné pole = body se vygenerují automaticky z limitu a zaškrtávek tieru.</p>
+        <p class="text-sm" style="color:#6b7280;">Výhody zobrazené pod cenou na stránce checkout („Až 500000 souborů v dávce“, „Kontrola elektronických podpisů“, „Časová razítka“, „Až 1 zařízení“) upravíte v záložce <strong>Tier definice</strong>: u každého tieru otevřete Upravit a vyplňte pole <strong>Checkout body (jedna výhoda na řádek)</strong>. Prázdné pole = body se vygenerují automaticky z limitu a zaškrtávek tieru.</p>
         <a href="{{ url_for('admin.tiers') }}" class="btn btn-secondary btn-sm mt-2">Přejít na Tier definice</a>
     </div>
 </div>

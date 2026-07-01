@@ -486,21 +486,21 @@ def company_settings():
 @admin_bp.route('/admin/checkout-texts', methods=['GET', 'POST'])
 @admin_required
 def checkout_texts():
-    """Karta pro úpravu textů na stránce checkout: nadpis bloku objednávky, popisek období (/ rok)."""
+    """Karta pro úpravu textů stránky checkout a ceníku na hlavní stránce (sekce #cenik)."""
     db = get_db()
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
+    from settings_loader import CHECKOUT_PRICING_TEXT_KEYS, get_checkout_pricing_texts, DEFAULTS as SETTINGS_DEFAULTS
     if request.method == 'POST':
-        db.set_global_setting('checkout_order_title', request.form.get('checkout_order_title', '').strip() or 'Vaše objednávka')
-        db.set_global_setting('checkout_period_label', request.form.get('checkout_period_label', '').strip() or '/ rok')
-        flash('Texty checkoutu byly uloženy.', 'success')
+        for key in CHECKOUT_PRICING_TEXT_KEYS:
+            default = SETTINGS_DEFAULTS.get(key, '')
+            db.set_global_setting(key, (request.form.get(key, '') or '').strip() or default)
+        flash('Texty checkoutu a ceníku byly uloženy.', 'success')
         return redirect(url_for('admin.checkout_texts'))
-    checkout_order_title = (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka'
-    checkout_period_label = (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok'
-    return render_template('admin_checkout_texts.html', user=user, active_page='checkout_texts',
-                           checkout_order_title=checkout_order_title, checkout_period_label=checkout_period_label)
+    texts = get_checkout_pricing_texts(db)
+    return render_template('admin_checkout_texts.html', user=user, active_page='checkout_texts', **texts)
 
 
 # --- Správa FAQ (pouze pro přihlášeného administrátora) ---
@@ -2689,61 +2689,84 @@ def api_welcome_package():
     api_key = (api_key or '').strip()
     if not api_key:
         return jsonify({'success': False, 'error': 'Chybí api_key'}), 400
-    lic = db.get_user_license(api_key)
-    if not lic:
-        return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
-    email = lic.get('email') or ''
-    user_name = lic.get('user_name') or ''
-    tier_name = lic.get('tier_name') or 'Standard'
-    base_url = request.host_url.rstrip('/') if request else 'https://www.dokucheck.cz'
-    download_url = (db.get_global_setting('download_url', '') or '').strip() or (base_url + '/download')
-    login_url = base_url + '/portal'
-    pwd_plain = db.get_license_password_plain(api_key)
-    pwd_line = f"Heslo: {pwd_plain}\n" if pwd_plain else "Heslo: (není uloženo – tlačítko „Heslo“ v řádku)\n"
-    max_batch = lic.get('max_batch_size')
-    max_devices = lic.get('max_devices')
-    active_devices = db.count_user_devices_non_blocked(api_key)
-    limits = lic.get('limits') or {}
-    daily_limit = limits.get('daily_files_limit')
-    max_file_mb = limits.get('max_file_size_mb')
-    expires = lic.get('license_expires') or 'Neomezeno'
-    is_active = 'Ano' if lic.get('is_active') else 'Ne'
-    excel = 'Ano' if lic.get('allow_excel_export') else 'Ne'
-    batch_txt = str(max_batch) if max_batch is not None and int(max_batch or 0) >= 0 else 'Neomezeno'
-    devices_txt = f"{active_devices}/{max_devices}" if max_devices is not None and int(max_devices or 0) >= 0 else f"{active_devices}/∞"
-    daily_txt = str(daily_limit) if daily_limit is not None and int(daily_limit or 0) >= 0 else 'Neomezeno'
-    file_mb_txt = str(max_file_mb) if max_file_mb is not None and int(max_file_mb or 0) >= 0 else 'Neomezeno'
-    email_body = (
-        f"=== ÚČET ===\n"
-        f"E-mail: {email}\n"
-        f"Jméno: {user_name or '—'}\n"
-        f"Tarif: {tier_name}\n"
-        f"Aktivní: {is_active}\n"
-        f"Platnost do: {expires}\n\n"
-        f"=== LIMITY ===\n"
-        f"Max. souborů v dávce: {batch_txt}\n"
-        f"Denní limit souborů: {daily_txt}\n"
-        f"Max. velikost souboru: {file_mb_txt} MB\n"
-        f"Zařízení (aktivní/limit): {devices_txt}\n"
-        f"Export Excel: {excel}\n\n"
-        f"=== PŘÍSTUP ===\n"
-        f"API klíč: {api_key}\n"
-        f"{pwd_line}\n"
-        f"Stažení agenta: {download_url}\n"
-        f"Portál: {login_url}\n"
-    )
-    return jsonify({
-        'success': True,
-        'email_body': email_body,
-        'email': email,
-        'tier_name': tier_name,
-        'api_key': api_key,
-        'download_url': download_url,
-        'max_batch_size': max_batch,
-        'max_devices': max_devices,
-        'active_devices': active_devices,
-        'daily_files_limit': daily_limit,
-    })
+    try:
+        lic = db.get_user_license(api_key)
+        if not lic:
+            return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
+        email = lic.get('email') or ''
+        user_name = lic.get('user_name') or ''
+        tier_name = lic.get('tier_name') or 'Standard'
+        base_url = request.host_url.rstrip('/') if request else 'https://www.dokucheck.cz'
+        download_url = (db.get_global_setting('download_url', '') or '').strip() or (base_url + '/download')
+        login_url = base_url + '/portal'
+        try:
+            pwd_plain = db.get_license_password_plain(api_key)
+        except Exception:
+            pwd_plain = None
+        pwd_line = f"Heslo: {pwd_plain}\n" if pwd_plain else "Heslo: (není uloženo – tlačítko „Heslo“ v řádku)\n"
+        max_batch = lic.get('max_batch_size')
+        max_devices = lic.get('max_devices')
+        # Počet aktivních zařízení: bezpečně s fallbackem (starší DB/kód nemusí mít count_user_devices_non_blocked)
+        try:
+            active_devices = db.count_user_devices_non_blocked(api_key)
+        except Exception:
+            active_devices = lic.get('active_devices') or 0
+        limits = lic.get('limits') or {}
+        daily_limit = limits.get('daily_files_limit')
+        max_file_mb = limits.get('max_file_size_mb')
+        expires = lic.get('license_expires') or 'Neomezeno'
+        is_active = 'Ano' if lic.get('is_active') else 'Ne'
+        excel = 'Ano' if lic.get('allow_excel_export') else 'Ne'
+
+        def _num_or_none(v):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return None
+
+        batch_n = _num_or_none(max_batch)
+        devices_n = _num_or_none(max_devices)
+        daily_n = _num_or_none(daily_limit)
+        file_mb_n = _num_or_none(max_file_mb)
+        batch_txt = str(batch_n) if batch_n is not None and batch_n >= 0 else 'Neomezeno'
+        devices_txt = f"{active_devices}/{devices_n}" if devices_n is not None and devices_n >= 0 else f"{active_devices}/∞"
+        daily_txt = str(daily_n) if daily_n is not None and daily_n >= 0 else 'Neomezeno'
+        file_mb_txt = str(file_mb_n) if file_mb_n is not None and file_mb_n >= 0 else 'Neomezeno'
+        email_body = (
+            f"=== ÚČET ===\n"
+            f"E-mail: {email}\n"
+            f"Jméno: {user_name or '—'}\n"
+            f"Tarif: {tier_name}\n"
+            f"Aktivní: {is_active}\n"
+            f"Platnost do: {expires}\n\n"
+            f"=== LIMITY ===\n"
+            f"Max. souborů v dávce: {batch_txt}\n"
+            f"Denní limit souborů: {daily_txt}\n"
+            f"Max. velikost souboru: {file_mb_txt} MB\n"
+            f"Zařízení (aktivní/limit): {devices_txt}\n"
+            f"Export Excel: {excel}\n\n"
+            f"=== PŘÍSTUP ===\n"
+            f"API klíč: {api_key}\n"
+            f"{pwd_line}\n"
+            f"Stažení agenta: {download_url}\n"
+            f"Portál: {login_url}\n"
+        )
+        return jsonify({
+            'success': True,
+            'email_body': email_body,
+            'email': email,
+            'tier_name': tier_name,
+            'api_key': api_key,
+            'download_url': download_url,
+            'max_batch_size': max_batch,
+            'max_devices': max_devices,
+            'active_devices': active_devices,
+            'daily_files_limit': daily_limit,
+        })
+    except Exception as e:
+        # Vždy vrátit JSON (ne HTML 500), aby modal v Adminu zobrazil srozumitelnou chybu
+        current_app.logger.exception('api_welcome_package selhal pro api_key=%s', api_key)
+        return jsonify({'success': False, 'error': f'Chyba serveru: {e}'}), 500
 
 
 @admin_bp.route('/admin/api/license/set-password', methods=['POST'])

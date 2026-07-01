@@ -498,34 +498,37 @@
     {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
     <section id="cenik" class="preview-section py-16 bg-white">
         <div class="preview-container max-w-3xl mx-auto px-6">
-            <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">Ceník</h2></div>
+            <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">{{ pricing_section_title|default('Ceník') }}</h2></div>
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="card flex flex-col">
-                    <h3 class="font-bold text-gray-900">PROJEKTANT</h3>
+                    <h3 class="font-bold text-gray-900">{{ pricing_basic_card_title|default('PROJEKTANT') }}</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.basic.label|default('BASIC') }}</p>
                     <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.basic.amount_czk|default(1090) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_basic_desc|default('Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
-                        <li>✓ Kontrola PDF/A + podpisů + TSA</li>
-                        <li>✓ Základní filtry chyb</li>
+                        {% for f in pricing_basic_features_list|default(['Kontrola PDF/A + podpisů + TSA', 'Základní filtry chyb']) %}
+                        <li>✓ {{ f }}</li>
+                        {% endfor %}
                     </ul>
-                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 mt-auto">Zakoupit Basic</a>
+                    <a href="/checkout?tarif=basic" class="block w-full py-2.5 rounded-lg text-center font-semibold bg-gray-100 text-gray-700 mt-auto">{{ pricing_basic_button|default('Zakoupit Basic') }}</a>
                 </div>
                 <div class="card price-pop flex flex-col relative">
-                    <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
-                    <h3 class="font-bold text-gray-900 mt-3">ATELIÉR</h3>
+                    <span class="price-badge">{{ pricing_pro_badge|default('DOPORUČUJEME PRO ATELIÉRY') }}</span>
+                    <h3 class="font-bold text-gray-900 mt-3">{{ pricing_pro_card_title|default('ATELIÉR') }}</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.standard.label|default('PRO') }}</p>
                     <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
-                        <li>✓ Vše z tarifu Projektant</li>
-                        <li>✓ <strong>Hromadná validace složek</strong></li>
-                        <li>✓ <strong>Pokročilé XLS reporty chyb</strong></li>
-                        <li>✓ <strong>Metadata zůstávají lokálně (režim Z Agenta)</strong></li>
+                        {% for f in pricing_pro_features_list|default(['Vše z tarifu Projektant', 'Hromadná validace složek', 'Pokročilé XLS reporty chyb', 'Metadata zůstávají lokálně (režim Z Agenta)']) %}
+                        <li>✓ {% if loop.index > 1 %}<strong>{{ f }}</strong>{% else %}{{ f }}{% endif %}</li>
+                        {% endfor %}
                     </ul>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">Zakoupit Pro</a>
+                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">{{ pricing_pro_button|default('Zakoupit Pro') }}</a>
                 </div>
             </div>
+            {% if pricing_volume_note %}
+            <p class="text-center text-sm text-gray-500 mt-6">{{ pricing_volume_note }}</p>
+            {% endif %}
         </div>
     </section>
 

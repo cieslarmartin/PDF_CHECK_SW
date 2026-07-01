@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fakturační údaje – DokuCheck</title>
+    <title>{{ checkout_page_title|default('Fakturační údaje') }} – DokuCheck</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo/dokucheck-icon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="16x16 32x32 48x48">
     <script>(function(){var k='dokucheck-theme';try{var t=localStorage.getItem(k)||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
@@ -33,8 +33,8 @@
     </header>
 
     <main class="max-w-lg mx-auto px-4 py-8 md:py-12" style="padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right));">
-        <h1 class="text-2xl font-bold mb-2" style="color:#1f2937;">Fakturační údaje</h1>
-        <p class="text-sm mb-6" style="color:#6b7280;">Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.</p>
+        <h1 class="text-2xl font-bold mb-2" style="color:#1f2937;">{{ checkout_page_title|default('Fakturační údaje') }}</h1>
+        <p class="text-sm mb-6" style="color:#6b7280;">{{ checkout_intro_text|default('Vyplňte údaje pro vystavení faktury. Po odeslání vám přijde faktura e‑mailem. Po zaplacení aktivujeme účet.') }}</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -67,7 +67,7 @@
         </section>
 
         <div class="checkout-panel p-4 mb-6 text-sm" style="color:#6b7280;border-left:4px solid #1e5a8a;">
-            Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.
+            {{ checkout_after_order_note|default('Po odeslání objednávky vám e-mailem zašleme platební údaje. Jakmile platbu přijmeme, obdržíte své přístupové údaje do aplikace.') }}
         </div>
         {% if payment_instructions %}
         <div class="checkout-panel p-4 mb-6 text-sm whitespace-pre-wrap" style="color:#4b5563;">{{ payment_instructions }}</div>
@@ -112,7 +112,7 @@
             </div>
             <div class="flex items-start gap-2 p-3 rounded-lg" style="background:#eff6ff;border:1px solid #bfdbfe;">
                 <input type="checkbox" name="discount_request" id="discount_request" class="mt-1 rounded border-gray-300" style="accent-color:#1e5a8a;">
-                <label for="discount_request" class="text-sm" style="color:#1e3a5f;">Objednávám více než 10 licencí (žádost o množstevní slevu)</label>
+                <label for="discount_request" class="text-sm" style="color:#1e3a5f;">{{ checkout_discount_label|default('Objednávám více než 10 licencí (žádost o množstevní slevu)') }}</label>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1" style="color:#374151;">Vybraný tarif</label>
@@ -122,10 +122,10 @@
                 <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-gray-300 text-1e5a8a focus:ring-1e5a8a" style="accent-color:#1e5a8a;">
                 <label for="souhlas_vop_gdpr" class="text-sm" style="color:#4b5563;">Souhlasím s <a href="{{ url_for('vop') }}" target="_blank" class="checkout-link">obchodními podmínkami</a> a <a href="{{ url_for('gdpr') }}" target="_blank" class="checkout-link">zásadami ochrany osobních údajů (GDPR)</a>. *</label>
             </div>
-            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">Odeslat a vystavit fakturu</button>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">{{ checkout_submit_button|default('Odeslat a vystavit fakturu') }}</button>
         </form>
 
-        <p class="mt-6 text-sm text-center" style="color:#6b7280;"><a href="/#cenik" class="checkout-link">Zpět na ceník</a></p>
+        <p class="mt-6 text-sm text-center" style="color:#6b7280;"><a href="/#cenik" class="checkout-link">{{ checkout_back_link|default('Zpět na ceník') }}</a></p>
     </main>
     <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script>(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>

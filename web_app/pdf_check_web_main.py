@@ -4218,15 +4218,20 @@ def checkout():
         'tier_id': tier_row.get('id') if tier_row else None,
         'features': _checkout_tier_features(tier_row, tarif),
     }
-    checkout_order_title = (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka'
-    checkout_period_label = (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok'
+    try:
+        from settings_loader import get_checkout_pricing_texts
+        checkout_texts = get_checkout_pricing_texts(db)
+    except Exception:
+        checkout_texts = {
+            'checkout_order_title': (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka',
+            'checkout_period_label': (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok',
+        }
     return render_template('checkout.html',
         tarif=tarif,
         tarif_label=tier_label,
         payment_instructions=payment_instructions,
         order_summary=order_summary,
-        checkout_order_title=checkout_order_title,
-        checkout_period_label=checkout_period_label,
+        **checkout_texts,
     )
 
 
