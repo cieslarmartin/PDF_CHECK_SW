@@ -102,6 +102,13 @@ def send_order_notification_to_admin(order=None, **kwargs):
     order_number = order.get('order_display_number') or order.get('invoice_number') or order.get('id') or '—'
     to_email = _order_notification_email()
     subject = 'Nová objednávka: {}'.format(order_number)
+    try:
+        from settings_loader import normalize_tarif_slug, SLUG_TO_TIER_NAME
+        tslug = normalize_tarif_slug(order.get('tarif'))
+        tarif_display = SLUG_TO_TIER_NAME.get(tslug, tslug.capitalize() if tslug else '—')
+    except Exception:
+        t = (order.get('tarif') or '—').strip().lower()
+        tarif_display = 'Pro' if t == 'standard' else (t.capitalize() if t else '—')
     lines = [
         'Nová objednávka',
         '',
@@ -109,7 +116,7 @@ def send_order_notification_to_admin(order=None, **kwargs):
         'Jméno / Firma: {}'.format(order.get('jmeno_firma') or '—'),
         'IČO: {}'.format(order.get('ico') or '—'),
         'E-mail: {}'.format(order.get('email') or '—'),
-        'Tarif: {}'.format(order.get('tarif') or '—'),
+        'Tarif: {}'.format(tarif_display),
         'Ulice: {}'.format(order.get('ulice') or '—'),
         'Město: {}'.format(order.get('mesto') or '—'),
         'PSČ: {}'.format(order.get('psc') or '—'),

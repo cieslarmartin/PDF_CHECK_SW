@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="cs" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
@@ -194,7 +194,7 @@
         <section id="cenik" class="mb-14">
             <h2 class="text-2xl font-bold mb-8" style="color:#1f2937;">Ceník</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="max-width:720px;margin:0 auto;">
-                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
+                {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"pro":{"label":"Pro","amount_czk":1590}}) %}
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col">
                     <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">PROJEKTANT</h3>
                     <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.basic.label|default('Basic') }}</p>
@@ -212,8 +212,8 @@
                 <div class="lp-v3-panel rounded-xl p-6 shadow-sm flex flex-col relative border-2" style="border-color:#1e5a8a;background:linear-gradient(180deg, #f0f9ff 0%, #ffffff 24%);">
                     <span class="lp-v3-badge absolute top-4 right-4" style="background:#1e5a8a;color:white;padding:4px 10px;border-radius:0 0 8px 8px;font-size:0.7em;font-weight:700;">DOPORUČUJEME PRO ATELIÉRY</span>
                     <h3 class="text-lg font-semibold mb-1" style="color:#1f2937;">ATELIÉR</h3>
-                    <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} Kč</p>
+                    <p class="text-sm mb-2" style="color:#6b7280;">{{ tarifs.pro.label|default('Pro') }}</p>
+                    <p class="text-xl font-bold mb-1" style="color:#1e5a8a;">{{ tarifs.pro.amount_czk|default(1590) }} Kč</p>
                     <p class="text-xs mb-4" style="color:#9ca3af;">/ rok</p>
                     <p class="text-sm mb-4" style="color:#4b5563;">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm mb-4 flex-1 space-y-2" style="color:#374151;list-style:none;padding-left:0;">
@@ -222,7 +222,7 @@
                         <li class="flex items-start gap-2"><span style="color:#059669;font-weight:bold;">✓</span> Vše z tarifu Projektant</li>
                     </ul>
                     <p class="text-xs py-3 border-t mt-auto" style="color:#059669;font-weight:600;border-color:#e5e7eb;">🔒 Z Agenta: soubory u vás, na server jdou jen metadata (výsledky kontroly).</p>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition mt-2">Zakoupit Pro</a>
+                    <a href="/checkout?tarif=pro" class="block w-full py-2.5 rounded-lg text-center font-medium lp-v3-btn-primary transition mt-2">Zakoupit Pro</a>
                 </div>
             </div>
             <p class="mt-6 py-3 px-5 rounded-lg text-center text-sm max-w-xl mx-auto" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f;"><strong style="color:#1e5a8a;">Při odběru 10+ licencí</strong> sleva <strong style="color:#1e5a8a;">10 %</strong> pro vaši firmu.</p>

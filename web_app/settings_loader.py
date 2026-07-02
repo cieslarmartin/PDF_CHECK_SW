@@ -85,13 +85,64 @@ DEFAULTS = {
     "pricing_firm_button": "Zakoupit Firemní",
 }
 
-# Výchozí hodnoty pro JSON klíče
+# Výchozí hodnoty pro JSON klíče – jednotné klíče: basic, pro, firemni (NE standard)
 DEFAULT_PRICING_TARIFS = {
-    "basic": {"label": "BASIC", "amount_czk": 1090},
-    "standard": {"label": "PRO", "amount_czk": 1590},
-    # Firemní: 5 zařízení pod jedním účtem, cena za 4× PRO (5. zařízení zdarma)
-    "firemni": {"label": "FIREMNÍ", "amount_czk": 6360},
+    "basic": {"label": "Basic", "amount_czk": 1090},
+    "pro": {"label": "Pro", "amount_czk": 1590},
+    "firemni": {"label": "Firemní", "amount_czk": 6360},
 }
+
+# Prodejní tarify (slug → název tieru v license_tiers)
+PRODUCT_TARIF_SLUGS = ("basic", "pro", "firemni")
+TARIF_SLUG_ALIASES = {
+    "standard": "pro",   # zpětná kompatibilita starých objednávek/URL
+    "firemní": "firemni",
+}
+SLUG_TO_TIER_NAME = {
+    "basic": "Basic",
+    "pro": "Pro",
+    "firemni": "Firemní",
+}
+
+
+def normalize_tarif_slug(slug, default="pro"):
+    """Jediný kanonický slug pro objednávku/checkout: basic | pro | firemni."""
+    s = (slug or default).strip().lower()
+    return TARIF_SLUG_ALIASES.get(s, s)
+
+
+def _normalize_pricing_tarifs_dict(tarifs):
+    """Sjednotí klíče ceníku: standard → pro, doplní chybějící tarify."""
+    if not isinstance(tarifs, dict):
+        return {k: dict(v) for k, v in DEFAULT_PRICING_TARIFS.items()}
+    out = dict(tarifs)
+    if "standard" in out and "pro" not in out:
+        out["pro"] = dict(out["standard"]) if isinstance(out["standard"], dict) else {"label": "Pro", "amount_czk": 1590}
+    out.pop("standard", None)
+    for key, default_val in DEFAULT_PRICING_TARIFS.items():
+        if key not in out:
+            out[key] = dict(default_val)
+    return out
+
+
+def get_tarif_display_name(db, slug) -> str:
+    """Zobrazovaný název tarifu – preferuje license_tiers.name, jinak label z ceníku."""
+    slug = normalize_tarif_slug(slug)
+    if db:
+        tier_row = db.get_tier_by_name(slug)
+        if tier_row and tier_row.get("name"):
+            return tier_row["name"]
+        pricing = get_pricing_tarifs(db)
+        label = (pricing.get(slug) or {}).get("label")
+        if label:
+            return label
+    return SLUG_TO_TIER_NAME.get(slug, slug.capitalize())
+
+
+def get_invoice_item_description(tarif, db=None, tarif_label=None) -> str:
+    """Text položky na faktuře: Licence DokuCheck – tarif {Basic|Pro|Firemní}."""
+    label = tarif_label or (get_tarif_display_name(db, tarif) if db else SLUG_TO_TIER_NAME.get(normalize_tarif_slug(tarif), "Pro"))
+    return f"Licence DokuCheck – tarif {label}"
 
 DEFAULT_LANDING_HOW_STEPS = [
     {"title": "Nahraj / vyber složku", "text": "Přetáhněte PDF nebo vyberte složku s dokumenty."},
@@ -306,18 +357,12 @@ def get_trial_limit_total_files(db) -> int:
 
 
 def get_pricing_tarifs(db):
-    """Ceník tarifů: { basic: {label, amount_czk}, ... }. Zdroj: DB (Admin Nastavení → Ceny).
+    """Ceník tarifů: { basic: {label, amount_czk}, pro: ..., firemni: ... }.
 
-    Klíče chybějící v DB se doplní z DEFAULT_PRICING_TARIFS (např. nově přidaný tarif firemni),
-    hodnoty uložené v DB mají vždy přednost.
+    Klíče chybějící v DB se doplní z DEFAULT_PRICING_TARIFS; legacy klíč standard se mapuje na pro.
     """
-    tarifs = db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
-    if not isinstance(tarifs, dict):
-        return dict(DEFAULT_PRICING_TARIFS)
-    for key, default_val in DEFAULT_PRICING_TARIFS.items():
-        if key not in tarifs:
-            tarifs[key] = dict(default_val)
-    return tarifs
+    raw = db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
+    return _normalize_pricing_tarifs_dict(raw)
 
 
 def get_email_order_confirmation_subject(db) -> str:

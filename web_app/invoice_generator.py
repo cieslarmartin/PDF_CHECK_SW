@@ -143,7 +143,7 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
                          invoice_number=None, supplier_trade_register=None, output_dir=None,
                          supplier_bank_name=None, supplier_phone=None, supplier_email=None, vs=None,
                          buyer_ulice=None, buyer_mesto=None, buyer_psc=None, buyer_dic=None,
-                         duzp=None):
+                         duzp=None, tarif_label=None):
     """
     Vygeneruje PDF fakturu (daňový doklad) pro neplátce DPH.
     Redesign: hlavička FAKTURA vlevo / DOKLAD Č. vpravo, sloupce Dodavatel|Odběratel,
@@ -289,7 +289,12 @@ def generate_invoice_pdf(order_id, jmeno_firma, ico, email, tarif, amount_czk,
         pdf.cell(col_total, row_h_header, 'Celkem (Kč)', 1, 1, 'R')
 
         pdf.set_font('DejaVu', '', 10)
-        pdf.cell(col_desc, row_h_item, 'Licence DokuCheck PRO', 1, 0)
+        try:
+            from settings_loader import get_invoice_item_description
+            item_desc = get_invoice_item_description(tarif, tarif_label=tarif_label)
+        except ImportError:
+            item_desc = 'Licence DokuCheck – tarif {}'.format(tarif_label or (tarif or 'Pro'))
+        pdf.cell(col_desc, row_h_item, item_desc, 1, 0)
         pdf.cell(col_qty, row_h_item, '1 ks', 1, 0, 'C')
         pdf.cell(col_unit, row_h_item, _unit_price, 1, 0, 'R')
         pdf.cell(col_total, row_h_item, _total_price, 1, 1, 'R')

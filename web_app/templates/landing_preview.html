@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="cs" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
@@ -495,7 +495,7 @@
     </section>
 
     {# CENÍK – stejný zdroj jako checkout: pricing_tarifs z DB (load_settings_for_views) #}
-    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
+    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"pro":{"label":"Pro","amount_czk":1590}}) %}
     <section id="cenik" class="preview-section py-16 bg-white">
         <div class="preview-container max-w-5xl mx-auto px-6">
             <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">{{ pricing_section_title|default('Ceník') }}</h2></div>
@@ -515,15 +515,15 @@
                 <div class="card price-pop flex flex-col relative">
                     <span class="price-badge">{{ pricing_pro_badge|default('DOPORUČUJEME PRO ATELIÉRY') }}</span>
                     <h3 class="font-bold text-gray-900 mt-3">{{ pricing_pro_card_title|default('ATELIÉR') }}</h3>
-                    <p class="text-xs text-gray-400 mb-1">{{ tarifs.standard.label|default('PRO') }}</p>
-                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-xs text-gray-400 mb-1">{{ tarifs.pro.label|default('PRO') }}</p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#1e5a8a;">{{ tarifs.pro.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm text-gray-600 space-y-1 mb-4">
                         {% for f in pricing_pro_features_list|default(['Vše z tarifu Projektant', 'Hromadná validace složek', 'Pokročilé XLS reporty chyb', 'Metadata zůstávají lokálně (režim Z Agenta)']) %}
                         <li>✓ {% if loop.index > 1 %}<strong>{{ f }}</strong>{% else %}{{ f }}{% endif %}</li>
                         {% endfor %}
                     </ul>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">{{ pricing_pro_button|default('Zakoupit Pro') }}</a>
+                    <a href="/checkout?tarif=pro" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">{{ pricing_pro_button|default('Zakoupit Pro') }}</a>
                 </div>
                 <div class="card flex flex-col relative">
                     <span class="price-badge" style="background:#059669;">{{ pricing_firm_badge|default('1 LICENCE = 5 ZAŘÍZENÍ') }}</span>

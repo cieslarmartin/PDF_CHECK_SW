@@ -33,8 +33,9 @@ TEST_JMENO_FIRMA = 'Pán s diakritikou řůščś'
 # Náhodné 8místné IČO (pouze pro vizuální test)
 TEST_ICO = str(random.randint(10000000, 99999999))
 TEST_EMAIL = 'test.odberatel@example.cz'
-TEST_TARIF = 'standard'
+TEST_TARIF = 'pro'
 TEST_AMOUNT_CZK = 1590
+TEST_TARIF_LABEL = 'Pro'
 
 
 def main():
@@ -46,6 +47,7 @@ def main():
         email=TEST_EMAIL,
         tarif=TEST_TARIF,
         amount_czk=TEST_AMOUNT_CZK,
+        tarif_label=TEST_TARIF_LABEL,
         supplier_name=SUPPLIER_NAME,
         supplier_address=SUPPLIER_ADDRESS,
         supplier_ico=SUPPLIER_ICO,
@@ -61,7 +63,7 @@ def main():
     dest = os.path.join(cwd, 'test_faktura.pdf')
     shutil.copy2(filepath, dest)
     print('Hotovo: {}'.format(dest))
-    print('Faktura obsahuje: Dodavatel, Odběratel, položku (Licence DokuCheck PRO), platební údaje a QR kód.')
+    print('Faktura obsahuje: Dodavatel, Odběratel, položku (Licence DokuCheck – tarif Pro), platební údaje a QR kód.')
 
 
 if __name__ == '__main__':

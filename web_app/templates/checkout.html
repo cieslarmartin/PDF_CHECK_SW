@@ -74,7 +74,7 @@
         {% endif %}
 
         <form method="post" action="{{ url_for('checkout') }}" class="checkout-panel p-6 space-y-4">
-            <input type="hidden" name="tarif" value="{{ tarif or 'standard' }}">
+            <input type="hidden" name="tarif" value="{{ tarif or 'pro' }}">
             {% if order_summary and order_summary.tier_id %}
             <input type="hidden" name="tier_id" value="{{ order_summary.tier_id }}">
             {% endif %}

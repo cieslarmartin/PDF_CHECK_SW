@@ -904,17 +904,24 @@ def users_licenses():
     # Objednávky (stejná logika jako dříve pending_orders)
     orders_raw = db.get_pending_orders(limit=500)
     try:
-        from settings_loader import get_pricing_tarifs
+        from settings_loader import get_pricing_tarifs, get_tarif_display_name, normalize_tarif_slug
         pricing_tarifs = get_pricing_tarifs(db)
     except Exception:
-        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
+        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'Basic', 'amount_czk': 1090}, 'pro': {'label': 'Pro', 'amount_czk': 1590}})
+        def normalize_tarif_slug(s, default='pro'):
+            x = (s or default).strip().lower()
+            return 'pro' if x == 'standard' else x
+        def get_tarif_display_name(db_, slug):
+            t = normalize_tarif_slug(slug)
+            return {'basic': 'Basic', 'pro': 'Pro', 'firemni': 'Firemní'}.get(t, t.capitalize())
     licenses_all = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
     active_emails = {(l.get('email') or '').lower(): l for l in licenses_all if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')}
     orders = []
     for o in (orders_raw or []):
         o_dict = dict(o)
-        t = o_dict.get('tarif')
-        o_dict['tarif_label'] = (pricing_tarifs.get(t) or {}).get('label') or (t or '').upper() or '—'
+        t = normalize_tarif_slug(o_dict.get('tarif'))
+        o_dict['tarif'] = t
+        o_dict['tarif_label'] = get_tarif_display_name(db, t)
         email = (o_dict.get('email') or '').lower()
         o_dict['has_active_license'] = email in active_emails
         o_dict['api_key'] = active_emails.get(email, {}).get('api_key') if email in active_emails else None
@@ -988,9 +995,10 @@ def apply_discount():
         return redirect(url_for('admin.users_licenses'))
     # Přegenerovat fakturu s novou cenou
     try:
+        from settings_loader import normalize_tarif_slug
         order_updated = db.get_pending_order_by_id(order_id)
         new_amount = order_updated.get('amount_czk_final') or order_updated.get('amount_czk') or 1590
-        tarif = order_updated.get('tarif') or 'standard'
+        tarif = normalize_tarif_slug(order_updated.get('tarif'))
         from admin_routes import _admin_generate_invoice_for_order
         filepath, err = _admin_generate_invoice_for_order(db, order_id, order_updated, new_amount, tarif)
         if filepath and os.path.isfile(filepath):
@@ -1188,6 +1196,15 @@ def delete_user_from_order():
     return redirect(url_for('admin.users_licenses'))
 
 
+def _invoice_tarif_label(db, tarif):
+    """Zobrazovaný název tarifu pro fakturu (Basic / Pro / Firemní)."""
+    try:
+        from settings_loader import get_tarif_display_name, normalize_tarif_slug
+        return get_tarif_display_name(db, normalize_tarif_slug(tarif))
+    except Exception:
+        return (tarif or 'Pro').capitalize()
+
+
 def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
     """Pomocná: vygeneruje PDF fakturu pro objednávku a vrátí (filepath nebo None, chybová zpráva)."""
     import logging
@@ -1231,6 +1248,7 @@ def _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif):
             buyer_mesto=order.get('mesto') or None,
             buyer_psc=order.get('psc') or None,
             buyer_dic=order.get('dic') or None,
+            tarif_label=_invoice_tarif_label(db, tarif),
         )
         return (filepath, None)
     except Exception as e:
@@ -1252,11 +1270,11 @@ def generate_invoice():
         flash('Objednávka nenalezena', 'error')
         return redirect(url_for('admin.users_licenses'))
     try:
-        from settings_loader import get_pricing_tarifs
+        from settings_loader import get_pricing_tarifs, normalize_tarif_slug
         pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
     except Exception:
         pricing = {}
-    tarif = order.get('tarif') or 'standard'
+    tarif = normalize_tarif_slug(order.get('tarif'))
     amount_czk = pricing.get(tarif, {}).get('amount_czk', 1590) if isinstance(pricing, dict) else 1590
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
@@ -1291,11 +1309,11 @@ def regenerate_invoice():
         flash('Objednávka nenalezena', 'error')
         return redirect(url_for('admin.users_licenses'))
     try:
-        from settings_loader import get_pricing_tarifs
+        from settings_loader import get_pricing_tarifs, normalize_tarif_slug
         pricing = get_pricing_tarifs(db) if get_pricing_tarifs else {}
     except Exception:
         pricing = {}
-    tarif = order.get('tarif') or 'standard'
+    tarif = normalize_tarif_slug(order.get('tarif'))
     amount_czk = pricing.get(tarif, {}).get('amount_czk', 1590) if isinstance(pricing, dict) else 1590
     filepath, err = _admin_generate_invoice_for_order(db, order_id, order, amount_czk, tarif)
     if err:
@@ -1368,7 +1386,8 @@ def confirm_payment():
     if status not in ('PENDING', 'WAITING_PAYMENT', 'NEW_ORDER'):
         flash('Objednávka již byla zpracována nebo není ve stavu Nová / Čekající na platbu.', 'error')
         return redirect(url_for('admin.users_licenses'))
-    tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
+    from settings_loader import normalize_tarif_slug
+    tier_row = db.get_tier_by_name(normalize_tarif_slug(order.get('tarif')))
     if not tier_row:
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.users_licenses'))
@@ -1431,7 +1450,8 @@ def activate_without_invoice():
     if status not in ('PENDING', 'WAITING_PAYMENT'):
         flash('Objednávka již byla zpracována nebo není ve stavu Čekající na platbu.', 'error')
         return redirect(url_for('admin.users_licenses'))
-    tier_row = db.get_tier_by_name(order.get('tarif') or 'standard')
+    from settings_loader import normalize_tarif_slug
+    tier_row = db.get_tier_by_name(normalize_tarif_slug(order.get('tarif')))
     if not tier_row:
         flash('Nepodařilo se určit tarif (Basic/Pro). Zkontrolujte tabulku license_tiers.', 'error')
         return redirect(url_for('admin.users_licenses'))
@@ -1771,7 +1791,11 @@ def _settings_for_admin(db):
     s['allow_new_registrations'] = db.get_setting_bool('allow_new_registrations', True)
     s['trial_limit_total_files'] = db.get_setting_int('trial_limit_total_files', 10)
     s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
-    s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
+    try:
+        from settings_loader import get_pricing_tarifs
+        s['pricing_tarifs'] = get_pricing_tarifs(db)
+    except Exception:
+        s['pricing_tarifs'] = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'Basic', 'amount_czk': 1090}, 'pro': {'label': 'Pro', 'amount_czk': 1590}})
     s['payment_instructions'] = db.get_global_setting('payment_instructions', '')
     s['pilot_notice_text'] = db.get_global_setting('pilot_notice_text', '') or ''
     s['show_pilot_notice'] = db.get_setting_bool('show_pilot_notice', False)
@@ -1859,22 +1883,21 @@ def settings():
                 price_basic = request.form.get('price_basic', '')
                 price_pro = request.form.get('price_pro', '')
                 price_firemni = request.form.get('price_firemni', '')
-                pricing = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
-                if not isinstance(pricing, dict):
-                    pricing = {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}}
+                from settings_loader import get_pricing_tarifs, _normalize_pricing_tarifs_dict
+                pricing = _normalize_pricing_tarifs_dict(db.get_setting_json('pricing_tarifs', None))
                 if price_basic.strip():
                     amt = int(price_basic)
                     if 'basic' not in pricing:
-                        pricing['basic'] = {'label': 'BASIC', 'amount_czk': amt}
+                        pricing['basic'] = {'label': 'Basic', 'amount_czk': amt}
                     else:
                         pricing['basic']['amount_czk'] = amt
                 if price_pro.strip():
                     amt = int(price_pro)
-                    if 'standard' not in pricing:
-                        pricing['standard'] = {'label': 'PRO', 'amount_czk': amt}
+                    if 'pro' not in pricing:
+                        pricing['pro'] = {'label': 'Pro', 'amount_czk': amt}
                     else:
-                        pricing['standard']['amount_czk'] = amt
-                        pricing['standard']['label'] = 'PRO'
+                        pricing['pro']['amount_czk'] = amt
+                        pricing['pro']['label'] = pricing['pro'].get('label') or 'Pro'
                 if price_firemni.strip():
                     amt = int(price_firemni)
                     if 'firemni' not in pricing:
@@ -1898,7 +1921,8 @@ def settings():
                 if raw.strip():
                     tarifs = json.loads(raw)
                     if isinstance(tarifs, dict):
-                        db.set_global_setting('pricing_tarifs', tarifs)
+                        from settings_loader import _normalize_pricing_tarifs_dict
+                        db.set_global_setting('pricing_tarifs', _normalize_pricing_tarifs_dict(tarifs))
             except (json.JSONDecodeError, TypeError):
                 flash('Neplatný JSON u ceníku – uložení přeskočeno', 'error')
                 pricing_ok = False
@@ -2248,7 +2272,8 @@ def api_email_preview():
             if existing:
                 api_key = existing['api_key']
             else:
-                tier_name = order.get('tarif') or 'standard' if order else 'standard'
+                from settings_loader import normalize_tarif_slug
+                tier_name = normalize_tarif_slug(order.get('tarif') if order else None)
                 tier_row = db.get_tier_by_name(tier_name)
                 tier_id = tier_row.get('id') if tier_row else 1
                 api_key = db.admin_create_license_by_tier_id(user_name, email, tier_id, days=365, password=None)

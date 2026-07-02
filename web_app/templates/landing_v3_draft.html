@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="cs" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
@@ -136,7 +136,7 @@
 <div id="mobBg" class="fixed inset-0 bg-black/20 z-[55] hidden"></div>
 
 <main style="padding-top:72px;">
-    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
+    {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"pro":{"label":"Pro","amount_czk":1590}}) %}
 
     {# ============ HERO ============ #}
     <section class="landing-section py-8 md:py-12">
@@ -355,17 +355,17 @@
                 <div class="card price-pop flex flex-col relative anim" style="transition-delay:80ms;">
                     <span class="price-badge">DOPORUČUJEME PRO ATELIÉRY</span>
                     <h3 class="font-bold text-gray-900 mt-3">ATELIÉR</h3>
-                    <p class="text-xs text-gray-400 mb-3">{{ tarifs.standard.label|default('Pro') }}</p>
-                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.standard.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-xs text-gray-400 mb-3">{{ tarifs.pro.label|default('Pro') }}</p>
+                    <p class="text-3xl font-extrabold mb-0.5" style="color:#1e5a8a;">{{ tarifs.pro.amount_czk|default(1590) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
                     {# pouze roční licence – bez měsíčních přepočtů #}
-                    <p class="price-annual">{{ tarifs.standard.amount_czk|default(1590) }} Kč/rok · placeno ročně</p>
+                    <p class="price-annual">{{ tarifs.pro.amount_czk|default(1590) }} Kč/rok · placeno ročně</p>
                     <p class="text-sm text-gray-500 my-4">{{ landing_tarif_standard_desc|default('Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.') }}</p>
                     <ul class="text-sm space-y-2 mb-6 flex-1">
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Hromadný export do Excelu (XLS)</strong></li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color:#1e5a8a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><strong>Sofistikované filtry chyb</strong></li>
                         <li class="flex gap-2"><svg class="w-4 h-4 mt-0.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Vše z tarifu Projektant</li>
                     </ul>
-                    <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg mt-2" style="background:#1e5a8a;">Zakoupit Pro</a>
+                    <a href="/checkout?tarif=pro" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white shadow-md transition hover:shadow-lg mt-2" style="background:#1e5a8a;">Zakoupit Pro</a>
                 </div>
             </div>
             <p class="mt-6 py-3 px-5 rounded-lg text-center text-sm max-w-xl mx-auto" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f;"><strong style="color:#1e5a8a;">Při odběru 10+ licencí</strong> sleva <strong style="color:#1e5a8a;">10 %</strong> pro vaši firmu.</p>

@@ -140,7 +140,7 @@
             <div class="card-body">
                 {% set pt = settings.pricing_tarifs or {} %}
                 {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1090) %}
-                {% set price_pro_val = (pt.get('standard') or {}).get('amount_czk', 1590) %}
+                {% set price_pro_val = (pt.get('pro') or pt.get('standard') or {}).get('amount_czk', 1590) %}
                 {% set price_firemni_val = (pt.get('firemni') or {}).get('amount_czk', 6360) %}
                 <label class="admin-settings-label">Cena licence BASIC (Kč)</label>
                 <input type="number" name="price_basic" class="form-control admin-settings-input" value="{{ price_basic_val }}" min="0" step="1">
@@ -187,7 +187,7 @@
         <div class="admin-card">
             <div class="card-header">Ceník tarifů (JSON)</div>
             <div class="card-body">
-                <label class="admin-settings-label">pricing_tarifs – např. {"basic":{"label":"BASIC","amount_czk":990},"standard":{...},"premium":{...}}</label>
+                <label class="admin-settings-label">pricing_tarifs – např. {"basic":{"label":"Basic","amount_czk":1090},"pro":{"label":"Pro","amount_czk":1590},"firemni":{"label":"Firemní","amount_czk":6360}}</label>
                 <textarea name="pricing_tarifs_json" class="form-control admin-settings-textarea">{{ pricing_tarifs_json }}</textarea>
                 <label class="admin-settings-label">Trial – max. souborů (trial_limit_total_files)</label>
                 <input type="number" name="trial_limit_total_files" class="form-control admin-settings-input" value="{{ settings.trial_limit_total_files }}" min="1">
