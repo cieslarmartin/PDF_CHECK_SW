@@ -44,6 +44,7 @@ DEFAULTS = {
     "landing_tarif_basic_desc": "Pro menší objemy a samostatné projektanty. Kontrola PDF/A, podpisů a časového razítka před odesláním na Portál stavebníka.",
     "landing_tarif_standard_desc": "Plné funkce pro ateliéry a projekční kanceláře — hromadná validace složek, pokročilé filtry chyb a export do XLS.",
     "landing_tarif_premium_desc": "Na míru pro větší týmy.",
+    "landing_tarif_firemni_desc": "Kompletní funkce PRO pro celou firmu — jedna licence, jedno přihlášení, až 5 zařízení. Platíte jen za 4.",
     # Právní – krátké texty (dlouhé VOP/GDPR mají fallback v šabloně nebo prázdné = zobraz šablonu)
     "footer_disclaimer": "Výsledky mají informativní charakter a nenahrazují Portál stavebníka. Autor neručí za správnost.",
     "app_legal_notice": "Výsledky kontroly mají pouze informativní charakter a nenahrazují Portál stavebníka.",
@@ -78,12 +79,18 @@ DEFAULTS = {
     "pricing_pro_features": "Vše z tarifu Projektant\nHromadná validace složek\nPokročilé XLS reporty chyb\nMetadata zůstávají lokálně (režim Z Agenta)",
     "pricing_basic_button": "Zakoupit Basic",
     "pricing_pro_button": "Zakoupit Pro",
+    "pricing_firm_card_title": "FIREMNÍ",
+    "pricing_firm_badge": "1 LICENCE = 5 ZAŘÍZENÍ",
+    "pricing_firm_features": "Vše z tarifu Ateliér (PRO)\nAž 5 zařízení pod jedním účtem\nJedno přihlášení pro celou firmu\nPlatíte jen za 4 zařízení — páté zdarma",
+    "pricing_firm_button": "Zakoupit Firemní",
 }
 
 # Výchozí hodnoty pro JSON klíče
 DEFAULT_PRICING_TARIFS = {
     "basic": {"label": "BASIC", "amount_czk": 1090},
     "standard": {"label": "PRO", "amount_czk": 1590},
+    # Firemní: 5 zařízení pod jedním účtem, cena za 4× PRO (5. zařízení zdarma)
+    "firemni": {"label": "FIREMNÍ", "amount_czk": 6360},
 }
 
 DEFAULT_LANDING_HOW_STEPS = [
@@ -187,7 +194,7 @@ def load_settings_for_views(db):
             out[k] = db.get_setting_bool(k, DEFAULTS[k])
         else:
             out[k] = db.get_global_setting(k, DEFAULTS[k]) or DEFAULTS[k]
-    out["pricing_tarifs"] = db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
+    out["pricing_tarifs"] = get_pricing_tarifs(db)
     out["landing_how_steps"] = db.get_setting_json("landing_how_steps", DEFAULT_LANDING_HOW_STEPS)
     out["landing_faq"] = db.get_setting_json("landing_faq", DEFAULT_LANDING_FAQ)
     out["testimonials"] = db.get_setting_json("testimonials", [])
@@ -270,6 +277,10 @@ CHECKOUT_PRICING_TEXT_KEYS = [
     "pricing_pro_features",
     "pricing_basic_button",
     "pricing_pro_button",
+    "pricing_firm_card_title",
+    "pricing_firm_badge",
+    "pricing_firm_features",
+    "pricing_firm_button",
 ]
 
 
@@ -285,6 +296,7 @@ def get_checkout_pricing_texts(db) -> dict:
         out[key] = (db.get_global_setting(key, default) or "").strip() or default
     out["pricing_basic_features_list"] = [x.strip() for x in (out.get("pricing_basic_features") or "").split("\n") if x.strip()]
     out["pricing_pro_features_list"] = [x.strip() for x in (out.get("pricing_pro_features") or "").split("\n") if x.strip()]
+    out["pricing_firm_features_list"] = [x.strip() for x in (out.get("pricing_firm_features") or "").split("\n") if x.strip()]
     return out
 
 
@@ -294,8 +306,18 @@ def get_trial_limit_total_files(db) -> int:
 
 
 def get_pricing_tarifs(db):
-    """Ceník tarifů: { basic: {label, amount_czk}, ... }. Jediný zdroj: DB (Admin Nastavení → Ceny)."""
-    return db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
+    """Ceník tarifů: { basic: {label, amount_czk}, ... }. Zdroj: DB (Admin Nastavení → Ceny).
+
+    Klíče chybějící v DB se doplní z DEFAULT_PRICING_TARIFS (např. nově přidaný tarif firemni),
+    hodnoty uložené v DB mají vždy přednost.
+    """
+    tarifs = db.get_setting_json("pricing_tarifs", DEFAULT_PRICING_TARIFS)
+    if not isinstance(tarifs, dict):
+        return dict(DEFAULT_PRICING_TARIFS)
+    for key, default_val in DEFAULT_PRICING_TARIFS.items():
+        if key not in tarifs:
+            tarifs[key] = dict(default_val)
+    return tarifs
 
 
 def get_email_order_confirmation_subject(db) -> str:

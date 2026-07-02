@@ -141,10 +141,13 @@
                 {% set pt = settings.pricing_tarifs or {} %}
                 {% set price_basic_val = (pt.get('basic') or {}).get('amount_czk', 1090) %}
                 {% set price_pro_val = (pt.get('standard') or {}).get('amount_czk', 1590) %}
+                {% set price_firemni_val = (pt.get('firemni') or {}).get('amount_czk', 6360) %}
                 <label class="admin-settings-label">Cena licence BASIC (Kč)</label>
                 <input type="number" name="price_basic" class="form-control admin-settings-input" value="{{ price_basic_val }}" min="0" step="1">
                 <label class="admin-settings-label">Cena licence PRO (Kč)</label>
                 <input type="number" name="price_pro" class="form-control admin-settings-input" value="{{ price_pro_val }}" min="0" step="1">
+                <label class="admin-settings-label">Cena licence FIREMNÍ (Kč) – 5 zařízení, platí se za 4</label>
+                <input type="number" name="price_firemni" class="form-control admin-settings-input" value="{{ price_firemni_val }}" min="0" step="1">
             </div>
             <div class="card-body">
                 <div class="card-header">Texty ceníku na hlavní stránce</div>
@@ -152,6 +155,8 @@
                 <input type="text" name="landing_tarif_basic_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_basic_desc|e }}" placeholder="Ideální pro samostatné projektanty...">
                 <label class="admin-settings-label">Popisek licence PRO (pod nadpisem)</label>
                 <input type="text" name="landing_tarif_pro_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_standard_desc|e }}" placeholder="Nástroj pro řízení velkých zakázek...">
+                <label class="admin-settings-label">Popisek licence FIREMNÍ (pod nadpisem)</label>
+                <input type="text" name="landing_tarif_firemni_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_firemni_desc|e }}" placeholder="Jedna licence, až 5 zařízení...">
             </div>
             <div class="card-body">
                 <div class="card-header">Platební instrukce (zobrazí se uživateli po kliknutí na „Koupit“)</div>

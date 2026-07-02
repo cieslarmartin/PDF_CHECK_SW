@@ -52,6 +52,15 @@
             <textarea name="pricing_pro_features" class="form-control admin-settings-input" rows="4" placeholder="Vše z tarifu Projektant&#10;Hromadná validace složek&#10;Pokročilé XLS reporty chyb">{{ pricing_pro_features|e }}</textarea>
             <label class="admin-settings-label">Karta 2 (Pro) – text tlačítka</label>
             <input type="text" name="pricing_pro_button" class="form-control admin-settings-input" value="{{ pricing_pro_button|e }}" placeholder="Zakoupit Pro">
+            <hr style="margin:14px 0;border-color:#e5e7eb;">
+            <label class="admin-settings-label">Karta 3 (Firemní) – nadpis</label>
+            <input type="text" name="pricing_firm_card_title" class="form-control admin-settings-input" value="{{ pricing_firm_card_title|e }}" placeholder="FIREMNÍ">
+            <label class="admin-settings-label">Karta 3 (Firemní) – štítek nad kartou</label>
+            <input type="text" name="pricing_firm_badge" class="form-control admin-settings-input" value="{{ pricing_firm_badge|e }}" placeholder="1 LICENCE = 5 ZAŘÍZENÍ">
+            <label class="admin-settings-label">Karta 3 (Firemní) – výhody (jedna na řádek)</label>
+            <textarea name="pricing_firm_features" class="form-control admin-settings-input" rows="4" placeholder="Vše z tarifu Ateliér (PRO)&#10;Až 5 zařízení pod jedním účtem">{{ pricing_firm_features|e }}</textarea>
+            <label class="admin-settings-label">Karta 3 (Firemní) – text tlačítka</label>
+            <input type="text" name="pricing_firm_button" class="form-control admin-settings-input" value="{{ pricing_firm_button|e }}" placeholder="Zakoupit Firemní">
             <p class="small text-muted mt-2">Ceny (Kč/rok) a popisky tarifů se upravují v <strong>Nastavení → Správa prodeje</strong> (pricing_tarifs, landing_tarif_*_desc).</p>
         </div>
         <div class="card-footer">

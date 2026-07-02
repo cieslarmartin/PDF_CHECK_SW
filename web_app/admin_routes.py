@@ -937,7 +937,8 @@ def users_licenses():
         licenses = [l for l in licenses if l.get('is_active')]
 
     tiers_list = db.get_all_license_tiers()
-    product_tiers = [t for t in (tiers_list or []) if (t.get('name') or '').strip() in ('Trial', 'Basic', 'Pro', 'Unlimited')] or (tiers_list or [])
+    # Prodejní tiery: vše kromě Free (aby se nově přidané tiery, např. Firemní, objevily ve výběru)
+    product_tiers = [t for t in (tiers_list or []) if (t.get('name') or '').strip().lower() != 'free'] or (tiers_list or [])
     try:
         auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
     except Exception:
@@ -1857,6 +1858,7 @@ def settings():
             try:
                 price_basic = request.form.get('price_basic', '')
                 price_pro = request.form.get('price_pro', '')
+                price_firemni = request.form.get('price_firemni', '')
                 pricing = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}})
                 if not isinstance(pricing, dict):
                     pricing = {'basic': {'label': 'BASIC', 'amount_czk': 1090}, 'standard': {'label': 'PRO', 'amount_czk': 1590}}
@@ -1873,11 +1875,18 @@ def settings():
                     else:
                         pricing['standard']['amount_czk'] = amt
                         pricing['standard']['label'] = 'PRO'
+                if price_firemni.strip():
+                    amt = int(price_firemni)
+                    if 'firemni' not in pricing:
+                        pricing['firemni'] = {'label': 'FIREMNÍ', 'amount_czk': amt}
+                    else:
+                        pricing['firemni']['amount_czk'] = amt
                 db.set_global_setting('pricing_tarifs', pricing)
             except (ValueError, TypeError):
                 pass
             db.set_global_setting('landing_tarif_basic_desc', request.form.get('landing_tarif_basic_desc', ''))
             db.set_global_setting('landing_tarif_standard_desc', request.form.get('landing_tarif_pro_desc', ''))
+            db.set_global_setting('landing_tarif_firemni_desc', request.form.get('landing_tarif_firemni_desc', ''))
             db.set_global_setting('payment_instructions', request.form.get('payment_instructions', ''))
             db.set_global_setting('pilot_notice_text', request.form.get('pilot_notice_text', ''))
             db.set_global_setting('show_pilot_notice', '1' if request.form.get('show_pilot_notice') == '1' else '0')
@@ -2411,6 +2420,31 @@ def api_web_trial_reset():
     return redirect(url_for('admin.trial'))
 
 
+def _parse_tier_form():
+    """Načte hodnoty tieru z request.form (společné pro update i add)."""
+    def _int_or_none(field):
+        raw = (request.form.get(field) or '').strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+    return {
+        'name': (request.form.get('name') or '').strip(),
+        'max_files_limit': _int_or_none('max_files_limit'),
+        'allow_signatures': request.form.get('allow_signatures') == '1',
+        'allow_timestamp': request.form.get('allow_timestamp') == '1',
+        'allow_excel_export': request.form.get('allow_excel_export') == '1',
+        'allow_advanced_filters': request.form.get('allow_advanced_filters') == '1',
+        'max_devices': _int_or_none('max_devices'),
+        'daily_files_limit': _int_or_none('daily_files_limit'),
+        'rate_limit_hour': _int_or_none('rate_limit_hour'),
+        'max_file_size_mb': _int_or_none('max_file_size_mb'),
+        'checkout_features': (request.form.get('checkout_features') or '').strip(),
+    }
+
+
 @admin_bp.route('/admin/api/tier/update', methods=['POST'])
 @admin_required
 def api_update_tier():
@@ -2420,64 +2454,53 @@ def api_update_tier():
         tier_id = int(request.form.get('tier_id', 0))
     except (TypeError, ValueError):
         return jsonify({'success': False, 'error': 'Neplatné tier_id'}), 400
-    name = request.form.get('name', '').strip()
-    max_files_raw = request.form.get('max_files_limit', '').strip()
-    try:
-        max_files_limit = int(max_files_raw) if max_files_raw else None
-    except (TypeError, ValueError):
-        max_files_limit = None
-    allow_signatures = request.form.get('allow_signatures') == '1'
-    allow_timestamp = request.form.get('allow_timestamp') == '1'
-    allow_excel_export = request.form.get('allow_excel_export') == '1'
-    allow_advanced_filters = request.form.get('allow_advanced_filters') == '1'
-    max_devices_raw = request.form.get('max_devices', '').strip()
-    try:
-        max_devices = int(max_devices_raw) if max_devices_raw else None
-    except (TypeError, ValueError):
-        max_devices = None
-    daily_files_limit = None
-    raw_daily = request.form.get('daily_files_limit', '').strip()
-    if raw_daily:
-        try:
-            daily_files_limit = int(raw_daily)
-        except ValueError:
-            pass
-    rate_limit_hour = None
-    raw_rate = request.form.get('rate_limit_hour', '').strip()
-    if raw_rate:
-        try:
-            rate_limit_hour = int(raw_rate)
-        except ValueError:
-            pass
-    max_file_size_mb = None
-    raw_size = request.form.get('max_file_size_mb', '').strip()
-    if raw_size:
-        try:
-            max_file_size_mb = int(raw_size)
-        except ValueError:
-            pass
-    checkout_features = (request.form.get('checkout_features') or '').strip()
-
     if not tier_id:
         return jsonify({'success': False, 'error': 'Chybí tier_id'}), 400
+    f = _parse_tier_form()
 
     ok = db.update_tier(
         tier_id,
-        name=name or None,
-        max_files_limit=max_files_limit,
-        allow_signatures=allow_signatures,
-        allow_timestamp=allow_timestamp,
-        allow_excel_export=allow_excel_export,
-        allow_advanced_filters=allow_advanced_filters,
-        max_devices=max_devices,
-        daily_files_limit=daily_files_limit,
-        rate_limit_hour=rate_limit_hour,
-        max_file_size_mb=max_file_size_mb,
-        checkout_features=checkout_features,
+        name=f['name'] or None,
+        max_files_limit=f['max_files_limit'],
+        allow_signatures=f['allow_signatures'],
+        allow_timestamp=f['allow_timestamp'],
+        allow_excel_export=f['allow_excel_export'],
+        allow_advanced_filters=f['allow_advanced_filters'],
+        max_devices=f['max_devices'],
+        daily_files_limit=f['daily_files_limit'],
+        rate_limit_hour=f['rate_limit_hour'],
+        max_file_size_mb=f['max_file_size_mb'],
+        checkout_features=f['checkout_features'],
     )
     if ok:
         return jsonify({'success': True, 'message': 'Tier aktualizován'})
     return jsonify({'success': False, 'error': 'Tier nenalezen'}), 404
+
+
+@admin_bp.route('/admin/api/tier/add', methods=['POST'])
+@admin_required
+def api_add_tier():
+    """Vytvoří nový globální tier (stránka /admin/tiers, tlačítko Přidat tier)."""
+    db = get_db()
+    f = _parse_tier_form()
+    if not f['name']:
+        return jsonify({'success': False, 'error': 'Zadejte název tieru'}), 400
+    tier_id, err = db.insert_tier(
+        name=f['name'],
+        max_files_limit=f['max_files_limit'] if f['max_files_limit'] is not None else 10,
+        allow_signatures=f['allow_signatures'],
+        allow_timestamp=f['allow_timestamp'],
+        allow_excel_export=f['allow_excel_export'],
+        allow_advanced_filters=f['allow_advanced_filters'],
+        max_devices=f['max_devices'] if f['max_devices'] is not None else 1,
+        daily_files_limit=f['daily_files_limit'],
+        rate_limit_hour=f['rate_limit_hour'],
+        max_file_size_mb=f['max_file_size_mb'],
+        checkout_features=f['checkout_features'],
+    )
+    if tier_id:
+        return jsonify({'success': True, 'tier_id': tier_id, 'message': 'Tier vytvořen'})
+    return jsonify({'success': False, 'error': err or 'Vytvoření tieru se nezdařilo'}), 400
 
 
 @admin_bp.route('/admin/api/activity')

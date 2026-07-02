@@ -497,9 +497,9 @@
     {# CENÍK – stejný zdroj jako checkout: pricing_tarifs z DB (load_settings_for_views) #}
     {% set tarifs = pricing_tarifs|default({"basic":{"label":"BASIC","amount_czk":1090},"standard":{"label":"PRO","amount_czk":1590}}) %}
     <section id="cenik" class="preview-section py-16 bg-white">
-        <div class="preview-container max-w-3xl mx-auto px-6">
+        <div class="preview-container max-w-5xl mx-auto px-6">
             <div class="section-head"><span class="section-num">6</span><h2 class="text-2xl font-bold text-center" style="color:#0f172a;">{{ pricing_section_title|default('Ceník') }}</h2></div>
-            <div class="grid md:grid-cols-2 gap-6">
+            <div class="grid md:grid-cols-3 gap-6">
                 <div class="card flex flex-col">
                     <h3 class="font-bold text-gray-900">{{ pricing_basic_card_title|default('PROJEKTANT') }}</h3>
                     <p class="text-xs text-gray-400 mb-1">{{ tarifs.basic.label|default('BASIC') }}</p>
@@ -524,6 +524,19 @@
                         {% endfor %}
                     </ul>
                     <a href="/checkout?tarif=standard" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#1e5a8a;">{{ pricing_pro_button|default('Zakoupit Pro') }}</a>
+                </div>
+                <div class="card flex flex-col relative">
+                    <span class="price-badge" style="background:#059669;">{{ pricing_firm_badge|default('1 LICENCE = 5 ZAŘÍZENÍ') }}</span>
+                    <h3 class="font-bold text-gray-900 mt-3">{{ pricing_firm_card_title|default('FIREMNÍ') }}</h3>
+                    <p class="text-xs text-gray-400 mb-1">{{ tarifs.firemni.label|default('FIREMNÍ') }}</p>
+                    <p class="text-3xl font-extrabold mb-2" style="color:#059669;">{{ tarifs.firemni.amount_czk|default(6360) }} <span class="text-base font-medium text-gray-400">Kč/rok</span></p>
+                    <p class="text-sm text-gray-500 mb-4">{{ landing_tarif_firemni_desc|default('Kompletní funkce PRO pro celou firmu — jedna licence, jedno přihlášení, až 5 zařízení. Platíte jen za 4.') }}</p>
+                    <ul class="text-sm text-gray-600 space-y-1 mb-4">
+                        {% for f in pricing_firm_features_list|default(['Vše z tarifu Ateliér (PRO)', 'Až 5 zařízení pod jedním účtem', 'Jedno přihlášení pro celou firmu', 'Platíte jen za 4 zařízení — páté zdarma']) %}
+                        <li>✓ {% if loop.index > 1 %}<strong>{{ f }}</strong>{% else %}{{ f }}{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="/checkout?tarif=firemni" class="block w-full py-2.5 rounded-lg text-center font-semibold text-white mt-auto" style="background:#059669;">{{ pricing_firm_button|default('Zakoupit Firemní') }}</a>
                 </div>
             </div>
             {% if pricing_volume_note %}

@@ -1,8 +1,11 @@
 {% extends "admin_base.html" %}
 {% block title %}PDF DokuCheck Admin – Tier definice{% endblock %}
 {% block content %}
-<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Globální definice tierů</h2>
-<p class="text-muted small mb-3">Úpravy se projeví u všech uživatelů s daným tierem. U uživatele v Nástěnce měníte pouze výběr tieru (dropdown).</p>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <h2 style="font-size:1.2em;font-weight:600;margin:0;">Globální definice tierů</h2>
+    <button type="button" class="btn btn-primary btn-sm" id="btnAddTier">+ Přidat nový tier</button>
+</div>
+<p class="text-muted small mb-3">Úpravy se projeví u všech uživatelů s daným tierem. U uživatele v Nástěnce měníte pouze výběr tieru (dropdown). Nový tier (např. Firemní pro 5 zařízení) přidáte tlačítkem vpravo nahoře.</p>
 <div class="table-container">
     <table class="table-dense">
         <thead>
@@ -57,7 +60,7 @@
 <div class="modal-overlay" id="tierEditModal">
     <div class="modal">
         <div class="modal-header">
-            <h3>Upravit tier</h3>
+            <h3 id="tierModalTitle">Upravit tier</h3>
             <button class="modal-close" onclick="document.getElementById('tierEditModal').classList.remove('active')">&times;</button>
         </div>
         <div class="modal-body">
@@ -117,9 +120,26 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+document.getElementById('btnAddTier').addEventListener('click', function() {
+    document.getElementById('tierModalTitle').textContent = 'Přidat nový tier';
+    document.getElementById('edit_tier_id').value = '';
+    document.getElementById('edit_tier_name').value = '';
+    document.getElementById('edit_max_files').value = '';
+    document.getElementById('edit_max_devices').value = '1';
+    document.getElementById('edit_daily_limit').value = '';
+    document.getElementById('edit_rate_limit').value = '';
+    document.getElementById('edit_max_size_mb').value = '';
+    document.getElementById('edit_allow_sig').checked = true;
+    document.getElementById('edit_allow_ts').checked = true;
+    document.getElementById('edit_allow_excel').checked = false;
+    document.getElementById('edit_allow_filters').checked = false;
+    document.getElementById('edit_checkout_features').value = '';
+    document.getElementById('tierEditModal').classList.add('active');
+});
 document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var tr = this.closest('tr');
+        document.getElementById('tierModalTitle').textContent = 'Upravit tier';
         document.getElementById('edit_tier_id').value = tr.getAttribute('data-tier-id');
         document.getElementById('edit_tier_name').value = tr.getAttribute('data-name') || '';
         document.getElementById('edit_max_files').value = tr.getAttribute('data-max-files') || '';
@@ -138,8 +158,10 @@ document.querySelectorAll('.btn-edit-tier').forEach(function(btn) {
     });
 });
 document.getElementById('btnTierSave').onclick = function() {
+    var tierId = document.getElementById('edit_tier_id').value;
+    var isNew = !tierId;
     var fd = new FormData();
-    fd.append('tier_id', document.getElementById('edit_tier_id').value);
+    if (!isNew) fd.append('tier_id', tierId);
     fd.append('name', document.getElementById('edit_tier_name').value);
     fd.append('max_files_limit', document.getElementById('edit_max_files').value);
     fd.append('max_devices', document.getElementById('edit_max_devices').value);
@@ -151,7 +173,7 @@ document.getElementById('btnTierSave').onclick = function() {
     fd.append('allow_excel_export', document.getElementById('edit_allow_excel').checked ? '1' : '0');
     fd.append('allow_advanced_filters', document.getElementById('edit_allow_filters').checked ? '1' : '0');
     fd.append('checkout_features', document.getElementById('edit_checkout_features').value || '');
-    var url = '{{ url_for("admin.api_update_tier") }}';
+    var url = isNew ? '{{ url_for("admin.api_add_tier") }}' : '{{ url_for("admin.api_update_tier") }}';
     fetch(url, { method: 'POST', body: fd })
         .then(function(r) {
             if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + (t && t.slice(0, 200))); });

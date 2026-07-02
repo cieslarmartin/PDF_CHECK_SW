@@ -1315,7 +1315,8 @@ class Database:
             result['max_devices'] = tier_row.get('max_devices', 1)
             result['tier_name'] = tier_row.get('name', 'Unknown')
             name = (tier_row.get('name') or '').strip().lower()
-            result['license_tier'] = 0 if name in ('trial', 'free') else (1 if name == 'basic' else (2 if name == 'pro' else 3))
+            # Firemní = funkčně Pro (tier 2), jen s vyšším limitem zařízení
+            result['license_tier'] = 0 if name in ('trial', 'free') else (1 if name == 'basic' else (2 if name in ('pro', 'firemní', 'firemni') else 3))
             # Admin-editable limity z license_tiers (daily_files_limit, rate_limit_hour, max_file_size_mb)
             result['limits'] = {
                 'daily_files_limit': tier_row.get('daily_files_limit'),
@@ -1945,6 +1946,8 @@ class Database:
         n = str(name).strip().lower()
         if n == 'standard':
             n = 'pro'
+        elif n == 'firemni':
+            n = 'firemní'
         cursor.execute('SELECT * FROM license_tiers WHERE LOWER(TRIM(name)) = ? LIMIT 1', (n,))
         row = cursor.fetchone()
         conn.close()
@@ -3159,6 +3162,46 @@ class Database:
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
+
+    def insert_tier(self, name: str, max_files_limit=10, allow_signatures=False,
+                    allow_timestamp=False, allow_excel_export=False, allow_advanced_filters=False,
+                    max_devices=1, daily_files_limit=None, rate_limit_hour=None,
+                    max_file_size_mb=None, checkout_features=None):
+        """Vytvoří nový globální tier. Vrátí (tier_id, None) při úspěchu, (None, chyba) při neúspěchu."""
+        if not name or not str(name).strip():
+            return None, 'Chybí název tieru'
+        name = str(name).strip()
+        if self.get_tier_by_name(name):
+            return None, f'Tier „{name}“ už existuje'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO license_tiers
+                    (name, max_files_limit, allow_signatures, allow_timestamp, allow_excel_export,
+                     allow_advanced_filters, max_devices, daily_files_limit, rate_limit_hour,
+                     max_file_size_mb, checkout_features)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                name,
+                int(max_files_limit) if max_files_limit is not None else 10,
+                1 if allow_signatures else 0,
+                1 if allow_timestamp else 0,
+                1 if allow_excel_export else 0,
+                1 if allow_advanced_filters else 0,
+                int(max_devices) if max_devices is not None else 1,
+                daily_files_limit,
+                rate_limit_hour,
+                max_file_size_mb,
+                checkout_features if isinstance(checkout_features, str) and checkout_features.strip() else None,
+            ))
+            tier_id = cursor.lastrowid
+            conn.commit()
+            return tier_id, None
+        except sqlite3.Error as e:
+            return None, str(e)
+        finally:
+            conn.close()
 
     def update_tier(self, tier_id: int, name=None, max_files_limit=None,
                     allow_signatures=None, allow_timestamp=None, allow_excel_export=None,
