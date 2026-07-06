@@ -159,6 +159,14 @@
                 <input type="text" name="landing_tarif_firemni_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_firemni_desc|e }}" placeholder="Jedna licence, až 5 zařízení...">
             </div>
             <div class="card-body">
+                <div class="card-header">Ochrana objednávkového formuláře (Cloudflare Turnstile CAPTCHA)</div>
+                <p class="small text-muted mb-3">Klíče získáte zdarma v <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener">Cloudflare Turnstile</a> (widget pro doménu dokucheck.cz). Pokud jsou vyplněny oba klíče, CAPTCHA se zobrazí na checkoutu. Alternativně lze nastavit proměnné prostředí <code>TURNSTILE_SITE_KEY</code> a <code>TURNSTILE_SECRET_KEY</code> na serveru.</p>
+                <label class="admin-settings-label">Site key (turnstile_site_key) – veřejný klíč pro web</label>
+                <input type="text" name="turnstile_site_key" class="form-control admin-settings-input" value="{{ settings.turnstile_site_key|default('', true)|e }}" placeholder="0x4AAAAAAA..." autocomplete="off">
+                <label class="admin-settings-label">Secret key (turnstile_secret_key) – tajný klíč pro server</label>
+                <input type="password" name="turnstile_secret_key" class="form-control admin-settings-input" value="{{ settings.turnstile_secret_key|default('', true)|e }}" placeholder="0x4AAAAAAA..." autocomplete="new-password">
+            </div>
+            <div class="card-body">
                 <div class="card-header">Platební instrukce (zobrazí se uživateli po kliknutí na „Koupit“)</div>
                 <p class="small text-muted mb-3">Text se zobrazí na stránce checkout nad formulářem. Můžete doplnit číslo účtu, variabilní symbol apod.</p>
                 <textarea name="payment_instructions" class="form-control admin-settings-textarea" rows="4" placeholder="Po odeslání objednávky vám e-mailem zašleme platební údaje...">{{ settings.payment_instructions|e }}</textarea>

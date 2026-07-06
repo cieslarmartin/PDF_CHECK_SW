@@ -122,11 +122,17 @@
                 <input type="checkbox" name="souhlas_vop_gdpr" id="souhlas_vop_gdpr" required class="mt-1 rounded border-gray-300 text-1e5a8a focus:ring-1e5a8a" style="accent-color:#1e5a8a;">
                 <label for="souhlas_vop_gdpr" class="text-sm" style="color:#4b5563;">Souhlasím s <a href="{{ url_for('vop') }}" target="_blank" class="checkout-link">obchodními podmínkami</a> a <a href="{{ url_for('gdpr') }}" target="_blank" class="checkout-link">zásadami ochrany osobních údajů (GDPR)</a>. *</label>
             </div>
+            {% if turnstile_site_key %}
+            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key|e }}" data-theme="light"></div>
+            {% endif %}
             <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">{{ checkout_submit_button|default('Odeslat a vystavit fakturu') }}</button>
         </form>
 
         <p class="mt-6 text-sm text-center" style="color:#6b7280;"><a href="/#cenik" class="checkout-link">{{ checkout_back_link|default('Zpět na ceník') }}</a></p>
     </main>
+    {% if turnstile_site_key %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    {% endif %}
     <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script>(function(){ var i=document.getElementById('theme-toggle-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
 </body>

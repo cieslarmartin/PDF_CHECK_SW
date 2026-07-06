@@ -4087,7 +4087,7 @@ def _checkout_tier_features(tier_row, tarif_key):
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    """Fakturační formulář. POST ukládá do pending_orders, odešle e-mail a přesměruje na order-success bez platebních údajů."""
+    """Fakturační formulář. POST ukládá do pending_orders, notifikaci adminovi, PDF fakturu; e-mail zákazníkovi jen ručně z Adminu."""
     db = Database()
     pricing = get_pricing_tarifs(db) if get_pricing_tarifs else TARIF_AMOUNTS_FALLBACK
     if isinstance(pricing, dict) and all(isinstance(v, dict) for v in pricing.values()):
@@ -4114,6 +4114,18 @@ def checkout():
             return redirect(url_for('checkout', tarif=tarif))
         if not souhlas:
             flash('Pro odeslání je nutný souhlas s obchodními podmínkami a zásadami GDPR.', 'error')
+            return redirect(url_for('checkout', tarif=tarif))
+        try:
+            from turnstile_captcha import is_turnstile_enabled, verify_turnstile
+            if is_turnstile_enabled(db):
+                captcha_token = request.form.get('cf-turnstile-response')
+                captcha_ok, captcha_err = verify_turnstile(captcha_token, request.remote_addr, db)
+                if not captcha_ok:
+                    flash(captcha_err or 'Ověření CAPTCHA se nezdařilo. Zkuste to znovu.', 'error')
+                    return redirect(url_for('checkout', tarif=tarif))
+        except Exception as e:
+            logging.getLogger(__name__).error('Checkout: chyba ověření CAPTCHA: %s', e, exc_info=True)
+            flash('Ověření CAPTCHA se nepodařilo. Zkuste to znovu.', 'error')
             return redirect(url_for('checkout', tarif=tarif))
         # Číslo objednávky = číslo faktury = variabilní symbol (čistě číselné, např. 2602001)
         order_display_number = db.get_next_order_number()
@@ -4179,29 +4191,7 @@ def checkout():
             if filepath and os.path.isfile(filepath):
                 db.update_pending_order_invoice_path(order_id, filepath)
             db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
-
-            # 3. E-mail zákazníkovi S PŘÍLOHOU PDF faktury (šablona z Adminu: {order_number}, {vs}, {amount}, {jmeno}, {ucet})
-            try:
-                from email_sender import send_email_with_attachment, get_email_templates, _apply_footer
-                ucet = (bank_account or bank_iban or '').strip() or 'bude uveden v e-mailu'
-                templates = get_email_templates() if get_email_templates else {}
-                subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
-                body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {amount} Kč na účet, VS: {vs}.'
-                def repl(t):
-                    return (t.replace('{vs}', str(order_display_number)).replace('{order_number}', str(order_display_number)))
-                subject = repl(subject_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or ''))
-                body = repl(body_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or '')).replace('{ucet}', ucet)
-                body = _apply_footer(body, templates.get('footer_text', ''))
-                body += '\n\nČástka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet pro platbu (CZ): {}'.format(int(amount_czk), order_display_number, order_display_number, ucet)
-                attachment_path = filepath if filepath and os.path.isfile(filepath) else None
-                attachment_name = 'Faktura_{}.pdf'.format(order_display_number) if attachment_path else None
-                ok = send_email_with_attachment(email, subject, body, attachment_path=attachment_path, attachment_filename=attachment_name, append_footer=False)
-                if not ok:
-                    logging.getLogger(__name__).warning('Checkout: e-mail zákazníkovi (%s) se nepodařilo odeslat (vráceno False).', email)
-            except Exception as e:
-                logging.getLogger(__name__).error('Checkout: chyba při odesílání e-mailu zákazníkovi (%s): %s', email, e, exc_info=True)
-                if current_app and getattr(current_app, 'logger', None):
-                    current_app.logger.error('Checkout: e-mail zákazníkovi selhal: %s', e)
+            # E-mail zákazníkovi s fakturou se neodesílá automaticky – pouze ručně z Adminu („Odeslat údaje k platbě“).
 
             session['last_order_id'] = order_id
             session['last_order_display_number'] = order_display_number
@@ -4232,11 +4222,17 @@ def checkout():
             'checkout_order_title': (db.get_global_setting('checkout_order_title') or '').strip() or 'Vaše objednávka',
             'checkout_period_label': (db.get_global_setting('checkout_period_label') or '').strip() or '/ rok',
         }
+    try:
+        from turnstile_captcha import get_turnstile_keys
+        turnstile_site_key, _turnstile_secret = get_turnstile_keys(db)
+    except Exception:
+        turnstile_site_key = ''
     return render_template('checkout.html',
         tarif=tarif,
         tarif_label=tier_label,
         payment_instructions=payment_instructions,
         order_summary=order_summary,
+        turnstile_site_key=turnstile_site_key,
         **checkout_texts,
     )
 

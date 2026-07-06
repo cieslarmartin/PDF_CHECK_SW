@@ -1777,6 +1777,8 @@ def _settings_for_admin(db):
         st = load_settings_for_views(db)
         for key in ('mail_server', 'mail_port', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
             st[key] = db.get_global_setting(key, '') or ''
+        for key in ('turnstile_site_key', 'turnstile_secret_key'):
+            st[key] = db.get_global_setting(key, '') or ''
         return st
     s = {}
     for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone',
@@ -1817,6 +1819,8 @@ def _settings_for_admin(db):
                 'coming_soon_parking_title', 'coming_soon_parking_subtitle', 'coming_soon_parking_items', 'coming_soon_parking_benefit'):
         s[key] = db.get_global_setting(key, '')
     for key in ('mail_server', 'mail_port', 'mail_username', 'mail_default_sender', 'order_notification_email', 'admin_info_email'):
+        s[key] = db.get_global_setting(key, '') or ''
+    for key in ('turnstile_site_key', 'turnstile_secret_key'):
         s[key] = db.get_global_setting(key, '') or ''
     return s
 
@@ -1913,6 +1917,8 @@ def settings():
             db.set_global_setting('payment_instructions', request.form.get('payment_instructions', ''))
             db.set_global_setting('pilot_notice_text', request.form.get('pilot_notice_text', ''))
             db.set_global_setting('show_pilot_notice', '1' if request.form.get('show_pilot_notice') == '1' else '0')
+            db.set_global_setting('turnstile_site_key', (request.form.get('turnstile_site_key') or '').strip())
+            db.set_global_setting('turnstile_secret_key', (request.form.get('turnstile_secret_key') or '').strip())
             flash('Správa prodeje uložena', 'success')
         elif action == 'save_pricing':
             pricing_ok = True
