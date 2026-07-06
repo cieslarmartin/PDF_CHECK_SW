@@ -238,7 +238,7 @@
                         <strong>{{ license.email or '—' }}</strong>
                         {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
                     </td>
-                    <td><span class="badge badge-{{ license.tier_name|lower }}">{{ license.tier_name }}</span></td>
+                    <td><span class="badge badge-{{ (license.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ license.tier_name }}</span></td>
                     <td>
                         {% set md = license.max_devices if license.max_devices and license.max_devices != -1 else None %}
                         {% set ad = license.active_devices or 0 %}

@@ -38,7 +38,7 @@
             {% set default_checkout = 'Kontrola PDF v dávkách\nKontrola elektronických podpisů\nČasová razítka' %}
             {% endif %}
             <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}" data-checkout-features="{{ (t.checkout_features or '')|e }}" data-default-checkout="{{ default_checkout|replace('\n', '&#10;')|e }}">
-                <td><span class="badge badge-{{ t.name|lower }}">{{ t.name }}</span></td>
+                <td><span class="badge badge-{{ (t.name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ t.name }}</span></td>
                 <td>{{ t.max_files_limit }}</td>
                 <td>{{ t.max_devices }}</td>
                 <td>{{ t.daily_files_limit|default('–') }}</td>
