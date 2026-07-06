@@ -1779,6 +1779,7 @@ def _settings_for_admin(db):
             st[key] = db.get_global_setting(key, '') or ''
         for key in ('turnstile_site_key', 'turnstile_secret_key'):
             st[key] = db.get_global_setting(key, '') or ''
+        st['checkout_auto_send_customer_email'] = db.get_setting_bool('checkout_auto_send_customer_email', False)
         return st
     s = {}
     for key in ('provider_name', 'provider_address', 'provider_ico', 'provider_legal_note', 'contact_email', 'contact_phone',
@@ -1822,6 +1823,7 @@ def _settings_for_admin(db):
         s[key] = db.get_global_setting(key, '') or ''
     for key in ('turnstile_site_key', 'turnstile_secret_key'):
         s[key] = db.get_global_setting(key, '') or ''
+    s['checkout_auto_send_customer_email'] = db.get_setting_bool('checkout_auto_send_customer_email', False)
     return s
 
 
@@ -1919,6 +1921,7 @@ def settings():
             db.set_global_setting('show_pilot_notice', '1' if request.form.get('show_pilot_notice') == '1' else '0')
             db.set_global_setting('turnstile_site_key', (request.form.get('turnstile_site_key') or '').strip())
             db.set_global_setting('turnstile_secret_key', (request.form.get('turnstile_secret_key') or '').strip())
+            db.set_global_setting('checkout_auto_send_customer_email', request.form.get('checkout_auto_send_customer_email') == '1')
             flash('Správa prodeje uložena', 'success')
         elif action == 'save_pricing':
             pricing_ok = True

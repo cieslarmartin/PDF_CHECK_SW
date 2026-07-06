@@ -159,6 +159,14 @@
                 <input type="text" name="landing_tarif_firemni_desc" class="form-control admin-settings-input" value="{{ settings.landing_tarif_firemni_desc|e }}" placeholder="Jedna licence, až 5 zařízení...">
             </div>
             <div class="card-body">
+                <div class="card-header">E-maily po objednávce (checkout)</div>
+                <p class="small text-muted mb-3">Když je vypnuto, zákazníkovi neodejde e-mail s fakturou automaticky – pošlete ručně tlačítkem „Odeslat údaje k platbě“ v seznamu objednávek. Notifikace vám na <code>objednavky@…</code> chodí vždy.</p>
+                <label class="d-flex align-items-center gap-2">
+                    <input type="checkbox" name="checkout_auto_send_customer_email" value="1" {% if settings.checkout_auto_send_customer_email %}checked{% endif %} class="form-check-input">
+                    <span class="admin-settings-label mb-0">Automaticky odesílat zákazníkovi e-mail s fakturou hned po objednávce</span>
+                </label>
+            </div>
+            <div class="card-body">
                 <div class="card-header">Ochrana objednávkového formuláře (Cloudflare Turnstile CAPTCHA)</div>
                 <p class="small text-muted mb-3">Klíče získáte zdarma v <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener">Cloudflare Turnstile</a> (widget pro doménu dokucheck.cz). Pokud jsou vyplněny oba klíče, CAPTCHA se zobrazí na checkoutu. Alternativně lze nastavit proměnné prostředí <code>TURNSTILE_SITE_KEY</code> a <code>TURNSTILE_SECRET_KEY</code> na serveru.</p>
                 <label class="admin-settings-label">Site key (turnstile_site_key) – veřejný klíč pro web</label>

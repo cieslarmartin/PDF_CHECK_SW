@@ -80,34 +80,34 @@
             {% endif %}
             <div>
                 <label class="block text-sm font-medium mb-1" style="color:#374151;">Jméno / Firma *</label>
-                <input type="text" name="jmeno_firma" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1 focus:ring-1e5a8a" style="border-color:#e5e7eb;" placeholder="Jan Novák nebo Firma s.r.o.">
+                <input type="text" name="jmeno_firma" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1 focus:ring-1e5a8a" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_jmeno|default('Ing. autorizovaný projektant')|e }}">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1" style="color:#374151;">E-mail *</label>
-                <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="vas@email.cz">
+                <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_email|default('vas-email@domena.cz')|e }}">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1" style="color:#374151;">Ulice a č.p.</label>
-                <input type="text" name="ulice" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="Hlavní 123">
+                <input type="text" name="ulice" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_ulice|default('Portál stavebníka')|e }}">
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1" style="color:#374151;">Město</label>
-                    <input type="text" name="mesto" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="Praha">
+                    <input type="text" name="mesto" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_mesto|default('Ostrava')|e }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1" style="color:#374151;">PSČ</label>
-                    <input type="text" name="psc" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="110 00">
+                    <input type="text" name="psc" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_psc|default('702 00')|e }}">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1" style="color:#374151;">IČO</label>
-                    <input type="text" name="ico" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="12345678">
+                    <input type="text" name="ico" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_ico|default('87654321')|e }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1" style="color:#374151;">DIČ</label>
-                    <input type="text" name="dic" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="CZ12345678">
+                    <input type="text" name="dic" class="w-full px-4 py-2.5 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:border-1e5a8a focus:ring-1" style="border-color:#e5e7eb;" placeholder="{{ checkout_placeholder_dic|default('CZ87654321')|e }}">
                 </div>
             </div>
             <div class="flex items-start gap-2 p-3 rounded-lg" style="background:#eff6ff;border:1px solid #bfdbfe;">
@@ -125,7 +125,7 @@
             {% if turnstile_site_key %}
             <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key|e }}" data-theme="light"></div>
             {% endif %}
-            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">{{ checkout_submit_button|default('Odeslat a vystavit fakturu') }}</button>
+            <button type="submit" class="w-full py-3 rounded-lg font-semibold text-white transition checkout-btn-primary">{{ checkout_submit_button|default('Odeslat objednávku') }}</button>
         </form>
 
         <p class="mt-6 text-sm text-center" style="color:#6b7280;"><a href="/#cenik" class="checkout-link">{{ checkout_back_link|default('Zpět na ceník') }}</a></p>

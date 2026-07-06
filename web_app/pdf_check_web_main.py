@@ -4191,7 +4191,29 @@ def checkout():
             if filepath and os.path.isfile(filepath):
                 db.update_pending_order_invoice_path(order_id, filepath)
             db.update_pending_order_status(order_id, 'WAITING_PAYMENT')
-            # E-mail zákazníkovi s fakturou se neodesílá automaticky – pouze ručně z Adminu („Odeslat údaje k platbě“).
+
+            if db.get_setting_bool('checkout_auto_send_customer_email', False):
+                try:
+                    from email_sender import send_email_with_attachment, get_email_templates, _apply_footer
+                    ucet = (bank_account or bank_iban or '').strip() or 'bude uveden v e-mailu'
+                    templates = get_email_templates() if get_email_templates else {}
+                    subject_tpl = templates.get('order_confirmation_subject') or 'DokuCheck – potvrzení objednávky č. {vs}'
+                    body_tpl = templates.get('order_confirmation_body') or 'Děkujeme za objednávku. Pro aktivaci zašlete {amount} Kč na účet, VS: {vs}.'
+                    def repl(t):
+                        return (t.replace('{vs}', str(order_display_number)).replace('{order_number}', str(order_display_number)))
+                    subject = repl(subject_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or ''))
+                    body = repl(body_tpl).replace('{cena}', str(amount_czk)).replace('{amount}', str(int(amount_czk))).replace('{jmeno}', (jmeno_firma or '')).replace('{ucet}', ucet)
+                    body = _apply_footer(body, templates.get('footer_text', ''))
+                    body += '\n\nČástka: {} Kč\nVariabilní symbol: {}\nČíslo faktury: {}\nÚčet pro platbu (CZ): {}'.format(int(amount_czk), order_display_number, order_display_number, ucet)
+                    attachment_path = filepath if filepath and os.path.isfile(filepath) else None
+                    attachment_name = 'Faktura_{}.pdf'.format(order_display_number) if attachment_path else None
+                    ok = send_email_with_attachment(email, subject, body, attachment_path=attachment_path, attachment_filename=attachment_name, append_footer=False)
+                    if not ok:
+                        logging.getLogger(__name__).warning('Checkout: e-mail zákazníkovi (%s) se nepodařilo odeslat (vráceno False).', email)
+                except Exception as e:
+                    logging.getLogger(__name__).error('Checkout: chyba při odesílání e-mailu zákazníkovi (%s): %s', email, e, exc_info=True)
+                    if current_app and getattr(current_app, 'logger', None):
+                        current_app.logger.error('Checkout: e-mail zákazníkovi selhal: %s', e)
 
             session['last_order_id'] = order_id
             session['last_order_display_number'] = order_display_number
