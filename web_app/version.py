@@ -2,12 +2,12 @@
 # Jediné místo pro verzi webové aplikace. Formát: w{RR}.{MM}.{XXX}.
 # Při každé nasazené změně zvyšte XXX. Zobrazí se v patě webu a v Admin dashboardu.
 
-WEB_VERSION = "w26.02.086"
+WEB_VERSION = "w26.02.088"
 # Číselný build (zpětná kompatibilita)
-WEB_BUILD = 130
+WEB_BUILD = 132
 
 # Krátký popis novinek v tomto buildu (zobrazení v „O aplikaci“ a na landingu)
-BUILD_NOTES = "Licence: testovací příznak, KPI příjmů, data aktivace/expirace, faktury po rocích."
+BUILD_NOTES = "Admin: nová karta Finance (příjmy, faktury, ZIP, tisk) a sloupec s cenou licence v přehledu uživatelů."
 
 # Verze / build desktop agenta (zobrazení v sekci Ke stažení). Při vydání nového agenta ručně srovnat s desktop_agent/version.py.
 AGENT_BUILD_ID = "56"

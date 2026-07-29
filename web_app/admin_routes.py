@@ -953,6 +953,18 @@ def users_licenses():
         'revenue_czk': 0, 'paid_active': 0, 'test_count': 0, 'expired_count': 0, 'blocked_count': 0, 'free_count': 0,
     }
 
+    # Cena licence v Kč pro každý řádek (stejné aliasy jako v get_license_revenue_summary)
+    tier_price_aliases = {'firemní': 'firemni', 'standard': 'pro', 'atelier': 'pro', 'atelíér': 'pro', 'projektant': 'basic'}
+    for l in licenses:
+        tname = (l.get('tier_name') or '').strip().lower()
+        if l.get('is_test'):
+            l['price_label'] = '0 Kč (test)'
+        elif tname in ('trial', 'free', ''):
+            l['price_label'] = '—'
+        else:
+            p = price_by_tier.get(tier_price_aliases.get(tname, tname))
+            l['price_label'] = '{:,.0f} Kč'.format(float(p)).replace(',', ' ') if p else '—'
+
     tiers_list = db.get_all_license_tiers()
     # Prodejní tiery: vše kromě Free (aby se nově přidané tiery, např. Firemní, objevily ve výběru)
     product_tiers = [t for t in (tiers_list or []) if (t.get('name') or '').strip().lower() != 'free'] or (tiers_list or [])
@@ -1367,6 +1379,109 @@ def download_invoice(order_id):
                 return send_file(path, as_attachment=True, download_name=dl_name)
     flash('Faktura k objednávce #{} nebyla nalezena. Vygenerujte ji tlačítkem „VYGENEROVAT FAKTURU“ nebo „GENEROVAT ZNOVU“.'.format(order_id), 'error')
     return redirect(url_for('admin.users_licenses'))
+
+
+def _finance_price_by_tier(db):
+    """Ceník jako dict slug|label → amount_czk (stejně jako na stránce Uživatelé a licence)."""
+    try:
+        from settings_loader import get_pricing_tarifs
+        pricing_tarifs = get_pricing_tarifs(db)
+    except Exception:
+        pricing_tarifs = db.get_setting_json('pricing_tarifs', {'basic': {'label': 'Basic', 'amount_czk': 1090}, 'pro': {'label': 'Pro', 'amount_czk': 1590}})
+    price_by_tier = {}
+    try:
+        for slug, info in (pricing_tarifs or {}).items():
+            if isinstance(info, dict):
+                price_by_tier[(slug or '').lower()] = info.get('amount_czk') or 0
+                label = (info.get('label') or '').strip().lower()
+                if label:
+                    price_by_tier[label] = info.get('amount_czk') or 0
+    except Exception:
+        price_by_tier = {'basic': 1090, 'pro': 1590, 'firemni': 6360}
+    return price_by_tier
+
+
+@admin_bp.route('/admin/finance')
+@admin_required
+def finance():
+    """Finance: KPI příjmů, graf po měsících, seznam faktur, hromadné stažení. Vše bez testovacích licencí."""
+    db = get_db()
+    price_by_tier = _finance_price_by_tier(db)
+
+    years = db.get_finance_years()
+    current_year = datetime.now().year
+    year = request.args.get('year', type=int)
+    if not year or year not in years:
+        year = current_year if current_year in years else years[0]
+    q = (request.args.get('q') or '').strip()
+
+    summary = db.get_finance_summary(year, price_by_tier)
+    monthly_revenue = db.get_finance_monthly_revenue(year, price_by_tier)
+    invoices = db.get_invoices_list(year=year, q=q, price_by_tier=price_by_tier)
+
+    try:
+        from settings_loader import get_tarif_display_name, normalize_tarif_slug
+    except Exception:
+        def normalize_tarif_slug(s, default='pro'):
+            x = (s or default).strip().lower()
+            return 'pro' if x == 'standard' else x
+        def get_tarif_display_name(db_, slug):
+            return {'basic': 'Basic', 'pro': 'Pro', 'firemni': 'Firemní'}.get(normalize_tarif_slug(slug), (slug or '').capitalize())
+    for inv in invoices:
+        inv['tarif_label'] = get_tarif_display_name(db, normalize_tarif_slug(inv.get('tarif')))
+        path = (inv.get('invoice_path') or '').strip()
+        inv['has_pdf'] = bool(path and os.path.isfile(path))
+    total_shown = sum(inv.get('amount') or 0 for inv in invoices)
+
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+
+    return render_template('admin_finance.html',
+        summary=summary,
+        monthly_revenue=monthly_revenue,
+        invoices=invoices,
+        total_shown=total_shown,
+        year=year,
+        years=years,
+        q=q,
+        user=user,
+        active_page='finance')
+
+
+@admin_bp.route('/admin/finance/invoices-zip')
+@admin_required
+def finance_invoices_zip():
+    """Zabalí existující PDF faktury vybraného roku do ZIPu a nabídne ke stažení. Chybějící soubory přeskočí."""
+    import io
+    import zipfile
+    from flask import send_file
+    db = get_db()
+    year = request.args.get('year', type=int) or datetime.now().year
+    invoices = db.get_invoices_list(year=year)
+    buf = io.BytesIO()
+    added = 0
+    used_names = set()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for inv in invoices:
+            path = (inv.get('invoice_path') or '').strip()
+            if not path or not os.path.isfile(path):
+                continue
+            name = 'faktura_{}.pdf'.format(inv.get('invoice_no') or inv.get('id'))
+            if name in used_names:
+                name = 'faktura_{}_id{}.pdf'.format(inv.get('invoice_no') or '', inv.get('id'))
+            used_names.add(name)
+            try:
+                zf.write(path, arcname=name)
+                added += 1
+            except OSError:
+                continue
+    if not added:
+        flash('Za rok {} nejsou k dispozici žádné PDF faktury (soubory nebyly nalezeny).'.format(year), 'error')
+        return redirect(url_for('admin.finance', year=year))
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name='faktury_{}.zip'.format(year), mimetype='application/zip')
 
 
 @admin_bp.route('/admin/toggle-auto-activate-csob', methods=['POST'])

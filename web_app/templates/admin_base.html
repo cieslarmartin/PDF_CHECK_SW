@@ -473,6 +473,7 @@
             {# ── Prodej ── #}
             <li class="nav-group-label">Prodej</li>
             <li><a href="{{ url_for('admin.users_licenses') }}" class="{{ 'active' if active_page == 'users_licenses' else '' }}" title="Objednávky (CRM) a seznam licencí"><span class="nav-ico">👤</span> Objednávky a licence</a></li>
+            <li><a href="{{ url_for('admin.finance') }}" class="{{ 'active' if active_page == 'finance' else '' }}" title="Příjmy, faktury a podklady pro daně"><span class="nav-ico">💰</span> Finance</a></li>
             <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span class="nav-ico">📋</span> Ceník / Tarify</a></li>
             <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span class="nav-ico">🛒</span> Texty checkoutu</a></li>
             <li><a href="{{ url_for('admin.company_settings') }}" class="{{ 'active' if active_page == 'company_settings' else '' }}"><span class="nav-ico">🏢</span> Nastavení firmy</a></li>

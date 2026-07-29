@@ -1,14 +1,55 @@
 {% extends "admin_base.html" %}
 {% block title %}DokuCheck – Přehled{% endblock %}
+{% block extra_css %}
+/* Mobilní dashboard: taby, kompaktní KPI, karusel grafů, feed aktivit */
+.dash-tabs { display: none; }
+.kpi-detail > summary { cursor: pointer; font-size: 0.95em; font-weight: 600; color: #374151; list-style: none; }
+.kpi-detail > summary::-webkit-details-marker { display: none; }
+.kpi-detail[open] > summary { margin-bottom: 12px; }
+.mobile-more { display: none; }
+@media (max-width: 768px) {
+    .dash-tabs { display: flex; position: sticky; top: 68px; z-index: 90; gap: 6px; padding: 8px 0; margin-bottom: 8px; background: #ECF0F1; }
+    .dash-tabs button { flex: 1; min-height: 40px; border: 1px solid #d1d5db; border-radius: 20px; background: #fff; font-weight: 600; font-size: 0.9em; color: #374151; cursor: pointer; }
+    .dash-tabs button.active { background: #16A34A; color: #fff; border-color: #16A34A; }
+    [data-tab-pane] { display: none; }
+    [data-tab-pane].tab-active { display: block; }
+    .hide-mobile { display: none !important; }
+    /* KPI dlaždice 2×2 */
+    .admin-grid-2.kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+    .kpi-grid .admin-card { padding: 10px 12px !important; }
+    .kpi-grid .admin-card > div:last-child { font-size: 1.25em; }
+    .kpi-detail > summary::after { content: ' ▾'; }
+    .kpi-detail[open] > summary::after { content: ' ▴'; }
+    /* Grafy jako swipe karusel */
+    .admin-grid-2.charts-row { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; gap: 12px; padding-bottom: 6px; }
+    .charts-row .chart-card { flex: 0 0 88%; scroll-snap-align: start; }
+    .chart-box { height: 180px !important; }
+    /* Aktivita: kompaktní feed místo karet, max 5 záznamů */
+    .table-feed thead { display: none; }
+    .table-feed, .table-feed tbody { display: block; width: 100%; }
+    .table-feed tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 8px 2px; border-bottom: 1px solid #e5e7eb; }
+    .table-feed td { display: inline-block; border: none; padding: 0; }
+    .table-feed td:first-child { font-weight: 600; }
+    .table-feed tbody tr:nth-child(n+6) { display: none; }
+    .mobile-more { display: inline-block; margin-top: 10px; font-weight: 600; }
+}
+{% endblock %}
 {% block header_right %}
 <button type="button" class="btn btn-secondary btn-small" id="btn-git-pull" onclick="doGitPull()" title="Stáhnout z GitHubu">&#128260; Git Pull</button>
 {% endblock %}
 {% block content %}
 
+{# Mobilní přepínač sekcí (na desktopu skrytý) #}
+<nav class="dash-tabs" id="dashTabs" aria-label="Sekce dashboardu">
+    <button type="button" data-tab="kpi" class="active">Přehled</button>
+    <button type="button" data-tab="grafy">Grafy</button>
+    <button type="button" data-tab="aktivita">Aktivita</button>
+</nav>
+
 {# ============ BLOK 1: KPI (licence, kontroly, objednávky) ============ #}
-<section class="dash-block" style="margin-bottom:28px;">
+<section class="dash-block tab-active" data-tab-pane="kpi" style="margin-bottom:28px;">
     <h2 class="dash-block-title">KPI přehled</h2>
-    <div class="admin-grid-2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:16px;">
+    <div class="admin-grid-2 kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:16px;">
         <div class="admin-card" style="padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
             <div style="font-size:0.85em;color:#0369a1;">Celkem kontrol dnes</div>
             <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.checks_today|default(0) }}</div>
@@ -27,7 +68,8 @@
         </div>
     </div>
     <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-        <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">KPI – detail</h3>
+        <details class="kpi-detail">
+        <summary>KPI – detail</summary>
         <table class="table-dense table-cards" style="width:100%;max-width:480px;">
             <tbody>
                 <tr><td data-label="Metrika">Aktivní licence</td><td data-label="Hodnota"><strong>{{ (kpis or {}).get('active_licenses', 0) }}</strong></td></tr>
@@ -39,26 +81,25 @@
                 <tr><td data-label="Metrika">Chybovost</td><td data-label="Hodnota">{{ (kpis or {}).get('error_rate_percent', 0) }} %</td></tr>
             </tbody>
         </table>
+        </details>
     </div>
 </section>
 
 {# ============ BLOK 2: Grafy provozu ============ #}
-<section class="dash-block" style="margin-bottom:28px;">
+<section class="dash-block tab-active" data-tab-pane="grafy" style="margin-bottom:28px;">
     <h2 class="dash-block-title">Provoz – grafy</h2>
-    <div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <div class="admin-grid-2 charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Aktivita – soubory za den (30 dní)</h3>
-            <div style="height:220px;"><canvas id="chartActivity30"></canvas></div>
+            <div class="chart-box" style="height:220px;"><canvas id="chartActivity30"></canvas></div>
         </div>
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Rozložení tarifů (počet licencí)</h3>
-            <div style="height:220px;"><canvas id="chartTiersPie"></canvas></div>
+            <div class="chart-box" style="height:220px;"><canvas id="chartTiersPie"></canvas></div>
         </div>
-    </div>
-    <div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – úspěšné vs. chybné</h3>
-            <div style="height:220px;"><canvas id="chartChecksBar"></canvas></div>
+            <div class="chart-box" style="height:220px;"><canvas id="chartChecksBar"></canvas></div>
         </div>
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly – Agent vs Web (30 dní)</h3>
@@ -75,14 +116,14 @@
 </section>
 
 {# ============ BLOK 3: Poslední aktivita ============ #}
-<section class="dash-block" style="margin-bottom:28px;">
+<section class="dash-block tab-active" data-tab-pane="aktivita" style="margin-bottom:28px;">
     <h2 class="dash-block-title">Poslední aktivita</h2>
     <div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly z agenta – poslední</h3>
             <p class="text-muted small" style="margin:0 0 8px;">Název souboru a podpisant z check_results.</p>
             <div style="max-height:280px;overflow-y:auto;">
-            <table class="table-dense table-cards" style="width:100%;">
+            <table class="table-dense table-feed" style="width:100%;">
                 <thead><tr><th>Soubor</th><th>Podpisant</th><th>Účet</th><th>Datum</th></tr></thead>
                 <tbody>
                     {% for r in recent_check_results_agent[:15] %}
@@ -98,11 +139,12 @@
                 </tbody>
             </table>
             </div>
+            <a class="mobile-more" href="{{ url_for('admin.logs', category='activity') }}">Zobrazit vše →</a>
         </div>
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Kontroly na webu (zdarma) – poslední</h3>
             <div style="max-height:280px;overflow-y:auto;">
-            <table class="table-dense table-cards" style="width:100%;">
+            <table class="table-dense table-feed" style="width:100%;">
                 <thead><tr><th>IP</th><th>Čas</th><th>Počet souborů</th></tr></thead>
                 <tbody>
                     {% for row in recent_web_checks[:15] %}
@@ -117,12 +159,13 @@
                 </tbody>
             </table>
             </div>
+            <a class="mobile-more" href="{{ url_for('admin.logs', category='activity') }}">Zobrazit vše →</a>
         </div>
     </div>
     <div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Žebříček uživatelů (30 dní)</h3>
-            <table class="table-dense table-cards" style="width:100%;">
+            <table class="table-dense table-feed" style="width:100%;">
                 <thead><tr><th>#</th><th>Uživatel</th><th>Souborů</th></tr></thead>
                 <tbody>
                     {% for r in user_ranking %}
@@ -135,7 +178,7 @@
         </div>
         <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Poslední aktivita (log)</h3>
-            <table class="table-dense table-cards" style="width:100%;">
+            <table class="table-dense table-feed" style="width:100%;">
                 <thead><tr><th>IP</th><th>Čas</th><th>Typ</th><th>Souborů</th></tr></thead>
                 <tbody>
                     {% for row in activity_log[:10] %}
@@ -150,11 +193,12 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <a class="mobile-more" href="{{ url_for('admin.logs', category='activity') }}">Zobrazit vše →</a>
         </div>
     </div>
     <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:20px;">
         <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Poslední komunikace (odeslané e-maily)</h3>
-        <table class="table-dense table-cards" style="width:100%;">
+        <table class="table-dense table-feed" style="width:100%;">
             <thead><tr><th>Příjemce</th><th>Předmět</th><th>Čas</th><th>Status</th></tr></thead>
             <tbody>
                 {% for mail in recent_emails %}
@@ -175,11 +219,12 @@
                 {% endfor %}
             </tbody>
         </table>
+        <a class="mobile-more" href="{{ url_for('admin.marketing_emails') }}">Zobrazit vše →</a>
     </div>
 </section>
 
 {# ============ Ostatní (sbalitelné / odkazy) ============ #}
-<details style="margin-bottom:24px;">
+<details class="tab-active" data-tab-pane="kpi" style="margin-bottom:24px;">
     <summary style="cursor:pointer;font-size:1em;font-weight:600;color:#374151;padding:8px 0;">Připravujeme &amp; odkazy</summary>
     <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin:12px 0;">
         <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Připravujeme</h3>
@@ -217,7 +262,7 @@
     </div>
 </details>
 
-<div class="chart-card" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px;margin-bottom:24px;">
+<div class="chart-card hide-mobile" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px;margin-bottom:24px;">
     <h3 style="font-size:1.05em;margin:0 0 8px;color:#1e5a8a;">Objednávky a licence</h3>
     <p style="margin:0 0 14px;color:#4b5563;font-size:0.9em;">Správa objednávek (CRM), aktivace licencí a seznam uživatelů.</p>
     <a href="{{ url_for('admin.users_licenses') }}" class="btn btn-primary">Otevřít Objednávky a licence →</a>
@@ -298,6 +343,27 @@ async function doGitPull() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
     }
+})();
+
+(function initDashTabs() {
+    var tabs = document.getElementById('dashTabs');
+    if (!tabs) return;
+    var buttons = tabs.querySelectorAll('button[data-tab]');
+    var panes = document.querySelectorAll('[data-tab-pane]');
+    function activate(name) {
+        buttons.forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === name); });
+        panes.forEach(function(p) { p.classList.toggle('tab-active', p.getAttribute('data-tab-pane') === name); });
+        // Chart.js přepočítá rozměry po zobrazení skrytého panelu
+        window.dispatchEvent(new Event('resize'));
+    }
+    buttons.forEach(function(b) { b.addEventListener('click', function() { activate(b.getAttribute('data-tab')); }); });
+    activate('kpi');
+    // KPI detail: na desktopu rozbalený, na mobilu sbalený
+    var det = document.querySelector('details.kpi-detail');
+    if (det && window.innerWidth > 768) det.open = true;
+    // Lišta tabů se lepí přesně pod sticky hlavičku
+    var header = document.querySelector('.header');
+    if (header) tabs.style.top = header.offsetHeight + 'px';
 })();
 </script>
 {% endblock %}

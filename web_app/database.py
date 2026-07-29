@@ -4200,6 +4200,192 @@ class Database:
             'free_count': free_count,
         }
 
+    # =========================================================================
+    # ADMIN: FINANCE (faktury, příjmy – bez testovacích licencí)
+    # =========================================================================
+
+    def _finance_order_rows(self):
+        """Objednávky z pending_orders s příznakem is_test_user (e-mail patří testovací licenci)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT po.*,
+                       COALESCE((SELECT MAX(COALESCE(ak.is_test, 0)) FROM api_keys ak
+                                 WHERE lower(ak.email) = lower(po.email)), 0) AS is_test_user
+                FROM pending_orders po
+                ORDER BY po.created_at DESC
+            ''')
+        except sqlite3.OperationalError:
+            # starší schéma bez is_test
+            cursor.execute('SELECT po.*, 0 AS is_test_user FROM pending_orders po ORDER BY po.created_at DESC')
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def _finance_billing_rows(self):
+        """Záznamy billing_history s e-mailem/jménem uživatele a příznakem is_test_user."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT bh.*, ak.email AS user_email, ak.user_name AS user_name,
+                       COALESCE(ak.is_test, 0) AS is_test_user
+                FROM billing_history bh
+                LEFT JOIN api_keys ak ON ak.api_key = bh.api_key
+                ORDER BY COALESCE(bh.paid_at, bh.created_at) DESC
+            ''')
+        except sqlite3.OperationalError:
+            cursor.execute('''
+                SELECT bh.*, NULL AS user_email, NULL AS user_name, 0 AS is_test_user
+                FROM billing_history bh ORDER BY bh.created_at DESC
+            ''')
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    @staticmethod
+    def _finance_order_amount(order, price_by_tier=None):
+        """Částka objednávky v Kč: amount_czk_final → amount_czk → cena z ceníku podle tarifu."""
+        amt = order.get('amount_czk_final') or order.get('amount_czk')
+        if amt:
+            try:
+                return float(amt)
+            except (TypeError, ValueError):
+                pass
+        slug = (order.get('tarif') or '').strip().lower()
+        aliases = {'standard': 'pro', 'firemní': 'firemni'}
+        slug = aliases.get(slug, slug)
+        try:
+            return float((price_by_tier or {}).get(slug) or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    @staticmethod
+    def _finance_billing_amount(row):
+        """Částka záznamu billing_history v Kč (amount_czk → amount_cents/100)."""
+        if row.get('amount_czk') is not None:
+            try:
+                return float(row['amount_czk'])
+            except (TypeError, ValueError):
+                pass
+        if row.get('amount_cents') is not None:
+            try:
+                return float(row['amount_cents']) / 100.0
+            except (TypeError, ValueError):
+                pass
+        return 0.0
+
+    def get_finance_years(self):
+        """Roky, ve kterých existují objednávky nebo záznamy fakturace (sestupně)."""
+        years = set()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT DISTINCT substr(created_at, 1, 4) AS y FROM pending_orders WHERE created_at IS NOT NULL")
+            years.update(r['y'] for r in cursor.fetchall() if r['y'])
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("SELECT DISTINCT substr(COALESCE(paid_at, created_at), 1, 4) AS y FROM billing_history")
+            years.update(r['y'] for r in cursor.fetchall() if r['y'])
+        except sqlite3.OperationalError:
+            pass
+        conn.close()
+        out = sorted((int(y) for y in years if str(y).isdigit()), reverse=True)
+        return out or [datetime.now().year]
+
+    def get_finance_monthly_revenue(self, year, price_by_tier=None):
+        """Příjmy po měsících daného roku (12 hodnot v Kč). Zaplacené objednávky (status ACTIVE)
+        z pending_orders + záznamy billing_history (ruční faktury/obnovy). Bez testovacích licencí."""
+        year_str = str(int(year))
+        months = [0.0] * 12
+
+        def _add(date_str, amount):
+            if not date_str or not str(date_str).startswith(year_str):
+                return
+            try:
+                m = int(str(date_str)[5:7])
+            except (TypeError, ValueError):
+                return
+            if 1 <= m <= 12:
+                months[m - 1] += float(amount or 0)
+
+        for o in self._finance_order_rows():
+            if o.get('is_test_user'):
+                continue
+            if (o.get('status') or '').strip().upper() != 'ACTIVE':
+                continue
+            _add(o.get('created_at'), self._finance_order_amount(o, price_by_tier))
+        for b in self._finance_billing_rows():
+            if b.get('is_test_user'):
+                continue
+            _add(b.get('paid_at') or b.get('created_at'), self._finance_billing_amount(b))
+        return [round(x, 0) for x in months]
+
+    def get_invoices_list(self, year=None, q=None, price_by_tier=None):
+        """Seznam faktur (objednávek z pending_orders) pro Finance – bez testovacích licencí.
+        Volitelný filtr roku (podle created_at) a vyhledávání (zákazník / e-mail / číslo faktury)."""
+        year_str = str(int(year)) if year else None
+        q_lower = (q or '').strip().lower()
+        out = []
+        for o in self._finance_order_rows():
+            if o.get('is_test_user'):
+                continue
+            created = str(o.get('created_at') or '')
+            if year_str and not created.startswith(year_str):
+                continue
+            invoice_no = (o.get('invoice_number') or o.get('order_display_number') or '').strip() or str(o.get('id'))
+            if q_lower:
+                haystack = ' '.join([
+                    (o.get('jmeno_firma') or ''), (o.get('email') or ''),
+                    invoice_no, (o.get('order_display_number') or ''),
+                ]).lower()
+                if q_lower not in haystack:
+                    continue
+            o['invoice_no'] = invoice_no
+            o['amount'] = self._finance_order_amount(o, price_by_tier)
+            o['is_paid'] = (o.get('status') or '').strip().upper() == 'ACTIVE'
+            out.append(o)
+        return out
+
+    def get_finance_summary(self, year, price_by_tier=None):
+        """KPI pro Finance: celkový příjem roku, počet vystavených faktur,
+        počet placených aktivních licencí a průměrná cena. Vše bez testovacích licencí."""
+        year_str = str(int(year))
+        monthly = self.get_finance_monthly_revenue(year, price_by_tier)
+        total = sum(monthly)
+
+        invoices_issued = 0
+        paid_items = 0
+        for o in self._finance_order_rows():
+            if o.get('is_test_user'):
+                continue
+            created = str(o.get('created_at') or '')
+            if not created.startswith(year_str):
+                continue
+            if (o.get('invoice_number') or '').strip() or (o.get('invoice_path') or '').strip():
+                invoices_issued += 1
+            if (o.get('status') or '').strip().upper() == 'ACTIVE':
+                paid_items += 1
+        for b in self._finance_billing_rows():
+            if b.get('is_test_user'):
+                continue
+            date_str = str(b.get('paid_at') or b.get('created_at') or '')
+            if not date_str.startswith(year_str):
+                continue
+            invoices_issued += 1
+            paid_items += 1
+
+        paid_licenses = self.get_license_revenue_summary(price_by_tier).get('paid_active', 0)
+        avg_price = round(total / paid_items, 0) if paid_items else 0
+        return {
+            'total_czk': round(total, 0),
+            'invoices_count': invoices_issued,
+            'paid_licenses': paid_licenses,
+            'avg_price_czk': avg_price,
+        }
+
     def admin_reset_devices(self, api_key: str) -> dict:
         """Resetuje všechna zařízení pro daný API klíč (user_devices + device_activations)."""
         conn = self.get_connection()

@@ -251,6 +251,7 @@
                 <tr>
                     <th>E-mail / Jméno</th>
                     <th>Tarif</th>
+                    <th>Cena</th>
                     <th>Stav</th>
                     <th>Aktivováno</th>
                     <th>Končí</th>
@@ -268,6 +269,7 @@
                         {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
                     </td>
                     <td data-label="Tarif"><span class="badge badge-{{ (license.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ license.tier_name }}</span></td>
+                    <td data-label="Cena" style="white-space:nowrap;{% if license.is_test %}color:#92400e;{% elif license.price_label and license.price_label != '—' %}font-weight:600;{% endif %}">{{ license.price_label or '—' }}</td>
                     <td data-label="Stav">
                         {% if license.is_expired %}
                             <span class="status-badge" style="background:#fee2e2;color:#b91c1c;">Vypršela</span>
@@ -324,7 +326,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="9" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
+                <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
                 {% endfor %}
             </tbody>
         </table>

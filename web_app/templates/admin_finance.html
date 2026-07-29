@@ -1,0 +1,196 @@
+{% extends "admin_base.html" %}
+{% block title %}Finance – DokuCheck Admin{% endblock %}
+{% block content %}
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; white-space: nowrap; }
+    .status-paid { background: #d1fae5; color: #047857; }
+    .status-waiting { background: #fef3c7; color: #b45309; }
+    .action-btn { background: none; border: 1px solid #d1d5db; color: #374151; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.85em; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .action-btn:hover { background: #f3f4f6; color: #111827; }
+    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section-title { font-size: 1.15em; font-weight: 600; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; color: #1e5a8a; }
+    .finance-kpi { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .finance-kpi .kpi-card { border-radius: 8px; padding: 12px 16px; border: 1px solid; }
+    @media print {
+        .sidebar, .header, .admin-sidebar-overlay, .finance-toolbar, .finance-actions-col, .alert { display: none !important; }
+        body { background: #fff !important; }
+        .main-content { padding: 0 !important; }
+        .section-card { border: none; box-shadow: none; padding: 0; margin-bottom: 16px; }
+        .table-container { box-shadow: none; }
+    }
+</style>
+
+<h1 style="font-size:1.35em;font-weight:600;margin:0 0 20px;">Finance</h1>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:24px;">Přehled příjmů a faktur (bez testovacích licencí). Zdroj: objednávky a historie fakturace.</p>
+
+{# ==================== FILTR / NÁSTROJE ==================== #}
+<div class="finance-toolbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <form method="get" action="{{ url_for('admin.finance') }}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <label class="small text-muted" for="financeYear">Rok:</label>
+        <select name="year" id="financeYear" class="form-control form-select" style="width:110px;" onchange="this.form.submit()">
+            {% for y in years %}
+            <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="q" class="form-control" style="width:200px;" placeholder="Zákazník / e-mail / č. faktury…" value="{{ q }}">
+        <button type="submit" class="btn btn-sm btn-secondary">Hledat</button>
+        {% if q %}
+        <a href="{{ url_for('admin.finance', year=year) }}" class="btn btn-sm btn-outline-secondary">Zrušit filtr</a>
+        {% endif %}
+    </form>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{{ url_for('admin.finance_invoices_zip', year=year) }}" class="btn btn-sm btn-primary" title="Zabalí existující PDF faktury roku {{ year }} do ZIPu">📦 Stáhnout vše (ZIP)</a>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="window.print()" title="Vytisknout přehled">🖨️ Tisk přehledu</button>
+    </div>
+</div>
+
+{# ==================== KPI ==================== #}
+{% set s = summary or {} %}
+<div class="finance-kpi">
+    <div class="kpi-card" style="background:#ecfdf5;border-color:#a7f3d0;">
+        <div style="font-size:0.7em;color:#047857;text-transform:uppercase;">Příjem za rok {{ year }}</div>
+        <div style="font-size:1.4em;font-weight:700;color:#065f46;">{{ '{:,.0f}'.format(s.get('total_czk', 0)).replace(',', ' ') }} Kč</div>
+        <div style="font-size:0.75em;color:#6b7280;">zaplacené objednávky + fakturace</div>
+    </div>
+    <div class="kpi-card" style="background:#eff6ff;border-color:#bfdbfe;">
+        <div style="font-size:0.7em;color:#1d4ed8;text-transform:uppercase;">Vystavené faktury</div>
+        <div style="font-size:1.4em;font-weight:700;color:#1e40af;">{{ s.get('invoices_count', 0) }}</div>
+        <div style="font-size:0.75em;color:#6b7280;">v roce {{ year }}</div>
+    </div>
+    <div class="kpi-card" style="background:#f5f3ff;border-color:#ddd6fe;">
+        <div style="font-size:0.7em;color:#6d28d9;text-transform:uppercase;">Placené aktivní licence</div>
+        <div style="font-size:1.4em;font-weight:700;color:#5b21b6;">{{ s.get('paid_licenses', 0) }}</div>
+        <div style="font-size:0.75em;color:#6b7280;">aktuální stav</div>
+    </div>
+    <div class="kpi-card" style="background:#fefce8;border-color:#fde68a;">
+        <div style="font-size:0.7em;color:#a16207;text-transform:uppercase;">Průměrná cena licence</div>
+        <div style="font-size:1.4em;font-weight:700;color:#854d0e;">{{ '{:,.0f}'.format(s.get('avg_price_czk', 0)).replace(',', ' ') }} Kč</div>
+        <div style="font-size:0.75em;color:#6b7280;">z plateb roku {{ year }}</div>
+    </div>
+</div>
+
+{# ==================== GRAF PŘÍJMŮ ==================== #}
+<div class="section-card">
+    <h2 class="section-title">Příjmy po měsících – {{ year }}</h2>
+    <div style="height:260px;"><canvas id="chartFinanceMonthly"></canvas></div>
+</div>
+
+{# ==================== TABULKA FAKTUR ==================== #}
+<div class="section-card">
+    <h2 class="section-title">Faktury {{ year }}{% if q %} – hledání „{{ q }}“{% endif %}</h2>
+    <div class="table-container">
+        <table class="table-dense table-cards">
+            <thead>
+                <tr>
+                    <th>Číslo faktury</th>
+                    <th>Zákazník</th>
+                    <th>Tarif</th>
+                    <th>Částka</th>
+                    <th>Datum</th>
+                    <th>Stav</th>
+                    <th class="finance-actions-col">Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td data-label="Číslo faktury"><strong>{{ inv.invoice_no }}</strong></td>
+                    <td data-label="Zákazník">
+                        <div style="font-weight:500;">{{ inv.jmeno_firma or '—' }}</div>
+                        <div style="font-size:0.85em;color:#4b5563;">{{ inv.email }}</div>
+                    </td>
+                    <td data-label="Tarif">{{ inv.tarif_label or (inv.tarif or '—')|upper }}</td>
+                    <td data-label="Částka" style="white-space:nowrap;font-weight:600;">{{ '{:,.0f}'.format(inv.amount or 0).replace(',', ' ') }} Kč</td>
+                    <td data-label="Datum" style="color:#6b7280;">{{ (inv.created_at or '')[:10] }}</td>
+                    <td data-label="Stav">
+                        {% if inv.is_paid %}
+                        <span class="status-badge status-paid">Zaplaceno</span>
+                        {% else %}
+                        <span class="status-badge status-waiting">Čeká</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Akce" class="finance-actions-col" style="min-width:220px;">
+                        <details class="actions-dropdown">
+                            <summary>⋮ Akce</summary>
+                            <div class="actions-menu">
+                            {% if inv.has_pdf %}
+                            <a href="{{ url_for('admin.download_invoice', order_id=inv.id) }}" class="action-btn" title="Stáhnout PDF fakturu">📄 Stáhnout PDF</a>
+                            {% endif %}
+                            <form method="post" action="{{ url_for('admin.regenerate_invoice') }}" style="display:inline;" onsubmit="return confirm('Znovu vygenerovat PDF fakturu {{ inv.invoice_no }}?');">
+                                <input type="hidden" name="order_id" value="{{ inv.id }}">
+                                <button type="submit" class="action-btn" title="Přegenerovat PDF fakturu">♻️ Znovu vygenerovat</button>
+                            </form>
+                            {% if not inv.is_paid %}
+                            <form method="post" action="{{ url_for('admin.bulk_send_payment') }}" style="display:inline;" onsubmit="return confirm('Odeslat e-mail s platebními údaji a fakturou na {{ inv.email }}?');">
+                                <input type="hidden" name="order_ids" value="{{ inv.id }}">
+                                <button type="submit" class="action-btn" title="Odeslat e-mail s platebními údaji a fakturou">✉️ Odeslat e-mailem</button>
+                            </form>
+                            {% endif %}
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Žádné faktury pro zvolený rok{% if q %} a hledaný výraz{% endif %}.</td></tr>
+                {% endfor %}
+            </tbody>
+            {% if invoices %}
+            <tfoot>
+                <tr style="background:#f9fafb;">
+                    <td colspan="3" style="font-weight:600;">Součet zobrazených částek ({{ invoices|length }} faktur)</td>
+                    <td style="white-space:nowrap;font-weight:700;color:#065f46;">{{ '{:,.0f}'.format(total_shown or 0).replace(',', ' ') }} Kč</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+    <p class="small text-muted" style="margin-top:10px;">Součet slouží jako podklad pro daně. Testovací licence nejsou zahrnuty.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var canvas = document.getElementById('chartFinanceMonthly');
+    if (!canvas || typeof Chart === 'undefined') return;
+    var monthLabels = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+    var data = {{ monthly_revenue|tojson }};
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Příjem (Kč)',
+                data: data,
+                backgroundColor: 'rgba(22, 163, 74, 0.6)',
+                borderColor: '#16A34A',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.parsed.y.toLocaleString('cs-CZ') + ' Kč';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(v) { return v.toLocaleString('cs-CZ') + ' Kč'; }
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}
