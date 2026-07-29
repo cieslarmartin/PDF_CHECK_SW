@@ -47,6 +47,7 @@
             {% if success %}<p class="text-green-600 text-sm mb-4">Heslo bylo nastaveno. Nyní se můžete přihlásit.</p>{% endif %}
             {% if error %}<p class="text-red-600 text-sm mb-4">{{ error }}</p>{% endif %}
             <form method="post" action="/portal" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label class="block portal-label text-sm mb-1">E-mail</label>
                     <input type="email" name="email" required class="input-field" placeholder="vas@email.cz" autocomplete="email">

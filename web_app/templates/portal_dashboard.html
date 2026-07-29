@@ -137,6 +137,7 @@
             <h2 class="text-lg font-semibold mb-4">Změna hesla</h2>
             {% if pw_message %}<p class="text-sm mb-4 {% if pw_error %}text-red-600{% else %}text-green-600{% endif %}">{{ pw_message }}</p>{% endif %}
             <form method="post" action="/portal/change-password" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label class="block portal-label text-sm mb-1">Aktuální heslo</label>
                     <input type="password" name="current_password" required class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-[#1e5a8a] focus:border-[#1e5a8a]">

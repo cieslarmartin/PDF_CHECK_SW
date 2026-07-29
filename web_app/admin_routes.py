@@ -149,28 +149,21 @@ def _bootstrap_admin_row(db):
 
 def ensure_default_admin():
     """
-    Jednorázově zajistí výchozí admin účet (přihlášení: admin / heslo: admin),
-    OTP na DEFAULT_OTP_EMAIL. Nepřepisuje heslo při každém načtení stránky.
+    Jen údržba existujícího bootstrap admina (přejmenování legacy e-mailu, doplnění otp_email).
+    Nový admin účet se NEVYTVÁŘÍ – použijte /setup.
     """
     db = get_db()
     user = _bootstrap_admin_row(db)
-    if user:
-        updates = {}
-        if user.get('email', '').lower() == LEGACY_ADMIN_EMAIL.lower():
-            updates['email'] = DEFAULT_ADMIN_LOGIN
-        if not (user.get('otp_email') or '').strip():
-            updates['otp_email'] = DEFAULT_OTP_EMAIL
-        if updates:
-            db.update_admin_user(user['id'], **updates)
-        return True
-    success, _ = db.create_admin_user(
-        email=DEFAULT_ADMIN_LOGIN,
-        password=DEFAULT_ADMIN_PASSWORD,
-        role='ADMIN',
-        display_name='Administrátor',
-        otp_email=DEFAULT_OTP_EMAIL,
-    )
-    return success
+    if not user:
+        return False
+    updates = {}
+    if user.get('email', '').lower() == LEGACY_ADMIN_EMAIL.lower():
+        updates['email'] = DEFAULT_ADMIN_LOGIN
+    if not (user.get('otp_email') or '').strip():
+        updates['otp_email'] = DEFAULT_OTP_EMAIL
+    if updates:
+        db.update_admin_user(user['id'], **updates)
+    return True
 
 
 def reset_default_admin_password():
@@ -215,7 +208,6 @@ def _send_admin_login_otp(to_addr, plain_code):
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Přihlašovací stránka (1. krok: heslo → 2. kód e-mailem)."""
-    ensure_default_admin()
     if session.get('admin_user', {}).get('id'):
         return redirect(url_for('admin.dashboard'))
 
@@ -271,7 +263,6 @@ def login():
             )
             return redirect(url_for('admin.login_verify_code'))
         db.record_admin_login_failure(ip)
-        print('LOGIN ATTEMPT: Email [{}], Password length [{}]'.format(email, len(password)))
         flash(result, 'error')
 
     return render_template('admin_login.html')
@@ -941,7 +932,26 @@ def users_licenses():
     if status_filter == 'blocked':
         licenses = [l for l in licenses if not l.get('is_active')]
     elif status_filter == 'active':
-        licenses = [l for l in licenses if l.get('is_active')]
+        licenses = [l for l in licenses if l.get('is_active') and not l.get('is_expired')]
+    elif status_filter == 'expired':
+        licenses = [l for l in licenses if l.get('is_expired')]
+    elif status_filter == 'test':
+        licenses = [l for l in licenses if l.get('is_test')]
+
+    # Ceník pro KPI příjmů (bez testovacích)
+    price_by_tier = {}
+    try:
+        for slug, info in (pricing_tarifs or {}).items():
+            if isinstance(info, dict):
+                price_by_tier[(slug or '').lower()] = info.get('amount_czk') or 0
+                label = (info.get('label') or '').strip().lower()
+                if label:
+                    price_by_tier[label] = info.get('amount_czk') or 0
+    except Exception:
+        price_by_tier = {'basic': 1090, 'pro': 1590, 'firemni': 6360}
+    revenue_summary = db.get_license_revenue_summary(price_by_tier) if hasattr(db, 'get_license_revenue_summary') else {
+        'revenue_czk': 0, 'paid_active': 0, 'test_count': 0, 'expired_count': 0, 'blocked_count': 0, 'free_count': 0,
+    }
 
     tiers_list = db.get_all_license_tiers()
     # Prodejní tiery: vše kromě Free (aby se nově přidané tiery, např. Firemní, objevily ve výběru)
@@ -965,6 +975,7 @@ def users_licenses():
         tier_filter=tier_filter,
         status_filter=status_filter,
         auto_activate_csob=auto_activate_csob,
+        revenue_summary=revenue_summary,
         user=user,
         active_page='users_licenses')
 
@@ -1654,7 +1665,7 @@ def trial():
 @admin_bp.route('/admin/analytics')
 @admin_required
 def analytics():
-    """Návštěvnost stránek: statistiky, top stránky, referrery, UTM zdroje, denní graf."""
+    """Návštěvnost: KPI, grafy, cesty, funnel, živý přehled 24 h."""
     db = get_db()
     days = int(request.args.get('days', 30))
     if days not in (7, 14, 30, 90):
@@ -1664,14 +1675,29 @@ def analytics():
     by_referrer = db.get_page_views_by_referrer(days=days)
     by_utm = db.get_page_views_by_utm(days=days)
     daily = db.get_page_views_daily(days=days)
+    hourly = db.get_page_views_hourly(hours=24)
+    devices = db.get_device_breakdown(days=days)
+    new_vs_ret = db.get_new_vs_returning(days=days)
+    visitor_paths = db.get_visitor_paths(days=min(days, 14), limit=25)
+    funnel = db.get_conversion_funnel(days=days)
+    recent_views = db.get_recent_page_views(hours=24, limit=40)
+    # Podíl mobil/desktop
+    device_total = sum(d.get('views', 0) for d in devices) or 1
+    device_share = {
+        d['device_type']: round(100.0 * d.get('views', 0) / device_total, 1)
+        for d in devices
+    }
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_analytics.html',
                            stats=stats, by_page=by_page, by_referrer=by_referrer,
-                           by_utm=by_utm, daily=daily, days=days,
-                           user=user, active_page='analytics')
+                           by_utm=by_utm, daily=daily, hourly=hourly,
+                           devices=devices, device_share=device_share,
+                           new_vs_ret=new_vs_ret, visitor_paths=visitor_paths,
+                           funnel=funnel, recent_views=recent_views,
+                           days=days, user=user, active_page='analytics')
 
 
 @admin_bp.route('/admin/free-check-usage')
@@ -2683,6 +2709,9 @@ def api_update_license():
     is_active = None if is_active_raw is None or is_active_raw == '' else (is_active_raw in ('1', 'true', 'ano'))
     payment_method = request.form.get('payment_method', '').strip() or None
     last_payment_date = request.form.get('last_payment_date', '').strip() or None
+    is_test_raw = request.form.get('is_test')
+    is_test = None if is_test_raw is None or is_test_raw == '' else (is_test_raw in ('1', 'true', 'True', 'on'))
+    activated_at = request.form.get('activated_at', '').strip() or None
     new_password = request.form.get('new_password', '').strip() or None
     max_batch_size_raw = request.form.get('max_batch_size', '').strip()
     try:
@@ -2714,6 +2743,8 @@ def api_update_license():
         is_active=is_active,
         payment_method=payment_method,
         last_payment_date=last_payment_date,
+        is_test=is_test,
+        activated_at=activated_at,
     )
     if tier_id is not None:
         db.admin_set_user_tier(api_key, tier_id)
@@ -2868,22 +2899,63 @@ def api_license_billing_list():
 @admin_bp.route('/admin/api/license/billing', methods=['POST'])
 @admin_required
 def api_license_billing_add():
-    """Přidá záznam do historie fakturace."""
+    """Přidá záznam do historie fakturace (ročník + druh faktury)."""
     db = get_db()
     api_key = request.form.get('api_key', '').strip()
     description = request.form.get('description', '').strip() or None
     amount_cents = request.form.get('amount_cents', '').strip()
+    amount_czk_raw = request.form.get('amount_czk', '').strip()
     try:
         amount_cents = int(amount_cents) if amount_cents else None
     except (TypeError, ValueError):
         amount_cents = None
+    amount_czk = None
+    if amount_czk_raw:
+        try:
+            amount_czk = float(str(amount_czk_raw).replace(',', '.'))
+        except (TypeError, ValueError):
+            amount_czk = None
+    if amount_czk is not None and amount_cents is None:
+        amount_cents = int(round(amount_czk * 100))
     paid_at = request.form.get('paid_at', '').strip() or None
+    period_year = request.form.get('period_year', '').strip()
+    try:
+        period_year = int(period_year) if period_year else None
+    except (TypeError, ValueError):
+        period_year = None
+    invoice_kind = request.form.get('invoice_kind', '').strip() or 'initial'
     if not api_key:
         return jsonify({'success': False, 'error': 'Chybí api_key'}), 400
-    db.add_billing_record(api_key, description=description, amount_cents=amount_cents, paid_at=paid_at)
+    db.add_billing_record(
+        api_key,
+        description=description,
+        amount_cents=amount_cents,
+        paid_at=paid_at,
+        period_year=period_year,
+        invoice_kind=invoice_kind,
+        amount_czk=amount_czk,
+    )
     db.admin_update_user_full(api_key, last_payment_date=paid_at)
-    db.insert_payment_log(api_key, 'fakturace', details=description or str(amount_cents))
+    db.insert_payment_log(api_key, 'fakturace', details=description or str(amount_czk or amount_cents))
     return jsonify({'success': True, 'message': 'Záznam přidán'})
+
+
+@admin_bp.route('/admin/api/license/set-test', methods=['POST'])
+@admin_required
+def api_set_license_test():
+    """Označí licenci jako testovací / odznačí (licence zůstává funkční)."""
+    db = get_db()
+    api_key = request.form.get('api_key', '').strip()
+    is_test = request.form.get('is_test', '0') in ('1', 'true', 'True', 'on')
+    if not api_key:
+        return jsonify({'success': False, 'error': 'Chybí API klíč'}), 400
+    if db.set_license_is_test(api_key, is_test):
+        return jsonify({
+            'success': True,
+            'message': 'Označeno jako testovací' if is_test else 'Odznačeno z testovacích',
+            'is_test': is_test,
+        })
+    return jsonify({'success': False, 'error': 'Licence nenalezena'}), 404
 
 
 @admin_bp.route('/admin/api/license/toggle', methods=['POST'])
@@ -3177,15 +3249,13 @@ def init_test_data():
     Inicializuje testovací data
 
     Volej tuto funkci pro vytvoření testovacích účtů:
-    - admin / admin + druhý krok kód e-mailem (viz ensure_default_admin, DEFAULT_OTP_EMAIL)
+    - První admin přes /setup (ne auto admin/admin)
     - tester-basic@test.cz / test123 / BASIC license
     - tester-pro@test.cz / test123 / PRO license
     """
     db = get_db()
 
-    # Výchozí admin pro dashboard: admin / admin + OTP e-mailem
-    ensure_default_admin()
-    print("Admin (dashboard): přihlášení admin / admin, poté kód na e-mail z účtu (otp_email).")
+    print("Admin: vytvořte účet přes /setup (auto admin/admin je vypnuto).")
 
     # Vytvoř testovací licence
     # Basic tester

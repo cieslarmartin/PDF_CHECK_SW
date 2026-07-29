@@ -15,7 +15,9 @@ env/
 !*.env.example
 !deploy_config.example.env
 !deploy_on_pa.env.example
+!web_app/ENV_PYTHONANYWHERE.example.env
 web_app/deploy_config.env
+desktop_agent/config.yaml
 
 # Python
 __pycache__/

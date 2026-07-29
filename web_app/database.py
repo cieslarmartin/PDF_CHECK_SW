@@ -526,6 +526,31 @@ class Database:
             ak_cols = {row[1] for row in cursor.fetchall()}
             if 'password_plain_stored' not in ak_cols:
                 cursor.execute('ALTER TABLE api_keys ADD COLUMN password_plain_stored TEXT')
+            if 'is_test' not in ak_cols:
+                cursor.execute('ALTER TABLE api_keys ADD COLUMN is_test INTEGER DEFAULT 0')
+            if 'activated_at' not in ak_cols:
+                # Datum aktivace licence (výchozí = created_at při zpětném doplnění)
+                cursor.execute('ALTER TABLE api_keys ADD COLUMN activated_at TIMESTAMP')
+                try:
+                    cursor.execute(
+                        'UPDATE api_keys SET activated_at = created_at WHERE activated_at IS NULL'
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # billing_history: roční období faktury (příprava na obnovy)
+        try:
+            cursor.execute("PRAGMA table_info(billing_history)")
+            bh_cols = {row[1] for row in cursor.fetchall()}
+            if 'period_year' not in bh_cols:
+                cursor.execute('ALTER TABLE billing_history ADD COLUMN period_year INTEGER')
+            if 'invoice_kind' not in bh_cols:
+                # initial | renewal | other
+                cursor.execute("ALTER TABLE billing_history ADD COLUMN invoice_kind TEXT DEFAULT 'initial'")
+            if 'amount_czk' not in bh_cols:
+                cursor.execute('ALTER TABLE billing_history ADD COLUMN amount_czk REAL')
         except Exception:
             pass
 
@@ -563,6 +588,27 @@ class Database:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN amount_czk_final REAL')
             if 'payment_sent_at' not in po_cols:
                 cursor.execute('ALTER TABLE pending_orders ADD COLUMN payment_sent_at TIMESTAMP')
+        except Exception:
+            pass
+
+        # page_views: visitor_id, device, browser, is_bot
+        try:
+            cursor.execute("PRAGMA table_info(page_views)")
+            pv_cols = {row[1] for row in cursor.fetchall()}
+            pv_new = {
+                'visitor_id': 'TEXT',
+                'device_type': 'TEXT',
+                'browser': 'TEXT',
+                'is_bot': 'INTEGER DEFAULT 0',
+            }
+            for col_name, col_type in pv_new.items():
+                if col_name not in pv_cols:
+                    try:
+                        cursor.execute(f'ALTER TABLE page_views ADD COLUMN {col_name} {col_type}')
+                    except sqlite3.OperationalError:
+                        pass
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_visitor ON page_views(visitor_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_bot ON page_views(is_bot)')
         except Exception:
             pass
 
@@ -1716,15 +1762,16 @@ class Database:
             conn.close()
 
     def get_combined_activity_last_30_days(self):
-        """Vrátí statistiky za posledních 30 dní - kontroly a návštěvy."""
+        """Vrátí statistiky za posledních 30 dní - kontroly a návštěvy (z page_views, bez botů)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute('''
                 SELECT date(timestamp) as date, 
                        COUNT(id) as visits
-                FROM page_visits 
+                FROM page_views 
                 WHERE timestamp >= date('now', '-30 days')
+                  AND COALESCE(is_bot, 0) = 0
                 GROUP BY date(timestamp)
                 ORDER BY date(timestamp) DESC
             ''')
@@ -2065,16 +2112,20 @@ class Database:
     # =========================================================================
 
     def record_page_view(self, ip_address, path, referrer=None, utm_source=None,
-                         utm_medium=None, utm_campaign=None, user_agent=None):
-        """Zaznamená návštěvu stránky."""
+                         utm_medium=None, utm_campaign=None, user_agent=None,
+                         visitor_id=None, device_type=None, browser=None, is_bot=0):
+        """Zaznamená návštěvu stránky (včetně visitor_id / zařízení / bot flagu)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute('''
-                INSERT INTO page_views (ip_address, path, referrer, utm_source, utm_medium, utm_campaign, user_agent)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO page_views (
+                    ip_address, path, referrer, utm_source, utm_medium, utm_campaign,
+                    user_agent, visitor_id, device_type, browser, is_bot
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (ip_address or '', path or '/', referrer, utm_source, utm_medium, utm_campaign,
-                  (user_agent or '')[:300]))
+                  (user_agent or '')[:300], visitor_id, device_type, browser, 1 if is_bot else 0))
             conn.commit()
         except Exception:
             pass
@@ -2082,25 +2133,24 @@ class Database:
             conn.close()
 
     def get_page_views_stats(self):
-        """Souhrnné statistiky návštěvnosti: dnes, 7 dní, 30 dní, unikátní IP."""
+        """Souhrnné statistiky návštěvnosti (bez botů): views + unikátní visitor_id."""
         conn = self.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM page_views WHERE date(timestamp) = date('now')")
-        today = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE date(timestamp) = date('now')")
-        today_unique = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM page_views WHERE timestamp >= datetime('now', '-7 days')")
-        week = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE timestamp >= datetime('now', '-7 days')")
-        week_unique = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM page_views WHERE timestamp >= datetime('now', '-30 days')")
-        month = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views WHERE timestamp >= datetime('now', '-30 days')")
-        month_unique = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM page_views")
-        total = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(DISTINCT ip_address) FROM page_views")
-        total_unique = cursor.fetchone()[0]
+        bot_filter = 'COALESCE(is_bot, 0) = 0'
+        uniq = 'COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ""), ip_address))'
+
+        def _pair(where_extra=''):
+            where = bot_filter + ((' AND ' + where_extra) if where_extra else '')
+            cursor.execute(f'SELECT COUNT(*) FROM page_views WHERE {where}')
+            views = cursor.fetchone()[0]
+            cursor.execute(f'SELECT {uniq} FROM page_views WHERE {where}')
+            unique = cursor.fetchone()[0]
+            return views, unique
+
+        today, today_unique = _pair("date(timestamp) = date('now')")
+        week, week_unique = _pair("timestamp >= datetime('now', '-7 days')")
+        month, month_unique = _pair("timestamp >= datetime('now', '-30 days')")
+        total, total_unique = _pair()
         conn.close()
         return {
             'today': today, 'today_unique': today_unique,
@@ -2110,13 +2160,15 @@ class Database:
         }
 
     def get_page_views_by_page(self, days=30, limit=20):
-        """Nejnavštěvovanější stránky za posledních N dní."""
+        """Nejnavštěvovanější stránky za posledních N dní (bez botů)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT path, COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            SELECT path, COUNT(*) AS views,
+                   COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) AS unique_visitors
             FROM page_views
-            WHERE timestamp >= datetime('now', ? || ' days')
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
             GROUP BY path ORDER BY views DESC LIMIT ?
         ''', (str(-days), limit))
         rows = [dict(row) for row in cursor.fetchall()]
@@ -2124,14 +2176,16 @@ class Database:
         return rows
 
     def get_page_views_by_referrer(self, days=30, limit=20):
-        """Top referrery za posledních N dní."""
+        """Top referrery za posledních N dní (bez botů)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             SELECT COALESCE(NULLIF(referrer, ''), '(přímý přístup)') AS referrer,
-                   COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+                   COUNT(*) AS views,
+                   COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) AS unique_visitors
             FROM page_views
-            WHERE timestamp >= datetime('now', ? || ' days')
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
             GROUP BY referrer ORDER BY views DESC LIMIT ?
         ''', (str(-days), limit))
         rows = [dict(row) for row in cursor.fetchall()]
@@ -2139,16 +2193,18 @@ class Database:
         return rows
 
     def get_page_views_by_utm(self, days=30, limit=20):
-        """Top UTM zdroje za posledních N dní."""
+        """Top UTM zdroje za posledních N dní (bez botů)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             SELECT COALESCE(NULLIF(utm_source, ''), '(bez UTM)') AS source,
                    COALESCE(NULLIF(utm_medium, ''), '-') AS medium,
                    COALESCE(NULLIF(utm_campaign, ''), '-') AS campaign,
-                   COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+                   COUNT(*) AS views,
+                   COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) AS unique_visitors
             FROM page_views
-            WHERE timestamp >= datetime('now', ? || ' days')
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
             GROUP BY utm_source, utm_medium, utm_campaign ORDER BY views DESC LIMIT ?
         ''', (str(-days), limit))
         rows = [dict(row) for row in cursor.fetchall()]
@@ -2156,18 +2212,190 @@ class Database:
         return rows
 
     def get_page_views_daily(self, days=30):
-        """Denní počet views za posledních N dní (pro graf)."""
+        """Denní počet views za posledních N dní (pro graf, bez botů)."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT date(timestamp) AS day, COUNT(*) AS views, COUNT(DISTINCT ip_address) AS unique_visitors
+            SELECT date(timestamp) AS day, COUNT(*) AS views,
+                   COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) AS unique_visitors
             FROM page_views
-            WHERE timestamp >= datetime('now', ? || ' days')
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
             GROUP BY day ORDER BY day ASC
         ''', (str(-days),))
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
+
+    def get_page_views_hourly(self, hours=24):
+        """Hodinová návštěvnost za posledních N hodin (bez botů)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT strftime('%Y-%m-%d %H:00', timestamp) AS hour,
+                   COUNT(*) AS views,
+                   COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) AS unique_visitors
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' hours')
+            GROUP BY hour ORDER BY hour ASC
+        ''', (str(-hours),))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_device_breakdown(self, days=30):
+        """Podíl mobil/desktop/tablet za období."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(NULLIF(device_type, ''), 'unknown') AS device_type, COUNT(*) AS views
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
+            GROUP BY device_type ORDER BY views DESC
+        ''', (str(-days),))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_new_vs_returning(self, days=30):
+        """Noví vs. vracející se visitor_id v období (vracející = viděn i před obdobím)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address)) FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
+        ''', (str(-days),))
+        period_visitors = cursor.fetchone()[0] or 0
+        cursor.execute('''
+            SELECT COUNT(DISTINCT v.vid) FROM (
+                SELECT COALESCE(NULLIF(visitor_id, ''), ip_address) AS vid
+                FROM page_views
+                WHERE COALESCE(is_bot, 0) = 0
+                  AND timestamp >= datetime('now', ? || ' days')
+            ) v
+            WHERE EXISTS (
+                SELECT 1 FROM page_views p
+                WHERE COALESCE(is_bot, 0) = 0
+                  AND COALESCE(NULLIF(p.visitor_id, ''), p.ip_address) = v.vid
+                  AND p.timestamp < datetime('now', ? || ' days')
+            )
+        ''', (str(-days), str(-days)))
+        returning = cursor.fetchone()[0] or 0
+        conn.close()
+        new = max(period_visitors - returning, 0)
+        return {'new': new, 'returning': returning, 'total': period_visitors}
+
+    def get_recent_page_views(self, hours=24, limit=50):
+        """Poslední návštěvy (živý přehled)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT timestamp, path, referrer, device_type, browser, visitor_id, ip_address
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' hours')
+            ORDER BY timestamp DESC LIMIT ?
+        ''', (str(-hours), limit))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_visitor_paths(self, days=7, limit=30, session_gap_minutes=30):
+        """
+        Nejčastější cesty návštěvníků: session = stejný visitor, mezera < N min.
+        Vrací seznam {path_str, count}.
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(NULLIF(visitor_id, ''), ip_address) AS vid,
+                   path, timestamp
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
+            ORDER BY vid ASC, timestamp ASC
+        ''', (str(-days),))
+        rows = cursor.fetchall()
+        conn.close()
+        from datetime import datetime
+        from collections import Counter
+
+        def _parse(ts):
+            if not ts:
+                return None
+            try:
+                return datetime.strptime(str(ts)[:19], '%Y-%m-%d %H:%M:%S')
+            except Exception:
+                return None
+
+        paths_counter = Counter()
+        current_vid = None
+        session_paths = []
+        last_ts = None
+        gap = session_gap_minutes * 60
+
+        def _flush():
+            if len(session_paths) >= 2:
+                key = ' → '.join(session_paths[:6])
+                paths_counter[key] += 1
+
+        for row in rows:
+            vid = row['vid']
+            path = row['path'] or '/'
+            ts = _parse(row['timestamp'])
+            if vid != current_vid:
+                _flush()
+                current_vid = vid
+                session_paths = [path]
+                last_ts = ts
+                continue
+            if last_ts and ts and (ts - last_ts).total_seconds() > gap:
+                _flush()
+                session_paths = [path]
+            else:
+                if not session_paths or session_paths[-1] != path:
+                    session_paths.append(path)
+            last_ts = ts
+        _flush()
+        return [{'path_str': k, 'count': v} for k, v in paths_counter.most_common(limit)]
+
+    def get_conversion_funnel(self, days=30):
+        """Konverzní trychtýř: landing → checkout → dokončená objednávka."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address))
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
+              AND (path = '/' OR path = '' OR path LIKE '/landing%')
+        ''', (str(-days),))
+        landing = cursor.fetchone()[0] or 0
+        cursor.execute('''
+            SELECT COUNT(DISTINCT COALESCE(NULLIF(visitor_id, ''), ip_address))
+            FROM page_views
+            WHERE COALESCE(is_bot, 0) = 0
+              AND timestamp >= datetime('now', ? || ' days')
+              AND path LIKE '/checkout%'
+        ''', (str(-days),))
+        checkout = cursor.fetchone()[0] or 0
+        cursor.execute('''
+            SELECT COUNT(*) FROM pending_orders
+            WHERE created_at >= datetime('now', ? || ' days')
+        ''', (str(-days),))
+        orders = cursor.fetchone()[0] or 0
+        conn.close()
+        return {
+            'landing': landing,
+            'checkout': checkout,
+            'orders': orders,
+            'landing_to_checkout_pct': round(100.0 * checkout / landing, 1) if landing else 0.0,
+            'checkout_to_order_pct': round(100.0 * orders / checkout, 1) if checkout else 0.0,
+            'landing_to_order_pct': round(100.0 * orders / landing, 1) if landing else 0.0,
+        }
 
     def get_activity_log(self, limit=200):
         """Vrátí sjednocený log aktivit pro admin: IP, čas, typ, počet souborů."""
@@ -2879,6 +3107,43 @@ class Database:
         cursor.execute(
             '''INSERT INTO rate_limits (identifier, identifier_type, action_type)
                VALUES (?, 'ip', 'admin_login_fail')''',
+            (ident,),
+        )
+        conn.commit()
+        conn.close()
+
+    def check_user_login_bruteforce_ip(self, ip: str, max_failures: int = 20, window_minutes: int = 15) -> tuple:
+        """Omezí opakované pokusy o přihlášení agenta (user-login) z jedné IP."""
+        ident = (ip or 'unknown').strip()[:200] or 'unknown'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''DELETE FROM rate_limits WHERE action_type = 'user_login_fail'
+               AND timestamp < datetime('now', '-' || ? || ' minutes')''',
+            (str(window_minutes + 60),),
+        )
+        cursor.execute(
+            '''SELECT COUNT(*) AS c FROM rate_limits
+               WHERE action_type = 'user_login_fail' AND identifier = ?
+                 AND timestamp > datetime('now', '-' || ? || ' minutes')''',
+            (ident, str(window_minutes)),
+        )
+        n = int(cursor.fetchone()['c'])
+        if n >= max_failures:
+            conn.commit()
+            conn.close()
+            return False, 'Příliš mnoho neúspěšných pokusů. Zkuste to znovu později.'
+        conn.commit()
+        conn.close()
+        return True, ''
+
+    def record_user_login_failure(self, ip: str) -> None:
+        ident = (ip or 'unknown').strip()[:200] or 'unknown'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''INSERT INTO rate_limits (identifier, identifier_type, action_type)
+               VALUES (?, 'ip', 'user_login_fail')''',
             (ident,),
         )
         conn.commit()
@@ -3664,28 +3929,72 @@ class Database:
         """Historie fakturace pro uživatele."""
         conn = self.get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            'SELECT * FROM billing_history WHERE api_key = ? ORDER BY created_at DESC LIMIT ?',
-            (api_key, limit)
-        )
+        try:
+            cursor.execute(
+                '''SELECT * FROM billing_history WHERE api_key = ?
+                   ORDER BY COALESCE(period_year, 0) DESC, created_at DESC LIMIT ?''',
+                (api_key, limit)
+            )
+        except sqlite3.OperationalError:
+            cursor.execute(
+                'SELECT * FROM billing_history WHERE api_key = ? ORDER BY created_at DESC LIMIT ?',
+                (api_key, limit)
+            )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
 
-    def add_billing_record(self, api_key, description=None, amount_cents=None, paid_at=None):
-        """Přidá záznam do historie fakturace."""
+    def add_billing_record(self, api_key, description=None, amount_cents=None, paid_at=None,
+                           period_year=None, invoice_kind=None, amount_czk=None):
+        """Přidá záznam do historie fakturace (včetně ročníku / druhu faktury)."""
         conn = self.get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            'INSERT INTO billing_history (api_key, description, amount_cents, paid_at) VALUES (?, ?, ?, ?)',
-            (api_key, description, amount_cents, paid_at)
-        )
+        if amount_czk is None and amount_cents is not None:
+            try:
+                amount_czk = float(amount_cents) / 100.0
+            except (TypeError, ValueError):
+                amount_czk = None
+        kind = (invoice_kind or 'initial').strip().lower()
+        if kind not in ('initial', 'renewal', 'other'):
+            kind = 'other'
+        try:
+            cursor.execute(
+                '''INSERT INTO billing_history
+                   (api_key, description, amount_cents, paid_at, period_year, invoice_kind, amount_czk)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                (api_key, description, amount_cents, paid_at, period_year, kind, amount_czk)
+            )
+        except sqlite3.OperationalError:
+            cursor.execute(
+                'INSERT INTO billing_history (api_key, description, amount_cents, paid_at) VALUES (?, ?, ?, ?)',
+                (api_key, description, amount_cents, paid_at)
+            )
         conn.commit()
         conn.close()
 
+    def set_license_is_test(self, api_key, is_test):
+        """Označí/odznačí licenci jako testovací (zůstává funkční, nepočítá se do příjmů)."""
+        if not api_key:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE api_keys SET is_test = ? WHERE api_key = ?',
+                (1 if is_test else 0, api_key),
+            )
+            ok = cursor.rowcount > 0
+            conn.commit()
+            return ok
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
     def admin_update_user_full(self, api_key, user_name=None, email=None, license_expires=None,
-                                is_active=None, payment_method=None, last_payment_date=None):
-        """Rozšířená aktualizace uživatele: jméno, email, expirace, status, platební údaje."""
+                                is_active=None, payment_method=None, last_payment_date=None,
+                                is_test=None, activated_at=None):
+        """Rozšířená aktualizace uživatele: jméno, email, expirace, status, platební údaje, testovací."""
         if not api_key or not str(api_key).strip():
             return False
         conn = self.get_connection()
@@ -3709,6 +4018,12 @@ class Database:
         if last_payment_date is not None:
             updates.append('last_payment_date = ?')
             values.append(last_payment_date)
+        if is_test is not None:
+            updates.append('is_test = ?')
+            values.append(1 if is_test else 0)
+        if activated_at is not None:
+            updates.append('activated_at = ?')
+            values.append(activated_at or None)
         if not updates:
             conn.close()
             return True
@@ -3749,7 +4064,11 @@ class Database:
                     COALESCE(lt.max_devices, ak.max_devices, 1) AS max_devices,
                     ak.rate_limit_hour,
                     ak.created_at,
+                    ak.activated_at,
                     ak.is_active,
+                    COALESCE(ak.is_test, 0) AS is_test,
+                    ak.payment_method,
+                    ak.last_payment_date,
                     ak.max_batch_size,
                     ak.allow_signatures,
                     ak.allow_timestamp,
@@ -3805,10 +4124,81 @@ class Database:
                 license_data['is_expired'] = False
                 license_data['days_remaining'] = -1
 
+            # Aktivace: activated_at nebo created_at
+            license_data['activated_at'] = license_data.get('activated_at') or license_data.get('created_at')
+            license_data['is_test'] = 1 if license_data.get('is_test') else 0
+            # Efektivní stav pro admin UI
+            if license_data.get('is_expired'):
+                license_data['status_label'] = 'Vypršela'
+            elif not license_data.get('is_active'):
+                license_data['status_label'] = 'Blokovaná'
+            else:
+                license_data['status_label'] = 'Aktivní'
+
             licenses.append(license_data)
 
         conn.close()
         return licenses
+
+    def get_license_revenue_summary(self, price_by_tier=None):
+        """
+        Aktuální roční příjem z placených licencí (bez testovacích / trial / free / vypršelých / blokovaných).
+        price_by_tier: dict slug|name.lower → amount_czk (např. {'basic': 1090, 'pro': 1590}).
+        """
+        price_by_tier = price_by_tier or {}
+        licenses = self.admin_get_all_licenses()
+        revenue = 0.0
+        paid_active = 0
+        test_count = 0
+        expired_count = 0
+        blocked_count = 0
+        free_count = 0
+
+        def _price_for(tier_name):
+            raw = (tier_name or '').strip().lower()
+            aliases = {
+                'firemní': 'firemni',
+                'standard': 'pro',
+                'unlimited': 'unlimited',
+                'atelíér': 'pro',
+                'atelier': 'pro',
+                'projektant': 'basic',
+            }
+            key = aliases.get(raw, raw)
+            if key in price_by_tier:
+                return float(price_by_tier[key] or 0)
+            # fallback přes částečný match
+            for k, v in price_by_tier.items():
+                if (k or '').lower() == key:
+                    return float(v or 0)
+            return 0.0
+
+        for lic in licenses:
+            name = (lic.get('tier_name') or '').strip().lower()
+            if lic.get('is_test'):
+                test_count += 1
+                continue
+            if name in ('trial', 'free', ''):
+                free_count += 1
+                continue
+            if lic.get('is_expired'):
+                expired_count += 1
+                continue
+            if not lic.get('is_active'):
+                blocked_count += 1
+                continue
+            p = _price_for(name)
+            revenue += p
+            paid_active += 1
+
+        return {
+            'revenue_czk': round(revenue, 0),
+            'paid_active': paid_active,
+            'test_count': test_count,
+            'expired_count': expired_count,
+            'blocked_count': blocked_count,
+            'free_count': free_count,
+        }
 
     def admin_reset_devices(self, api_key: str) -> dict:
         """Resetuje všechna zařízení pro daný API klíč (user_devices + device_activations)."""

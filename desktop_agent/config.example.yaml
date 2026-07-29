@@ -2,6 +2,6 @@ agent:
   auto_send: true
   show_results_window: true
 api:
-  # Lokální klíč – soubor je v .gitignore. Po rotaci na serveru zadejte nový klíč.
+  # Získejte klíč po aktivaci licence / z adminu. Nikdy necommitujte skutečný klíč.
   key: YOUR_API_KEY_HERE
   url: https://www.dokucheck.cz

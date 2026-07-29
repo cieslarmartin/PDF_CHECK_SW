@@ -459,6 +459,12 @@ def register_api_routes(app):
         Vrátí: { "success": true, "api_key": "...", "user_name": "...", "email": "...", "tier_name": "..." }
         """
         try:
+            ip = request.headers.get('X-Forwarded-For', request.remote_addr or '')
+            if isinstance(ip, str) and ',' in ip:
+                ip = ip.split(',')[0].strip()
+            ok_rate, rate_msg = db.check_user_login_bruteforce_ip(ip)
+            if not ok_rate:
+                return jsonify({'success': False, 'error': rate_msg}), 429
             if not request.is_json:
                 return jsonify({'success': False, 'error': 'Content-Type must be application/json'}), 400
             data = request.get_json()
@@ -470,6 +476,7 @@ def register_api_routes(app):
                 return jsonify({'success': False, 'error': 'Zadejte heslo'}), 400
             success, result = db.verify_license_password(email, password)
             if not success:
+                db.record_user_login_failure(ip)
                 return jsonify({'success': False, 'error': result}), 401
             api_key = result['api_key']
             ip_address, machine_id, machine_name = _request_client_info(request)
@@ -560,32 +567,13 @@ def register_api_routes(app):
             logger.exception(f"Chyba session-from-token: {e}")
             return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
-    @app.route('/api/generate-key', methods=['POST'])
-    def generate_key():
-        """Vygeneruje nový API klíč (pro testování)"""
-        try:
-            from database import generate_api_key
-
-            user_name = None
-            if request.is_json:
-                data = request.get_json()
-                user_name = data.get('user_name')
-
-            new_key = generate_api_key()
-
-            if db.create_api_key(new_key, user_name):
-                logger.info(f"Nový API klíč vygenerován pro: {user_name or 'Anonymous'}")
-                return jsonify({
-                    'success': True,
-                    'api_key': new_key,
-                    'message': 'API key generated successfully'
-                }), 200
-            else:
-                return jsonify({'error': 'Failed to create API key'}), 500
-
-        except Exception as e:
-            logger.exception(f"Chyba generování klíče: {e}")
-            return jsonify({'error': 'Internal server error'}), 500
+    def _require_admin_api_key(provided_key):
+        """Fail-closed: ADMIN_API_KEY musí být v env, jinak 401."""
+        expected = (os.environ.get('ADMIN_API_KEY') or '').strip()
+        if not expected:
+            logger.warning('ADMIN_API_KEY není nastaven – admin API endpointy jsou vypnuté')
+            return False
+        return secrets.compare_digest(str(provided_key or ''), expected)
 
     @app.route('/api/stats', methods=['GET'])
     def get_stats():
@@ -1458,9 +1446,8 @@ def register_api_routes(app):
 
             data = request.get_json()
 
-            # Jednoduchá admin autorizace (v produkci nahradit lepším řešením)
             admin_key = data.get('admin_key')
-            if admin_key != 'pdfcheck_admin_2025':  # TODO: přesunout do konfigurace
+            if not _require_admin_api_key(admin_key):
                 return jsonify({'error': 'Unauthorized'}), 401
 
             user_name = data.get('user_name')
@@ -1522,7 +1509,7 @@ def register_api_routes(app):
             data = request.get_json()
 
             admin_key = data.get('admin_key')
-            if admin_key != 'pdfcheck_admin_2025':
+            if not _require_admin_api_key(admin_key):
                 return jsonify({'error': 'Unauthorized'}), 401
 
             api_key = data.get('api_key')
@@ -1562,7 +1549,7 @@ def register_api_routes(app):
 
         try:
             admin_key = request.args.get('admin_key')
-            if admin_key != 'pdfcheck_admin_2025':
+            if not _require_admin_api_key(admin_key):
                 return jsonify({'error': 'Unauthorized'}), 401
 
             keys = db.get_all_api_keys()

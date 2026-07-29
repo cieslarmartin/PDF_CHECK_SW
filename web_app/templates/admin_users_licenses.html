@@ -42,7 +42,7 @@
         </form>
     </div>
     <div class="table-container">
-        <table class="table-dense">
+        <table class="table-dense table-cards">
             <thead>
                 <tr>
                     <th style="width:40px;"><input type="checkbox" id="selectAllOrders" title="Vybrat vše"></th>
@@ -58,21 +58,21 @@
             <tbody>
                 {% for o in orders %}
                 <tr>
-                    <td><input type="checkbox" class="order-cb" value="{{ o.id }}"></td>
-                    <td><strong>{{ o.order_display_number or o.id }}</strong></td>
-                    <td style="color:#6b7280; font-size:0.9em;">
+                    <td data-label=""><input type="checkbox" class="order-cb" value="{{ o.id }}"></td>
+                    <td data-label="Objednávka"><strong>{{ o.order_display_number or o.id }}</strong></td>
+                    <td data-label="Datum" style="color:#6b7280; font-size:0.9em;">
                         {{ (o.created_at or '')[:16] }}
                         {% if o.payment_sent_at %}
                         <br><span style="font-size:0.85em; color:#8b5cf6;">✉️ {{ o.payment_sent_at[:16] }}</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Zákazník">
                         <div style="font-weight:500;">{{ o.jmeno_firma or '—' }}</div>
                         <div style="font-size:0.85em; color:#4b5563;">{{ o.email }}</div>
                     </td>
-                    <td>{{ o.tarif_label or (o.tarif or '—')|upper }}</td>
-                    <td>{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
-                    <td>
+                    <td data-label="Tarif">{{ o.tarif_label or (o.tarif or '—')|upper }}</td>
+                    <td data-label="Cena">{{ o.amount_czk_final or o.amount_czk or '—' }} Kč</td>
+                    <td data-label="Stav">
                         {% if o.status == 'NEW_ORDER' or o.status == 'pending' %}
                             <span class="status-badge status-pending">Objednáno</span>
                         {% elif o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT' %}
@@ -83,8 +83,10 @@
                             <span class="status-badge" style="background:#f3f4f6;">{{ o.status }}</span>
                         {% endif %}
                     </td>
-                    <td style="min-width:260px;">
-                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    <td data-label="Akce" style="min-width:260px;">
+                        <details class="actions-dropdown">
+                            <summary>⋮ Akce</summary>
+                            <div class="actions-menu">
                             {% set is_pending = (o.status == 'NEW_ORDER' or o.status == 'pending') %}
                             {% set is_waiting_payment = (o.status == 'payment_sent' or o.status == 'WAITING_PAYMENT') %}
                             {% set is_active = (o.status == 'ACTIVE' or o.status == 'active') %}
@@ -116,7 +118,8 @@
                                 <button type="submit" class="action-btn action-danger" title="Smazat licenci">🗑️ Smazat lic.</button>
                             </form>
                             {% endif %}
-                        </div>
+                            </div>
+                        </details>
                     </td>
                 </tr>
                 {% else %}
@@ -208,38 +211,95 @@
         <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
             <input type="hidden" name="q" value="{{ search }}">
             <input type="hidden" name="tier" value="{{ tier_filter }}">
-            <select name="status" class="form-control form-select" style="width:110px;" onchange="this.form.submit()">
+            <select name="status" class="form-control form-select" style="width:130px;" onchange="this.form.submit()">
                 <option value="">Stav účtu</option>
                 <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Aktivní</option>
+                <option value="expired" {{ 'selected' if status_filter == 'expired' else '' }}>Vypršelé</option>
                 <option value="blocked" {{ 'selected' if status_filter == 'blocked' else '' }}>Blokovaný</option>
+                <option value="test" {{ 'selected' if status_filter == 'test' else '' }}>Testovací</option>
             </select>
         </form>
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('createForm').reset(); openModal('createModal');">+ Nová licence</button>
     </div>
+
+    {# KPI příjmů (bez testovacích) #}
+    {% set rs = revenue_summary or {} %}
+    <div class="admin-grid-2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px;">
+        <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7em;color:#047857;text-transform:uppercase;">Příjem teď (Kč/rok)</div>
+            <div style="font-size:1.4em;font-weight:700;color:#065f46;">{{ '{:,.0f}'.format(rs.get('revenue_czk', 0)).replace(',', ' ') }} Kč</div>
+            <div style="font-size:0.75em;color:#6b7280;">bez testovacích / trial / vypršelých</div>
+        </div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7em;color:#1d4ed8;text-transform:uppercase;">Placené aktivní</div>
+            <div style="font-size:1.4em;font-weight:700;color:#1e40af;">{{ rs.get('paid_active', 0) }}</div>
+        </div>
+        <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7em;color:#a16207;text-transform:uppercase;">Testovací</div>
+            <div style="font-size:1.4em;font-weight:700;color:#854d0e;">{{ rs.get('test_count', 0) }}</div>
+            <div style="font-size:0.75em;color:#6b7280;">funkční, mimo příjem</div>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7em;color:#b91c1c;text-transform:uppercase;">Vypršelé</div>
+            <div style="font-size:1.4em;font-weight:700;color:#991b1b;">{{ rs.get('expired_count', 0) }}</div>
+        </div>
+    </div>
+
     <div class="table-container">
-        <table class="table-dense">
+        <table class="table-dense table-cards">
             <thead>
                 <tr>
                     <th>E-mail / Jméno</th>
                     <th>Tarif</th>
+                    <th>Stav</th>
+                    <th>Aktivováno</th>
+                    <th>Končí</th>
+                    <th>Test</th>
                     <th>Zařízení</th>
-                    <th>Poslední aktivita</th>
-                    <th>Poslední IP</th>
-                    <th>Soubory</th>
                     <th>Platba</th>
-                    <th>Heslo</th>
                     <th>Akce</th>
                 </tr>
             </thead>
             <tbody>
                 {% for license in licenses %}
-                <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}">
-                    <td>
+                <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-activated-at="{{ license.activated_at or license.created_at or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-is-test="{{ 1 if license.is_test else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" {% if license.is_expired %}style="opacity:0.85;background:#fef2f2;"{% elif license.is_test %}style="background:#fffbeb;"{% endif %}>
+                    <td data-label="E-mail">
                         <strong>{{ license.email or '—' }}</strong>
                         {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
                     </td>
-                    <td><span class="badge badge-{{ (license.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ license.tier_name }}</span></td>
-                    <td>
+                    <td data-label="Tarif"><span class="badge badge-{{ (license.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ license.tier_name }}</span></td>
+                    <td data-label="Stav">
+                        {% if license.is_expired %}
+                            <span class="status-badge" style="background:#fee2e2;color:#b91c1c;">Vypršela</span>
+                        {% elif not license.is_active %}
+                            <span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Blokovaná</span>
+                        {% else %}
+                            <span class="status-badge status-active">Aktivní</span>
+                        {% endif %}
+                        {% if license.is_test %}<br><span class="status-badge" style="background:#fef3c7;color:#92400e;margin-top:4px;">Test</span>{% endif %}
+                    </td>
+                    <td data-label="Aktivováno"><small>{{ (license.activated_at or license.created_at or '—')[:10] }}</small></td>
+                    <td data-label="Končí">
+                        {% if license.license_expires %}
+                        <small {% if license.is_expired %}style="color:#b91c1c;font-weight:600;"{% elif license.days_remaining is defined and license.days_remaining >= 0 and license.days_remaining <= 30 %}style="color:#b45309;font-weight:600;"{% endif %}>
+                            {{ license.license_expires[:10] }}
+                            {% if license.is_expired %}
+                            <br>vypršela
+                            {% elif license.days_remaining is defined and license.days_remaining >= 0 %}
+                            <br>{{ license.days_remaining }} dní
+                            {% endif %}
+                        </small>
+                        {% else %}
+                        <small>—</small>
+                        {% endif %}
+                    </td>
+                    <td data-label="Test">
+                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;min-height:44px;" title="Testovací licence zůstává funkční, ale nepočítá se do příjmů">
+                            <input type="checkbox" {% if license.is_test %}checked{% endif %} onchange="toggleTestLicense('{{ license.api_key }}', this.checked, this)">
+                            <span class="small">Test</span>
+                        </label>
+                    </td>
+                    <td data-label="Zařízení">
                         {% set md = license.max_devices if license.max_devices and license.max_devices != -1 else None %}
                         {% set ad = license.active_devices or 0 %}
                         <button type="button" class="action-btn" style="padding:2px 8px;font-size:0.85em;{% if md is not none and ad >= md %}color:#dc2626;font-weight:600;{% endif %}" title="Spravovat registrované počítače (kliknutím)" data-api-key="{{ license.api_key }}" data-email="{{ (license.email or '')|e }}" onclick="openDevicesModal(this)">
@@ -247,13 +307,11 @@
                         </button>
                         {% if license.device_names %}<br><small style="color:#6b7280;">{{ license.device_names|truncate(28, True) }}</small>{% endif %}
                     </td>
-                    <td><small>{% if license.last_active %}{{ license.last_active[:16] }}{% else %}—{% endif %}</small></td>
-                    <td><small style="font-family:monospace;font-size:0.85em;">{{ license.last_ip or '—' }}</small></td>
-                    <td>{{ license.total_checks }}</td>
-                    <td><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
-                    <td><small style="font-family:monospace;font-size:0.85em;">{{ (license.get('password_plain_stored') or '—')|e }}</small></td>
-                    <td>
-                        <div class="actions-cell">
+                    <td data-label="Platba"><small>{{ license.payment_method or '—' }}<br>{{ (license.last_payment_date or '—')[:10] }}</small></td>
+                    <td data-label="Akce">
+                        <details class="actions-dropdown">
+                            <summary>⋮ Akce</summary>
+                            <div class="actions-menu actions-cell">
                             <button class="action-btn primary-btn" onclick="openEditModalFromRow(this.closest('tr'))" title="Upravit">Upravit</button>
                             <button class="action-btn" onclick="toggleLicense('{{ license.api_key }}', {{ 'false' if license.is_active else 'true' }})">{{ 'DEAKTIVOVAT' if license.is_active else 'AKTIVOVAT' }}</button>
                             <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')">SMAZAT</button>
@@ -261,7 +319,8 @@
                             <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)">INFO</button>
                             <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn">Audit</a>
                             <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)">Heslo</button>
-                        </div>
+                            </div>
+                        </details>
                     </td>
                 </tr>
                 {% else %}
@@ -393,8 +452,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="edit_license_expires">Datum expirace</label>
+                <label for="edit_license_expires">Datum expirace (konec licence)</label>
                 <input type="date" id="edit_license_expires" name="license_expires" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="edit_activated_at">Datum aktivace</label>
+                <input type="date" id="edit_activated_at" name="activated_at" class="form-control">
             </div>
             <div class="form-group">
                 <label for="edit_is_active">Status</label>
@@ -402,6 +465,10 @@
                     <option value="1">Aktivní</option>
                     <option value="0">Blokovaný</option>
                 </select>
+            </div>
+            <div class="form-check" style="margin-bottom:16px;">
+                <input type="checkbox" id="edit_is_test" name="is_test" value="1">
+                <label for="edit_is_test">Testovací licence (funkční, nepočítá se do příjmů)</label>
             </div>
             <div class="form-group">
                 <label>Stávající heslo</label>
@@ -424,11 +491,11 @@
                 <input type="date" id="edit_last_payment_date" name="last_payment_date" class="form-control">
             </div>
             <div class="form-group">
-                <label>Historie fakturace</label>
-                <div id="editBillingList" style="max-height:120px;overflow-y:auto;font-size:0.8em;color:#6b7280;margin-top:4px;"></div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="openAddBillingModal()">+ Přidat záznam</button>
-            </div>
-            <div class="modal-actions">
+                <label>Faktury po rocích</label>
+                <p class="small text-muted" style="margin:0 0 6px;">První rok = initial, další roky = renewal (obnova). Zatím ručně.</p>
+                <div id="editBillingList" style="max-height:140px;overflow-y:auto;font-size:0.8em;color:#6b7280;margin-top:4px;"></div>
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="openAddBillingModal()">+ Přidat fakturu za rok</button>
+            </div>            <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Zrušit</button>
                 <button type="submit" class="btn btn-primary">Uložit</button>
             </div>
@@ -591,7 +658,9 @@ function openEditModalFromRow(tr) {
     document.getElementById('edit_user_name').value = tr.getAttribute('data-user-name') || '';
     document.getElementById('edit_email').value = tr.getAttribute('data-email') || '';
     document.getElementById('edit_license_expires').value = (tr.getAttribute('data-license-expires') || '').substring(0, 10);
+    document.getElementById('edit_activated_at').value = (tr.getAttribute('data-activated-at') || '').substring(0, 10);
     document.getElementById('edit_is_active').value = tr.getAttribute('data-is-active') === '1' ? '1' : '0';
+    document.getElementById('edit_is_test').checked = tr.getAttribute('data-is-test') === '1';
     document.getElementById('edit_payment_method').value = tr.getAttribute('data-payment-method') || '';
     document.getElementById('edit_last_payment_date').value = (tr.getAttribute('data-last-payment-date') || '').substring(0, 10);
     document.getElementById('edit_current_password_display').textContent = pwdPlain || '—';
@@ -610,28 +679,62 @@ async function loadBillingHistory(apiKey) {
         var data = await r.json();
         if (data.success && data.data && data.data.length) {
             el.innerHTML = data.data.map(function(x) {
-                return '<div style="padding:4px 0;border-bottom:1px solid #eee;">' + (x.description || '-') + ' ' + (x.amount_cents != null ? x.amount_cents + ' Kč' : '') + ' <small>' + (x.paid_at || x.created_at || '').substring(0, 10) + '</small></div>';
+                var kindMap = { initial: '1. rok', renewal: 'Obnova', other: 'Jiné' };
+                var kind = kindMap[x.invoice_kind] || (x.invoice_kind || '');
+                var year = x.period_year ? (' ' + x.period_year) : '';
+                var amt = (x.amount_czk != null) ? (Number(x.amount_czk) + ' Kč')
+                    : (x.amount_cents != null ? (Math.round(Number(x.amount_cents) / 100) + ' Kč') : '');
+                return '<div style="padding:4px 0;border-bottom:1px solid #eee;">'
+                    + '<strong>' + (kind + year).trim() + '</strong> · '
+                    + (x.description || '-') + ' · ' + amt
+                    + ' <small>' + (x.paid_at || x.created_at || '').substring(0, 10) + '</small></div>';
             }).join('');
-        } else { el.innerHTML = '<span class="text-muted">Žádné záznamy</span>'; }
+        } else { el.innerHTML = '<span class="text-muted">Žádné faktury</span>'; }
     } catch (e) { el.innerHTML = '<span style="color:#dc2626;">Chyba načtení</span>'; }
 }
 function openAddBillingModal() {
     var apiKey = document.getElementById('edit_api_key').value;
-    var desc = prompt('Popis (např. Faktura 2025-01):');
+    var yearDefault = String(new Date().getFullYear());
+    var year = prompt('Rok faktury (např. 2026):', yearDefault);
+    if (year === null) return;
+    var kind = prompt('Druh: initial (1. rok) / renewal (obnova) / other:', 'initial');
+    if (kind === null) return;
+    var desc = prompt('Popis (např. Faktura Basic 2026):', 'Faktura ' + year);
     if (desc === null) return;
-    var amount = prompt('Částka (Kč):', '0');
+    var amount = prompt('Částka (Kč):', '1090');
     if (amount === null) return;
     var paidAt = prompt('Datum platby (YYYY-MM-DD):', new Date().toISOString().substring(0, 10));
     if (paidAt === null) return;
     var fd = new FormData();
     fd.append('api_key', apiKey);
     fd.append('description', desc);
-    fd.append('amount_cents', Math.round(parseFloat(amount) || 0) * 100);
+    fd.append('amount_czk', String(parseFloat(String(amount).replace(',', '.')) || 0));
     fd.append('paid_at', paidAt);
+    fd.append('period_year', String(parseInt(year, 10) || yearDefault));
+    fd.append('invoice_kind', (kind || 'initial').toLowerCase());
     fetch('/admin/api/license/billing', { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(res) {
-        if (res.success) { loadBillingHistory(apiKey); alert('Záznam přidán'); }
+        if (res.success) { loadBillingHistory(apiKey); alert('Faktura přidána'); }
         else alert(res.error || 'Chyba');
     }).catch(function(e) { alert('Chyba: ' + e.message); });
+}
+async function toggleTestLicense(apiKey, isTest, checkboxEl) {
+    var fd = new FormData();
+    fd.append('api_key', apiKey);
+    fd.append('is_test', isTest ? '1' : '0');
+    try {
+        var r = await fetch('/admin/api/license/set-test', { method: 'POST', body: fd });
+        var data = await r.json();
+        if (!data.success) {
+            if (checkboxEl) checkboxEl.checked = !isTest;
+            alert(data.error || 'Chyba');
+            return;
+        }
+        // Obnovit stránku kvůli KPI příjmů
+        window.location.reload();
+    } catch (e) {
+        if (checkboxEl) checkboxEl.checked = !isTest;
+        alert('Chyba: ' + e.message);
+    }
 }
 var lastWelcomePackageText = '';
 function openWelcomePackageModal(btn) {
@@ -728,6 +831,7 @@ async function submitEditForm(e) {
     var data = new FormData(document.getElementById('editForm'));
     var np = document.getElementById('edit_new_password').value;
     if (np) data.set('new_password', np);
+    data.set('is_test', document.getElementById('edit_is_test').checked ? '1' : '0');
     try {
         var response = await fetch('{{ url_for("admin.api_update_license") }}', { method: 'POST', body: data });
         var result = await response.json();

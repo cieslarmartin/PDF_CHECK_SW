@@ -159,8 +159,17 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
 # JWT KONFIGURACE
 # =============================================================================
 
-# DŮLEŽITÉ: V produkci nahradit silným náhodným klíčem!
-JWT_SECRET = "pdfcheck_jwt_secret_change_in_production_2025"
+# DŮLEŽITÉ: V produkci nastavit JWT_SECRET v env (PythonAnywhere WSGI / Environment variables).
+import os as _os
+import logging as _logging
+
+_JWT_FALLBACK = "pdfcheck_jwt_secret_change_in_production_2025"
+JWT_SECRET = (_os.environ.get('JWT_SECRET') or '').strip() or _JWT_FALLBACK
+if JWT_SECRET == _JWT_FALLBACK:
+    _logging.getLogger(__name__).warning(
+        'JWT_SECRET není nastaven v prostředí – používá se lokální vývojový fallback. '
+        'Na produkci nastavte silný náhodný JWT_SECRET.'
+    )
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24  # Token platí 24 hodin
 

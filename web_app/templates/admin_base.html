@@ -49,6 +49,16 @@
             color: #fff;
         }
         .sidebar-nav a.active { color: #3498DB; }
+        .nav-group-label {
+            padding: 14px 20px 4px;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #7f8c8d;
+            font-weight: 600;
+            list-style: none;
+        }
+        .nav-ico { width: 1.4rem; display: inline-block; text-align: center; }
         .sidebar .user-info {
             padding: 16px 20px;
             border-top: 1px solid #34495e;
@@ -312,9 +322,137 @@
             .header-mobile-menu { display: none !important; }
         }
         @media (max-width: 768px) {
-            .header { flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 12px 16px; }
-            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .table-container table { min-width: 600px; }
+            .header {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            .admin-grid-2 { grid-template-columns: 1fr !important; }
+            .btn, .action-btn, .btn-sm, .btn-small {
+                min-height: 44px;
+                padding: 10px 14px;
+            }
+            .modal-overlay, .crm-modal {
+                align-items: stretch;
+                padding: 0;
+            }
+            .modal-overlay .modal,
+            .crm-modal .crm-modal-content,
+            .crm-modal-content {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: 100vh !important;
+                height: 100%;
+                border-radius: 0 !important;
+                margin: 0;
+            }
+            /* Tabulka → karty */
+            .table-cards thead { display: none; }
+            .table-cards,
+            .table-cards tbody,
+            .table-cards tr,
+            .table-cards td {
+                display: block;
+                width: 100%;
+            }
+            .table-container:has(.table-cards) { overflow: visible; }
+            .table-container:has(.table-cards) table { min-width: 0 !important; }
+            .table-cards tr {
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                padding: 10px 12px;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            }
+            .table-cards tr:hover { background: #fff; }
+            .table-cards td {
+                border: none;
+                padding: 6px 0;
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            .table-cards td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #6b7280;
+                font-size: 0.75em;
+                text-transform: uppercase;
+                flex: 0 0 38%;
+                max-width: 42%;
+            }
+            .table-cards td[data-label=""]::before,
+            .table-cards td:not([data-label])::before { content: none; flex: 0; }
+            .actions-dropdown { position: relative; display: inline-block; width: 100%; }
+            .actions-dropdown > summary {
+                list-style: none;
+                cursor: pointer;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 10px 14px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                background: #fff;
+                font-weight: 600;
+                width: 100%;
+            }
+            .actions-dropdown > summary::-webkit-details-marker { display: none; }
+            .actions-dropdown[open] > summary { background: #f3f4f6; }
+            .actions-dropdown .actions-menu {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 8px;
+                padding: 8px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                background: #f9fafb;
+            }
+            .actions-dropdown .actions-menu .action-btn,
+            .actions-dropdown .actions-menu form {
+                width: 100%;
+            }
+            .actions-dropdown .actions-menu .action-btn {
+                justify-content: center;
+            }
+            .dash-block-title {
+                font-size: 1.05em;
+                font-weight: 600;
+                margin: 0 0 12px;
+                color: #1e5a8a;
+            }
+            .form-group input, .form-group select, .form-control {
+                min-height: 44px;
+                font-size: 16px; /* iOS zoom prevent */
+            }
+        }
+        @media (min-width: 769px) {
+            .actions-dropdown > summary { display: none; }
+            .actions-dropdown .actions-menu {
+                display: flex !important;
+                flex-wrap: wrap;
+                gap: 6px;
+                border: none;
+                background: transparent;
+                padding: 0;
+                margin: 0;
+            }
+            .actions-dropdown { display: contents; }
+        }
+        .dash-block-title {
+            font-size: 1.05em;
+            font-weight: 600;
+            margin: 0 0 12px;
+            color: #1e5a8a;
         }
         {% block extra_css %}{% endblock %}
     </style>
@@ -328,40 +466,34 @@
         </div>
         <ul class="sidebar-nav">
             {# ── Přehled ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Přehled</li>
-            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📊</span> Dashboard</a></li>
-            <li><a href="{{ url_for('admin.analytics') }}" class="{{ 'active' if active_page == 'analytics' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">👁️</span> Návštěvnost</a></li>
+            <li class="nav-group-label">Přehled</li>
+            <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}"><span class="nav-ico">📊</span> Dashboard</a></li>
+            <li><a href="{{ url_for('admin.analytics') }}" class="{{ 'active' if active_page == 'analytics' else '' }}"><span class="nav-ico">👁️</span> Návštěvnost</a></li>
 
-            {# ── Uživatelé a licence ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Uživatelé a licence</li>
-            <li><a href="{{ url_for('admin.users_licenses') }}" class="{{ 'active' if active_page == 'users_licenses' else '' }}" title="Objednávky (CRM) a seznam licencí"><span style="width:1.4rem;display:inline-block;text-align:center;">👤</span> Objednávky a licence</a></li>
+            {# ── Prodej ── #}
+            <li class="nav-group-label">Prodej</li>
+            <li><a href="{{ url_for('admin.users_licenses') }}" class="{{ 'active' if active_page == 'users_licenses' else '' }}" title="Objednávky (CRM) a seznam licencí"><span class="nav-ico">👤</span> Objednávky a licence</a></li>
+            <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span class="nav-ico">📋</span> Ceník / Tarify</a></li>
+            <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span class="nav-ico">🛒</span> Texty checkoutu</a></li>
+            <li><a href="{{ url_for('admin.company_settings') }}" class="{{ 'active' if active_page == 'company_settings' else '' }}"><span class="nav-ico">🏢</span> Nastavení firmy</a></li>
 
-            {# ── Obchod ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obchod</li>
-            <li><a href="{{ url_for('admin.tiers') }}" class="{{ 'active' if active_page == 'tiers' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📋</span> Ceník / Tarify</a></li>
-            <li><a href="{{ url_for('admin.checkout_texts') }}" class="{{ 'active' if active_page == 'checkout_texts' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🛒</span> Texty checkoutu</a></li>
+            {# ── Provoz ── #}
+            <li class="nav-group-label">Provoz</li>
+            <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span class="nav-ico">🧪</span> Trial správa</a></li>
+            <li><a href="{{ url_for('admin.free_check_usage') }}" class="{{ 'active' if active_page == 'free_check_usage' else '' }}"><span class="nav-ico">🆓</span> Free check podle IP</a></li>
+            <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span class="nav-ico">📜</span> Logy</a></li>
 
-            {# ── Aktivita ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Aktivita</li>
-            <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🧪</span> Trial správa</a></li>
-            <li><a href="{{ url_for('admin.free_check_usage') }}" class="{{ 'active' if active_page == 'free_check_usage' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🆓</span> Free check podle IP</a></li>
-            <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📜</span> Logy</a></li>
+            {# ── Obsah a marketing ── #}
+            <li class="nav-group-label">Obsah a marketing</li>
+            <li><a href="{{ url_for('admin.marketing_emails') }}" class="{{ 'active' if active_page == 'marketing_emails' else '' }}"><span class="nav-ico">📧</span> E-maily / Marketing</a></li>
+            <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span class="nav-ico">❓</span> FAQ</a></li>
+            <li><a href="{{ url_for('admin.content_help') }}" class="{{ 'active' if active_page == 'content_help' else '' }}"><span class="nav-ico">📄</span> Nápověda</a></li>
+            <li><a href="{{ url_for('admin.updates') }}" class="{{ 'active' if active_page == 'updates' else '' }}"><span class="nav-ico">📰</span> Co je nového</a></li>
+            <li><a href="{{ url_for('admin.coming_soon') }}" class="{{ 'active' if active_page == 'coming_soon' else '' }}"><span class="nav-ico">🔜</span> Připravujeme</a></li>
 
-            {# ── Komunikace ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Komunikace</li>
-            <li><a href="{{ url_for('admin.marketing_emails') }}" class="{{ 'active' if active_page == 'marketing_emails' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📧</span> E-maily / Marketing</a></li>
-
-            {# ── Firma ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Firma</li>
-            <li><a href="{{ url_for('admin.company_settings') }}" class="{{ 'active' if active_page == 'company_settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🏢</span> Nastavení firmy</a></li>
-
-            {# ── Obsah a systém ── #}
-            <li style="padding:14px 20px 4px;font-size:0.7em;text-transform:uppercase;letter-spacing:0.08em;color:#7f8c8d;font-weight:600;">Obsah a systém</li>
-            <li><a href="{{ url_for('admin.settings') }}" class="{{ 'active' if active_page == 'settings' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">⚙️</span> Nastavení</a></li>
-            <li><a href="{{ url_for('admin.faq_list') }}" class="{{ 'active' if active_page == 'faq' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">❓</span> Správa FAQ</a></li>
-            <li><a href="{{ url_for('admin.content_help') }}" class="{{ 'active' if active_page == 'content_help' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📄</span> Správa obsahu nápovědy</a></li>
-            <li><a href="{{ url_for('admin.updates') }}" class="{{ 'active' if active_page == 'updates' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">📰</span> Co je nového</a></li>
-            <li><a href="{{ url_for('admin.coming_soon') }}" class="{{ 'active' if active_page == 'coming_soon' else '' }}"><span style="width:1.4rem;display:inline-block;text-align:center;">🔜</span> Připravujeme</a></li>
+            {# ── Systém ── #}
+            <li class="nav-group-label">Systém</li>
+            <li><a href="{{ url_for('admin.settings') }}" class="{{ 'active' if active_page == 'settings' else '' }}"><span class="nav-ico">⚙️</span> Nastavení</a></li>
         </ul>
         <div class="user-info">
             {{ user.display_name if user else 'Admin' }}<br>
@@ -398,6 +530,43 @@
     </div>
     <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script>(function(){ var i=document.getElementById('admin-theme-icon'); if(i) i.textContent=(typeof getTheme==='function'&&getTheme()==='dark')?'☀️':'🌙'; })();</script>
+    <script>
+    window.__CSRF_TOKEN__ = {{ (csrf_token() if csrf_token is defined else '')|tojson }};
+    (function() {
+        function injectCsrf(form) {
+            if (!form || !window.__CSRF_TOKEN__) return;
+            var method = (form.getAttribute('method') || 'get').toLowerCase();
+            if (method !== 'post') return;
+            if (form.querySelector('input[name="csrf_token"]')) return;
+            var i = document.createElement('input');
+            i.type = 'hidden';
+            i.name = 'csrf_token';
+            i.value = window.__CSRF_TOKEN__;
+            form.appendChild(i);
+        }
+        document.querySelectorAll('form').forEach(injectCsrf);
+        var _fd = window.fetch;
+        if (_fd) {
+            window.fetch = function(input, init) {
+                init = init || {};
+                var method = (init.method || 'GET').toUpperCase();
+                if (method !== 'GET' && method !== 'HEAD' && window.__CSRF_TOKEN__) {
+                    init.headers = init.headers || {};
+                    if (init.headers instanceof Headers) {
+                        if (!init.headers.has('X-CSRF-Token')) init.headers.set('X-CSRF-Token', window.__CSRF_TOKEN__);
+                    } else if (!init.headers['X-CSRF-Token']) {
+                        init.headers['X-CSRF-Token'] = window.__CSRF_TOKEN__;
+                    }
+                    if (init.body && typeof FormData !== 'undefined' && init.body instanceof FormData && !init.body.has('csrf_token')) {
+                        init.body.append('csrf_token', window.__CSRF_TOKEN__);
+                    }
+                }
+                return _fd.call(this, input, init);
+            };
+        }
+        document.addEventListener('submit', function(e) { injectCsrf(e.target); }, true);
+    })();
+    </script>
     <script>
     (function() {
         var sidebar = document.getElementById('adminSidebar');

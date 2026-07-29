@@ -3,73 +3,113 @@
 {% block content %}
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:16px;">Návštěvnost webu</h2>
 
-{# Období #}
-<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;">
+<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
     <span style="font-size:0.85em;color:#6b7280;">Období:</span>
     {% for d in [7, 14, 30, 90] %}
-    <a href="?days={{ d }}" style="padding:4px 12px;border-radius:6px;font-size:0.85em;text-decoration:none;
+    <a href="?days={{ d }}" class="btn btn-sm" style="min-height:44px;display:inline-flex;align-items:center;
         {% if days == d %}background:#1d4ed8;color:white;{% else %}background:#f3f4f6;color:#374151;{% endif %}">{{ d }} dní</a>
     {% endfor %}
 </div>
 
-{# KPI karty #}
-<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;">
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:150px;">
-        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Dnes</div>
+{# KPI #}
+<div class="admin-grid-2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">Dnes</div>
         <div style="font-size:1.5em;font-weight:700;color:#1d4ed8;">{{ stats.today }}</div>
         <div style="font-size:0.8em;color:#6b7280;">{{ stats.today_unique }} unikátních</div>
     </div>
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:150px;">
-        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">7 dní</div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">7 dní</div>
         <div style="font-size:1.5em;font-weight:700;color:#047857;">{{ stats.week }}</div>
         <div style="font-size:0.8em;color:#6b7280;">{{ stats.week_unique }} unikátních</div>
     </div>
-    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;min-width:150px;">
-        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">30 dní</div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">30 dní</div>
         <div style="font-size:1.5em;font-weight:700;color:#b45309;">{{ stats.month }}</div>
         <div style="font-size:0.8em;color:#6b7280;">{{ stats.month_unique }} unikátních</div>
     </div>
-    <div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;min-width:150px;">
-        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Celkem</div>
+    <div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">Celkem</div>
         <div style="font-size:1.5em;font-weight:700;color:#374151;">{{ stats.total }}</div>
         <div style="font-size:0.8em;color:#6b7280;">{{ stats.total_unique }} unikátních</div>
     </div>
+    <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">Noví / Vracející ({{ days }} d)</div>
+        <div style="font-size:1.2em;font-weight:700;color:#7e22ce;">{{ new_vs_ret.new }} / {{ new_vs_ret.returning }}</div>
+    </div>
+    <div style="background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:12px 20px;">
+        <div style="font-size:0.7em;color:#6b7280;text-transform:uppercase;">Mobil / Desktop</div>
+        <div style="font-size:1.2em;font-weight:700;color:#0e7490;">{{ device_share.get('mobile', 0) }}% / {{ device_share.get('desktop', 0) }}%</div>
+        {% if device_share.get('tablet') %}<div style="font-size:0.8em;color:#6b7280;">Tablet {{ device_share.get('tablet') }}%</div>{% endif %}
+    </div>
 </div>
 
-{# Denní graf #}
-{% if daily %}
-<h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Denní návštěvnost ({{ days }} dní)</h3>
-<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;overflow-x:auto;">
-    <div style="display:flex;align-items:flex-end;gap:2px;height:120px;min-width:{{ daily|length * 18 }}px;">
-        {% set max_views = daily|map(attribute='views')|max %}
-        {% for d in daily %}
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:14px;">
-            <div style="background:#3b82f6;border-radius:2px 2px 0 0;width:100%;max-width:24px;
-                height:{{ (d.views / max_views * 100)|int if max_views > 0 else 0 }}px;min-height:2px;" title="{{ d.day }}: {{ d.views }} views / {{ d.unique_visitors }} unik."></div>
+{# Grafy #}
+<div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;">
+        <h3 style="font-size:0.95em;margin:0 0 12px;">Návštěvy po hodinách (24 h)</h3>
+        <div style="height:220px;"><canvas id="chartHourly"></canvas></div>
+    </div>
+    <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;">
+        <h3 style="font-size:0.95em;margin:0 0 12px;">Denní návštěvnost ({{ days }} dní)</h3>
+        <div style="height:220px;"><canvas id="chartDaily"></canvas></div>
+    </div>
+</div>
+
+{# Funnel #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 12px;">Konverzní trychtýř ({{ days }} dní)</h3>
+    <div class="admin-grid-2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div style="padding:12px;background:#eff6ff;border-radius:8px;text-align:center;">
+            <div style="font-size:0.75em;color:#6b7280;">Landing</div>
+            <div style="font-size:1.4em;font-weight:700;">{{ funnel.landing }}</div>
         </div>
-        {% endfor %}
-    </div>
-    <div style="display:flex;gap:2px;margin-top:4px;min-width:{{ daily|length * 18 }}px;">
-        {% for d in daily %}
-        <div style="flex:1;text-align:center;font-size:0.55em;color:#9ca3af;min-width:14px;{% if loop.index0 % 3 != 0 and daily|length > 14 %}visibility:hidden;{% endif %}">{{ d.day[5:] }}</div>
-        {% endfor %}
+        <div style="padding:12px;background:#fef3c7;border-radius:8px;text-align:center;">
+            <div style="font-size:0.75em;color:#6b7280;">Checkout</div>
+            <div style="font-size:1.4em;font-weight:700;">{{ funnel.checkout }}</div>
+            <div style="font-size:0.8em;color:#6b7280;">{{ funnel.landing_to_checkout_pct }} % z landingu</div>
+        </div>
+        <div style="padding:12px;background:#d1fae5;border-radius:8px;text-align:center;">
+            <div style="font-size:0.75em;color:#6b7280;">Objednávky</div>
+            <div style="font-size:1.4em;font-weight:700;">{{ funnel.orders }}</div>
+            <div style="font-size:0.8em;color:#6b7280;">{{ funnel.checkout_to_order_pct }} % z checkoutu · {{ funnel.landing_to_order_pct }} % celkově</div>
+        </div>
     </div>
 </div>
-{% endif %}
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-    {# Top stránky #}
+{# Cesty #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 8px;">Nejčastější cesty návštěvníků</h3>
+    <p class="text-muted small" style="margin:0 0 12px;">Session = stejný visitor do 30 minut.</p>
+    <div class="table-container">
+        <table class="table-dense table-cards">
+            <thead><tr><th>Cesta</th><th>Počet</th></tr></thead>
+            <tbody>
+            {% for p in visitor_paths %}
+            <tr>
+                <td data-label="Cesta" style="font-family:monospace;font-size:0.85em;">{{ p.path_str }}</td>
+                <td data-label="Počet">{{ p.count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2" class="text-center text-muted" style="padding:16px;">Zatím málo dat pro cesty.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
     <div>
-        <h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Nejnavštěvovanější stránky</h3>
+        <h3 style="font-size:1em;margin-bottom:8px;">Nejnavštěvovanější stránky</h3>
         <div class="table-container">
-            <table class="table-dense">
+            <table class="table-dense table-cards">
                 <thead><tr><th>Stránka</th><th>Views</th><th>Unikátní</th></tr></thead>
                 <tbody>
                 {% for r in by_page %}
                 <tr>
-                    <td style="font-family:monospace;font-size:0.85em;">{{ r.path }}</td>
-                    <td>{{ r.views }}</td>
-                    <td>{{ r.unique_visitors }}</td>
+                    <td data-label="Stránka" style="font-family:monospace;font-size:0.85em;">{{ r.path }}</td>
+                    <td data-label="Views">{{ r.views }}</td>
+                    <td data-label="Unikátní">{{ r.unique_visitors }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádná data</td></tr>
@@ -78,19 +118,17 @@
             </table>
         </div>
     </div>
-
-    {# Referrery #}
     <div>
-        <h3 style="font-size:1em;margin-bottom:8px;color:#1f2937;">Odkud přicházejí (Referrer)</h3>
+        <h3 style="font-size:1em;margin-bottom:8px;">Odkud přicházejí (Referrer)</h3>
         <div class="table-container">
-            <table class="table-dense">
+            <table class="table-dense table-cards">
                 <thead><tr><th>Zdroj</th><th>Views</th><th>Unikátní</th></tr></thead>
                 <tbody>
                 {% for r in by_referrer %}
                 <tr>
-                    <td style="font-size:0.85em;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ r.referrer }}">{{ r.referrer }}</td>
-                    <td>{{ r.views }}</td>
-                    <td>{{ r.unique_visitors }}</td>
+                    <td data-label="Zdroj" style="font-size:0.85em;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ r.referrer }}">{{ r.referrer }}</td>
+                    <td data-label="Views">{{ r.views }}</td>
+                    <td data-label="Unikátní">{{ r.unique_visitors }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádná data</td></tr>
@@ -101,33 +139,86 @@
     </div>
 </div>
 
-{# UTM zdroje #}
 {% if by_utm and by_utm|selectattr('source', 'ne', '(bez UTM)')|list %}
-<h3 style="font-size:1em;margin:20px 0 8px;color:#1f2937;">UTM kampaně</h3>
-<p class="text-muted small mb-2">Přidejte <code>?utm_source=google&utm_medium=cpc&utm_campaign=jaro2026</code> k odkazům pro trackování kampaní.</p>
-<div class="table-container">
-    <table class="table-dense">
+<h3 style="font-size:1em;margin:20px 0 8px;">UTM kampaně</h3>
+<div class="table-container" style="margin-bottom:24px;">
+    <table class="table-dense table-cards">
         <thead><tr><th>Zdroj</th><th>Médium</th><th>Kampaň</th><th>Views</th><th>Unikátní</th></tr></thead>
         <tbody>
         {% for r in by_utm %}
         {% if r.source != '(bez UTM)' %}
         <tr>
-            <td>{{ r.source }}</td>
-            <td>{{ r.medium }}</td>
-            <td>{{ r.campaign }}</td>
-            <td>{{ r.views }}</td>
-            <td>{{ r.unique_visitors }}</td>
+            <td data-label="Zdroj">{{ r.source }}</td>
+            <td data-label="Médium">{{ r.medium }}</td>
+            <td data-label="Kampaň">{{ r.campaign }}</td>
+            <td data-label="Views">{{ r.views }}</td>
+            <td data-label="Unikátní">{{ r.unique_visitors }}</td>
         </tr>
         {% endif %}
         {% endfor %}
         </tbody>
     </table>
 </div>
-{% else %}
-<div style="margin-top:20px;padding:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
-    <p style="font-size:0.9em;color:#6b7280;">💡 <strong>Tip:</strong> Přidejte UTM parametry k odkazům pro sledování kampaní:</p>
-    <code style="font-size:0.8em;color:#374151;background:#e5e7eb;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;">https://www.dokucheck.cz/?utm_source=facebook&utm_medium=post&utm_campaign=launch</code>
-</div>
 {% endif %}
 
+{# Živý přehled 24h #}
+<h3 style="font-size:1em;margin:20px 0 8px;">Poslední návštěvy (24 h)</h3>
+<div class="table-container" style="margin-bottom:24px;">
+    <table class="table-dense table-cards">
+        <thead><tr><th>Čas</th><th>Stránka</th><th>Zařízení</th><th>Prohlížeč</th><th>Referrer</th></tr></thead>
+        <tbody>
+        {% for r in recent_views %}
+        <tr>
+            <td data-label="Čas"><small>{{ (r.timestamp or '')[:16] }}</small></td>
+            <td data-label="Stránka" style="font-family:monospace;font-size:0.85em;">{{ r.path }}</td>
+            <td data-label="Zařízení">{{ r.device_type or '—' }}</td>
+            <td data-label="Prohlížeč">{{ r.browser or '—' }}</td>
+            <td data-label="Referrer"><small title="{{ r.referrer or '' }}">{{ (r.referrer or '—')[:40] }}</small></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted" style="padding:16px;">Žádné návštěvy za posledních 24 h.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+var _hourly = {{ (hourly or []) | tojson }};
+var _daily = {{ (daily or []) | tojson }};
+(function() {
+    if (typeof Chart === 'undefined') return;
+    var blue = 'rgb(59, 130, 246)', green = 'rgb(16, 185, 129)';
+    var ctxH = document.getElementById('chartHourly');
+    if (ctxH) {
+        new Chart(ctxH, {
+            type: 'line',
+            data: {
+                labels: _hourly.map(function(x) { return (x.hour || '').toString().slice(11, 16); }),
+                datasets: [
+                    { label: 'Views', data: _hourly.map(function(x) { return x.views || 0; }), borderColor: blue, tension: 0.3, fill: false },
+                    { label: 'Unikátní', data: _hourly.map(function(x) { return x.unique_visitors || 0; }), borderColor: green, tension: 0.3, fill: false }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+    }
+    var ctxD = document.getElementById('chartDaily');
+    if (ctxD) {
+        new Chart(ctxD, {
+            type: 'bar',
+            data: {
+                labels: _daily.map(function(x) { return (x.day || '').toString().slice(5); }),
+                datasets: [
+                    { label: 'Views', data: _daily.map(function(x) { return x.views || 0; }), backgroundColor: blue },
+                    { label: 'Unikátní', data: _daily.map(function(x) { return x.unique_visitors || 0; }), backgroundColor: green }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+    }
+})();
+</script>
 {% endblock %}

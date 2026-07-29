@@ -28,25 +28,6 @@ _PROJECT_ROOT = os.path.dirname(_WEB_APP_DIR)
 if _PROJECT_ROOT not in sys.path:
     sys.path.append(_PROJECT_ROOT)
 
-# #region agent debug log
-def _dbg(hypothesis_id: str, message: str, data: dict | None = None, run_id: str = "pre-fix"):
-    """NDJSON debug log for local reproduction (no secrets/PII)."""
-    try:
-        payload = {
-            "sessionId": "1b2246",
-            "runId": run_id,
-            "hypothesisId": hypothesis_id,
-            "location": "web_app/pdf_check_web_main.py",
-            "message": message,
-            "data": data or {},
-            "timestamp": int(__import__("time").time() * 1000),
-        }
-        with open(os.path.join(_PROJECT_ROOT, "debug-1b2246.log"), "a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
-# #endregion
-
 # NOVÉ IMPORTY PRO API:
 from api_endpoint import register_api_routes, consume_one_time_token
 from database import Database
@@ -100,6 +81,19 @@ def kill_port(port=5000):
 
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
+
+def _allow_local_disk_scan():
+    """Skenování disků jen na localhost / s ALLOW_SCAN_FOLDER=1 – nikdy na PythonAnywhere."""
+    if os.environ.get('PYTHONANYWHERE_SITE') or os.environ.get('PYTHONANYWHERE_DOMAIN'):
+        return False
+    if os.environ.get('ALLOW_SCAN_FOLDER', '').strip().lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    try:
+        host = (request.host or '').split(':')[0].lower()
+    except RuntimeError:
+        host = ''
+    return host in ('127.0.0.1', 'localhost')
 
 
 # =============================================================================
@@ -208,38 +202,93 @@ def redirect_admin_login_trailing_slash():
     return None
 
 
-_TRACK_PATHS = {'/', '/app', '/checkout', '/portal', '/portal/dashboard', '/online-check', '/download/agent'}
-_SKIP_PREFIXES = ('/static/', '/admin', '/api/', '/favicon', '/login', '/logout', '/setup')
+_SKIP_PREFIXES = ('/static/', '/admin', '/api/', '/favicon', '/login', '/logout', '/setup', '/__')
+
+@app.before_request
+def csrf_before_request():
+    try:
+        from csrf_protect import csrf_protect_request
+        return csrf_protect_request()
+    except ImportError:
+        return None
+
+
+@app.after_request
+def security_headers(response):
+    """Bezpečnostní HTTP hlavičky (bez dopadu na API logiku)."""
+    response.headers.setdefault('X-Frame-Options', 'DENY')
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    # HSTS jen přes HTTPS / za proxy
+    is_https = request.is_secure or (request.headers.get('X-Forwarded-Proto') == 'https')
+    if is_https:
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    return response
+
 
 @app.after_request
 def track_page_view(response):
-    """Zaznamenává návštěvy stránek (jen HTML stránky, ne API/statika/admin)."""
+    """Zaznamenává návštěvy všech veřejných HTML stránek (ne API/statika/admin)."""
     if response.status_code >= 300:
+        return response
+    # Jen HTML odpovědi (ne JSON/SSE/binárky)
+    ctype = (response.content_type or '').lower()
+    if ctype and 'text/html' not in ctype:
         return response
     path = request.path or '/'
     if any(path.startswith(p) for p in _SKIP_PREFIXES):
         return response
-    if path not in _TRACK_PATHS and not path.startswith('/checkout'):
-        return response
     try:
+        from analytics_ua import (
+            is_bot_user_agent, parse_device_type, parse_browser, make_visitor_id,
+        )
         ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
         referrer = (request.referrer or '')[:500]
-        # Odstranit interní referrer (vlastní doména)
-        if referrer and ('dokucheck.cz' in referrer or '127.0.0.1' in referrer):
+        if referrer and ('dokucheck.cz' in referrer or '127.0.0.1' in referrer or 'localhost' in referrer):
             referrer = ''
         ua = (request.headers.get('User-Agent') or '')[:300]
+        is_bot = is_bot_user_agent(ua)
+        visitor_id = make_visitor_id(ip, ua)
+        device_type = parse_device_type(ua)
+        browser = parse_browser(ua)
         utm_source = request.args.get('utm_source', '')[:100]
         utm_medium = request.args.get('utm_medium', '')[:100]
         utm_campaign = request.args.get('utm_campaign', '')[:100]
         db = Database()
-        db.record_page_view(ip, path, referrer=referrer or None,
-                            utm_source=utm_source or None,
-                            utm_medium=utm_medium or None,
-                            utm_campaign=utm_campaign or None,
-                            user_agent=ua or None)
+        db.record_page_view(
+            ip, path, referrer=referrer or None,
+            utm_source=utm_source or None,
+            utm_medium=utm_medium or None,
+            utm_campaign=utm_campaign or None,
+            user_agent=ua or None,
+            visitor_id=visitor_id,
+            device_type=device_type,
+            browser=browser,
+            is_bot=1 if is_bot else 0,
+        )
     except Exception:
         pass
     return response
+
+
+@app.errorhandler(500)
+def handle_500(error):
+    """Zapíše pád serveru do admin systémových logů (nikdy nesmí shodit odpověď)."""
+    try:
+        msg = str(getattr(error, 'original_exception', None) or error)[:2000]
+        Database().insert_system_log('ERROR', f'HTTP 500: {msg}')
+    except Exception:
+        pass
+    return ('Interní chyba serveru', 500)
+
+
+@app.context_processor
+def inject_csrf_token():
+    try:
+        from csrf_protect import get_csrf_token
+        return {'csrf_token': get_csrf_token}
+    except ImportError:
+        return {'csrf_token': lambda: ''}
 
 
 @app.context_processor
@@ -254,12 +303,26 @@ def inject_web_build():
 
 # NOVÉ: Secret key pro sessions (admin panel)
 import os
-app.secret_key = os.environ.get('SECRET_KEY', 'pdfcheck_secret_key_2025_change_in_production')
-# Na PythonAnywhere s HTTPS nastavte SESSION_COOKIE_SECURE=1 v proměnných prostředí
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', '').strip().lower() in (
-    '1', 'true', 'yes', 'on',
-)
+_SECRET_FALLBACK = 'pdfcheck_secret_key_2025_change_in_production'
+_secret_from_env = (os.environ.get('SECRET_KEY') or '').strip()
+app.secret_key = _secret_from_env or _SECRET_FALLBACK
+if not _secret_from_env:
+    logging.getLogger(__name__).warning(
+        'SECRET_KEY není nastaven v prostředí – používá se lokální vývojový fallback. '
+        'Na produkci nastavte silný náhodný SECRET_KEY (odhlásí aktivní session).'
+    )
+# Na PythonAnywhere s HTTPS nastavte SESSION_COOKIE_SECURE=1 (nebo nechte auto-detekci níže)
+_is_pa = bool(os.environ.get('PYTHONANYWHERE_SITE') or os.environ.get('PYTHONANYWHERE_DOMAIN'))
+_secure_env = os.environ.get('SESSION_COOKIE_SECURE', '').strip().lower()
+if _secure_env in ('1', 'true', 'yes', 'on'):
+    app.config['SESSION_COOKIE_SECURE'] = True
+elif _secure_env in ('0', 'false', 'no', 'off'):
+    app.config['SESSION_COOKIE_SECURE'] = False
+else:
+    # Auto: na PythonAnywhere / produkci zapnout Secure cookies
+    app.config['SESSION_COOKIE_SECURE'] = _is_pa
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hodin
 
 # Flask-Mail – SMTP (výchozí objednavky@dokucheck.cz; příjemce notifikací objednavky@)
@@ -1653,17 +1716,8 @@ async function processFilesWithProgress(files) {
             const formData = new FormData();
             formData.append('file', file);
             try {
-                // #region agent debug log
-                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J1',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_start',data:{name:file.name,size:file.size||null},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
                 const response = await fetch('/analyze', { method: 'POST', body: formData, headers: authHeaders });
-                // #region agent debug log
-                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J2',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_response',data:{status:response.status,ok:response.ok},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
                 const result = await response.json().catch(function() { return {}; });
-                // #region agent debug log
-                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J3',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_json',data:{hasError:!!(result&&result.error),error:(result&&result.error)||null,pdfaStatus:(result&&result.pdfaStatus)||null},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
                 if (!response.ok) {
                     if (response.status === 429 && result.limit_exceeded) {
                         progressModal.classList.remove('visible');
@@ -1676,9 +1730,6 @@ async function processFilesWithProgress(files) {
                 }
                 batch.files.push({ ...result, path: file.webkitRelativePath || file.name, name: file.name });
             } catch (error) {
-                // #region agent debug log
-                fetch('http://127.0.0.1:7291/ingest/43cdb55e-f6da-4f9b-915d-4b8904608b43',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1b2246'},body:JSON.stringify({sessionId:'1b2246',runId:'pre-fix',hypothesisId:'J4',location:'web_app/pdf_check_web_main.py:processUploadFiles',message:'upload_fetch_exception',data:{err:String((error&&error.message)||error||'')},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
                 batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: 'Chyba: ' + (error.message || 'síťová chyba') });
             }
         }
@@ -3663,19 +3714,8 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
 def analyze_pdf_from_content(content):
     """Analýza PDF z bajtů přes sdílený desktop engine + web adaptér."""
     try:
-        # H1: desktop_agent import / sys.path / cwd
-        _dbg("H1", "analyze_pdf_from_content:enter", {
-            "content_len": len(content) if content is not None else None,
-            "cwd": os.getcwd(),
-            "project_root_in_syspath": _PROJECT_ROOT in sys.path,
-        })
         import tempfile
-        try:
-            from desktop_agent import pdf_checker as shared_engine
-            _dbg("H1", "analyze_pdf_from_content:import_desktop_agent_ok", {"desktop_agent_module": getattr(shared_engine, "__name__", "pdf_checker")})
-        except Exception as ie:
-            _dbg("H1", "analyze_pdf_from_content:import_desktop_agent_fail", {"err_type": type(ie).__name__, "err": str(ie)})
-            raise
+        from desktop_agent import pdf_checker as shared_engine
         try:
             from desktop_agent.tsa_registry import is_tsa_issuer_qualified as _q
             shared_engine.is_tsa_issuer_qualified = _q
@@ -3685,13 +3725,7 @@ def analyze_pdf_from_content(content):
             tmp.write(content)
             tmp_path = tmp.name
         try:
-            _dbg("H4", "analyze_pdf_from_content:tmp_written", {"tmp_path": tmp_path, "tmp_exists": os.path.exists(tmp_path)})
             wrapped = shared_engine.analyze_pdf_file(tmp_path)
-            # H3: engine dependency failures will surface here
-            _dbg("H3", "analyze_pdf_from_content:engine_ok", {
-                "wrapped_success": bool(getattr(wrapped, "get", lambda *_: None)("success")) if isinstance(wrapped, dict) else None,
-                "wrapped_keys": list(wrapped.keys())[:20] if isinstance(wrapped, dict) else None,
-            })
         finally:
             try:
                 os.remove(tmp_path)
@@ -3699,7 +3733,6 @@ def analyze_pdf_from_content(content):
                 pass
         return _flatten_shared_result(wrapped, content, fallback_name='upload.pdf')
     except Exception as e:
-        _dbg("H2", "analyze_pdf_from_content:exception", {"err_type": type(e).__name__, "err": str(e)})
         return {'name': 'upload.pdf', 'pdfaVersion': None, 'pdfaStatus': 'FAIL', 'pdfVersion': None, 'pdfaConformance': None, 'pdfaLevel': None, 'sig': 'FAIL', 'signer': '—', 'ckait': '—', 'tsa': 'NONE', 'issr_compatible': True, 'error': str(e)}
 
 
@@ -3925,41 +3958,6 @@ def app_logout():
     """Odhlášení z online checku – smaže portal_user ze session, aby se po F5 neobnovilo přihlášení."""
     session.pop('portal_user', None)
     return jsonify({'ok': True})
-
-
-@app.route('/__diag')
-def __diag():
-    """
-    Dočasná diagnostika: který version.py skutečně načetl WSGI proces (cesta, mtime, PID).
-    Po ověření na PA odstranit tuto route a zvýšit WEB_BUILD.
-    """
-    import version as ver_module
-
-    p = os.path.abspath(getattr(ver_module, '__file__', '') or '')
-    mtime = size = inode = None
-    try:
-        if p and os.path.isfile(p):
-            st = os.stat(p)
-            mtime = st.st_mtime
-            size = st.st_size
-            inode = st.st_ino
-    except Exception:
-        pass
-    return jsonify({
-        'web_build': getattr(ver_module, 'WEB_BUILD', None),
-        'web_version': getattr(ver_module, 'WEB_VERSION', None),
-        'agent_build_id': getattr(ver_module, 'AGENT_BUILD_ID', None),
-        'agent_version_display': getattr(ver_module, 'AGENT_VERSION_DISPLAY', None),
-        'version_file': p,
-        'version_mtime': mtime,
-        'version_size': size,
-        'version_inode': inode,
-        'cwd': os.getcwd(),
-        'pid': os.getpid(),
-        'sys_path_head': sys.path[:8],
-        'project_root': _PROJECT_ROOT,
-        'web_app_dir': _WEB_APP_DIR,
-    })
 
 
 @app.route('/app')
@@ -4514,12 +4512,8 @@ def analyze():
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
     try:
-        # H2: limit / wrong request shape
-        _dbg("H2", "/analyze:enter", {"has_filename": bool(getattr(file, "filename", "")), "filename_ext": (file.filename or "")[-8:] if getattr(file, "filename", None) else None})
         content = file.read()
-        _dbg("H2", "/analyze:read", {"content_len": len(content)})
         if len(content) > ONLINE_DEMO_MAX_FILE_SIZE:
-            _dbg("H2", "/analyze:reject_size", {"limit": ONLINE_DEMO_MAX_FILE_SIZE, "content_len": len(content)})
             return jsonify({'error': 'Soubor je větší než 2 MB. Pro větší soubory použijte Desktop aplikaci.'}), 400
         ip = _get_client_ip()
         db = Database()
@@ -4527,7 +4521,6 @@ def analyze():
         if not paid_user:
             allowed, _ = db.check_web_trial_limit(ip)
             if not allowed:
-                _dbg("H2", "/analyze:reject_trial_limit", {})
                 return jsonify({
                     'error': 'Dosáhli jste limitu kontrol za 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
                     'limit_exceeded': True
@@ -4538,10 +4531,8 @@ def analyze():
         _enrich_signatures_tsa_qualified(result)
         if file.filename:
             result['name'] = file.filename
-        _dbg("H2", "/analyze:ok", {"has_error": bool(result.get("error")), "pdfaStatus": result.get("pdfaStatus"), "sig": result.get("sig")})
         return jsonify(result)
     except Exception as e:
-        _dbg("H2", "/analyze:exception", {"err_type": type(e).__name__, "err": str(e)})
         return jsonify({'error': str(e)}), 500
 
 @app.route('/select_folder')
@@ -4592,7 +4583,9 @@ def api_settings():
 
 @app.route('/api/scan-folder-stream')
 def scan_folder_stream():
-    """SSE endpoint pro skenování složky s průběžným progress"""
+    """SSE endpoint pro skenování složky – pouze lokální vývoj (ne produkce/PA)."""
+    if not _allow_local_disk_scan():
+        return ('', 404)
     folder_path = request.args.get('path', '')
     
     if not folder_path or not os.path.isdir(folder_path):
@@ -4633,6 +4626,9 @@ def scan_folder_stream():
 
 @app.route('/api/scan-folder', methods=['POST'])
 def scan_folder():
+    """Skenování složky – pouze lokální vývoj (ne produkce/PA)."""
+    if not _allow_local_disk_scan():
+        return ('', 404)
     data = request.get_json()
     folder_path = data.get('path', '')
     if not folder_path or not os.path.isdir(folder_path):

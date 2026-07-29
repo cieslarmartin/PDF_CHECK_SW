@@ -93,6 +93,7 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('admin.login_verify_code') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="otp_code">Kód</label>
                 <input type="text" id="otp_code" name="otp_code" required maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autofocus placeholder="000000">

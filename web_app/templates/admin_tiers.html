@@ -7,7 +7,7 @@
 </div>
 <p class="text-muted small mb-3">Úpravy se projeví u všech uživatelů s daným tierem. U uživatele v Nástěnce měníte pouze výběr tieru (dropdown). Nový tier (např. Firemní pro 5 zařízení) přidáte tlačítkem vpravo nahoře.</p>
 <div class="table-container">
-    <table class="table-dense">
+    <table class="table-dense table-cards">
         <thead>
             <tr>
                 <th>Název</th>
@@ -38,17 +38,17 @@
             {% set default_checkout = 'Kontrola PDF v dávkách\nKontrola elektronických podpisů\nČasová razítka' %}
             {% endif %}
             <tr data-tier-id="{{ t.id }}" data-name="{{ t.name|e }}" data-max-files="{{ t.max_files_limit }}" data-max-devices="{{ t.max_devices }}" data-daily-limit="{{ t.daily_files_limit|default('') }}" data-rate-limit="{{ t.rate_limit_hour|default('') }}" data-max-size-mb="{{ t.max_file_size_mb|default('') }}" data-allow-sig="{{ 1 if t.allow_signatures else 0 }}" data-allow-ts="{{ 1 if t.allow_timestamp else 0 }}" data-allow-excel="{{ 1 if t.allow_excel_export else 0 }}" data-allow-filters="{{ 1 if (t.allow_advanced_filters|default(0)) else 0 }}" data-checkout-features="{{ (t.checkout_features or '')|e }}" data-default-checkout="{{ default_checkout|replace('\n', '&#10;')|e }}">
-                <td><span class="badge badge-{{ (t.name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ t.name }}</span></td>
-                <td>{{ t.max_files_limit }}</td>
-                <td>{{ t.max_devices }}</td>
-                <td>{{ t.daily_files_limit|default('–') }}</td>
-                <td>{{ t.rate_limit_hour|default('–') }}</td>
-                <td>{{ t.max_file_size_mb|default('–') }}</td>
-                <td>{{ 'Ano' if t.allow_signatures else 'Ne' }}</td>
-                <td>{{ 'Ano' if t.allow_timestamp else 'Ne' }}</td>
-                <td>{{ 'Ano' if t.allow_excel_export else 'Ne' }}</td>
-                <td>{{ 'Ano' if (t.allow_advanced_filters|default(0)) else 'Ne' }}</td>
-                <td><button type="button" class="action-btn primary-btn btn-edit-tier">Upravit</button></td>
+                <td data-label="Název"><span class="badge badge-{{ (t.name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ t.name }}</span></td>
+                <td data-label="Max souborů">{{ t.max_files_limit }}</td>
+                <td data-label="Max zařízení">{{ t.max_devices }}</td>
+                <td data-label="Den. limit">{{ t.daily_files_limit|default('–') }}</td>
+                <td data-label="Rate/h">{{ t.rate_limit_hour|default('–') }}</td>
+                <td data-label="Max MB">{{ t.max_file_size_mb|default('–') }}</td>
+                <td data-label="Podpisy">{{ 'Ano' if t.allow_signatures else 'Ne' }}</td>
+                <td data-label="Čas. razítka">{{ 'Ano' if t.allow_timestamp else 'Ne' }}</td>
+                <td data-label="Excel">{{ 'Ano' if t.allow_excel_export else 'Ne' }}</td>
+                <td data-label="Filtry">{{ 'Ano' if (t.allow_advanced_filters|default(0)) else 'Ne' }}</td>
+                <td data-label="Akce"><button type="button" class="action-btn primary-btn btn-edit-tier">Upravit</button></td>
             </tr>
             {% else %}
             <tr><td colspan="11" class="text-center text-muted" style="padding:24px;">Spusťte migraci: <code>python migrate_tiers.py</code></td></tr>
