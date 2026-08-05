@@ -402,6 +402,7 @@ def dashboard():
     recent_check_results_agent = db.get_recent_check_results_with_metadata(limit=25)
     recent_web_checks = db.get_activity_log_web_trial_only(limit=25)
     activity_agent_vs_web = db.get_activity_agent_vs_web(days=30)
+    web_check_stats = db.get_web_check_stats_today()
 
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
@@ -427,6 +428,7 @@ def dashboard():
                           recent_check_results_agent=recent_check_results_agent or [],
                           recent_web_checks=recent_web_checks or [],
                           activity_agent_vs_web=activity_agent_vs_web or {},
+                          web_check_stats=web_check_stats or {},
                           search=search,
                           tier_filter=tier_filter,
                           status_filter=status_filter,
@@ -868,6 +870,39 @@ def user_audit():
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_user_audit.html', logs=logs, user_id=user_id, user_email=user_email, user_display=user_display, user=user, active_page='dashboard')
+
+
+@admin_bp.route('/admin/users/detail')
+@admin_required
+def user_detail():
+    """Detail uživatele: licence, souhrnné statistiky, graf aktivity, poslední soubory, IP, zařízení, fakturace."""
+    db = get_db()
+    user_id = (request.args.get('user') or '').strip()
+    if not user_id:
+        flash('Zadejte uživatele (parametr user)', 'error')
+        return redirect(url_for('admin.users_licenses'))
+    lic = db.get_user_license(user_id)
+    if not lic:
+        flash('Uživatel nenalezen.', 'error')
+        return redirect(url_for('admin.users_licenses'))
+    activity_stats = db.get_portal_user_activity_stats(user_id)
+    daily = db.get_activity_daily_by_api_key(user_id, days=30)
+    recent_files = db.get_check_results_by_api_key(user_id, limit=50)
+    ips = db.get_user_ips(user_id)
+    devices = db.get_user_devices_list(user_id)
+    logs = db.get_user_logs(user_id=user_id, limit=100, offset=0)
+    billing = db.get_billing_history(user_id, limit=20)
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_user_detail.html',
+                           lic=lic, user_id=user_id,
+                           activity_stats=activity_stats or {},
+                           daily=daily or [], recent_files=recent_files or [],
+                           ips=ips or [], devices=devices or [],
+                           logs=logs or [], billing=billing or [],
+                           user=user, active_page='users_licenses')
 
 
 @admin_bp.route('/admin/tiers')
@@ -1757,24 +1792,24 @@ def trial():
     db = get_db()
     if request.method == 'POST' and request.form.get('action') == 'save_web_trial_limit':
         try:
-            val = request.form.get('web_trial_max_batches_per_24h', '0').strip()
-            n = int(val) if val else 0
-            if n < 0:
-                n = 0
-            db.set_global_setting('web_trial_max_batches_per_24h', n)
-            flash('Limit Web Trial uložen: ' + ('neomezeno' if n == 0 else f'{n} kontrol za 24 h na IP') + '.', 'success')
+            val = request.form.get('web_trial_max_files_per_24h', '8').strip()
+            n = int(val) if val else 8
+            if n < 1:
+                n = 1
+            db.set_global_setting('web_trial_max_files_per_24h', n)
+            flash(f'Limit Web kontrol uložen: {n} souborů zdarma za 24 h na IP.', 'success')
         except (ValueError, TypeError):
-            flash('Neplatná hodnota. Zadejte celé číslo (0 = neomezeno).', 'error')
+            flash('Neplatná hodnota. Zadejte celé číslo (min. 1).', 'error')
         return redirect(url_for('admin.trial'))
     trial_list = db.list_trial_usage()
     web_trial_list = db.list_web_trial_usage()
-    web_trial_max_batches = db.get_setting_int('web_trial_max_batches_per_24h', 0)
+    web_trial_files_limit = db.get_web_trial_files_limit()
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
         user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_trial.html', trial_list=trial_list or [], web_trial_list=web_trial_list or [],
-                          web_trial_max_batches_per_24h=web_trial_max_batches, user=user, active_page='trial')
+                          web_trial_files_limit=web_trial_files_limit, user=user, active_page='trial')
 
 
 @admin_bp.route('/admin/analytics')
@@ -1835,6 +1870,127 @@ def free_check_usage():
                            limit_per_hour=limit_per_hour,
                            user=user,
                            active_page='free_check_usage')
+
+
+@admin_bp.route('/admin/web-checks', methods=['GET', 'POST'])
+@admin_required
+def web_checks():
+    """Web kontroly (IP): přehled free kontrol na webu podle IP, limit souborů/24 h, blokace."""
+    db = get_db()
+    if request.method == 'POST' and request.form.get('action') == 'save_web_check_limit':
+        try:
+            val = request.form.get('web_trial_max_files_per_24h', '8').strip()
+            n = int(val) if val else 8
+            if n < 1:
+                n = 1
+            db.set_global_setting('web_trial_max_files_per_24h', n)
+            flash(f'Limit uložen: {n} souborů zdarma za 24 h na IP.', 'success')
+        except (ValueError, TypeError):
+            flash('Neplatná hodnota. Zadejte celé číslo (min. 1).', 'error')
+        return redirect(url_for('admin.web_checks'))
+    rows = db.list_web_check_ips()
+    known_ips = {r['ip_address'] for r in rows}
+    # Starší záznamy (před zavedením detailního logu) – jen IP + počet dávek
+    legacy = []
+    for l in (db.list_web_trial_usage() or []):
+        if l['ip_address'] not in known_ips:
+            legacy.append({
+                'ip_address': l['ip_address'],
+                'total_checks': l.get('total_batches') or 0,
+                'total_files': None,
+                'files_24h': None,
+                'checks_24h': None,
+                'limit_hits': 0,
+                'first_seen': None,
+                'last_seen': l.get('last_used'),
+                'blocked_until': (db.get_ip_block(l['ip_address']) or {}).get('blocked_until'),
+                'block_reason': (db.get_ip_block(l['ip_address']) or {}).get('reason'),
+                'is_legacy': True,
+            })
+    all_rows = rows + legacy
+    all_rows.sort(key=lambda r: r.get('last_seen') or '', reverse=True)
+    stats = db.get_web_check_stats_today()
+    files_limit = db.get_web_trial_files_limit()
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_web_checks.html',
+                           rows=all_rows, stats=stats, files_limit=files_limit,
+                           user=user, active_page='web_checks')
+
+
+@admin_bp.route('/admin/web-checks/ip')
+@admin_required
+def web_check_ip_detail():
+    """Detail jedné IP: statistiky, graf aktivity po dnech a časová osa všech free kontrol."""
+    db = get_db()
+    ip = (request.args.get('ip') or '').strip()
+    if not ip:
+        flash('Chybí IP adresa (parametr ip).', 'error')
+        return redirect(url_for('admin.web_checks'))
+    logs = db.get_web_check_log_by_ip(ip, limit=500)
+    daily = db.get_web_check_daily_by_ip(ip, days=30)
+    block = db.get_ip_block(ip)
+    _, files_24h, files_limit = db.check_web_check_file_limit(ip, incoming_files=1)
+    stats = {
+        'total_checks': len(logs),
+        'total_files': sum((l.get('file_count') or 0) for l in logs if l.get('status') == 'ok'),
+        'limit_hits': sum(1 for l in logs if l.get('status') == 'limit'),
+        'total_size': sum((l.get('total_size') or 0) for l in logs),
+        'first_seen': logs[-1]['timestamp'] if logs else None,
+        'last_seen': logs[0]['timestamp'] if logs else None,
+        'files_24h': files_24h,
+    }
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_web_check_ip_detail.html',
+                           ip=ip, logs=logs, daily=daily, block=block, stats=stats,
+                           files_limit=files_limit, user=user, active_page='web_checks')
+
+
+@admin_bp.route('/admin/api/ip-block', methods=['POST'])
+@admin_required
+def api_ip_block():
+    """Ruční blokace / odblokace IP adresy pro free web kontroly."""
+    db = get_db()
+    ip = (request.form.get('ip_address') or '').strip()
+    action = (request.form.get('block_action') or 'block').strip()
+    back = request.referrer or url_for('admin.web_checks')
+    if not ip:
+        flash('Chybí IP adresa.', 'error')
+        return redirect(back)
+    if action == 'unblock':
+        db.unblock_ip(ip)
+        flash(f'IP {ip} odblokována.', 'success')
+    else:
+        try:
+            hours = int(request.form.get('hours', '24'))
+        except (ValueError, TypeError):
+            hours = 24
+        hours = max(1, min(hours, 24 * 365))
+        db.block_ip(ip, hours=hours, reason='manual')
+        flash(f'IP {ip} zablokována na {hours} h.', 'success')
+    return redirect(back)
+
+
+@admin_bp.route('/admin/api/web-check/reset', methods=['POST'])
+@admin_required
+def api_web_check_reset():
+    """Reset počítadla free kontrol pro IP (smaže log + starý čítač) a odblokuje ji."""
+    db = get_db()
+    ip = (request.form.get('ip_address') or '').strip()
+    back = request.referrer or url_for('admin.web_checks')
+    if not ip:
+        flash('Chybí IP adresa.', 'error')
+        return redirect(back)
+    db.reset_web_check_ip(ip)
+    db.reset_web_trial_ip(ip)
+    db.unblock_ip(ip)
+    flash(f'Počítadlo pro IP {ip} vynulováno a IP odblokována.', 'success')
+    return redirect(back)
 
 
 @admin_bp.route('/admin/logs')

@@ -362,6 +362,33 @@ class Database:
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_online_demo_log_timestamp ON online_demo_log(timestamp)')
 
+        # Detailní log free kontrol na webu: IP, počet souborů, názvy, velikost, user-agent, status (ok/limit)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS web_check_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                file_count INTEGER NOT NULL DEFAULT 0,
+                file_names TEXT,
+                total_size INTEGER DEFAULT 0,
+                user_agent TEXT,
+                status TEXT DEFAULT 'ok'
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_web_check_log_ip_ts ON web_check_log(ip_address, timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_web_check_log_ts ON web_check_log(timestamp)')
+
+        # Blokace IP adres (automaticky po překročení limitu, nebo ručně adminem)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ip_blocks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_address TEXT NOT NULL UNIQUE,
+                blocked_until TIMESTAMP,
+                reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # Historie kontrol (pouze PRO uživatelé) – pro kartu „Historie“ na portálu
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS check_history (
@@ -2106,6 +2133,263 @@ class Database:
             return None
         finally:
             conn.close()
+
+    # =========================================================================
+    # WEB CHECK LOG + IP BLOKACE (free kontroly na webu podle IP)
+    # =========================================================================
+
+    def get_web_trial_files_limit(self):
+        """Max. počet souborů zdarma za 24 h na IP (global_settings web_trial_max_files_per_24h, výchozí 8)."""
+        limit = self.get_setting_int('web_trial_max_files_per_24h', 8)
+        return limit if limit > 0 else 8
+
+    def get_ip_block(self, ip_address):
+        """Vrátí {'blocked_until', 'reason'} pokud je IP aktuálně blokovaná, jinak None."""
+        if not ip_address:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT blocked_until, reason FROM ip_blocks WHERE ip_address = ? AND blocked_until > datetime('now')",
+            (ip_address,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def block_ip(self, ip_address, hours=24, reason='auto'):
+        """Zablokuje IP na daný počet hodin (upsert – prodlouží existující blokaci)."""
+        if not ip_address:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO ip_blocks (ip_address, blocked_until, reason)
+            VALUES (?, datetime('now', ?), ?)
+            ON CONFLICT(ip_address) DO UPDATE SET
+                blocked_until = excluded.blocked_until,
+                reason = excluded.reason,
+                created_at = CURRENT_TIMESTAMP
+        ''', (ip_address, f'+{int(hours)} hours', reason))
+        conn.commit()
+        conn.close()
+        return True
+
+    def unblock_ip(self, ip_address):
+        """Odblokuje IP (smaže záznam blokace)."""
+        if not ip_address:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM ip_blocks WHERE ip_address = ?', (ip_address,))
+        conn.commit()
+        n = cursor.rowcount
+        conn.close()
+        return n > 0
+
+    def insert_web_check_log(self, ip_address, file_count=0, file_names=None, total_size=0, user_agent=None, status='ok'):
+        """Zapíše detailní záznam free web kontroly (status: ok = provedeno, limit = odmítnuto přes limit)."""
+        if not ip_address:
+            return None
+        try:
+            names_json = json.dumps(list(file_names or []), ensure_ascii=False)[:4000]
+        except Exception:
+            names_json = '[]'
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO web_check_log (ip_address, file_count, file_names, total_size, user_agent, status) VALUES (?, ?, ?, ?, ?, ?)',
+                (ip_address, max(0, int(file_count)), names_json, int(total_size or 0), (user_agent or '')[:300], status)
+            )
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            return None
+        finally:
+            conn.close()
+
+    def check_web_check_file_limit(self, ip_address, incoming_files=1):
+        """Vrátí (allowed: bool, used: int, limit: int) – limit souborů za 24 h na IP."""
+        limit = self.get_web_trial_files_limit()
+        if not ip_address:
+            return True, 0, limit
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(SUM(file_count), 0) FROM web_check_log
+            WHERE ip_address = ? AND status = 'ok' AND timestamp >= datetime('now', '-24 hours')
+        ''', (ip_address,))
+        used = cursor.fetchone()[0] or 0
+        conn.close()
+        return (used + max(1, int(incoming_files))) <= limit, used, limit
+
+    def list_web_check_ips(self):
+        """Agregovaný přehled free web kontrol podle IP včetně stavu blokace."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT w.ip_address,
+                   COUNT(*) AS total_checks,
+                   COALESCE(SUM(CASE WHEN w.status = 'ok' THEN w.file_count ELSE 0 END), 0) AS total_files,
+                   COALESCE(SUM(CASE WHEN w.status = 'ok' AND w.timestamp >= datetime('now', '-24 hours') THEN w.file_count ELSE 0 END), 0) AS files_24h,
+                   SUM(CASE WHEN w.timestamp >= datetime('now', '-24 hours') THEN 1 ELSE 0 END) AS checks_24h,
+                   SUM(CASE WHEN w.status = 'limit' THEN 1 ELSE 0 END) AS limit_hits,
+                   MIN(w.timestamp) AS first_seen,
+                   MAX(w.timestamp) AS last_seen,
+                   b.blocked_until AS blocked_until,
+                   b.reason AS block_reason
+            FROM web_check_log w
+            LEFT JOIN ip_blocks b ON b.ip_address = w.ip_address AND b.blocked_until > datetime('now')
+            GROUP BY w.ip_address
+            ORDER BY last_seen DESC
+        ''')
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_web_check_log_by_ip(self, ip_address, limit=500):
+        """Časová osa všech free kontrol pro jednu IP (nejnovější první)."""
+        if not ip_address:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, timestamp, file_count, file_names, total_size, user_agent, status FROM web_check_log WHERE ip_address = ? ORDER BY timestamp DESC LIMIT ?',
+            (ip_address, limit)
+        )
+        rows = []
+        for row in cursor.fetchall():
+            d = dict(row)
+            try:
+                d['file_names_list'] = json.loads(d.get('file_names') or '[]')
+            except Exception:
+                d['file_names_list'] = []
+            rows.append(d)
+        conn.close()
+        return rows
+
+    def get_web_check_daily_by_ip(self, ip_address, days=30):
+        """Denní agregace kontrol pro jednu IP: [{day, files, checks}, ...] vzestupně."""
+        if not ip_address:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT DATE(timestamp) AS day,
+                   COALESCE(SUM(CASE WHEN status = 'ok' THEN file_count ELSE 0 END), 0) AS files,
+                   COUNT(*) AS checks
+            FROM web_check_log
+            WHERE ip_address = ? AND timestamp >= datetime('now', ?)
+            GROUP BY day ORDER BY day
+        ''', (ip_address, f'-{int(days)} days'))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_web_check_stats_today(self):
+        """Souhrn free web kontrol pro dashboard: dnes IP/soubory/kontroly, pokusy přes limit, aktivní blokace."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(DISTINCT ip_address) AS ips,
+                   COALESCE(SUM(CASE WHEN status = 'ok' THEN file_count ELSE 0 END), 0) AS files,
+                   SUM(CASE WHEN status = 'ok' THEN 1 ELSE 0 END) AS checks,
+                   SUM(CASE WHEN status = 'limit' THEN 1 ELSE 0 END) AS limit_hits
+            FROM web_check_log
+            WHERE DATE(timestamp) = DATE('now')
+        ''')
+        row = cursor.fetchone()
+        cursor.execute("SELECT COUNT(*) FROM ip_blocks WHERE blocked_until > datetime('now')")
+        blocked = cursor.fetchone()[0] or 0
+        conn.close()
+        return {
+            'ips_today': (row['ips'] if row else 0) or 0,
+            'files_today': (row['files'] if row else 0) or 0,
+            'checks_today': (row['checks'] if row else 0) or 0,
+            'limit_hits_today': (row['limit_hits'] if row else 0) or 0,
+            'blocked_ips': blocked,
+        }
+
+    def reset_web_check_ip(self, ip_address):
+        """Smaže detailní log free kontrol pro danou IP (admin reset počítadla)."""
+        if not ip_address:
+            return False
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM web_check_log WHERE ip_address = ?', (ip_address,))
+        conn.commit()
+        n = cursor.rowcount
+        conn.close()
+        return n > 0
+
+    # =========================================================================
+    # STATISTIKY UŽIVATELE (admin detail)
+    # =========================================================================
+
+    def get_activity_daily_by_api_key(self, api_key, days=30):
+        """Denní aktivita účtu z activity_log: [{day, files, batches}, ...] vzestupně."""
+        if not api_key:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT DATE(timestamp) AS day,
+                   COALESCE(SUM(file_count), 0) AS files,
+                   COUNT(*) AS batches
+            FROM activity_log
+            WHERE api_key = ? AND timestamp >= datetime('now', ?)
+            GROUP BY day ORDER BY day
+        ''', (api_key, f'-{int(days)} days'))
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_check_results_by_api_key(self, api_key, limit=50):
+        """Poslední zkontrolované soubory účtu (check_results)."""
+        if not api_key:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, batch_id, file_name, folder_path, created_at FROM check_results WHERE api_key = ? ORDER BY created_at DESC LIMIT ?',
+            (api_key, limit)
+        )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def get_user_ips(self, api_key):
+        """IP adresy použité účtem (user_logs + activity_log): [{ip_address, cnt, last_seen}, ...]."""
+        if not api_key:
+            return []
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        merged = {}
+        cursor.execute('''
+            SELECT ip_address, COUNT(*) AS cnt, MAX(timestamp) AS last_seen
+            FROM user_logs
+            WHERE user_id = ? AND ip_address IS NOT NULL AND ip_address <> ''
+            GROUP BY ip_address
+        ''', (api_key,))
+        for row in cursor.fetchall():
+            merged[row['ip_address']] = {'ip_address': row['ip_address'], 'cnt': row['cnt'] or 0, 'last_seen': row['last_seen']}
+        cursor.execute('''
+            SELECT ip_address, COUNT(*) AS cnt, MAX(timestamp) AS last_seen
+            FROM activity_log
+            WHERE api_key = ? AND ip_address IS NOT NULL AND ip_address <> ''
+            GROUP BY ip_address
+        ''', (api_key,))
+        for row in cursor.fetchall():
+            ip = row['ip_address']
+            if ip in merged:
+                merged[ip]['cnt'] += row['cnt'] or 0
+                if (row['last_seen'] or '') > (merged[ip]['last_seen'] or ''):
+                    merged[ip]['last_seen'] = row['last_seen']
+            else:
+                merged[ip] = {'ip_address': ip, 'cnt': row['cnt'] or 0, 'last_seen': row['last_seen']}
+        conn.close()
+        return sorted(merged.values(), key=lambda x: x.get('last_seen') or '', reverse=True)
 
     # =========================================================================
     # PAGE VIEWS (návštěvnost stránek)

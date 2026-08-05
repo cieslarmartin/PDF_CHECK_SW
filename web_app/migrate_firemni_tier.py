@@ -14,6 +14,7 @@ from database import Database
 FIREMNI_NAME = "Firemní"
 FIREMNI_MAX_DEVICES = 5
 FIREMNI_AMOUNT_CZK = 6360  # 4 × 1590 (5. zařízení zdarma)
+FIREMNI_DAILY_FILES_LIMIT = 5000  # 5 zařízení sdílí jeden api_key → 5× denní limit Pro (1000)
 
 FIREMNI_CHECKOUT_FEATURES = (
     "Vše z tarifu Ateliér (PRO)\n"
@@ -28,10 +29,17 @@ FIREMNI_CHECKOUT_FEATURES = (
 def run():
     db = Database()
 
-    # 1. Tier Firemní – limity zkopírované z Pro, jen max_devices=5
+    # 1. Tier Firemní – limity zkopírované z Pro, jen max_devices=5 a denní limit 5000
     existing = db.get_tier_by_name(FIREMNI_NAME)
     if existing:
-        print(f"Tier „{FIREMNI_NAME}“ už existuje (id={existing.get('id')}) – ponechán.")
+        # Denní kvóta se počítá na api_key (sdílený všemi zařízeními) – bez navýšení
+        # by 5 zařízení vyčerpalo limit Pro 5× rychleji.
+        current_daily = existing.get("daily_files_limit")
+        if current_daily is None or (0 <= int(current_daily) < FIREMNI_DAILY_FILES_LIMIT):
+            db.update_tier(existing["id"], daily_files_limit=FIREMNI_DAILY_FILES_LIMIT)
+            print(f"Tier „{FIREMNI_NAME}“ (id={existing.get('id')}): daily_files_limit {current_daily} -> {FIREMNI_DAILY_FILES_LIMIT}.")
+        else:
+            print(f"Tier „{FIREMNI_NAME}“ už existuje (id={existing.get('id')}, daily_files_limit={current_daily}) – ponechán.")
     else:
         pro = db.get_tier_by_name("Pro") or {}
         tier_id, err = db.insert_tier(
@@ -42,7 +50,7 @@ def run():
             allow_excel_export=bool(pro.get("allow_excel_export", 1)),
             allow_advanced_filters=bool(pro.get("allow_advanced_filters", 1)),
             max_devices=FIREMNI_MAX_DEVICES,
-            daily_files_limit=pro.get("daily_files_limit"),
+            daily_files_limit=FIREMNI_DAILY_FILES_LIMIT,
             rate_limit_hour=pro.get("rate_limit_hour"),
             max_file_size_mb=pro.get("max_file_size_mb"),
             checkout_features=FIREMNI_CHECKOUT_FEATURES,

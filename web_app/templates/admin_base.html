@@ -481,6 +481,7 @@
             {# ── Provoz ── #}
             <li class="nav-group-label">Provoz</li>
             <li><a href="{{ url_for('admin.trial') }}" class="{{ 'active' if active_page == 'trial' else '' }}"><span class="nav-ico">🧪</span> Trial správa</a></li>
+            <li><a href="{{ url_for('admin.web_checks') }}" class="{{ 'active' if active_page == 'web_checks' else '' }}" title="Free kontroly na webu podle IP, limity a blokace"><span class="nav-ico">🌐</span> Web kontroly (IP)</a></li>
             <li><a href="{{ url_for('admin.free_check_usage') }}" class="{{ 'active' if active_page == 'free_check_usage' else '' }}"><span class="nav-ico">🆓</span> Free check podle IP</a></li>
             <li><a href="{{ url_for('admin.logs') }}" class="{{ 'active' if active_page == 'logs' else '' }}"><span class="nav-ico">📜</span> Logy</a></li>
 
@@ -566,6 +567,25 @@
             };
         }
         document.addEventListener('submit', function(e) { injectCsrf(e.target); }, true);
+    })();
+    </script>
+    <script>
+    // Oprava: obsah zavřeného <details> prohlížeč nevykreslí (CSS to nepřebije),
+    // proto na desktopu (summary skryté) musí být dropdowny Akce otevřené atributem open.
+    (function() {
+        var mq = window.matchMedia('(min-width: 769px)');
+        function syncActionMenus() {
+            document.querySelectorAll('details.actions-dropdown').forEach(function(d) {
+                if (mq.matches) {
+                    d.setAttribute('open', '');
+                } else {
+                    d.removeAttribute('open');
+                }
+            });
+        }
+        syncActionMenus();
+        if (mq.addEventListener) { mq.addEventListener('change', syncActionMenus); }
+        else if (mq.addListener) { mq.addListener(syncActionMenus); }
     })();
     </script>
     <script>

@@ -28,11 +28,12 @@
     <div class="card-body">
         <form method="post" action="{{ url_for('admin.trial') }}">
             <input type="hidden" name="action" value="save_web_trial_limit">
-            <label for="web_trial_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet kontrol za 24 h na jednu IP (0 = neomezeno)</label>
-            <input type="number" id="web_trial_limit" name="web_trial_max_batches_per_24h" value="{{ web_trial_max_batches_per_24h }}" min="0" max="999" step="1" style="width:120px;padding:6px 8px;">
-            <span class="text-muted small" style="margin-left:8px;">0 = Online check i cloud upload bez limitu</span>
+            <label for="web_trial_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za 24 h na jednu IP</label>
+            <input type="number" id="web_trial_limit" name="web_trial_max_files_per_24h" value="{{ web_trial_files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
+            <span class="text-muted small" style="margin-left:8px;">Po překročení se IP automaticky zablokuje na 24 hodin.</span>
             <div style="margin-top:10px;">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
+                <a href="{{ url_for('admin.web_checks') }}" class="btn btn-secondary btn-sm" style="margin-left:6px;">Podrobné statistiky a blokace IP →</a>
             </div>
         </form>
     </div>
@@ -40,7 +41,7 @@
 
 {# A) Web Trial (online check bez přihlášení – podle IP) #}
 <h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Web Trial – online kontroly (podle IP)</h3>
-<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení.{% if web_trial_max_batches_per_24h == 0 %} Limit: <strong>neomezeno</strong>.{% else %} Limit: <strong>{{ web_trial_max_batches_per_24h }}</strong> kontrol / 24 h na IP.{% endif %}</p>
+<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení. Limit: <strong>{{ web_trial_files_limit }}</strong> souborů / 24 h na IP. Podrobný přehled včetně názvů souborů a blokací najdete v sekci <a href="{{ url_for('admin.web_checks') }}">Web kontroly (IP)</a>.</p>
 <div class="table-container">
     <table class="table-dense">
         <thead>

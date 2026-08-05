@@ -265,7 +265,7 @@
                 {% for license in licenses %}
                 <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-activated-at="{{ license.activated_at or license.created_at or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-is-test="{{ 1 if license.is_test else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" {% if license.is_expired %}style="opacity:0.85;background:#fef2f2;"{% elif license.is_test %}style="background:#fffbeb;"{% endif %}>
                     <td data-label="E-mail">
-                        <strong>{{ license.email or '—' }}</strong>
+                        <a href="{{ url_for('admin.user_detail') }}?user={{ license.api_key }}" title="Zobrazit detail a statistiky uživatele" style="text-decoration:none;"><strong>{{ license.email or '—' }}</strong></a>
                         {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
                     </td>
                     <td data-label="Tarif"><span class="badge badge-{{ (license.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}">{{ license.tier_name }}</span></td>
@@ -319,6 +319,7 @@
                             <button class="action-btn danger" onclick="deleteLicense('{{ license.api_key }}')">SMAZAT</button>
                             <button class="action-btn" data-api-key="{{ license.api_key }}" data-email="{{ (license.email or '')|e }}" onclick="openDevicesModal(this)" title="Počítače vázané na licenci">Počítače</button>
                             <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)">INFO</button>
+                            <a href="{{ url_for('admin.user_detail') }}?user={{ license.api_key }}" class="action-btn primary-btn" title="Detail a statistiky uživatele">Detail</a>
                             <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn">Audit</a>
                             <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)">Heslo</button>
                             </div>

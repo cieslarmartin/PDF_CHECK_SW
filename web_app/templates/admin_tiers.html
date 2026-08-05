@@ -79,7 +79,8 @@
             </div>
             <div class="form-group">
                 <label class="small">Denní limit souborů (daily_files_limit)</label>
-                <input type="number" id="edit_daily_limit" class="form-control" min="0" placeholder="prázdné = bez limitu">
+                <input type="number" id="edit_daily_limit" class="form-control" min="-1" placeholder="-1 = bez limitu">
+                <p class="small text-muted mt-1">−1 = bez limitu. Prázdné = výchozí hodnota z kódu (Basic 500, Pro/Firemní 1000/den).</p>
             </div>
             <div class="form-group">
                 <label class="small">Rate limit za hodinu (rate_limit_hour)</label>

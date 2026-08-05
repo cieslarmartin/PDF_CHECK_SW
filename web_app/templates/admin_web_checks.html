@@ -1,0 +1,122 @@
+{% extends "admin_base.html" %}
+{% block title %}DokuCheck Admin – Web kontroly (IP){% endblock %}
+{% block content %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:6px;">Web kontroly zdarma (podle IP)</h2>
+<p class="text-muted small mb-2">Každý, kdo zkouší kontrolu na webu bez přihlášení, je evidovaný podle IP adresy. Limit: <strong>{{ files_limit }}</strong> souborů za 24 h na IP – po překročení se IP automaticky zablokuje na 24 hodin.</p>
+
+{# Souhrnné statistiky dnes #}
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">IP adres dnes</div>
+        <div style="font-size:1.5em;font-weight:700;color:#047857;">{{ stats.ips_today }}</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Souborů dnes</div>
+        <div style="font-size:1.5em;font-weight:700;color:#1d4ed8;">{{ stats.files_today }}</div>
+    </div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Pokusů přes limit dnes</div>
+        <div style="font-size:1.5em;font-weight:700;color:#b45309;">{{ stats.limit_hits_today }}</div>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Blokovaných IP</div>
+        <div style="font-size:1.5em;font-weight:700;color:#b91c1c;">{{ stats.blocked_ips }}</div>
+    </div>
+</div>
+
+{# Nastavení limitu #}
+<div class="admin-card" style="margin-bottom:20px;">
+    <div class="card-header">Limit kontrol zdarma</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('admin.web_checks') }}">
+            <input type="hidden" name="action" value="save_web_check_limit">
+            <label for="web_check_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za 24 h na jednu IP</label>
+            <input type="number" id="web_check_limit" name="web_trial_max_files_per_24h" value="{{ files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
+            <span class="text-muted small" style="margin-left:8px;">Po překročení se IP automaticky zablokuje na 24 hodin.</span>
+            <div style="margin-top:10px;">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# Vyhledávání #}
+<input type="text" id="ipSearch" class="form-control" placeholder="Hledat IP…" style="max-width:220px;margin-bottom:12px;" oninput="filterIps(this.value)">
+
+<div class="table-container">
+    <table class="table-dense" id="ipTable">
+        <thead>
+            <tr>
+                <th>IP adresa</th>
+                <th>Souborů 24 h</th>
+                <th>Kontrol 24 h</th>
+                <th>Souborů celkem</th>
+                <th>Kontrol celkem</th>
+                <th>Pokusů přes limit</th>
+                <th>První aktivita</th>
+                <th>Poslední aktivita</th>
+                <th>Stav</th>
+                <th>Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr {% if row.blocked_until %}style="background:#fef2f2;"{% endif %}>
+                <td style="font-family:monospace;font-size:0.85em;">
+                    <a href="{{ url_for('admin.web_check_ip_detail') }}?ip={{ row.ip_address }}" title="Zobrazit detail a všechny kontroly této IP"><strong>{{ row.ip_address }}</strong></a>
+                    {% if row.is_legacy %}<br><small class="text-muted">starší záznam (bez detailu)</small>{% endif %}
+                </td>
+                <td>{{ row.files_24h if row.files_24h is not none else '—' }}</td>
+                <td>{{ row.checks_24h if row.checks_24h is not none else '—' }}</td>
+                <td>{{ row.total_files if row.total_files is not none else '—' }}</td>
+                <td>{{ row.total_checks }}</td>
+                <td {% if row.limit_hits %}style="color:#b91c1c;font-weight:600;"{% endif %}>{{ row.limit_hits or 0 }}</td>
+                <td><small>{{ (row.first_seen or '—')[:16] }}</small></td>
+                <td><small>{{ (row.last_seen or '—')[:16] }}</small></td>
+                <td>
+                    {% if row.blocked_until %}
+                    <span class="status-badge" style="background:#fee2e2;color:#b91c1c;" title="Důvod: {{ 'automaticky (limit)' if row.block_reason == 'auto' else 'ručně' }}">Blokováno do {{ row.blocked_until[:16] }}</span>
+                    {% else %}
+                    <span class="status-badge status-active">OK</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                        {% if row.blocked_until %}
+                        <form action="{{ url_for('admin.api_ip_block') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="ip_address" value="{{ row.ip_address }}">
+                            <input type="hidden" name="block_action" value="unblock">
+                            <button type="submit" class="action-btn" style="background:#d1fae5;border-color:#10b981;">Odblokovat</button>
+                        </form>
+                        {% else %}
+                        <form action="{{ url_for('admin.api_ip_block') }}" method="post" style="display:inline;" onsubmit="return confirm('Zablokovat IP {{ row.ip_address }} na 24 hodin?');">
+                            <input type="hidden" name="ip_address" value="{{ row.ip_address }}">
+                            <input type="hidden" name="block_action" value="block">
+                            <input type="hidden" name="hours" value="24">
+                            <button type="submit" class="action-btn danger">Blokovat 24 h</button>
+                        </form>
+                        {% endif %}
+                        <form action="{{ url_for('admin.api_web_check_reset') }}" method="post" style="display:inline;" onsubmit="return confirm('Vynulovat počítadlo pro IP {{ row.ip_address }} a odblokovat ji?');">
+                            <input type="hidden" name="ip_address" value="{{ row.ip_address }}">
+                            <button type="submit" class="action-btn" style="background:#fef3c7;border-color:#f59e0b;">Reset</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Zatím žádné free kontroly z webu</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function filterIps(q) {
+    q = (q || '').trim().toLowerCase();
+    document.querySelectorAll('#ipTable tbody tr').forEach(function(tr) {
+        var ip = (tr.querySelector('td') || {}).textContent || '';
+        tr.style.display = (!q || ip.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

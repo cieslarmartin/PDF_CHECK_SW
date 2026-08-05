@@ -1,0 +1,193 @@
+{% extends "admin_base.html" %}
+{% block title %}DokuCheck Admin – Detail uživatele {{ lic.email or user_id[:12] }}{% endblock %}
+{% block content %}
+<p style="margin-bottom:10px;"><a href="{{ url_for('admin.users_licenses') }}">&larr; Zpět na Objednávky a licence</a></p>
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:6px;">
+    {{ lic.user_name or lic.email or '—' }}
+    <span class="badge badge-{{ (lic.tier_name or '')|lower|replace('í', 'i')|replace('ě', 'e')|replace('ř', 'r') }}" style="margin-left:8px;vertical-align:middle;">{{ lic.tier_name }}</span>
+    {% if lic.is_expired %}
+    <span class="status-badge" style="background:#fee2e2;color:#b91c1c;margin-left:4px;vertical-align:middle;">Vypršela</span>
+    {% elif not lic.is_active %}
+    <span class="status-badge" style="background:#f3f4f6;color:#6b7280;margin-left:4px;vertical-align:middle;">Blokovaná</span>
+    {% else %}
+    <span class="status-badge status-active" style="margin-left:4px;vertical-align:middle;">Aktivní</span>
+    {% endif %}
+</h2>
+<p class="text-muted small mb-2">
+    E-mail: <strong>{{ lic.email or '—' }}</strong> |
+    API klíč: <code>{{ user_id[:24] }}…</code> |
+    Licence do: {{ (lic.license_expires or 'neomezeno')[:10] }}
+    {% if lic.days_remaining is defined and lic.days_remaining >= 0 %}({{ lic.days_remaining }} dní){% endif %} |
+    Zařízení: {{ lic.active_devices or 0 }}/{{ lic.max_devices if lic.max_devices and lic.max_devices != -1 else '∞' }}
+</p>
+<p style="margin-bottom:20px;">
+    <a href="{{ url_for('admin.user_audit') }}?user={{ user_id }}" class="btn btn-secondary btn-sm">Kompletní audit log</a>
+</p>
+
+{# Souhrnné statistiky #}
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Souborů celkem</div>
+        <div style="font-size:1.5em;font-weight:700;color:#1d4ed8;">{{ activity_stats.total_files or 0 }}</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:150px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Dávek (kontrol) celkem</div>
+        <div style="font-size:1.5em;font-weight:700;color:#047857;">{{ activity_stats.total_batches or 0 }}</div>
+    </div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;min-width:170px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Poslední aktivita</div>
+        <div style="font-size:1.1em;font-weight:700;color:#b45309;">{{ (activity_stats.last_activity or '—')[:16] }}</div>
+    </div>
+    {% for source, data in (activity_stats.by_source or {}).items() %}
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;min-width:130px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">{{ {'agent': 'Z agenta', 'web_trial': 'Z webu (free)', 'registered': 'Z webu (přihlášen)'}.get(source, source) }}</div>
+        <div style="font-size:1.1em;font-weight:700;">{{ data.files if data.files is defined else data }} souborů</div>
+    </div>
+    {% endfor %}
+</div>
+
+{# Graf aktivity po dnech #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Aktivita po dnech (30 dní)</h3>
+    <div style="height:200px;"><canvas id="chartUserDaily"></canvas></div>
+</div>
+
+<div class="admin-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+    {# Poslední zkontrolované soubory #}
+    <div class="admin-card">
+        <div class="card-header">Poslední zkontrolované soubory ({{ recent_files|length }})</div>
+        <div class="card-body" style="max-height:420px;overflow-y:auto;">
+            <table class="table-dense">
+                <thead><tr><th>Čas</th><th>Soubor</th><th>Složka</th></tr></thead>
+                <tbody>
+                    {% for f in recent_files %}
+                    <tr>
+                        <td><small>{{ (f.created_at or '—')[:16] }}</small></td>
+                        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ f.file_name }}"><small>{{ f.file_name }}</small></td>
+                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ f.folder_path or '' }}"><small>{{ f.folder_path or '—' }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádné soubory</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# IP adresy #}
+    <div class="admin-card">
+        <div class="card-header">Použité IP adresy ({{ ips|length }})</div>
+        <div class="card-body" style="max-height:420px;overflow-y:auto;">
+            <table class="table-dense">
+                <thead><tr><th>IP adresa</th><th>Počet akcí</th><th>Naposledy</th></tr></thead>
+                <tbody>
+                    {% for i in ips %}
+                    <tr>
+                        <td style="font-family:monospace;font-size:0.85em;"><a href="{{ url_for('admin.web_check_ip_detail') }}?ip={{ i.ip_address }}" title="Detail IP (free web kontroly)">{{ i.ip_address }}</a></td>
+                        <td>{{ i.cnt }}</td>
+                        <td><small>{{ (i.last_seen or '—')[:16] }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádné IP záznamy</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Zařízení #}
+    <div class="admin-card">
+        <div class="card-header">Zařízení ({{ devices|length }})</div>
+        <div class="card-body" style="max-height:360px;overflow-y:auto;">
+            <table class="table-dense">
+                <thead><tr><th>Název</th><th>Machine-ID</th><th>Naposledy</th><th>Stav</th></tr></thead>
+                <tbody>
+                    {% for d in devices %}
+                    <tr>
+                        <td><small>{{ d.machine_name or '—' }}</small></td>
+                        <td style="font-family:monospace;font-size:0.75em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ d.machine_id }}">{{ d.machine_id }}</td>
+                        <td><small>{{ (d.last_seen or '—')[:16] }}</small></td>
+                        <td>{% if d.is_blocked %}<span class="status-badge" style="background:#fee2e2;color:#b91c1c;">Blokováno</span>{% else %}<span class="status-badge status-active">OK</span>{% endif %}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted" style="padding:16px;">Žádná zařízení</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Fakturace #}
+    <div class="admin-card">
+        <div class="card-header">Fakturace ({{ billing|length }})</div>
+        <div class="card-body" style="max-height:360px;overflow-y:auto;">
+            <table class="table-dense">
+                <thead><tr><th>Popis</th><th>Částka</th><th>Zaplaceno</th></tr></thead>
+                <tbody>
+                    {% for b in billing %}
+                    <tr>
+                        <td><small>{{ b.description or '—' }}</small></td>
+                        <td><small>{% if b.amount_cents %}{{ '%.0f'|format(b.amount_cents / 100) }} Kč{% else %}—{% endif %}</small></td>
+                        <td><small>{{ (b.paid_at or b.created_at or '—')[:10] }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted" style="padding:16px;">Žádné platby</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# Poslední akce (user_logs) #}
+<div class="admin-card" style="margin-bottom:24px;">
+    <div class="card-header">Poslední akce ({{ logs|length }}, kompletní přehled v auditu)</div>
+    <div class="card-body" style="max-height:420px;overflow-y:auto;">
+        <table class="table-dense">
+            <thead><tr><th>Čas</th><th>Akce</th><th>Výsledek</th><th>Soubory</th><th>IP</th></tr></thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td><small>{{ (log.timestamp or '—')[:19] }}</small></td>
+                    <td><small>{{ log.action_type }}</small></td>
+                    <td><small>{{ log.status }}</small></td>
+                    <td>{{ log.file_count or 0 }}</td>
+                    <td style="font-family:monospace;"><small>{{ log.ip_address or '—' }}</small></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted" style="padding:16px;">Žádné záznamy</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var daily = {{ daily|tojson }};
+    var ctx = document.getElementById('chartUserDaily');
+    if (!ctx || !window.Chart) return;
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: daily.map(function(d) { return d.day; }),
+            datasets: [{
+                label: 'Souborů',
+                data: daily.map(function(d) { return d.files; }),
+                backgroundColor: '#3b82f6'
+            }, {
+                label: 'Dávek',
+                data: daily.map(function(d) { return d.batches; }),
+                backgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+})();
+</script>
+{% endblock %}

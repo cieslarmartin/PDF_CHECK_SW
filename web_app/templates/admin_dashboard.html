@@ -66,6 +66,11 @@
             <div style="font-size:0.85em;color:#9d174d;">Čeká na platbu</div>
             <div style="font-size:1.5em;font-weight:700;">{{ activity_stats.pending_orders|default(0) }}</div>
         </div>
+        <a href="{{ url_for('admin.web_checks') }}" class="admin-card" style="padding:16px;background:#ede9fe;border:1px solid #c4b5fd;border-radius:8px;text-decoration:none;color:inherit;" title="Free kontroly na webu podle IP – detail, limity a blokace">
+            <div style="font-size:0.85em;color:#5b21b6;">Web kontroly dnes (free)</div>
+            <div style="font-size:1.5em;font-weight:700;">{{ (web_check_stats or {}).get('files_today', 0) }} <span style="font-size:0.6em;font-weight:600;">souborů</span></div>
+            <div style="font-size:0.78em;color:#6b7280;">{{ (web_check_stats or {}).get('ips_today', 0) }} IP | {{ (web_check_stats or {}).get('limit_hits_today', 0) }} přes limit | {{ (web_check_stats or {}).get('blocked_ips', 0) }} blokováno</div>
+        </a>
     </div>
     <div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
         <details class="kpi-detail">

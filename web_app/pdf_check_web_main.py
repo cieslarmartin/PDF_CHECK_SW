@@ -1721,7 +1721,7 @@ async function processFilesWithProgress(files) {
                 if (!response.ok) {
                     if (response.status === 429 && result.limit_exceeded) {
                         progressModal.classList.remove('visible');
-                        alert('Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
+                        alert(result.error || 'Dosáhli jste limitu kontrol zdarma za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
                         limitReached = true;
                         break;
                     }
@@ -4474,15 +4474,27 @@ def analyze_batch():
     try:
         db = Database()
         paid_user = _is_paid_user_from_request(db)
+        user_agent = request.headers.get('User-Agent', '')
+        incoming_names = [f.filename for f in files if f.filename]
         if not paid_user:
-            allowed, count = db.check_web_trial_limit(ip)
-            if not allowed:
+            block = db.get_ip_block(ip)
+            if block:
                 return jsonify({
-                    'error': f'Dosáhli jste limitu kontrol za 24 hodin (IP). Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
+                    'error': f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC) kvůli překročení limitu kontrol zdarma. Pro neomezené kontroly si zakupte licenci.',
+                    'limit_exceeded': True, 'blocked': True
+                }), 429
+            allowed, used, limit = db.check_web_check_file_limit(ip, incoming_files=len(files))
+            if not allowed:
+                db.insert_web_check_log(ip, file_count=len(files), file_names=incoming_names, user_agent=user_agent, status='limit')
+                db.block_ip(ip, hours=24, reason='auto')
+                return jsonify({
+                    'error': f'Dosáhli jste limitu {limit} souborů zdarma za 24 hodin. Vaše IP adresa byla dočasně zablokována na 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakupte licenci.',
                     'limit_exceeded': True
                 }), 429
 
         results = []
+        total_size = 0
+        checked_names = []
         for file in files:
             if not file.filename or not file.filename.lower().endswith('.pdf'):
                 continue
@@ -4495,9 +4507,13 @@ def analyze_batch():
             r['filename'] = file.filename
             r['name'] = file.filename
             results.append(r)
+            total_size += len(content)
+            checked_names.append(file.filename)
 
         if not paid_user:
             db.record_web_trial_usage(ip)
+            db.insert_web_check_log(ip, file_count=len(checked_names), file_names=checked_names,
+                                    total_size=total_size, user_agent=user_agent, status='ok')
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=len(results))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -4518,14 +4534,26 @@ def analyze():
         ip = _get_client_ip()
         db = Database()
         paid_user = _is_paid_user_from_request(db)
+        user_agent = request.headers.get('User-Agent', '')
         if not paid_user:
-            allowed, _ = db.check_web_trial_limit(ip)
-            if not allowed:
+            block = db.get_ip_block(ip)
+            if block:
                 return jsonify({
-                    'error': 'Dosáhli jste limitu kontrol za 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakoupte licenci.',
+                    'error': f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC) kvůli překročení limitu kontrol zdarma. Pro neomezené kontroly si zakupte licenci.',
+                    'limit_exceeded': True, 'blocked': True
+                }), 429
+            allowed, used, limit = db.check_web_check_file_limit(ip, incoming_files=1)
+            if not allowed:
+                db.insert_web_check_log(ip, file_count=1, file_names=[file.filename] if file.filename else [],
+                                        user_agent=user_agent, status='limit')
+                db.block_ip(ip, hours=24, reason='auto')
+                return jsonify({
+                    'error': f'Dosáhli jste limitu {limit} souborů zdarma za 24 hodin. Vaše IP adresa byla dočasně zablokována na 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakupte licenci.',
                     'limit_exceeded': True
                 }), 429
             db.record_web_trial_usage(ip)
+            db.insert_web_check_log(ip, file_count=1, file_names=[file.filename] if file.filename else [],
+                                    total_size=len(content), user_agent=user_agent, status='ok')
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         result = analyze_pdf_from_content(content)
         _enrich_signatures_tsa_qualified(result)

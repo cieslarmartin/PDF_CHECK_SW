@@ -141,7 +141,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'can_use_agent': True,
         'daily_files_limit': 1000,
     },
-    # Enterprise = stejné jako Pro (zpětná kompatibilita)
+    # Enterprise = Unlimited/God (admin) – denní kvóta bez limitu (-1)
     LicenseTier.ENTERPRISE: {
         'max_files_per_batch': -1,
         'max_file_size_mb': 100,
@@ -150,7 +150,7 @@ TIER_LIMITS: Dict[LicenseTier, Dict[str, Any]] = {
         'max_devices': 3,
         'rate_limit_per_hour': 1000,
         'can_use_agent': True,
-        'daily_files_limit': 1000,
+        'daily_files_limit': -1,
     },
 }
 

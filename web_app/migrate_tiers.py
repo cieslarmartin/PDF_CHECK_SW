@@ -73,8 +73,8 @@ def run():
                 UPDATE license_tiers SET name=?, max_files_limit=?, allow_signatures=?, allow_timestamp=?, allow_excel_export=?, allow_advanced_filters=?, max_devices=?
                 WHERE id=?
             ''', (name, max_files, allow_sig, allow_ts, allow_excel, allow_filters, max_dev, tier_id))
-        cur.execute("DELETE FROM license_tiers WHERE id > 4")
-        print("Tier definice synchronizovány (včetně allow_advanced_filters).")
+        # POZOR: dřívější DELETE id > 4 by smazal později přidané tiery (např. Firemní) – nemazat!
+        print("Tier definice synchronizovány (včetně allow_advanced_filters). Vlastní tiery (id > 4) ponechány.")
 
     cur.execute("CREATE INDEX IF NOT EXISTS idx_license_tiers_name ON license_tiers(name)")
 

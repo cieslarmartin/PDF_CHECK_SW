@@ -1,0 +1,132 @@
+{% extends "admin_base.html" %}
+{% block title %}DokuCheck Admin – Detail IP {{ ip }}{% endblock %}
+{% block content %}
+<p style="margin-bottom:10px;"><a href="{{ url_for('admin.web_checks') }}">&larr; Zpět na Web kontroly (IP)</a></p>
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:6px;">Detail IP: <span style="font-family:monospace;">{{ ip }}</span>
+    {% if block %}
+    <span class="status-badge" style="background:#fee2e2;color:#b91c1c;margin-left:8px;vertical-align:middle;">Blokováno do {{ (block.blocked_until or '')[:16] }} ({{ 'automaticky – limit' if block.reason == 'auto' else 'ručně' }})</span>
+    {% else %}
+    <span class="status-badge status-active" style="margin-left:8px;vertical-align:middle;">OK</span>
+    {% endif %}
+</h2>
+<p class="text-muted small mb-2">Limit: {{ files_limit }} souborů zdarma / 24 h. Aktuálně vyčerpáno za posledních 24 h: <strong>{{ stats.files_24h }}</strong> souborů.</p>
+
+{# Akce #}
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+    {% if block %}
+    <form action="{{ url_for('admin.api_ip_block') }}" method="post" style="display:inline;">
+        <input type="hidden" name="ip_address" value="{{ ip }}">
+        <input type="hidden" name="block_action" value="unblock">
+        <button type="submit" class="btn btn-primary btn-sm">Odblokovat</button>
+    </form>
+    {% else %}
+    <form action="{{ url_for('admin.api_ip_block') }}" method="post" style="display:inline;" onsubmit="return confirm('Zablokovat IP {{ ip }}?');">
+        <input type="hidden" name="ip_address" value="{{ ip }}">
+        <input type="hidden" name="block_action" value="block">
+        <select name="hours" style="padding:5px 8px;margin-right:4px;">
+            <option value="24">24 hodin</option>
+            <option value="72">3 dny</option>
+            <option value="168">7 dní</option>
+            <option value="720">30 dní</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm" style="color:#b91c1c;">Blokovat</button>
+    </form>
+    {% endif %}
+    <form action="{{ url_for('admin.api_web_check_reset') }}" method="post" style="display:inline;" onsubmit="return confirm('Vynulovat počítadlo pro IP {{ ip }} a odblokovat ji?');">
+        <input type="hidden" name="ip_address" value="{{ ip }}">
+        <button type="submit" class="btn btn-secondary btn-sm">Reset počítadla</button>
+    </form>
+</div>
+
+{# Souhrnné statistiky #}
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:140px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Souborů celkem</div>
+        <div style="font-size:1.5em;font-weight:700;color:#1d4ed8;">{{ stats.total_files }}</div>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 20px;min-width:140px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Kontrol celkem</div>
+        <div style="font-size:1.5em;font-weight:700;color:#047857;">{{ stats.total_checks }}</div>
+    </div>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 20px;min-width:140px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">Pokusů přes limit</div>
+        <div style="font-size:1.5em;font-weight:700;color:#b45309;">{{ stats.limit_hits }}</div>
+    </div>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;min-width:180px;">
+        <div style="font-size:0.75em;color:#6b7280;text-transform:uppercase;">První / poslední aktivita</div>
+        <div style="font-size:0.95em;font-weight:600;">{{ (stats.first_seen or '—')[:16] }}<br>{{ (stats.last_seen or '—')[:16] }}</div>
+    </div>
+</div>
+
+{# Graf po dnech #}
+<div class="chart-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:24px;">
+    <h3 style="font-size:0.95em;margin:0 0 12px;color:#374151;">Soubory po dnech (30 dní)</h3>
+    <div style="height:200px;"><canvas id="chartIpDaily"></canvas></div>
+</div>
+
+{# Časová osa kontrol #}
+<h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">Všechny kontroly ({{ logs|length }})</h3>
+<div class="table-container">
+    <table class="table-dense">
+        <thead>
+            <tr>
+                <th>Čas</th>
+                <th>Stav</th>
+                <th>Souborů</th>
+                <th>Názvy souborů</th>
+                <th>Velikost</th>
+                <th>Prohlížeč (User-Agent)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr {% if log.status == 'limit' %}style="background:#fef2f2;"{% endif %}>
+                <td><small>{{ (log.timestamp or '—')[:19] }}</small></td>
+                <td>
+                    {% if log.status == 'ok' %}
+                    <span class="status-badge status-active">OK</span>
+                    {% else %}
+                    <span class="status-badge" style="background:#fee2e2;color:#b91c1c;">Přes limit</span>
+                    {% endif %}
+                </td>
+                <td>{{ log.file_count }}</td>
+                <td style="max-width:340px;"><small>{{ log.file_names_list|join(', ') if log.file_names_list else '—' }}</small></td>
+                <td><small>{% if log.total_size %}{{ '%.1f'|format(log.total_size / 1024) }} kB{% else %}—{% endif %}</small></td>
+                <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ log.user_agent or '' }}"><small>{{ log.user_agent or '—' }}</small></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Žádné záznamy (starší aktivita před zavedením detailního logu se zde nezobrazuje)</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var daily = {{ daily|tojson }};
+    var ctx = document.getElementById('chartIpDaily');
+    if (!ctx || !window.Chart) return;
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: daily.map(function(d) { return d.day; }),
+            datasets: [{
+                label: 'Souborů',
+                data: daily.map(function(d) { return d.files; }),
+                backgroundColor: '#3b82f6'
+            }, {
+                label: 'Kontrol (požadavků)',
+                data: daily.map(function(d) { return d.checks; }),
+                backgroundColor: '#f59e0b'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+})();
+</script>
+{% endblock %}
