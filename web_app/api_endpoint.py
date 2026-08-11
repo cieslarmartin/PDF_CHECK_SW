@@ -108,8 +108,14 @@ def register_api_routes(app):
             data = request.get_json() if request.is_json else {}
             batch_name = data.get('batch_name')
             source_folder = data.get('source_folder')
+            _ip, machine_id, machine_name = _request_client_info(request)
+            if machine_id:
+                db.upsert_user_device(api_key, machine_id, machine_name)
 
-            batch_id = db.create_batch(api_key, batch_name, source_folder)
+            batch_id = db.create_batch(
+                api_key, batch_name, source_folder,
+                machine_id=machine_id, machine_name=machine_name,
+            )
 
             if batch_id:
                 logger.info(f"Batch vytvořen: {batch_id}")
@@ -237,7 +243,10 @@ def register_api_routes(app):
                     }), 403
 
             # Vytvoř batch
-            batch_id = db.create_batch(api_key, batch_name, source_folder)
+            batch_id = db.create_batch(
+                api_key, batch_name, source_folder,
+                machine_id=machine_id, machine_name=machine_name,
+            )
             if not batch_id:
                 return jsonify({'error': 'Failed to create batch'}), 500
 
@@ -683,6 +692,24 @@ def register_api_routes(app):
                 daily_limit = limits.get('daily_files_limit')
                 license_info['daily_files_remaining'] = max(0, daily_limit - license_info['daily_files_used']) if daily_limit is not None and daily_limit >= 0 else None
                 license_info['daily_files_limit'] = daily_limit
+                max_devices = lic.get('max_devices')
+                try:
+                    max_devices = int(max_devices) if max_devices is not None else 1
+                except (TypeError, ValueError):
+                    max_devices = 1
+                license_info['max_devices'] = max_devices
+                # Zařízení pro filtr (jen Firemní / více zařízení)
+                if max_devices > 1:
+                    devices_out = []
+                    for d in db.get_user_devices_list(api_key):
+                        if d.get('is_blocked'):
+                            continue
+                        mid = d.get('machine_id') or ''
+                        devices_out.append({
+                            'machine_id': mid,
+                            'machine_name': (d.get('machine_name') or '').strip() or (mid[:8] + '…' if len(mid) > 8 else mid),
+                        })
+                    license_info['devices'] = devices_out
 
             return jsonify({
                 'success': True,

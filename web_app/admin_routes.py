@@ -3109,6 +3109,7 @@ def api_welcome_package():
             f"{pwd_line}\n"
             f"Stažení agenta: {download_url}\n"
             f"Portál: {login_url}\n"
+            f"Přejmenování zařízení: {login_url}#zarizeni\n"
         )
         return jsonify({
             'success': True,

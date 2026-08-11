@@ -5,13 +5,22 @@ import os
 from flask import current_app
 
 try:
-    from site_config_loader import get_email_templates, ACTIVATION_NETWORK_NOTE_HTML, ACTIVATION_NETWORK_NOTE_PLAIN, FAQ_PAGE_URL
+    from site_config_loader import (
+        get_email_templates,
+        ACTIVATION_NETWORK_NOTE_HTML,
+        ACTIVATION_NETWORK_NOTE_PLAIN,
+        ACTIVATION_PORTAL_DEVICES_NOTE_HTML,
+        ACTIVATION_PORTAL_DEVICES_NOTE_PLAIN,
+        FAQ_PAGE_URL,
+    )
 except ImportError:
     def get_email_templates():
         return {}
     FAQ_PAGE_URL = "https://www.dokucheck.cz/#faq"
     ACTIVATION_NETWORK_NOTE_HTML = ""
     ACTIVATION_NETWORK_NOTE_PLAIN = ""
+    ACTIVATION_PORTAL_DEVICES_NOTE_HTML = ""
+    ACTIVATION_PORTAL_DEVICES_NOTE_PLAIN = ""
 
 
 def _apply_footer(body_plain, footer_text):
@@ -270,6 +279,26 @@ def _append_activation_network_note(body):
     return body
 
 
+def _append_activation_portal_devices_note(body, login_url=None):
+    """Doplní info o přejmenování zařízení v portálu, pokud v těle ještě není."""
+    if not body:
+        return body
+    low = body.lower()
+    if 'přejmenovat' in low or 'seznam zařízení' in low:
+        return body
+    url = (login_url or 'https://www.dokucheck.cz/portal').strip()
+    if '<' in body and ACTIVATION_PORTAL_DEVICES_NOTE_HTML:
+        note = ACTIVATION_PORTAL_DEVICES_NOTE_HTML.replace('{login_url}', url)
+        # Vložit před síťovou poznámku / před konec divu, jinak na konec
+        if '</div>' in body:
+            idx = body.rfind('</div>')
+            return body[:idx] + note + body[idx:]
+        return body.rstrip() + note
+    if ACTIVATION_PORTAL_DEVICES_NOTE_PLAIN:
+        return body.rstrip() + ACTIVATION_PORTAL_DEVICES_NOTE_PLAIN.replace('{login_url}', url)
+    return body
+
+
 def get_activation_email_preview(user_email, password_plain=None, download_url=None, login_url=None, user_name=None, set_password_url=None):
     """Vrátí (předmět, tělo_plain, tělo_html) pro aktivační e-mail – pro náhled v administraci. Neodesílá!"""
     if not download_url:
@@ -326,6 +355,7 @@ def get_activation_email_preview(user_email, password_plain=None, download_url=N
     
     subject = repl(subject_tpl)
     body = repl(body_tpl)
+    body = _append_activation_portal_devices_note(body, login_url=login_url)
     body = _append_activation_network_note(body)
     
     # Podpora HTML:

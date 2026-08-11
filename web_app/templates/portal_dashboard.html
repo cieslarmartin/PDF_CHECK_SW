@@ -133,6 +133,57 @@
         </section>
         {% endif %}
 
+        <section class="portal-card p-5 mb-6" id="zarizeni">
+            <h2 class="text-lg font-semibold mb-2">Zařízení</h2>
+            <p class="portal-label text-sm mb-4">
+                Počet aktivních zařízení:
+                <span class="portal-value font-medium">{{ devices_active or 0 }}{% if devices_max is not none and devices_max >= 0 %} / {{ devices_max }}{% else %} / ∞{% endif %}</span>
+            </p>
+            {% if device_message %}
+            <p class="text-sm mb-4 {% if device_error %}text-red-600{% else %}text-green-600{% endif %}">{{ device_message }}</p>
+            {% endif %}
+            {% if portal_devices %}
+            <div class="overflow-x-auto">
+                <table class="table-activity w-full border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-2 pr-4">Název</th>
+                            <th class="text-left py-2 pr-4">Poslední aktivita</th>
+                            <th class="text-left py-2">Přejmenovat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in portal_devices %}
+                        <tr class="border-b border-gray-100 {% if d.is_blocked %}opacity-50{% endif %}">
+                            <td class="py-2 pr-4">
+                                <span class="font-medium text-gray-800">{{ d.display_name }}</span>
+                                {% if d.is_blocked %}<span class="text-xs text-red-600 ml-1">(blokováno)</span>{% endif %}
+                            </td>
+                            <td class="py-2 pr-4">{{ (d.last_seen or '')[:16] or '—' }}</td>
+                            <td class="py-2">
+                                {% if not d.is_blocked %}
+                                <form method="post" action="/portal/rename-device" class="flex flex-wrap gap-2 items-center">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="machine_id" value="{{ d.machine_id }}">
+                                    <input type="text" name="new_name" maxlength="80" value="{{ d.display_name }}" required
+                                           class="px-2 py-1 rounded border border-gray-300 bg-white text-gray-800 text-sm max-w-[180px] focus:ring-2 focus:ring-[#1e5a8a] focus:border-[#1e5a8a]">
+                                    <button type="submit" class="px-3 py-1 rounded text-sm font-semibold portal-btn">Uložit</button>
+                                </form>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="portal-label text-xs mt-3">Název slouží k rozpoznání počítače v historii kontrol (zejména u firemního tarifu). Identita zařízení se tím nemění.</p>
+            {% else %}
+            <p class="portal-label text-sm">Zatím žádné registrované zařízení. Po prvním přihlášení v Desktop Agentovi se zde objeví.</p>
+            {% endif %}
+        </section>
+
         <section class="portal-card p-5 mb-6">
             <h2 class="text-lg font-semibold mb-4">Změna hesla</h2>
             {% if pw_message %}<p class="text-sm mb-4 {% if pw_error %}text-red-600{% else %}text-green-600{% endif %}">{{ pw_message }}</p>{% endif %}

@@ -250,7 +250,7 @@ class Database:
                 ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
                  'Dobrý den,\n\nDěkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
                 ('activation', 'DokuCheck – přístup aktivní',
-                 'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
+                 'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nV Portálu (Můj účet) uvidíte seznam zařízení a můžete si je přejmenovat.\n\nStahujte aplikaci zde: {download_url}'),
                 ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
             ''')
 
@@ -567,6 +567,18 @@ class Database:
         except Exception:
             pass
 
+        # batches: zařízení, ze kterého Agent odeslal dávku (filtr Firemní)
+        try:
+            cursor.execute("PRAGMA table_info(batches)")
+            batch_cols = {row[1] for row in cursor.fetchall()}
+            if 'machine_id' not in batch_cols:
+                cursor.execute('ALTER TABLE batches ADD COLUMN machine_id TEXT')
+            if 'machine_name' not in batch_cols:
+                cursor.execute('ALTER TABLE batches ADD COLUMN machine_name TEXT')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_batches_machine_id ON batches(machine_id)')
+        except Exception:
+            pass
+
         # billing_history: roční období faktury (příprava na obnovy)
         try:
             cursor.execute("PRAGMA table_info(billing_history)")
@@ -686,7 +698,7 @@ class Database:
                     ('order_confirmation', 'DokuCheck – potvrzení objednávky č. {vs}',
                      'Dobrý den,\n\nDěkujeme za objednávku DokuCheck.\n\nPro aktivaci zašlete {cena} Kč na účet uvedený v patičce, variabilní symbol: {vs}.\n\nJméno / Firma: {jmeno}'),
                     ('activation', 'DokuCheck – přístup aktivní',
-                     'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nStahujte aplikaci zde: {download_url}'),
+                     'Dobrý den, {jmeno}!\n\nVaše platba byla přijata. Přístup k DokuCheck je aktivní.\n\nPřihlašovací jméno (e-mail): {email}\nHeslo: {heslo}\n\nOdkaz na přihlášení: {login_url}\n\nV Portálu (Můj účet) uvidíte seznam zařízení a můžete si je přejmenovat.\n\nStahujte aplikaci zde: {download_url}'),
                     ('footer_text', '', '---\nDokuCheck – Dokumentace bez chyb | www.dokucheck.cz\nTato zpráva byla odeslána automaticky.')
                 ''')
         except Exception:
@@ -769,20 +781,34 @@ class Database:
     # BATCH OPERACE (NOVÉ v40)
     # =========================================================================
 
-    def create_batch(self, api_key, batch_name=None, source_folder=None):
-        """Vytvoří novou dávku a vrátí batch_id"""
+    def create_batch(self, api_key, batch_name=None, source_folder=None, machine_id=None, machine_name=None):
+        """Vytvoří novou dávku a vrátí batch_id. Volitelně uloží zařízení (Agent)."""
         conn = self.get_connection()
         cursor = conn.cursor()
 
         batch_id = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        mid = (str(machine_id).strip() if machine_id else None) or None
+        mname = (str(machine_name).strip() if machine_name else None) or None
 
         try:
             cursor.execute('''
-                INSERT INTO batches (batch_id, api_key, batch_name, source_folder)
-                VALUES (?, ?, ?, ?)
-            ''', (batch_id, api_key, batch_name, source_folder))
+                INSERT INTO batches (batch_id, api_key, batch_name, source_folder, machine_id, machine_name)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (batch_id, api_key, batch_name, source_folder, mid, mname))
             conn.commit()
             return batch_id
+        except sqlite3.OperationalError:
+            # Starší DB bez sloupců machine_* – fallback bez zařízení
+            try:
+                cursor.execute('''
+                    INSERT INTO batches (batch_id, api_key, batch_name, source_folder)
+                    VALUES (?, ?, ?, ?)
+                ''', (batch_id, api_key, batch_name, source_folder))
+                conn.commit()
+                return batch_id
+            except Exception as e2:
+                print(f"Chyba při vytváření batch: {e2}")
+                return None
         except Exception as e:
             print(f"Chyba při vytváření batch: {e}")
             return None
@@ -1181,6 +1207,15 @@ class Database:
 
             # Vytvoř stromovou strukturu složek
             batch['folder_tree'] = self._build_folder_tree(results)
+
+            # Zobrazované jméno PC: preferuj přejmenování z user_devices
+            mid = batch.get('machine_id')
+            if mid and api_key:
+                batch['machine_display_name'] = self.get_device_display_name(
+                    api_key, mid, batch.get('machine_name')
+                )
+            else:
+                batch['machine_display_name'] = batch.get('machine_name') or None
 
         conn.close()
 
@@ -3185,9 +3220,12 @@ class Database:
         return rows
 
     def upsert_user_device(self, user_id, machine_id, machine_name=None):
-        """Vloží nebo aktualizuje záznam v user_devices (last_seen, machine_name)."""
+        """Vloží nebo aktualizuje záznam v user_devices (last_seen).
+        Existující machine_name (včetně uživatelského přejmenování) se nepřepisuje."""
         if not user_id or not machine_id or not str(machine_id).strip():
             return
+        mid = str(machine_id).strip()
+        mname = (str(machine_name).strip() if machine_name else None) or None
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
@@ -3196,24 +3234,91 @@ class Database:
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(user_id, machine_id) DO UPDATE SET
                     last_seen = CURRENT_TIMESTAMP,
-                    machine_name = COALESCE(?, machine_name)
-            ''', (user_id, str(machine_id).strip(), machine_name or None, machine_name or None))
+                    machine_name = CASE
+                        WHEN user_devices.machine_name IS NULL OR TRIM(user_devices.machine_name) = ''
+                        THEN COALESCE(excluded.machine_name, user_devices.machine_name)
+                        ELSE user_devices.machine_name
+                    END
+            ''', (user_id, mid, mname))
             conn.commit()
         except (sqlite3.IntegrityError, sqlite3.OperationalError):
-            # SQLite < 3.24 or no ON CONFLICT support; fallback to SELECT + INSERT/UPDATE
-            cursor.execute('SELECT id FROM user_devices WHERE user_id = ? AND machine_id = ?',
-                           (user_id, str(machine_id).strip()))
-            if cursor.fetchone():
-                cursor.execute('''
-                    UPDATE user_devices SET last_seen = CURRENT_TIMESTAMP, machine_name = COALESCE(?, machine_name)
-                    WHERE user_id = ? AND machine_id = ?
-                ''', (machine_name, user_id, str(machine_id).strip()))
+            cursor.execute(
+                'SELECT id, machine_name FROM user_devices WHERE user_id = ? AND machine_id = ?',
+                (user_id, mid),
+            )
+            row = cursor.fetchone()
+            if row:
+                existing_name = (row['machine_name'] if isinstance(row, sqlite3.Row) else row[1]) or ''
+                if str(existing_name).strip():
+                    cursor.execute('''
+                        UPDATE user_devices SET last_seen = CURRENT_TIMESTAMP
+                        WHERE user_id = ? AND machine_id = ?
+                    ''', (user_id, mid))
+                else:
+                    cursor.execute('''
+                        UPDATE user_devices SET last_seen = CURRENT_TIMESTAMP, machine_name = COALESCE(?, machine_name)
+                        WHERE user_id = ? AND machine_id = ?
+                    ''', (mname, user_id, mid))
             else:
                 cursor.execute('''
                     INSERT INTO user_devices (user_id, machine_id, machine_name, last_seen)
                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ''', (user_id, str(machine_id).strip(), machine_name))
+                ''', (user_id, mid, mname))
             conn.commit()
+        finally:
+            conn.close()
+
+    def get_device_display_name(self, user_id, machine_id, fallback_name=None):
+        """Vrátí zobrazované jméno zařízení (přejmenování > hostname > zkrácené ID)."""
+        if not user_id or not machine_id:
+            return (fallback_name or '').strip() or None
+        mid = str(machine_id).strip()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT machine_name FROM user_devices WHERE user_id = ? AND machine_id = ?',
+                (user_id, mid),
+            )
+            row = cursor.fetchone()
+            if row:
+                name = (row['machine_name'] if isinstance(row, sqlite3.Row) else row[0]) or ''
+                if str(name).strip():
+                    return str(name).strip()
+        finally:
+            conn.close()
+        fb = (fallback_name or '').strip()
+        if fb:
+            return fb
+        return mid[:8] + '…' if len(mid) > 8 else mid
+
+    def rename_user_device(self, user_id, machine_id, new_name):
+        """Přejmenuje zařízení uživatele. Vrací (True, None) nebo (False, chybová zpráva)."""
+        if not user_id or not machine_id:
+            return False, 'Chybí identifikace zařízení'
+        name = (new_name or '').strip()
+        if not name:
+            return False, 'Zadejte název zařízení'
+        if len(name) > 80:
+            return False, 'Název může mít nejvýše 80 znaků'
+        mid = str(machine_id).strip()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'SELECT id FROM user_devices WHERE user_id = ? AND machine_id = ?',
+                (user_id, mid),
+            )
+            if not cursor.fetchone():
+                return False, 'Zařízení nenalezeno'
+            cursor.execute(
+                'UPDATE user_devices SET machine_name = ? WHERE user_id = ? AND machine_id = ?',
+                (name, user_id, mid),
+            )
+            conn.commit()
+            return True, None
+        except Exception as e:
+            return False, str(e)
         finally:
             conn.close()
 

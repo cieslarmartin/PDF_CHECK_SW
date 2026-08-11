@@ -1092,6 +1092,13 @@ HTML_TEMPLATE = '''
                                     </div>
                                 </div>
                             </div>
+                            <div id="device-filter-wrap" style="display:none;margin-top:12px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                                <label for="device-filter-select" style="display:block;font-size:0.75em;color:#166534;font-weight:600;margin-bottom:6px;">Filtrovat podle zařízení</label>
+                                <select id="device-filter-select" onchange="onDeviceFilterChange()" style="width:100%;padding:8px;border:1px solid #86efac;border-radius:6px;font-size:0.85em;background:white;color:#374151;">
+                                    <option value="">Všechna zařízení</option>
+                                </select>
+                                <div style="font-size:0.7em;color:#6b7280;margin-top:6px;">Názvy zařízení můžete upravit v <a href="/portal#zarizeni" style="color:#1e5a8a;">Portálu – Můj účet</a>.</div>
+                            </div>
                             <div class="disk-tip" style="margin-top:12px;">
                                 💡 <strong>Z Agenta:</strong> Soubory zůstávají na disku, na server odcházejí jen metadata (výsledky kontroly).
                             </div>
@@ -1455,6 +1462,8 @@ let selectedDiskPath = '';
 let sidebarFilters = { pdfa: 'all', sig: 'all', tsa: 'all' };
 let headerFilter = { column: null, value: null };
 let treeCollapsedIds = new Set();
+let deviceFilterId = ''; // Firemní: filtr dávek podle machine_id
+let allAgentBatches = []; // nefiltrované dávky z API (pro přepínání filtru)
 
 // ===== MODE =====
 function setMode(mode) {
@@ -1911,6 +1920,10 @@ function renderResults() {
         html += '<div class="batch-header-left"><span class="batch-arrow' + (batch.collapsed ? ' collapsed' : '') + '">▼</span>';
         html += '<span class="batch-name">📦 ' + batch.name + '</span><span class="batch-time">— ' + batch.timestamp + '</span>';
         if (batch.source_folder) html += '<span class="batch-folder" title="' + batch.source_folder + '">📂 ' + batch.source_folder.split(/[/\\\\]/).pop() + '</span>';
+        if (batch.machine_display_name) {
+            const pcLabel = String(batch.machine_display_name).replace(/</g, '&lt;').replace(/"/g, '&quot;');
+            html += '<span class="batch-folder" title="Zařízení: ' + pcLabel + '" style="background:#ecfdf5;color:#166534;">💻 ' + pcLabel + '</span>';
+        }
         html += '</div>';
         html += '<div class="batch-header-right"><span class="batch-stat">A-3: ' + stats.pdfaOk + '✓</span>';
         html += '<span class="batch-stat">Podpis: ' + stats.sigOk + '✓</span><span class="batch-count">(' + batch.files.length + ')</span>';
@@ -2509,6 +2522,7 @@ async function loadAgentResults() {
             updateLicenseBadge();
             updateDailyQuotaDisplay();
             updateFeatureLocks();
+            window._pendingDeviceLicense = data.license;
         }
 
         // Zobraz statistiky
@@ -2519,7 +2533,7 @@ async function loadAgentResults() {
 
         // NOVÉ v40: API vrací data.batches (seskupené podle batch_id)
         if (data.batches && data.batches.length > 0) {
-            batches = data.batches.map((batch, i) => {
+            allAgentBatches = data.batches.map((batch, i) => {
                 // Název dávky = název kontrolované složky (source_folder), ne generický „PDF Check“
                 const sourceFolder = batch.source_folder || '';
                 const folderNameForTitle = sourceFolder ? sourceFolder.replace(/\\\\/g, '/').split('/').filter(Boolean).pop() : '';
@@ -2567,16 +2581,22 @@ async function loadAgentResults() {
                     name: batchDisplayName,
                     timestamp: timestamp,
                     source_folder: batch.source_folder,
+                    machine_id: batch.machine_id || '',
+                    machine_display_name: batch.machine_display_name || batch.machine_name || '',
                     files: files,
                     collapsed: i > 0
                 };
             });
 
-            renderResults();
+            updateDeviceFilterUI(window._pendingDeviceLicense || data.license);
+            applyDeviceFilterAndRender();
             updateFilterLists();
             const onlyYourLabel = document.getElementById('only-your-checks-label');
             if (onlyYourLabel) onlyYourLabel.style.display = 'block';
         } else {
+            allAgentBatches = [];
+            batches = [];
+            updateDeviceFilterUI(window._pendingDeviceLicense || data.license);
             const user = getStoredUser();
             const msg = user
                 ? '<div style="padding:40px;text-align:center;color:#9ca3af;"><div style="font-size:3em;margin-bottom:16px;">📭</div><div>Zatím žádné výsledky z agenta</div><div style="font-size:0.85em;margin-top:8px;">Spusťte desktop agenta a zkontrolujte nějaké PDF soubory. Zobrazují se pouze vaše kontroly.</div></div>'
@@ -2590,6 +2610,66 @@ async function loadAgentResults() {
         console.error('Chyba při načítání:', error);
         document.getElementById('results-container').innerHTML = '<div style="padding:40px;text-align:center;color:#dc2626;"><div style="font-size:2em;margin-bottom:16px;">❌</div><div>Chyba při načítání dat: ' + error.message + '</div></div>';
     }
+}
+
+function updateDeviceFilterUI(license) {
+    const wrap = document.getElementById('device-filter-wrap');
+    const sel = document.getElementById('device-filter-select');
+    if (!wrap || !sel) return;
+    const maxDev = license && license.max_devices != null ? Number(license.max_devices) : 1;
+    const devices = (license && Array.isArray(license.devices)) ? license.devices : [];
+    if (!(maxDev > 1)) {
+        wrap.style.display = 'none';
+        deviceFilterId = '';
+        return;
+    }
+    wrap.style.display = 'block';
+    const prev = deviceFilterId;
+    let opts = '<option value="">Všechna zařízení</option>';
+    devices.forEach(function(d) {
+        const id = d.machine_id || '';
+        const label = (d.machine_name || id || 'PC').replace(/</g, '&lt;');
+        opts += '<option value="' + String(id).replace(/"/g, '&quot;') + '">' + label + '</option>';
+    });
+    // Dávky s PC, které ještě nejsou v user_devices (např. po smazání slotu) – doplň z dat
+    const known = {};
+    devices.forEach(function(d) { known[d.machine_id] = true; });
+    (allAgentBatches || []).forEach(function(b) {
+        if (b.machine_id && !known[b.machine_id]) {
+            known[b.machine_id] = true;
+            const label = (b.machine_display_name || b.machine_id).replace(/</g, '&lt;');
+            opts += '<option value="' + String(b.machine_id).replace(/"/g, '&quot;') + '">' + label + '</option>';
+        }
+    });
+    sel.innerHTML = opts;
+    if (prev && known[prev]) {
+        sel.value = prev;
+        deviceFilterId = prev;
+    } else {
+        sel.value = '';
+        deviceFilterId = '';
+    }
+}
+
+function onDeviceFilterChange() {
+    const sel = document.getElementById('device-filter-select');
+    deviceFilterId = sel ? (sel.value || '') : '';
+    applyDeviceFilterAndRender();
+    updateFilterLists();
+}
+
+function applyDeviceFilterAndRender() {
+    if (!allAgentBatches || allAgentBatches.length === 0) {
+        batches = [];
+        renderResults();
+        return;
+    }
+    if (!deviceFilterId) {
+        batches = allAgentBatches.slice();
+    } else {
+        batches = allAgentBatches.filter(function(b) { return (b.machine_id || '') === deviceFilterId; });
+    }
+    renderResults();
 }
 
 // Export batch ze serveru (Excel) – vyžaduje přihlášení a Pro
@@ -4297,6 +4377,7 @@ def portal():
         portal_stats = db.get_portal_user_activity_stats(api_key)
         portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
         download_url = db.get_global_setting('download_url', '') or ''
+        devices_ctx = _portal_devices_context(db, api_key, lic)
         return render_template('portal_dashboard.html',
                                tier_name=tier_name,
                                license_expires_label=license_expires_label,
@@ -4305,7 +4386,9 @@ def portal():
                                portal_stats=portal_stats,
                                portal_activity=portal_activity,
                                download_url=download_url,
-                               pw_message=None, pw_error=False)
+                               pw_message=None, pw_error=False,
+                               device_message=None, device_error=False,
+                               **devices_ctx)
     success = request.args.get('set_password') == 'ok'
     return render_template('portal_login.html', success=success)
 
@@ -4391,7 +4474,57 @@ def portal_change_password():
     return _portal_dashboard_with_message('Nepodařilo se změnit heslo', error=True)
 
 
-def _portal_dashboard_with_message(message, error=True):
+@app.route('/portal/rename-device', methods=['POST'])
+def portal_rename_device():
+    """Přejmenování zařízení v portálu (Můj účet)."""
+    if not session.get('portal_user'):
+        return redirect(url_for('portal'))
+    api_key = session['portal_user']['api_key']
+    machine_id = (request.form.get('machine_id') or '').strip()
+    new_name = (request.form.get('new_name') or '').strip()
+    db = Database()
+    ok, err = db.rename_user_device(api_key, machine_id, new_name)
+    if ok:
+        return _portal_dashboard_with_message(
+            'Název zařízení byl uložen', error=False,
+            device_message='Název zařízení byl uložen', device_error=False,
+        )
+    return _portal_dashboard_with_message(
+        err or 'Nepodařilo se přejmenovat zařízení', error=True,
+        device_message=err or 'Nepodařilo se přejmenovat zařízení', device_error=True,
+    )
+
+
+def _portal_devices_context(db, api_key, lic=None):
+    """Kontext zařízení pro portal_dashboard."""
+    lic = lic or db.get_user_license(api_key) or {}
+    raw = db.get_user_devices_list(api_key) or []
+    devices = []
+    for d in raw:
+        mid = d.get('machine_id') or ''
+        name = (d.get('machine_name') or '').strip()
+        devices.append({
+            'machine_id': mid,
+            'display_name': name or (mid[:8] + '…' if len(mid) > 8 else mid or '—'),
+            'last_seen': d.get('last_seen'),
+            'is_blocked': bool(d.get('is_blocked')),
+        })
+    try:
+        devices_max = int(lic.get('max_devices')) if lic.get('max_devices') is not None else None
+    except (TypeError, ValueError):
+        devices_max = None
+    try:
+        devices_active = db.count_user_devices_non_blocked(api_key)
+    except Exception:
+        devices_active = sum(1 for d in devices if not d.get('is_blocked'))
+    return {
+        'portal_devices': devices,
+        'devices_active': devices_active,
+        'devices_max': devices_max,
+    }
+
+
+def _portal_dashboard_with_message(message, error=True, device_message=None, device_error=False):
     """Pomocná: vykreslí portal dashboard s hláškou."""
     if not session.get('portal_user'):
         return redirect(url_for('portal'))
@@ -4406,6 +4539,9 @@ def _portal_dashboard_with_message(message, error=True):
     portal_stats = db.get_portal_user_activity_stats(api_key)
     portal_activity = db.get_activity_log_by_api_key(api_key, limit=30)
     download_url = db.get_global_setting('download_url', '') or ''
+    devices_ctx = _portal_devices_context(db, api_key, lic)
+    pw_msg = message if device_message is None else None
+    pw_err = error if device_message is None else False
     return render_template('portal_dashboard.html',
                            tier_name=tier_name,
                            license_expires_label=license_expires_label,
@@ -4414,7 +4550,10 @@ def _portal_dashboard_with_message(message, error=True):
                            portal_stats=portal_stats,
                            portal_activity=portal_activity,
                            download_url=download_url,
-                           pw_message=message, pw_error=error)
+                           pw_message=pw_msg, pw_error=pw_err,
+                           device_message=device_message if device_message is not None else None,
+                           device_error=device_error,
+                           **devices_ctx)
 
 
 # Online Demo / Web Trial: max 5 souborů, max 2 MB na soubor, max 3 batche/IP/24h
