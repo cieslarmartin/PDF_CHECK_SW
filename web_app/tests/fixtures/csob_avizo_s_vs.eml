@@ -1,0 +1,227 @@
+Received: from mm2a2.csob.cz (mm2a2.csob.cz [193.245.36.14])
+	by smtpd-profi-cc9db68f4-r8qn4 (szn-email-smtpd/2.0.79) with ESMTP
+	id 9f39bc43-1ff6-47fb-b718-b907e05eda48;
+	Wed, 12 Aug 2026 15:21:57 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=csob.cz; s=m1;
+  h=date:from:to:message-id:subject:mime-version:
+   content-transfer-encoding;
+  bh=xfHu/FxZM6SOfLo+ODVAQcHI5vNp+AFJ1Hse4Se1jMs=;
+  b=gQ7Bb00o2weLAnulzgXid4dL00O/2MVX2MKFHXwLM4tbLdrdRfCZaYNo
+   FFVWLppRhANPfybHtVGUZhuL84zqRFbgX81g3RbtQmhE7LFQIGOU4m9hP
+   9D7Ljske8l0p+gTRhn57rdpXJ4KBAiK//EFijwtaLlUwU2D/ZA2lvGUnO
+   I=;
+X-CSE-ConnectionGUID: p0TbigNtT7yFqv1YzVW9aA==
+X-CSE-MsgGUID: 8OhwCgWoQSWoz2XKQoMz6Q==
+X-CSE-ConnectionGUID: kBapC7sDQAG3HmI8fJbOJw==
+X-CSE-MsgGUID: 0wqhDqPSQNSn3U+uTwbB/w==
+Date: Wed, 12 Aug 2026 15:21:55 +0200 (CEST)
+From: =?UTF-8?Q?=C4=8CSOB?= <noreply@csob.cz>
+To: cieslar@dokucheck.cz
+Message-ID: <1988673173.1076232.1786540915690@s08986ue.cz.srv.sys>
+Subject: =?utf-8?Q?Moje_info_-_Av=C3=ADzo?=
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html lang=3D"cz" xmlns=3D"http://www.w3.org/1999/xhtml">
+  <body style=3D"line-height:18px; background-color: #B8CCE2; font-family: =
+'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <br />
+    <table align=3D"center" width=3D"600" border=3D"0" cellpadding=3D"0" ce=
+llspacing=3D"0" style=3D"background-color: #FFFFFF;color:#555555;">
+      <tr>
+        <td>
+          <table align=3D"center" width=3D"500" border=3D"0" cellpadding=3D=
+"0" cellspacing=3D"0">
+            <tr>
+              <td>&nbsp;
+                <br />
+              </td>
+            </tr>
+            <tr>
+              <td style=3D"height:50px;">
+                <img align=3D"left" alt=3D"CSOB" border=3D"0" src=3D"https:=
+//content.csob.cz/ib/CSOB_logo.jpg" width=3D"60" style=3D"display: block;"/=
+>
+              </td>
+            </tr>
+            <tr>
+              <td style=3D"font-size: 14px; line-height: 1.5; word-break: b=
+reak-word; color:#555555;">
+                <br />Dobr=C3=BD den,
+              </td>
+            </tr><tr>
+  <td style=3D"font-size: 14px; line-height: 1.5; word-break: break-word; c=
+olor:#555555;">
+    <p><br />dne 12.8.2026 byla na =C3=BA=C4=8Dtu 307279608 za=C3=BA=C4=8Dt=
+ov=C3=A1na transakce typu: P=C5=99=C3=ADchoz=C3=AD =C3=BAhrada okam=C5=BEit=
+=C3=A1.</p>
+  </td>
+</tr>
+<tr>
+  <td>
+    <br />
+    <table style=3D"border-top: 1px solid #BBBBBB; width: 100%;" valign=3D"=
+top"></table>
+  </td>
+</tr>
+<tr>
+  <td>
+    <p style=3D"font-size: 17px; line-height: 1.2; word-break: break-word; =
+color:#555555;">
+      <br />
+      <b>Parametry platby</b>
+      <br />
+    </p>
+    <table style=3D"border-collapse: collapse; display: table;width: 100%; =
+color: #555555; font-size: 14px; line-height: 1.5;">
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">=C3=9A=C4=8Det</td>
+        <td>307279608/0300</td>
+      </tr>
+     =20
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">=C3=9A=C4=8Det protistrany</td>
+        <td>107496683/0100</td>
+      </tr>
+     =20
+     =20
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">N=C3=A1zev protistrany</td>
+        <td>MARTIN CIE.LAR</td>
+      </tr>
+     =20
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Datum =C3=BA=C4=8Dtov=C3=A1n=C3=AD</td>
+        <td>12.8.2026</td>
+      </tr>
+      <!--
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Zaslan=C3=A1 =C4=8D=C3=A1stka platby</td>
+        <td> </td>
+      </tr>
+      -->
+      <!--
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Kurz</td>
+        <td></td>
+      </tr>
+      -->
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">=C4=8C=C3=A1stka</td>
+        <td>+1=C2=A0590,00 CZK</td>
+      </tr>
+     =20
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Variabiln=C3=AD symbol</td>
+        <td>160</td>
+      </tr>
+     =20
+      <!--
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Konstantn=C3=AD symbol</td>
+        <td></td>
+      </tr>
+      -->
+      <!--
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Specifick=C3=BD symbol</td>
+        <td></td>
+      </tr>
+      -->
+     =20
+      <tr>
+        <td style=3D"vertical-align: top; width: 52%;padding-bottom: 5px;pa=
+dding-top: 5px;">Zpr=C3=A1va pro p=C5=99=C3=ADjemce</td>
+        <td>Faktura 160   </td>
+      </tr>
+     =20
+    </table>
+  </td>
+</tr>
+<tr>
+  <td>
+    <br />
+    <table style=3D"border-top: 1px solid #BBBBBB; width: 100%;" valign=3D"=
+top"></table>
+  </td>
+</tr>
+<tr>
+  <td style=3D"font-size: 14px; line-height: 1.5; word-break: break-word; c=
+olor:#555555;">
+    <p>
+      <br />Z=C5=AFstatek na =C3=BA=C4=8Dtu po za=C3=BA=C4=8Dtov=C3=A1n=C3=
+=AD transakce: +1=C2=A0590,00 CZK.</p>
+  </td>
+</tr>            <tr>
+              <td style=3D"font-size: 14px; line-height: 1.5; word-break: b=
+reak-word; color:#555555;">
+                <p>
+                  <br />P=C5=99ejeme p=C5=99=C3=ADjemn=C3=BD den.
+                  <br />Va=C5=A1e =C4=8CSOB</p>
+                <br />
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <table align=3D"center" width=3D"600" border=3D"0" cellpadding=3D"0px" =
+cellspacing=3D"0px" style=3D"background-color: #0198cd;">
+    <tr><td colspan=3D"4"><br /></td></tr>
+      <tr>
+        <td style=3D"width: 50px">&nbsp;</td>
+        <td style=3D"font-size: 12px; color:#F8F8F8;line-height:1.2;">
+          <b>=C4=8Ceskoslovensk=C3=A1 obchodn=C3=AD banka, a.s.</b>
+          <br/>Radlick=C3=A1 333/150
+          <br/>150 57 Praha 5</td>
+        <td>
+          <table align=3D"center">
+            <tr>
+              <td style=3D"padding:5px;">
+                <a href=3D"https://www.facebook.com/csob" target=3D"_blank"=
+>
+                  <img alt=3D"Facebook" height=3D"32" src=3D"https://conten=
+t.csob.cz/ib/facebook2x.png" title=3D"Facebook" width=3D"32"/>
+                </a>
+              </td>
+              <td style=3D"padding:5px;">
+                <a href=3D"https://twitter.com/CSOB_CZ" target=3D"_blank">
+                  <img alt=3D"Twitter" height=3D"32" src=3D"https://content=
+.csob.cz/ib/twitter2x.png" title=3D"Twitter" width=3D"32"/>
+                </a>
+              </td>
+              <td style=3D"padding:5px;">
+                <a href=3D"https://www.youtube.com/channel/UCCRLevEhack4M8n=
+KdO4JJkA" target=3D"_blank">
+                  <img alt=3D"YouTube" height=3D"32" src=3D"https://content=
+.csob.cz/ib/youtube2x.png" title=3D"YouTube" width=3D"32"/>
+                </a>
+              </td>
+              <td style=3D"padding:5px;">
+                <a href=3D"https://www.linkedin.com/company/csob" target=3D=
+"_blank">
+                  <img alt=3D"LinkedIn" height=3D"32" src=3D"https://conten=
+t.csob.cz/ib/linkedin2x.png" title=3D"LinkedIn" width=3D"32"/>
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td style=3D"width: 50px">&nbsp;</td>
+      </tr>
+      <tr><td colspan=3D"4"><br /></td></tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+{% extends "admin_base.html" %}
+{% block title %}Příchozí platby ČSOB – DokuCheck Admin{% endblock %}
+{% block content %}
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; white-space: nowrap; }
+    .st-nove { background: #e0e7ff; color: #3730a3; }
+    .st-shoda { background: #fef3c7; color: #b45309; }
+    .st-sparovano { background: #d1fae5; color: #047857; }
+    .st-nesparovano { background: #fee2e2; color: #b91c1c; }
+    .st-podezrele { background: #fce7f3; color: #9d174d; }
+    .st-chyba_parsovani { background: #f3f4f6; color: #374151; }
+    .st-preplatek { background: #ffedd5; color: #c2410c; }
+    .st-vyrizeno { background: #e5e7eb; color: #4b5563; }
+    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section-title { font-size: 1.15em; font-weight: 600; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; color: #1e5a8a; }
+    .kill-switch { border: 2px solid {{ '#16a34a' if auto_activate_csob else '#dc2626' }}; background: {{ '#f0fdf4' if auto_activate_csob else '#fef2f2' }}; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+    .action-btn { background: none; border: 1px solid #d1d5db; color: #374151; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+    .action-btn:hover { background: #f3f4f6; }
+</style>
+
+<h1 style="font-size:1.35em;font-weight:600;margin:0 0 12px;">Příchozí platby ČSOB</h1>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:20px;">
+    Avíza z banky → párování podle <strong>přesného VS + částky na haléř</strong>.
+    Automatická aktivace licence je oddělená přepínačem (výchozí: vypnuto).
+</p>
+
+{# ========== KILL SWITCH ========== #}
+<div class="kill-switch">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+            <strong style="font-size:1.05em;">Automaticky aktivovat po zaplacení (ČSOB)</strong>
+            <div style="font-size:0.9em;margin-top:4px;color:#374151;">
+                Stav: {% if auto_activate_csob %}
+                    <span style="color:#16a34a;font-weight:700;">ZAPNUTO</span> – při shodě se vytvoří licence a odešle aktivační e-mail.
+                {% else %}
+                    <span style="color:#dc2626;font-weight:700;">VYPNUTO</span> – systém jen páruje (stav „Shoda“), aktivaci děláte ručně. Doporučeno při ladění.
+                {% endif %}
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('admin.toggle_auto_activate_csob') }}" style="display:flex;gap:8px;align-items:center;">
+            <input type="hidden" name="next" value="csob_platby">
+            {% if auto_activate_csob %}
+            <input type="hidden" name="auto_activate_csob" value="0">
+            <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Vypnout automatickou aktivaci?');">Vypnout autoaktivaci</button>
+            {% else %}
+            <input type="hidden" name="auto_activate_csob" value="1">
+            <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Opravdu ZAPNOUT automatickou aktivaci licencí?');">Zapnout autoaktivaci</button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{# ========== NÁSTROJE ========== #}
+<div class="section-card">
+    <h2 class="section-title">Nástroje pro ladění</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+        <form method="post" action="{{ url_for('admin.csob_platby_upload_eml') }}" enctype="multipart/form-data" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+            <strong>Nahrát .eml</strong>
+            <p style="font-size:0.85em;color:#6b7280;margin:6px 0;">Zpracuje avízo bez IMAP (DKIM se ověří přes DNS).</p>
+            <input type="file" name="eml_file" accept=".eml,message/rfc822,text/plain" required style="margin-bottom:8px;width:100%;">
+            <label style="font-size:0.85em;display:block;margin-bottom:8px;">
+                <input type="checkbox" name="skip_dkim" value="1"> Přeskočit DKIM (jen lokální test parseru)
+            </label>
+            <button type="submit" class="btn btn-sm btn-primary">Zpracovat .eml</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.csob_platby_process_imap') }}" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+            <strong>Zpracovat schránku teď</strong>
+            <p style="font-size:0.85em;color:#6b7280;margin:6px 0;">Načte UNSEEN z IMAP (env IMAP_*). Cizí maily neoznačí jako přečtené.</p>
+            <button type="submit" class="btn btn-sm btn-primary">Spustit IMAP</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.csob_platby_manual') }}" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+            <strong>Ruční záznam platby</strong>
+            <p style="font-size:0.85em;color:#6b7280;margin:6px 0;">Bez DKIM – aktivace jen přes „Ručně spárovat“.</p>
+            <div style="display:grid;gap:6px;">
+                <input type="text" name="variabilni_symbol" class="form-control" placeholder="VS" required>
+                <input type="text" name="castka_czk" class="form-control" placeholder="Částka Kč (např. 1590)" required>
+                <input type="text" name="protiucet" class="form-control" placeholder="Protiúčet (volitelné)">
+                <input type="text" name="datum_zauctovani" class="form-control" placeholder="Datum (např. 12.8.2026)">
+                <button type="submit" class="btn btn-sm btn-secondary">Uložit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ========== FILTR ========== #}
+<form method="get" action="{{ url_for('admin.csob_platby') }}" style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <label for="stavFilter">Stav:</label>
+    <select name="stav" id="stavFilter" class="form-control form-select" style="width:200px;" onchange="this.form.submit()">
+        <option value="">Vše</option>
+        {% for key, label in stav_labels.items() %}
+        <option value="{{ key }}" {{ 'selected' if stav_filter == key else '' }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    {% if stav_filter %}
+    <a href="{{ url_for('admin.csob_platby') }}" class="btn btn-sm btn-outline-secondary">Zrušit filtr</a>
+    {% endif %}
+</form>
+
+{# ========== TABULKA ========== #}
+<div class="section-card">
+    <h2 class="section-title">Seznam plateb{% if stav_filter %} – {{ stav_labels.get(stav_filter, stav_filter) }}{% endif %}</h2>
+    <div class="table-container">
+        <table class="table-dense table-cards">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>VS</th>
+                    <th>Částka</th>
+                    <th>Protiúčet</th>
+                    <th>Stav</th>
+                    <th>Objednávka</th>
+                    <th>Poznámka</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in platby %}
+                <tr>
+                    <td data-label="ID">#{{ p.id }}</td>
+                    <td data-label="Datum" style="font-size:0.85em;color:#6b7280;">
+                        {{ p.datum_zauctovani or '—' }}<br>
+                        <span>{{ (p.zpracovano_at or p.created_at or '')[:16] }}</span>
+                    </td>
+                    <td data-label="VS"><strong>{{ p.variabilni_symbol or '—' }}</strong></td>
+                    <td data-label="Částka">
+                        {% if p.castka_haleru is not none %}
+                        {{ '%.2f'|format(p.castka_haleru / 100) }} {{ p.mena or 'CZK' }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td data-label="Protiúčet" style="font-size:0.85em;">{{ p.protiucet or '—' }}</td>
+                    <td data-label="Stav">
+                        <span class="status-badge st-{{ p.stav }}">{{ stav_labels.get(p.stav, p.stav) }}</span>
+                        {% if p.dkim_ok %}<br><span style="font-size:0.75em;color:#059669;">DKIM OK</span>
+                        {% else %}<br><span style="font-size:0.75em;color:#b91c1c;">bez DKIM</span>{% endif %}
+                    </td>
+                    <td data-label="Objednávka">{{ p.order_id or '—' }}</td>
+                    <td data-label="Poznámka" style="font-size:0.8em;max-width:220px;word-break:break-word;">{{ p.poznamka or '—' }}</td>
+                    <td data-label="Akce" style="min-width:180px;">
+                        {% if p.stav in ('shoda', 'nove', 'nesparovano') %}
+                        <form method="post" action="{{ url_for('admin.csob_platby_aktivovat', platba_id=p.id) }}" style="display:inline;" onsubmit="return confirm('Aktivovat licenci z této platby?');">
+                            <button type="submit" class="action-btn" title="Aktivovat při shodě">🔑 Aktivovat</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin.csob_platby_sparovat', platba_id=p.id) }}" style="display:inline;margin-top:4px;">
+                            <select name="order_id" class="form-control form-select" style="width:140px;display:inline-block;font-size:0.8em;">
+                                <option value="">VS z platby</option>
+                                {% for o in waiting_orders %}
+                                <option value="{{ o.id }}">#{{ o.order_display_number or o.id }} – {{ o.email }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="action-btn" onclick="return confirm('Ručně spárovat a aktivovat?');">Spárovat</button>
+                        </form>
+                        {% endif %}
+                        {% if p.stav != 'vyrizeno' and p.stav != 'sparovano' %}
+                        <form method="post" action="{{ url_for('admin.csob_platby_vyridit', platba_id=p.id) }}" style="display:inline;margin-top:4px;">
+                            <button type="submit" class="action-btn">Vyřízeno</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" style="text-align:center;color:#6b7280;padding:24px;">Zatím žádné příchozí platby.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

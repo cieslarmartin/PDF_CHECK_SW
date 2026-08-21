@@ -1522,12 +1522,280 @@ def finance_invoices_zip():
 @admin_bp.route('/admin/toggle-auto-activate-csob', methods=['POST'])
 @admin_required
 def toggle_auto_activate_csob():
-    """Přepínač: Automaticky aktivovat po zaplacení (ČSOB)."""
+    """Přepínač: Automaticky aktivovat po zaplacení (ČSOB). Default VYPNUTO."""
     db = get_db()
     value = request.form.get('auto_activate_csob') == '1'
     db.set_global_setting('auto_activate_csob', '1' if value else '0')
-    flash('Nastavení „Automaticky aktivovat po zaplacení (ČSOB)“ uloženo.', 'success')
+    flash(
+        'Automatická aktivace po zaplacení (ČSOB) je nyní {}.'.format('ZAPNUTÁ' if value else 'VYPNUTÁ'),
+        'success' if not value else 'warning',
+    )
+    next_url = (request.form.get('next') or '').strip()
+    if next_url == 'csob_platby':
+        return redirect(url_for('admin.csob_platby'))
     return redirect(url_for('admin.users_licenses'))
+
+
+# =============================================================================
+# ČSOB PŘÍCHOZÍ PLATBY
+# =============================================================================
+
+_CSOB_STAV_LABELS = {
+    'nove': 'Nové',
+    'shoda': 'Shoda (čeká)',
+    'sparovano': 'Spárováno',
+    'nesparovano': 'Nespárováno',
+    'podezrele': 'Podezřelé',
+    'chyba_parsovani': 'Chyba parsování',
+    'preplatek': 'Přeplatek',
+    'vyrizeno': 'Vyřízeno',
+}
+
+
+@admin_bp.route('/admin/csob-platby', methods=['GET'])
+@admin_required
+def csob_platby():
+    """Přehled příchozích plateb z ČSOB avíz."""
+    db = get_db()
+    stav = (request.args.get('stav') or '').strip() or None
+    platby = db.list_csob_platby(stav=stav, limit=300)
+    try:
+        auto_activate_csob = db.get_setting_bool('auto_activate_csob', False)
+    except Exception:
+        auto_activate_csob = False
+    waiting_orders = []
+    for st in ('WAITING_PAYMENT', 'payment_sent', 'NEW_ORDER', 'pending'):
+        waiting_orders.extend(db.get_pending_orders(status=st, limit=100) or [])
+    # unikátní podle id
+    seen = set()
+    orders_uniq = []
+    for o in waiting_orders:
+        oid = o.get('id')
+        if oid in seen:
+            continue
+        seen.add(oid)
+        orders_uniq.append(o)
+    user = session.get('admin_user') or {}
+    return render_template(
+        'admin_csob_platby.html',
+        platby=platby,
+        stav_filter=stav or '',
+        stav_labels=_CSOB_STAV_LABELS,
+        auto_activate_csob=auto_activate_csob,
+        waiting_orders=orders_uniq,
+        user=user,
+        active_page='csob_platby',
+    )
+
+
+@admin_bp.route('/admin/csob-platby/manual', methods=['POST'])
+@admin_required
+def csob_platby_manual():
+    """Ruční zadání příchozí platby (pro testování bez IMAP)."""
+    db = get_db()
+    vs = (request.form.get('variabilni_symbol') or '').strip() or None
+    mena = (request.form.get('mena') or 'CZK').strip() or 'CZK'
+    protiucet = (request.form.get('protiucet') or '').strip() or None
+    datum = (request.form.get('datum_zauctovani') or '').strip() or None
+    zprava = (request.form.get('zprava_pro_prijemce') or '').strip() or None
+    poznamka = (request.form.get('poznamka') or '').strip() or 'Ruční zadání'
+    castka_raw = (request.form.get('castka_czk') or '').strip().replace(' ', '').replace(',', '.')
+    try:
+        castka_haleru = int(round(float(castka_raw) * 100))
+    except (TypeError, ValueError):
+        flash('Neplatná částka.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+
+    import hashlib
+    from datetime import datetime
+    h_src = 'manual|{}|{}|{}|{}|{}'.format(castka_haleru, vs, datum, protiucet, datetime.now().isoformat())
+    message_hash = hashlib.sha256(h_src.encode('utf-8')).hexdigest()
+    # Ruční záznam: dkim_ok=False aby nikdy nespustil autoaktivaci bez e-mailu;
+    # párování/aktivace jen přes tlačítko „Ručně spárovat“.
+    platba_id = db.insert_csob_platba(
+        message_hash=message_hash,
+        castka_haleru=castka_haleru,
+        mena=mena,
+        variabilni_symbol=vs,
+        protiucet=protiucet,
+        datum_zauctovani=datum,
+        zprava_pro_prijemce=zprava,
+        dkim_ok=False,
+        stav='nove',
+        poznamka=poznamka + ' (ruční, bez DKIM – aktivace jen ručním spárováním)',
+    )
+    if not platba_id:
+        flash('Platbu se nepodařilo uložit (duplicita?).', 'error')
+    else:
+        flash('Platba #{} uložena. Pro aktivaci použijte „Ručně spárovat“.'.format(platba_id), 'success')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/<int:platba_id>/sparovat', methods=['POST'])
+@admin_required
+def csob_platby_sparovat(platba_id):
+    """Ruční spárování platby s objednávkou + aktivace (audit: kdo)."""
+    db = get_db()
+    platba = db.get_csob_platba_by_id(platba_id)
+    if not platba:
+        flash('Platba nenalezena.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+
+    order_id = request.form.get('order_id', '').strip()
+    if order_id:
+        order = db.get_pending_order_by_id(order_id)
+    else:
+        vs = (platba.get('variabilni_symbol') or '').strip()
+        order = db.get_pending_order_by_vs(vs) if vs else None
+
+    if not order:
+        flash('Objednávka nenalezena (zadejte ID nebo doplňte VS u platby).', 'error')
+        return redirect(url_for('admin.csob_platby'))
+
+    status = (order.get('status') or '').upper()
+    if status in ('ACTIVE',):
+        flash('Objednávka už je aktivní – označte jako přeplatek / vyřízeno.', 'warning')
+        db.update_csob_platba(platba_id, stav='preplatek', order_id=order.get('id'),
+                              poznamka='Ruční pokus o spárování na ACTIVE objednávku')
+        return redirect(url_for('admin.csob_platby'))
+
+    admin_user = session.get('admin_user') or {}
+    admin_id = admin_user.get('id')
+    try:
+        from csob_payments import activate_order_from_payment
+        # Pro ruční spárování dočasně povolíme aktivaci i bez DKIM (admin vědomě potvrzuje)
+        platba_force = dict(platba)
+        platba_force['dkim_ok'] = True
+        result = activate_order_from_payment(
+            db, order, platba_force, admin_id=admin_id, source='manual_match'
+        )
+        if result.get('ok'):
+            flash(
+                'Platba #{} spárována s objednávkou #{} a licence aktivována (admin id {}).'.format(
+                    platba_id, order.get('order_display_number') or order.get('id'), admin_id
+                ),
+                'success',
+            )
+        else:
+            flash('Aktivace selhala: {}'.format(result.get('error') or 'neznámá chyba'), 'error')
+    except Exception as e:
+        flash('Chyba při spárování: {}'.format(e), 'error')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/<int:platba_id>/aktivovat', methods=['POST'])
+@admin_required
+def csob_platby_aktivovat(platba_id):
+    """Aktivuje objednávku u platby ve stavu shoda (ruční potvrzení při vypnuté autoaktivaci)."""
+    db = get_db()
+    platba = db.get_csob_platba_by_id(platba_id)
+    if not platba:
+        flash('Platba nenalezena.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+    if platba.get('stav') not in ('shoda', 'nove', 'nesparovano'):
+        flash('Platba není ve stavu vhodném k aktivaci (stav: {}).'.format(platba.get('stav')), 'warning')
+        return redirect(url_for('admin.csob_platby'))
+
+    order = None
+    if platba.get('order_id'):
+        order = db.get_pending_order_by_id(platba.get('order_id'))
+    if not order and platba.get('variabilni_symbol'):
+        order = db.get_pending_order_by_vs(platba.get('variabilni_symbol'))
+    if not order:
+        flash('K platbě není přiřazena objednávka.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+
+    admin_id = (session.get('admin_user') or {}).get('id')
+    try:
+        from csob_payments import activate_order_from_payment, order_amount_to_haleru
+        expected = order_amount_to_haleru(order)
+        if expected is not None and platba.get('castka_haleru') is not None and int(platba['castka_haleru']) != int(expected):
+            flash('Částka nesedí na haléř – aktivace odmítnuta. Použijte ruční spárování jen po kontrole.', 'error')
+            return redirect(url_for('admin.csob_platby'))
+        platba_force = dict(platba)
+        platba_force['dkim_ok'] = True
+        result = activate_order_from_payment(db, order, platba_force, admin_id=admin_id, source='manual_activate')
+        if result.get('ok'):
+            flash('Licence aktivována z platby #{}.'.format(platba_id), 'success')
+        else:
+            flash('Aktivace selhala: {}'.format(result.get('error')), 'error')
+    except Exception as e:
+        flash('Chyba: {}'.format(e), 'error')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/<int:platba_id>/vyridit', methods=['POST'])
+@admin_required
+def csob_platby_vyridit(platba_id):
+    """Označí platbu jako vyřízenou (bez aktivace)."""
+    db = get_db()
+    platba = db.get_csob_platba_by_id(platba_id)
+    if not platba:
+        flash('Platba nenalezena.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+    admin_id = (session.get('admin_user') or {}).get('id')
+    note = (platba.get('poznamka') or '') + ' | Vyřízeno adminem id={}'.format(admin_id)
+    db.update_csob_platba(platba_id, stav='vyrizeno', poznamka=note.strip(' |'), sparoval_admin_id=admin_id)
+    flash('Platba #{} označena jako vyřízená.'.format(platba_id), 'success')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/upload-eml', methods=['POST'])
+@admin_required
+def csob_platby_upload_eml():
+    """Nahrání .eml avíza – zpracování bez IMAP (pro ladění parseru)."""
+    db = get_db()
+    f = request.files.get('eml_file')
+    if not f or not f.filename:
+        flash('Vyberte soubor .eml.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+    raw = f.read()
+    if not raw:
+        flash('Soubor je prázdný.', 'error')
+        return redirect(url_for('admin.csob_platby'))
+    try:
+        from csob_payments import process_raw_email
+        # Produkční chování: DKIM povinný. Pro lokální vzorek bez DNS může selhat –
+        # admin vidí výsledek; skip_dkim jen pokud zaškrtnuto (test).
+        skip_dkim = request.form.get('skip_dkim') == '1'
+        res = process_raw_email(db, raw, skip_dkim=skip_dkim)
+        if res.get('duplicate'):
+            flash('Duplicitní zpráva (už zpracována), platba #{}.'.format(res.get('platba_id')), 'warning')
+        elif res.get('stav') == 'podezrele':
+            flash('Podezřelé (DKIM/From): {} – platba #{}.'.format(res.get('reason') or '', res.get('platba_id')), 'warning')
+        elif res.get('stav') == 'chyba_parsovani':
+            flash('Chyba parsování: {} – platba #{}.'.format(res.get('error'), res.get('platba_id')), 'error')
+        elif res.get('activated'):
+            flash('Platba #{} spárována a licence AKTIVOVÁNA.'.format(res.get('platba_id')), 'success')
+        elif res.get('stav') == 'shoda':
+            flash('Platba #{} – shoda VS+částka, autoaktivace vypnutá (čeká na ruční aktivaci).'.format(res.get('platba_id')), 'success')
+        else:
+            flash('Zpracováno: stav={}, platba #{}.'.format(res.get('stav') or res.get('reason'), res.get('platba_id')), 'info')
+    except Exception as e:
+        flash('Zpracování .eml selhalo: {}'.format(e), 'error')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/process-imap', methods=['POST'])
+@admin_required
+def csob_platby_process_imap():
+    """Jednorázové načtení UNSEEN z IMAP schránky (tlačítko Zpracovat schránku teď)."""
+    db = get_db()
+    try:
+        from csob_payments import fetch_and_process_imap
+        res = fetch_and_process_imap(db)
+        if not res.get('ok'):
+            flash('IMAP: {}'.format(res.get('error') or 'chyba'), 'error')
+        else:
+            flash(
+                'IMAP hotovo: zpracováno {}, přeskočeno (ne-ČSOB) {}, chyb {}.'.format(
+                    res.get('processed', 0), res.get('skipped_non_csob', 0), res.get('errors', 0)
+                ),
+                'success',
+            )
+    except Exception as e:
+        flash('IMAP selhalo: {}'.format(e), 'error')
+    return redirect(url_for('admin.csob_platby'))
 
 
 @admin_bp.route('/admin/confirm-payment', methods=['POST'])

@@ -5,3 +5,5 @@ openpyxl>=3.0.0
 fpdf2>=2.7.0
 qrcode[pil]>=7.4.0
 pypdf>=4.0.0
+dkimpy>=1.0.5
+dnspython>=2.0.0

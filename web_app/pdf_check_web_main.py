@@ -1183,7 +1183,7 @@ HTML_TEMPLATE = '''
                         <div class="legend-segment">
                             <div class="legend-segment-title">Podpis</div>
                             <div class="legend-segment-body">
-                                <div class="legend-item"><span class="badge badge-green">OK</span> Platný podpis + ČKAIT/ČKA</div>
+                                <div class="legend-item"><span class="badge badge-green">OK</span> Platný podpis + autorizace</div>
                                 <div class="legend-item"><span class="badge badge-red">PARTIAL/FAIL</span> Chybí nebo neplatný</div>
                             </div>
                         </div>
@@ -1273,7 +1273,7 @@ HTML_TEMPLATE = '''
                         </div>
                     </div>
                     <div class="table-header-cell">
-                        <button class="table-header-btn" onclick="toggleDropdown('ckait',event)">ČKAIT <span class="arrow">▼</span></button>
+                        <button class="table-header-btn" onclick="toggleDropdown('ckait',event)">Autorizace <span class="arrow">▼</span></button>
                         <div class="filter-dropdown" id="dropdown-ckait">
                             <div class="filter-dropdown-search"><input type="text" placeholder="Hledat číslo..." id="search-ckait" oninput="filterCkaitList()"></div>
                             <button class="filter-dropdown-item clear" onclick="setHeaderFilter(null,null)">✕ Zobrazit vše</button>
@@ -1853,7 +1853,7 @@ function toggleDropdown(col, event) {
     if (!wasVisible) dropdown.classList.add('visible');
 }
 
-const headerFilterColumnLabels = { pdfa: 'PDF/A', sig: 'Podpis', tsa: 'Čas. razítko', issr: 'ISSŘ', signer: 'Jméno (CN)', ckait: 'ČKAIT' };
+const headerFilterColumnLabels = { pdfa: 'PDF/A', sig: 'Podpis', tsa: 'Čas. razítko', issr: 'ISSŘ', signer: 'Jméno (CN)', ckait: 'Autorizace' };
 function setHeaderFilter(column, value) {
     headerFilter = { column, value };
     document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('visible'));
@@ -2137,7 +2137,7 @@ function renderFileRow(file, batchId, indent = 0) {
             html += '<div class="signature-row">';
             html += '<div class="sig-index">' + icon + '</div>';
             html += '<div class="sig-name">' + esc(label) + '</div>';
-            html += '<div class="sig-ckait">' + (isTs ? '—' : esc(sig.ckait_number || sig.ckait || '—')) + '</div>';
+            html += '<div class="sig-ckait">' + (isTs ? '—' : esc(formatAuthDisplay(sig))) + '</div>';
             html += '<div class="sig-podpis">' + getSigBadgeForSig(sig) + '</div>';
             html += '<div class="sig-tsa">' + getTsaBadgeForSig(sig) + (sig.tsa_issuer && sig.tsa_issuer !== '—' ? '<div class="tsa-issuer-text">' + esc(sig.tsa_issuer) + '</div>' : '') + '</div>';
             html += '<div class="sig-date">' + esc(sig.date || '—') + '</div>';
@@ -2255,11 +2255,19 @@ function getTsaBadgeForSig(sig) {
     if (tsa === 'LOCAL') return '<span class="badge badge-red">LOK</span>';
     return '<span class="badge badge-red">Bez razítka</span>';
 }
+function formatAuthDisplay(sig) {
+    if (!sig) return '—';
+    var num = sig.ckait_number || sig.ckait || '—';
+    if (!num || num === '—') return '—';
+    if (/^(ČKAIT|ČKA|ČKZ)\s+\d/.test(String(num))) return String(num);
+    var st = sig.signature_type || '';
+    return st ? (st + ' ' + num) : String(num);
+}
 function getSigBadgeForSig(sig) {
     if (!sig) return '<span class="badge badge-gray">—</span>';
     if (sig.type === 'DOCUMENT_TIMESTAMP') return '<span class="badge badge-orange">Razítko dokumentu</span>';
     var signer = sig.signer || sig.name || '—';
-    var ckait = sig.ckait_number || sig.ckait || '—';
+    var ckait = formatAuthDisplay(sig);
     if (signer !== '—' && ckait !== '—') return '<span class="badge badge-green">Autor. osoba</span>';
     return '<span class="badge badge-red">Podpis (ne autor.)</span>';
 }
@@ -2418,7 +2426,7 @@ function downloadLocalExcel(files, batchName) {
     const pdfVerCol = f => (f.pdfVersion || '');
 
     // Data: hlavička + řádky
-    const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'ČKAIT/ČKA', 'Čas. razítko', 'ISSŘ'];
+    const header = ['Složka', 'Soubor', 'PDF/A', 'PDF verze', 'Podpis', 'Jméno (CN)', 'Autorizace', 'Čas. razítko', 'ISSŘ'];
     const issrCol = f => (f.issr_compatible === false ? 'Zamčeno (Level 1)' : (f.issr_compatible === true ? 'OK' : '—'));
     const rows = files.map(f => [
         f.path || '.',
@@ -2557,14 +2565,18 @@ async function loadAgentResults() {
                         pdfaStatus: pdfFormat.is_pdf_a3 ? 'OK' : 'FAIL',
                         sig: signatures.length > 0 ? (signatures.every(s => s.valid !== false) ? 'OK' : 'PARTIAL') : 'FAIL',
                         signer: signatures.map(s => s.name).filter(n => n && n !== '—').join(', ') || '—',
-                        ckait: signatures.map(s => s.ckait_number).filter(n => n && n !== '—').join(', ') || '—',
+                        ckait: signatures.map(s => formatAuthDisplay(s)).filter(n => n && n !== '—').join(', ') || '—',
                         tsa: signatures.some(s => s.timestamp_valid) ? 'TSA' : (signatures.length > 0 ? 'LOCAL' : 'NONE'),
                         issr_compatible: isCompatible,
                         sig_count: signatures.length,
                         signatures: signatures.map((s, idx) => ({
                             index: idx + 1,
-                            signer: s.name || '—',
-                            ckait: s.ckait_number || '—',
+                            type: s.type || 'SIGNATURE',
+                            signer: s.name || s.signer || '—',
+                            name: s.name || s.signer || '—',
+                            ckait: formatAuthDisplay(s),
+                            ckait_number: s.ckait_number || '—',
+                            signature_type: s.signature_type || null,
                             tsa: s.timestamp_valid ? 'TSA' : 'LOCAL',
                             date: s.date || '—',
                             tsa_issuer: s.tsa_issuer || '—',
@@ -3103,8 +3115,115 @@ CA_KEYWORDS = [
 ]
 
 
+def _decode_asn1_string(typ, hex_val):
+    raw = bytes.fromhex(hex_val)
+    if typ == '1e':
+        return raw.decode('utf-16-be', errors='ignore')
+    return raw.decode('utf-8', errors='ignore')
+
+
+def _extract_oid_strings(pkcs7_hex, oid_hex, allow_othername_wrap=False):
+    """Najde řetězce za OID (UTF8/Printable/BMP, vč. long-form délky 0x81).
+
+    allow_othername_wrap: u SAN OtherName (např. description 2.5.4.13) může být
+    mezi OID a řetězcem kontextový wrapper a0XX.
+    """
+    found = []
+    wrap = r'(?:a0[0-9a-f]{2})?' if allow_othername_wrap else ''
+    for typ in ('0c', '13', '1e'):
+        for m in re.finditer(oid_hex + wrap + typ + r'81([0-9a-f]{2})', pkcs7_hex, re.I):
+            length = int(m.group(1), 16)
+            start = m.end()
+            data = pkcs7_hex[start:start + length * 2]
+            if len(data) != length * 2:
+                continue
+            try:
+                found.append((m.start(), _decode_asn1_string(typ, data)))
+            except Exception:
+                pass
+        for length in range(1, 200):
+            hex_len = format(length, '02x')
+            pat = oid_hex + wrap + typ + hex_len + f'([0-9a-f]{{{length * 2}}})'
+            for m in re.finditer(pat, pkcs7_hex, re.I):
+                try:
+                    found.append((m.start(), _decode_asn1_string(typ, m.group(1))))
+                except Exception:
+                    pass
+    found.sort(key=lambda x: x[0])
+    out, seen = [], set()
+    for pos, t in found:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out
+
+
+def _parse_auth_from_description(text):
+    """Z SAN description: číslo autorizace, rozsah, typ textu."""
+    if not text:
+        return None, None, None
+    num = None
+    m = re.search(r'č[ií]slo\s+autorizace:\s*(\d{4,7})', text, re.I)
+    if m:
+        num = m.group(1)
+    scope = None
+    m2 = re.search(r'rozsah\s+autorizace:\s*([a-z0-9]+)', text, re.I)
+    if m2:
+        scope = m2.group(1)
+    auth_type = None
+    m3 = re.match(r'\s*([^,]+)', text)
+    if m3:
+        auth_type = m3.group(1).strip() or None
+    return num, scope, auth_type
+
+
+def _fold_czech(s):
+    return (
+        (s or '').lower()
+        .replace('ě', 'e').replace('š', 's').replace('č', 'c').replace('ř', 'r')
+        .replace('ž', 'z').replace('ý', 'y').replace('á', 'a').replace('í', 'i')
+        .replace('é', 'e').replace('ú', 'u').replace('ů', 'u')
+    )
+
+
+def _infer_chamber_type(org_texts, san_texts, number):
+    """ČKA / ČKAIT / ČKZ z O a SAN; délka čísla jen fallback."""
+    blob = _fold_czech(' '.join([*(org_texts or []), *(san_texts or [])]))
+    if any(k in blob for k in ('zememer', 'ckz', 'komora zememer')):
+        return 'ČKZ'
+    if 'architekt' in blob or 'komora architekt' in blob:
+        return 'ČKA'
+    if 'ckait' in blob:
+        return 'ČKAIT'
+    if 'autorizovany inzenyr' in blob and 'zememer' not in blob:
+        return 'ČKAIT'
+    if number and re.match(r'^\d{4,7}$', number):
+        return 'ČKAIT' if len(number) >= 6 else 'ČKA'
+    return None
+
+
+def format_authorization_display(signature_type, ckait_number):
+    """Složí text sloupce Autorizace, např. 'ČKZ 2920'."""
+    num = (ckait_number or '').strip()
+    if not num or num == '—':
+        return '—'
+    st = (signature_type or '').strip()
+    if st:
+        return f'{st} {num}'
+    return num
+
+
+def _parse_verification_number(location_text):
+    if not location_text:
+        return '—'
+    m = re.search(r'č[ií]slo\s+ov[eě][rř]en[ií]:\s*([\d./]+)', str(location_text), re.I)
+    if m:
+        return m.group(1).strip()
+    return '—'
+
+
 def _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=None):
-    """Vyplní signer, ckait, tsa, tsa_issuer, timestamp_valid, signature_type v sig_info z PKCS7 bajtů."""
+    """Vyplní signer, ckait, tsa, signature_type, ckait_source, auth_scope z PKCS7."""
     if not pkcs7 or len(pkcs7) < 50:
         return
     try:
@@ -3117,25 +3236,50 @@ def _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=None):
         elif m_date:
             sig_info['tsa'] = 'LOCAL'
             sig_info['timestamp_valid'] = False
-        for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
+
+        sig_info.setdefault('ckait_source', None)
+        sig_info.setdefault('auth_scope', None)
+        sig_info.setdefault('verification_number', sig_info.get('verification_number', '—'))
+
+        for length in (7, 6, 5, 4):
             if sig_info.get('ckait', '—') != '—':
                 break
             hex_len = format(length, '02x')
-            ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
+            ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length * 2}}})'
             ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
             if ou_match:
                 try:
                     value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
                     if re.match(rf'^\d{{{length}}}$', value):
                         sig_info['ckait'] = value
-                        sig_info['signature_type'] = sig_type
+                        sig_info['ckait_source'] = 'subject_ou'
                 except Exception:
                     pass
+
+        org_texts = _extract_oid_strings(pkcs7_hex, '060355040a')
+        san_descs = _extract_oid_strings(pkcs7_hex, '060355040d', allow_othername_wrap=True)
+        san_auth_texts = []
+        for desc in san_descs:
+            if 'autoriz' in desc.lower() or 'cislo autorizace' in _fold_czech(desc):
+                san_auth_texts.append(desc)
+                num, scope, auth_type = _parse_auth_from_description(desc)
+                if sig_info.get('ckait', '—') == '—' and num:
+                    sig_info['ckait'] = num
+                    sig_info['ckait_source'] = 'san_description'
+                if scope and not sig_info.get('auth_scope'):
+                    sig_info['auth_scope'] = scope
+                if auth_type and not sig_info.get('auth_type'):
+                    sig_info['auth_type'] = auth_type
+
+        chamber = _infer_chamber_type(org_texts, san_auth_texts or san_descs, sig_info.get('ckait'))
+        if chamber:
+            sig_info['signature_type'] = chamber
+
         found_cns = []
         for typ in ['0c', '13', '1e']:
             for length in range(5, 80):
                 hex_len = format(length, '02x')
-                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
+                pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length * 2}}})'
                 for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
                     try:
                         raw_bytes = bytes.fromhex(cn_match.group(1))
@@ -3204,6 +3348,9 @@ def extract_signatures_via_reader(reader):
                 'date': '—',
                 'valid': False,
                 'signature_type': None,
+                'ckait_source': None,
+                'auth_scope': None,
+                'verification_number': '—',
                 'type': 'SIGNATURE',
                 'timestamp_valid': False,
                 'certificate_valid': False,
@@ -3222,6 +3369,9 @@ def extract_signatures_via_reader(reader):
                 if d_match:
                     d = d_match.group(1)
                     sig_info['date'] = f"{d[:4]}-{d[4:6]}-{d[6:8]} {d[8:10]}:{d[10:12]}"
+            loc = v_dict.get('/Location')
+            if loc is not None:
+                sig_info['verification_number'] = _parse_verification_number(loc)
             contents_obj = v_dict.get('/Contents')
             if contents_obj is not None:
                 pkcs7 = None
@@ -3280,6 +3430,9 @@ def extract_all_signatures(content):
             'date': '—',
             'valid': False,
             'signature_type': None,
+            'ckait_source': None,
+            'auth_scope': None,
+            'verification_number': '—',
             'timestamp_valid': False,
             'type': 'SIGNATURE',  # DOCUMENT_TIMESTAMP | SIGNATURE
         }
@@ -3312,61 +3465,17 @@ def extract_all_signatures(content):
             try:
                 hex_data = contents_match.group(1).decode('ascii')
                 pkcs7 = bytes.fromhex(hex_data)
-                pkcs7_hex = pkcs7.hex()
-
-                # TSA OID
-                tsa_oid = bytes.fromhex('060b2a864886f70d010910020e')
-                if tsa_oid in pkcs7:
-                    sig_info['tsa'] = 'TSA'
-                    sig_info['timestamp_valid'] = True
-                    sig_info['tsa_issuer'] = _extract_tsa_issuer_from_pkcs7(pkcs7, tsa_oid)
-                elif m_match:
-                    sig_info['tsa'] = 'LOCAL'
-                    sig_info['timestamp_valid'] = False
-
-                # ČKAIT/ČKA z OU (Organizational Unit) – stejně jako agent
-                for length, sig_type in [(7, 'ČKAIT'), (6, 'ČKAIT'), (5, 'ČKA'), (4, 'ČKA')]:
-                    if sig_info['ckait'] != '—':
-                        break
-                    hex_len = format(length, '02x')
-                    ou_pattern = f'060355040b(?:0c|13){hex_len}([0-9a-f]{{{length*2}}})'
-                    ou_match = re.search(ou_pattern, pkcs7_hex, re.I)
-                    if ou_match:
-                        try:
-                            value = bytes.fromhex(ou_match.group(1)).decode('utf-8', errors='ignore')
-                            if re.match(rf'^\d{{{length}}}$', value):
-                                sig_info['ckait'] = value
-                                sig_info['signature_type'] = sig_type
-                        except Exception:
-                            pass
-
-                # Jméno z CN (Common Name) – UTF8String, PrintableString, BMPString
-                found_cns = []
-                for typ in ['0c', '13', '1e']:
-                    for length in range(5, 80):
-                        hex_len = format(length, '02x')
-                        pattern = f'0603550403{typ}{hex_len}([0-9a-f]{{{length*2}}})'
-                        for cn_match in re.finditer(pattern, pkcs7_hex, re.I):
-                            try:
-                                raw_bytes = bytes.fromhex(cn_match.group(1))
-                                cn = raw_bytes.decode('utf-16-be', errors='ignore') if typ == '1e' else raw_bytes.decode('utf-8', errors='ignore')
-                                if len(cn) > 3:
-                                    is_ca = any(kw in cn.lower() for kw in CA_KEYWORDS)
-                                    found_cns.append({
-                                        'name': cn,
-                                        'is_ca': is_ca,
-                                        'has_space': ' ' in cn,
-                                        'position': cn_match.start(),
-                                    })
-                            except Exception:
-                                pass
-                best_cn = None
-                for cn_info in sorted(found_cns, key=lambda x: (x['is_ca'], not x['has_space'], x['position'])):
-                    if not cn_info['is_ca']:
-                        best_cn = cn_info['name']
-                        break
-                if best_cn:
-                    sig_info['signer'] = best_cn
+                loc_match = re.search(rb'/Location\s*\(([^)]*)\)', search_area)
+                if loc_match:
+                    try:
+                        loc_raw = loc_match.group(1)
+                        loc_txt = loc_raw.decode('utf-8', errors='ignore')
+                        if not loc_txt or '\x00' in loc_txt[:4]:
+                            loc_txt = loc_raw.decode('latin-1', errors='ignore')
+                        sig_info['verification_number'] = _parse_verification_number(loc_txt)
+                    except Exception:
+                        pass
+                _fill_sig_info_from_pkcs7(pkcs7, sig_info, m_date=sig_info.get('date') if m_match else None)
             except Exception:
                 pass
 
@@ -3414,7 +3523,7 @@ def extract_all_signatures(content):
             if best_name:
                 sig_info['signer'] = best_name
 
-        # Validace: DOCUMENT_TIMESTAMP = platné, pokud máme TSA issuer; SIGNATURE = jméno + ČKAIT
+        # Validace: DOCUMENT_TIMESTAMP = platné, pokud máme TSA issuer; SIGNATURE = jméno + číslo autorizace
         if sig_info['type'] == 'DOCUMENT_TIMESTAMP':
             sig_info['valid'] = (sig_info.get('tsa_issuer', '—') != '—')
             sig_info['certificate_valid'] = sig_info['valid']
@@ -3641,7 +3750,12 @@ def analyze_pdf(content):
         'pdfaLevel': pdfa_level or None,
         'sig': sig_status,
         'signer': sig_data['signer_name'],
-        'ckait': sig_data['ckait_number'],
+        'ckait': (
+            ', '.join(dict.fromkeys([
+                format_authorization_display(s.get('signature_type'), s.get('ckait'))
+                for s in signature_objs if s.get('ckait', '—') != '—'
+            ])) or '—'
+        ),
         'tsa': tsa,
         'sig_count': sig_data.get('sig_count', 0),
         'signatures': sig_data.get('signatures', []),
@@ -3728,9 +3842,16 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
     signatures = (results.get('signatures') or []) if isinstance(results, dict) else []
     signature_objs = [s for s in signatures if s.get('type') == 'SIGNATURE']
     signer = ', '.join(dict.fromkeys([s.get('signer', '—') for s in signature_objs if s.get('signer', '—') != '—'])) or '—'
-    ckait = ', '.join(dict.fromkeys([s.get('ckait_number', '—') for s in signature_objs if s.get('ckait_number', '—') != '—'])) or '—'
+    ckait = ', '.join(dict.fromkeys([
+        format_authorization_display(s.get('signature_type'), s.get('ckait_number') or s.get('ckait'))
+        for s in signature_objs
+        if (s.get('ckait_number') or s.get('ckait') or '—') != '—'
+    ])) or '—'
     if signature_objs:
-        sig = 'OK' if all(s.get('signer', '—') != '—' and s.get('ckait_number', '—') != '—' for s in signature_objs) else 'PARTIAL'
+        sig = 'OK' if all(
+            s.get('signer', '—') != '—' and (s.get('ckait_number') or s.get('ckait') or '—') != '—'
+            for s in signature_objs
+        ) else 'PARTIAL'
     else:
         sig = 'PARTIAL' if signatures else 'FAIL'
     timestamp_objs = [s for s in signatures if s.get('type') == 'DOCUMENT_TIMESTAMP']
@@ -3756,8 +3877,12 @@ def _flatten_shared_result(wrapped, content, fallback_name='upload.pdf'):
             'type': sig_type,
             'valid': s.get('valid', False),
             'signature_type': s.get('signature_type'),
+            'ckait_source': s.get('ckait_source'),
+            'verification_number': s.get('verification_number', '—'),
+            'auth_scope': s.get('auth_scope'),
             'signer': s.get('signer', '—'),
-            'ckait': s.get('ckait_number', '—'),
+            'ckait': format_authorization_display(s.get('signature_type'), s.get('ckait_number') or s.get('ckait')),
+            'ckait_number': s.get('ckait_number') or s.get('ckait') or '—',
             'date': s.get('date', '—'),
             'tsa': 'TSA' if s.get('timestamp_valid') else ('LOCAL' if (s.get('date') or '—') != '—' else 'NONE'),
             'tsa_issuer': tsa_issuer,

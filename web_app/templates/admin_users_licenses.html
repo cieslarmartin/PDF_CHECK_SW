@@ -25,7 +25,25 @@
 </style>
 
 <h1 style="font-size:1.35em;font-weight:600;margin:0 0 20px;">Uživatelé a licence</h1>
-<p style="color:#6b7280;font-size:0.9em;margin-bottom:24px;">Objednávky (CRM) a seznam licencí na jednom místě. Flow: Objednáno &rarr; Odeslána platba &rarr; Aktivováno.</p>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:16px;">Objednávky (CRM) a seznam licencí na jednom místě. Flow: Objednáno &rarr; Odeslána platba &rarr; Aktivováno.</p>
+
+<div style="border:1px solid {{ '#86efac' if auto_activate_csob else '#fca5a5' }};background:{{ '#f0fdf4' if auto_activate_csob else '#fef2f2' }};border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
+    <div style="font-size:0.9em;">
+        <strong>ČSOB autoaktivace:</strong>
+        {% if auto_activate_csob %}<span style="color:#16a34a;font-weight:700;">ZAPNUTO</span>
+        {% else %}<span style="color:#dc2626;font-weight:700;">VYPNUTO</span>{% endif %}
+        — <a href="{{ url_for('admin.csob_platby') }}">Příchozí platby</a>
+    </div>
+    <form method="post" action="{{ url_for('admin.toggle_auto_activate_csob') }}" style="display:inline;">
+        {% if auto_activate_csob %}
+        <input type="hidden" name="auto_activate_csob" value="0">
+        <button type="submit" class="btn btn-sm btn-secondary">Vypnout</button>
+        {% else %}
+        <input type="hidden" name="auto_activate_csob" value="1">
+        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Zapnout automatickou aktivaci licencí z ČSOB?');">Zapnout</button>
+        {% endif %}
+    </form>
+</div>
 
 {# ==================== SEKCE OBJEDNÁVKY ==================== #}
 <div class="section-card">

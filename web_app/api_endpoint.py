@@ -784,7 +784,7 @@ def register_api_routes(app):
             )
 
             # Header
-            headers = ['Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'ČKAIT/ČKA', 'TSA', 'ISSŘ', 'Datum kontroly']
+            headers = ['Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'Autorizace', 'TSA', 'ISSŘ', 'Datum kontroly']
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
                 cell.font = header_font
@@ -799,7 +799,15 @@ def register_api_routes(app):
                 signatures = parsed.get('results', {}).get('signatures', [])
 
                 signer = ', '.join(s.get('name', '—') for s in signatures if s.get('name') and s.get('name') != '—') or '—'
-                ckait = ', '.join(s.get('ckait_number', '—') for s in signatures if s.get('ckait_number') and s.get('ckait_number') != '—') or '—'
+                def _auth_label(s):
+                    num = s.get('ckait_number') or '—'
+                    if not num or num == '—':
+                        return None
+                    st = (s.get('signature_type') or '').strip()
+                    if st and not str(num).startswith(st + ' '):
+                        return f'{st} {num}'
+                    return str(num)
+                ckait = ', '.join(filter(None, (_auth_label(s) for s in signatures))) or '—'
                 tsa = 'TSA' if any(s.get('timestamp_valid') for s in signatures) else ('Lokální' if signatures else 'Žádné')
 
                 # Formát data: YYYY-MM-DD HH:MM
@@ -932,7 +940,7 @@ def register_api_routes(app):
             )
 
             # Header
-            headers = ['Kontrola', 'Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'ČKAIT/ČKA', 'TSA', 'Datum kontroly']
+            headers = ['Kontrola', 'Složka', 'Soubor', 'PDF/A-3', 'Verze', 'Podpis', 'Jméno', 'Autorizace', 'TSA', 'Datum kontroly']
             for col, header in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col, value=header)
                 cell.font = header_font
@@ -947,7 +955,15 @@ def register_api_routes(app):
                 signatures = parsed.get('results', {}).get('signatures', [])
 
                 signer = ', '.join(s.get('name', '—') for s in signatures if s.get('name') and s.get('name') != '—') or '—'
-                ckait = ', '.join(s.get('ckait_number', '—') for s in signatures if s.get('ckait_number') and s.get('ckait_number') != '—') or '—'
+                def _auth_label(s):
+                    num = s.get('ckait_number') or '—'
+                    if not num or num == '—':
+                        return None
+                    st = (s.get('signature_type') or '').strip()
+                    if st and not str(num).startswith(st + ' '):
+                        return f'{st} {num}'
+                    return str(num)
+                ckait = ', '.join(filter(None, (_auth_label(s) for s in signatures))) or '—'
                 tsa = 'TSA' if any(s.get('timestamp_valid') for s in signatures) else ('Lokální' if signatures else 'Žádné')
 
                 # Formát data: YYYY-MM-DD HH:MM

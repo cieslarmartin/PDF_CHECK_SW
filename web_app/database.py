@@ -489,6 +489,33 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_ip ON page_views(ip_address)')
 
+        # Příchozí platby z ČSOB e-mailových avíz
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS csob_prijate_platby (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_hash TEXT UNIQUE NOT NULL,
+                imap_message_id TEXT,
+                castka_haleru INTEGER,
+                mena TEXT,
+                variabilni_symbol TEXT,
+                protiucet TEXT,
+                datum_zauctovani TEXT,
+                zprava_pro_prijemce TEXT,
+                raw_email TEXT,
+                dkim_ok INTEGER DEFAULT 0,
+                stav TEXT NOT NULL DEFAULT 'nove',
+                order_id INTEGER,
+                zpracovano_at TIMESTAMP,
+                poznamka TEXT,
+                sparoval_admin_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (order_id) REFERENCES pending_orders(id)
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_csob_platby_stav ON csob_prijate_platby(stav)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_csob_platby_vs ON csob_prijate_platby(variabilni_symbol)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_csob_platby_order ON csob_prijate_platby(order_id)')
+
         # Migrace: přidej nové sloupce pokud neexistují (pro existující databáze)
         self._migrate_schema(cursor)
 
@@ -5019,6 +5046,139 @@ class Database:
             return None
         finally:
             conn.close()
+
+    # =========================================================================
+    # ČSOB PŘÍCHOZÍ PLATBY (e-mailová avíza)
+    # =========================================================================
+
+    def insert_csob_platba(self, message_hash, imap_message_id=None, castka_haleru=None, mena=None,
+                           variabilni_symbol=None, protiucet=None, datum_zauctovani=None,
+                           zprava_pro_prijemce=None, raw_email=None, dkim_ok=False, stav='nove',
+                           order_id=None, poznamka=None):
+        """Vloží příchozí platbu. Při duplicitním message_hash vrátí None (idempotence). Jinak id."""
+        if not message_hash or not str(message_hash).strip():
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO csob_prijate_platby (
+                    message_hash, imap_message_id, castka_haleru, mena, variabilni_symbol,
+                    protiucet, datum_zauctovani, zprava_pro_prijemce, raw_email, dkim_ok,
+                    stav, order_id, poznamka, zpracovano_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (
+                str(message_hash).strip(),
+                imap_message_id,
+                castka_haleru,
+                mena,
+                (str(variabilni_symbol).strip() if variabilni_symbol is not None else None),
+                protiucet,
+                datum_zauctovani,
+                zprava_pro_prijemce,
+                raw_email,
+                1 if dkim_ok else 0,
+                stav or 'nove',
+                order_id,
+                poznamka,
+            ))
+            conn.commit()
+            return cursor.lastrowid
+        except sqlite3.IntegrityError:
+            return None
+        finally:
+            conn.close()
+
+    def get_csob_platba_by_id(self, platba_id):
+        """Vrátí jednu příchozí platbu nebo None."""
+        if not platba_id:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM csob_prijate_platby WHERE id = ?', (platba_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_csob_platba_by_hash(self, message_hash):
+        """Vrátí platbu podle message_hash nebo None."""
+        if not message_hash:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM csob_prijate_platby WHERE message_hash = ?', (str(message_hash).strip(),))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def list_csob_platby(self, stav=None, limit=200):
+        """Seznam příchozích plateb, volitelně filtrovaný podle stavu."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        if stav:
+            cursor.execute(
+                'SELECT * FROM csob_prijate_platby WHERE stav = ? ORDER BY COALESCE(zpracovano_at, created_at) DESC LIMIT ?',
+                (stav, limit)
+            )
+        else:
+            cursor.execute(
+                'SELECT * FROM csob_prijate_platby ORDER BY COALESCE(zpracovano_at, created_at) DESC LIMIT ?',
+                (limit,)
+            )
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    def update_csob_platba(self, platba_id, **kwargs):
+        """Aktualizuje povolené sloupce příchozí platby. Vrátí True při úspěchu."""
+        allowed = {
+            'castka_haleru', 'mena', 'variabilni_symbol', 'protiucet', 'datum_zauctovani',
+            'zprava_pro_prijemce', 'raw_email', 'dkim_ok', 'stav', 'order_id', 'poznamka',
+            'sparoval_admin_id', 'zpracovano_at', 'imap_message_id',
+        }
+        updates = []
+        values = []
+        for k, v in kwargs.items():
+            if k not in allowed:
+                continue
+            if k == 'dkim_ok':
+                v = 1 if v else 0
+            updates.append(f'{k} = ?')
+            values.append(v)
+        if not updates:
+            return False
+        values.append(platba_id)
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                'UPDATE csob_prijate_platby SET ' + ', '.join(updates) + ' WHERE id = ?',
+                values
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def get_pending_order_by_vs(self, vs):
+        """Najde objednávku podle přesného variabilního symbolu (order_display_number / invoice_number)."""
+        vs_s = (str(vs) if vs is not None else '').strip()
+        if not vs_s:
+            return None
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            '''SELECT * FROM pending_orders
+               WHERE TRIM(COALESCE(order_display_number, '')) = ?
+                  OR TRIM(COALESCE(invoice_number, '')) = ?
+               ORDER BY id DESC LIMIT 1''',
+            (vs_s, vs_s)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
 
 
 # Helper funkce pro generování API klíče
