@@ -15,7 +15,19 @@ Manifest: `store/msix/AppxManifest.xml`
 
 ---
 
-## Sestavení MSIX
+## EXE + MSIX v jedné dávce (doporučeno před Store)
+
+Stejný build → testovací instalátor i MSIX:
+
+```batch
+cd desktop_agent
+BUILD_EXE_A_MSIX.bat
+```
+
+Výstupy: `install\DokuCheckPRO_Setup_{BUILD}_{datum}.exe` a `store\output\DokuCheck_{BUILD}.msix`.  
+Nejdřív otestujte EXE, pak nahrajte MSIX do Partner Center. Potřebuje Inno Setup 6 + Windows SDK.
+
+## Sestavení jen MSIX
 
 ```batch
 cd c:\CURSOR_SOUBORY\Claude\PDF_CHECK_SW\desktop_agent

@@ -1,0 +1,4 @@
+# Tato složka je jen lokální. Nesmí se commitovat z rodičovského repa.
+*
+!.gitignore
+!README.md

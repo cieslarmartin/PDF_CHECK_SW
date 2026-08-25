@@ -658,37 +658,109 @@ def process_raw_email(db, raw_bytes: bytes, imap_uid: Optional[str] = None,
 # ---------------------------------------------------------------------------
 
 def _imap_config() -> Dict[str, Any]:
+    """IMAP údaje jen z env (nikdy z DB / gitu). Default user = cieslar@dokucheck.cz."""
     return {
-        'host': os.environ.get('IMAP_HOST', 'imap.seznam.cz'),
+        'host': (os.environ.get('IMAP_HOST') or 'imap.seznam.cz').strip(),
         'port': int(os.environ.get('IMAP_PORT', '993') or 993),
-        'user': os.environ.get('IMAP_USER', ''),
-        'password': os.environ.get('IMAP_PASSWORD', ''),
-        'folder': os.environ.get('IMAP_FOLDER', 'INBOX'),
+        'user': (os.environ.get('IMAP_USER') or 'cieslar@dokucheck.cz').strip(),
+        'password': (os.environ.get('IMAP_PASSWORD') or '').strip(),
+        'folder': (os.environ.get('IMAP_FOLDER') or 'INBOX').strip() or 'INBOX',
     }
 
 
-def fetch_and_process_imap(db, auto_activate: Optional[bool] = None, limit: int = 50) -> Dict[str, Any]:
+def get_imap_status() -> Dict[str, Any]:
+    """Stav IMAP konfigurace pro admin UI – heslo nikdy nevrací."""
+    cfg = _imap_config()
+    dkimpy_ok = False
+    try:
+        import dkim  # noqa: F401
+        dkimpy_ok = True
+    except ImportError:
+        dkimpy_ok = False
+    password_set = bool(cfg['password'])
+    return {
+        'host': cfg['host'],
+        'port': cfg['port'],
+        'user': cfg['user'],
+        'folder': cfg['folder'],
+        'password_set': password_set,
+        'configured': password_set and bool(cfg['user']),
+        'dkimpy_installed': dkimpy_ok,
+    }
+
+
+def test_imap_connection() -> Dict[str, Any]:
+    """Ověří přihlášení k IMAP a počet UNSEEN. Heslo nevrací."""
+    cfg = _imap_config()
+    if not cfg['password']:
+        return {
+            'ok': False,
+            'error': 'IMAP_PASSWORD není nastavené v env na serveru (PythonAnywhere → Environment variables).',
+            'status': get_imap_status(),
+        }
+    try:
+        mail = imaplib.IMAP4_SSL(cfg['host'], cfg['port'])
+        mail.login(cfg['user'], cfg['password'])
+        typ, _ = mail.select(cfg['folder'])
+        if typ != 'OK':
+            mail.logout()
+            return {'ok': False, 'error': 'Nelze otevřít složku {}'.format(cfg['folder']), 'status': get_imap_status()}
+        typ, data = mail.search(None, 'UNSEEN')
+        unseen = len((data[0] or b'').split()) if typ == 'OK' else 0
+        typ2, data2 = mail.search(None, 'FROM', 'csob.cz')
+        csob_total = len((data2[0] or b'').split()) if typ2 == 'OK' else 0
+        mail.logout()
+        return {
+            'ok': True,
+            'unseen': unseen,
+            'csob_from_count': csob_total,
+            'status': get_imap_status(),
+        }
+    except Exception as e:
+        logger.exception('IMAP test selhal: %s', e)
+        return {'ok': False, 'error': str(e), 'status': get_imap_status()}
+
+
+def fetch_and_process_imap(db, auto_activate: Optional[bool] = None, limit: int = 50,
+                           include_seen: bool = False, seen_days: int = 14) -> Dict[str, Any]:
     """
-    Načte UNSEEN zprávy z IMAP. Zpracuje jen ty od ČSOB s DKIM.
-    Cizí maily NEOZNAČÍ jako Seen. ČSOB avíza označí Seen až po úspěšném zápisu do DB.
+    Načte zprávy z IMAP. Zpracuje jen ty od ČSOB (From/DKIM).
+    - include_seen=False (default): jen UNSEEN
+    - include_seen=True: FROM csob.cz za posledních seen_days dní (i přečtené) – pro ladění
+    Cizí maily NEOZNAČÍ jako Seen. ČSOB avíza označí Seen až po zápisu do DB.
     """
     cfg = _imap_config()
-    if not cfg['user'] or not cfg['password']:
-        return {'ok': False, 'error': 'IMAP_USER / IMAP_PASSWORD nejsou nastavené v env'}
+    if not cfg['password']:
+        return {
+            'ok': False,
+            'error': 'IMAP_PASSWORD není nastavené v env. Nastavte na PythonAnywhere a Reload.',
+        }
 
     results: List[Dict[str, Any]] = []
     processed = 0
     skipped = 0
+    duplicates = 0
     errors = 0
 
     try:
         mail = imaplib.IMAP4_SSL(cfg['host'], cfg['port'])
         mail.login(cfg['user'], cfg['password'])
         mail.select(cfg['folder'])
-        typ, data = mail.search(None, 'UNSEEN')
+
+        if include_seen:
+            from datetime import datetime, timedelta
+            days = max(1, min(int(seen_days or 14), 90))
+            since = (datetime.now() - timedelta(days=days)).strftime('%d-%b-%Y')
+            # IMAP: FROM csob.cz SINCE ...
+            typ, data = mail.search(None, 'FROM', 'csob.cz', 'SINCE', since)
+            search_desc = 'FROM csob.cz SINCE {}'.format(since)
+        else:
+            typ, data = mail.search(None, 'UNSEEN')
+            search_desc = 'UNSEEN'
+
         if typ != 'OK':
             mail.logout()
-            return {'ok': False, 'error': 'IMAP SEARCH selhal: {}'.format(typ)}
+            return {'ok': False, 'error': 'IMAP SEARCH ({}) selhal: {}'.format(search_desc, typ)}
 
         ids = (data[0] or b'').split()
         for num in ids[:limit]:
@@ -712,10 +784,16 @@ def fetch_and_process_imap(db, auto_activate: Optional[bool] = None, limit: int 
                 continue  # nechat UNSEEN
 
             try:
-                res = process_raw_email(db, raw_bytes, imap_uid=num.decode() if isinstance(num, bytes) else str(num),
-                                        auto_activate=auto_activate)
+                res = process_raw_email(
+                    db, raw_bytes,
+                    imap_uid=num.decode() if isinstance(num, bytes) else str(num),
+                    auto_activate=auto_activate,
+                )
                 results.append(res)
-                processed += 1
+                if res.get('duplicate'):
+                    duplicates += 1
+                else:
+                    processed += 1
                 # Označit Seen až po zápisu (i podezřelé/chyba – ať se neopakují)
                 mail.store(num, '+FLAGS', '\\Seen')
             except Exception as e:
@@ -730,7 +808,9 @@ def fetch_and_process_imap(db, auto_activate: Optional[bool] = None, limit: int 
 
     return {
         'ok': True,
+        'search': search_desc,
         'processed': processed,
+        'duplicates': duplicates,
         'skipped_non_csob': skipped,
         'errors': errors,
         'results': results,

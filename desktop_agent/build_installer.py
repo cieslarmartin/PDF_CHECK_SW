@@ -34,10 +34,16 @@ VERSION_SOURCES = [
     (os.path.join(SCRIPT_DIR, "ui.py"), re.compile(r'VERSION\s*=\s*["\']([^"\']+)["\']')),
 ]
 
-# Inno Setup 6: 32bit a 64bit standardní cesty
+# Inno Setup 6: Program Files + uživatelská instalace (winget často dává Local\Programs)
 INNO_PATHS = [
     r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
     r"C:\Program Files\Inno Setup 6\ISCC.exe",
+    os.path.join(
+        os.environ.get("LOCALAPPDATA", ""),
+        "Programs",
+        "Inno Setup 6",
+        "ISCC.exe",
+    ),
 ]
 
 

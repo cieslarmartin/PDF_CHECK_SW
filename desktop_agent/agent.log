@@ -7682,3 +7682,31 @@ NameError: name 'FS_11' is not defined. Did you mean: 'FS_12'?
 2026-08-21 15:21:45,956 - INFO - Ověřuji licenci se serverem...
 2026-08-21 15:21:46,562 - WARNING - Licence není platná – přihlaste se znovu v sidebaru
 2026-08-21 15:21:47,147 - INFO - Agent běží
+2026-08-21 15:27:24,045 - INFO - Kontrola souboru: c:/CURSOR_SOUBORY/Claude/testovaci PDF/problemove PDF/prilohy_1125\E81_1001_e.pdf
+2026-08-21 15:27:24,337 - INFO - Analýza dokončena: E81_1001_e.pdf
+2026-08-21 15:27:24,338 - INFO - Kontrola souboru: c:/CURSOR_SOUBORY/Claude/testovaci PDF/problemove PDF/prilohy_1125\E82_0000.pdf
+2026-08-21 15:27:24,566 - INFO - Analýza dokončena: E82_0000.pdf
+2026-08-21 15:27:25,055 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-08-21 15:27:25,711 - ERROR - Chyba při odesílání batch: Neplatný API klíč
+2026-08-21 15:27:31,033 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-08-21 15:27:32,072 - ERROR - Chyba při odesílání batch: Neplatný API klíč
+2026-08-21 15:27:50,136 - INFO - Přihlášení e-mailem a heslem...
+2026-08-21 15:27:51,474 - INFO - Přihlášeno.
+2026-08-21 15:27:59,430 - INFO - Kontrola složky: c:/CURSOR_SOUBORY/Claude/testovaci PDF/problemove PDF/prilohy_1125
+2026-08-21 15:28:00,396 - INFO - Odesílám 2 výsledků na server (jeden request)...
+2026-08-21 15:28:01,630 - INFO - Batch úspěšně odeslán: batch_20260821_132800_8dc13554 - Uloženo 2 souborů
+2026-08-21 15:29:11,209 - INFO - Kontrola složky: c:/CURSOR_SOUBORY/Claude/testovaci PDF
+2026-08-21 15:29:30,691 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:30,691 - WARNING - parsing for Object Streams
+2026-08-21 15:29:30,693 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:30,693 - WARNING - parsing for Object Streams
+2026-08-21 15:29:30,982 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:30,982 - WARNING - parsing for Object Streams
+2026-08-21 15:29:31,876 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:31,876 - WARNING - parsing for Object Streams
+2026-08-21 15:29:31,878 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:31,878 - WARNING - parsing for Object Streams
+2026-08-21 15:29:32,167 - WARNING - incorrect startxref pointer(1)
+2026-08-21 15:29:32,167 - WARNING - parsing for Object Streams
+2026-08-21 15:29:36,405 - INFO - Odesílám 217 výsledků na server (jeden request)...
+2026-08-21 15:29:44,475 - INFO - Batch úspěšně odeslán: batch_20260821_132937_e41b7d98 - Uloženo 217 souborů

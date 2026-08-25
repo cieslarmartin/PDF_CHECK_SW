@@ -56,3 +56,6 @@ testovaci_engine/reports/snapshots/
 
 # Lokální knihovna zkopírovaných log a obrázků (pro výběr, necommitovat)
 pouzite_obrazky/
+
+# Lokální Flutter + Android SDK (instalace pro Android admin app, necommitovat)
+_dev/

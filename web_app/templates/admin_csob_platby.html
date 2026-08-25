@@ -50,6 +50,34 @@
     </div>
 </div>
 
+{# ========== STAV IMAP ========== #}
+{% set im = imap_status or {} %}
+<div class="section-card" style="border-color:{{ '#86efac' if im.configured else '#fca5a5' }};">
+    <h2 class="section-title">Stav připojení ke schránce</h2>
+    <div style="font-size:0.95em;line-height:1.6;">
+        <div><strong>Schránka:</strong> {{ im.user or '—' }} @ {{ im.host or '—' }}:{{ im.port or '—' }} / {{ im.folder or 'INBOX' }}</div>
+        <div><strong>IMAP heslo (env IMAP_PASSWORD):</strong>
+            {% if im.password_set %}
+                <span style="color:#16a34a;font-weight:700;">nastaveno</span>
+            {% else %}
+                <span style="color:#dc2626;font-weight:700;">CHYBÍ</span> — nastavte na PythonAnywhere → Web → Environment variables, pak Reload.
+            {% endif %}
+        </div>
+        <div><strong>Knihovna dkimpy:</strong>
+            {% if im.dkimpy_installed %}
+                <span style="color:#16a34a;font-weight:700;">OK</span>
+            {% else %}
+                <span style="color:#dc2626;font-weight:700;">není nainstalovaná</span> — na PA: <code>pip install dkimpy dnspython</code>
+            {% endif %}
+        </div>
+    </div>
+    <form method="post" action="{{ url_for('admin.csob_platby_test_imap') }}" style="margin-top:12px;">
+        <button type="submit" class="btn btn-sm btn-secondary" {% if not im.password_set %}disabled title="Nejdřív nastavte IMAP_PASSWORD"{% endif %}>
+            Ověřit IMAP přihlášení
+        </button>
+    </form>
+</div>
+
 {# ========== NÁSTROJE ========== #}
 <div class="section-card">
     <h2 class="section-title">Nástroje pro ladění</h2>
@@ -65,8 +93,11 @@
         </form>
         <form method="post" action="{{ url_for('admin.csob_platby_process_imap') }}" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
             <strong>Zpracovat schránku teď</strong>
-            <p style="font-size:0.85em;color:#6b7280;margin:6px 0;">Načte UNSEEN z IMAP (env IMAP_*). Cizí maily neoznačí jako přečtené.</p>
-            <button type="submit" class="btn btn-sm btn-primary">Spustit IMAP</button>
+            <p style="font-size:0.85em;color:#6b7280;margin:6px 0;">Načte maily z IMAP. Cizí maily neoznačí jako přečtené.</p>
+            <label style="font-size:0.85em;display:block;margin-bottom:8px;">
+                <input type="checkbox" name="include_seen" value="1"> Včetně už přečtených od ČSOB (posledních 14 dní)
+            </label>
+            <button type="submit" class="btn btn-sm btn-primary" {% if not im.password_set %}disabled title="Nejdřív nastavte IMAP_PASSWORD"{% endif %}>Spustit IMAP</button>
         </form>
         <form method="post" action="{{ url_for('admin.csob_platby_manual') }}" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
             <strong>Ruční záznam platby</strong>

@@ -1575,6 +1575,14 @@ def csob_platby():
             continue
         seen.add(oid)
         orders_uniq.append(o)
+    try:
+        from csob_payments import get_imap_status
+        imap_status = get_imap_status()
+    except Exception:
+        imap_status = {
+            'configured': False, 'password_set': False, 'dkimpy_installed': False,
+            'user': 'cieslar@dokucheck.cz', 'host': 'imap.seznam.cz', 'port': 993, 'folder': 'INBOX',
+        }
     user = session.get('admin_user') or {}
     return render_template(
         'admin_csob_platby.html',
@@ -1583,6 +1591,7 @@ def csob_platby():
         stav_labels=_CSOB_STAV_LABELS,
         auto_activate_csob=auto_activate_csob,
         waiting_orders=orders_uniq,
+        imap_status=imap_status,
         user=user,
         active_page='csob_platby',
     )
@@ -1779,22 +1788,48 @@ def csob_platby_upload_eml():
 @admin_bp.route('/admin/csob-platby/process-imap', methods=['POST'])
 @admin_required
 def csob_platby_process_imap():
-    """Jednorázové načtení UNSEEN z IMAP schránky (tlačítko Zpracovat schránku teď)."""
+    """Jednorázové načtení z IMAP schránky (tlačítko Zpracovat schránku teď)."""
     db = get_db()
+    include_seen = request.form.get('include_seen') == '1'
     try:
         from csob_payments import fetch_and_process_imap
-        res = fetch_and_process_imap(db)
+        res = fetch_and_process_imap(db, include_seen=include_seen, seen_days=14)
         if not res.get('ok'):
             flash('IMAP: {}'.format(res.get('error') or 'chyba'), 'error')
         else:
             flash(
-                'IMAP hotovo: zpracováno {}, přeskočeno (ne-ČSOB) {}, chyb {}.'.format(
-                    res.get('processed', 0), res.get('skipped_non_csob', 0), res.get('errors', 0)
+                'IMAP hotovo ({}): nových {}, duplicit {}, přeskočeno (ne-ČSOB) {}, chyb {}.'.format(
+                    res.get('search') or '—',
+                    res.get('processed', 0),
+                    res.get('duplicates', 0),
+                    res.get('skipped_non_csob', 0),
+                    res.get('errors', 0),
                 ),
                 'success',
             )
     except Exception as e:
         flash('IMAP selhalo: {}'.format(e), 'error')
+    return redirect(url_for('admin.csob_platby'))
+
+
+@admin_bp.route('/admin/csob-platby/test-imap', methods=['POST'])
+@admin_required
+def csob_platby_test_imap():
+    """Ověří IMAP přihlášení bez zpracování mailů."""
+    try:
+        from csob_payments import test_imap_connection
+        res = test_imap_connection()
+        if res.get('ok'):
+            flash(
+                'IMAP OK: přihlášení funguje. Nepřečtených: {}, mailů From csob.cz: {}.'.format(
+                    res.get('unseen', 0), res.get('csob_from_count', 0)
+                ),
+                'success',
+            )
+        else:
+            flash('IMAP test selhal: {}'.format(res.get('error') or 'neznámá chyba'), 'error')
+    except Exception as e:
+        flash('IMAP test selhal: {}'.format(e), 'error')
     return redirect(url_for('admin.csob_platby'))
 
 
