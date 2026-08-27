@@ -1108,6 +1108,15 @@ HTML_TEMPLATE = '''
                     <!-- UPLOAD MODE - Serverová / Cloudová kontrola = celé soubory jdou na server -->
                     <div id="upload-mode" class="hidden">
                         <div style="font-size:0.75em;color:#6b7280;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;">Celé PDF soubory se odesílají na server (cloud). Pro kontrolu bez odeslání souborů použijte Desktop aplikaci (Z Agenta – na server jdou jen metadata).</div>
+                        <div id="free-quota-banner" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-size:0.9em;"></div>
+                        <div id="free-paywall" style="display:none;margin-bottom:12px;padding:14px 16px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;">
+                            <div id="free-paywall-title" style="font-weight:700;margin-bottom:8px;"></div>
+                            <div id="free-paywall-body" style="margin-bottom:12px;line-height:1.45;"></div>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                                <a id="free-paywall-cta" href="/checkout?tarif=basic" class="btn btn-primary btn-sm" style="text-decoration:none;">Získat licenci</a>
+                                <span id="free-paywall-reset" style="font-size:0.85em;color:#78716c;"></span>
+                            </div>
+                        </div>
                         <div class="drop-zone" id="drop-zone">
                             <div class="drop-zone-icon">📂</div>
                             <div class="drop-zone-text">Přetáhněte PDF soubory</div>
@@ -1487,11 +1496,76 @@ function setMode(mode) {
     if (mode === 'agent') {
         loadAgentResults();
     }
+    if (mode === 'local' || mode === 'upload') {
+        if (typeof refreshFreeQuota === 'function') refreshFreeQuota();
+    }
 }
 
 // ===== FILE UPLOAD =====
 function selectFiles() { document.getElementById('file-input').click(); }
 function selectFolder() { document.getElementById('folder-input').click(); }
+
+var freeQuotaState = null;
+
+function updateFreeQuotaUI(data) {
+    freeQuotaState = data || null;
+    var banner = document.getElementById('free-quota-banner');
+    var paywall = document.getElementById('free-paywall');
+    if (!banner || !paywall) return;
+    var user = (typeof getStoredUser === 'function') ? getStoredUser() : null;
+    var paid = !!(data && data.paid) || !!(user && user.tier >= 1 && (user.tier_name || '').toLowerCase() !== 'trial' && (user.tier_name || '').toLowerCase() !== 'free');
+    if (paid || (data && data.unlimited)) {
+        banner.style.display = 'none';
+        paywall.style.display = 'none';
+        return;
+    }
+    if (data && data.exhausted) {
+        banner.style.display = 'none';
+        paywall.style.display = 'block';
+        var t = document.getElementById('free-paywall-title');
+        var b = document.getElementById('free-paywall-body');
+        var r = document.getElementById('free-paywall-reset');
+        var c = document.getElementById('free-paywall-cta');
+        if (t) t.textContent = data.paywall_title || data.counter_message || 'Vyčerpali jste bezplatné kontroly pro tento měsíc.';
+        if (b) b.textContent = data.paywall_body || '';
+        if (r) r.textContent = data.reset_hint || '';
+        if (c && data.paywall_cta_url) { c.href = data.paywall_cta_url; c.textContent = data.paywall_cta_label || 'Získat licenci'; }
+        return;
+    }
+    paywall.style.display = 'none';
+    if (data && data.counter_message) {
+        banner.style.display = 'block';
+        banner.textContent = data.counter_message;
+        if (data.remaining === 1) {
+            banner.style.background = '#fef3c7';
+            banner.style.borderColor = '#fcd34d';
+            banner.style.color = '#92400e';
+        } else {
+            banner.style.background = '#eff6ff';
+            banner.style.borderColor = '#bfdbfe';
+            banner.style.color = '#1e40af';
+        }
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+async function refreshFreeQuota() {
+    try {
+        var user = (typeof getStoredUser === 'function') ? getStoredUser() : null;
+        var headers = (user && user.api_key) ? { 'Authorization': 'Bearer ' + user.api_key } : {};
+        var r = await fetch('/api/web-trial/status', { headers: headers });
+        var data = await r.json().catch(function() { return {}; });
+        updateFreeQuotaUI(data);
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function showFreePaywallFromResult(result) {
+    updateFreeQuotaUI(Object.assign({ exhausted: true }, result || {}));
+}
 
 document.getElementById('file-input').addEventListener('change', function(e) {
     if (e.target.files.length > 0) {
@@ -1671,6 +1745,10 @@ function confirmUpload() {
     pendingFiles = [];
     hideUploadPreview();
     if (filesToProcess.length > 0) {
+        if (freeQuotaState && freeQuotaState.exhausted && !(freeQuotaState.paid || freeQuotaState.unlimited)) {
+            showFreePaywallFromResult(freeQuotaState);
+            return;
+        }
         processFilesWithProgress(filesToProcess);
     }
 }
@@ -1730,12 +1808,19 @@ async function processFilesWithProgress(files) {
                 if (!response.ok) {
                     if (response.status === 429 && result.limit_exceeded) {
                         progressModal.classList.remove('visible');
-                        alert(result.error || 'Dosáhli jste limitu kontrol zdarma za 24 hodin (podle IP). Pro další kontroly se přihlaste nebo si zakoupte licenci.');
+                        showFreePaywallFromResult(result);
                         limitReached = true;
                         break;
                     }
                     batch.files.push({ path: file.webkitRelativePath || file.name, name: file.name, error: result.error || 'Chyba kontroly' });
                     continue;
+                }
+                if (result.quota || result.counter_message) {
+                    updateFreeQuotaUI(Object.assign({}, result.quota || {}, {
+                        counter_message: result.counter_message,
+                        exhausted: !!(result.quota && result.quota.exhausted),
+                        last_free_check: result.last_free_check
+                    }));
                 }
                 batch.files.push({ ...result, path: file.webkitRelativePath || file.name, name: file.name });
             } catch (error) {
@@ -2954,6 +3039,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var lm = document.getElementById('login-modal');
         if (lm) lm.addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
         updateLoggedInUI();
+        if (typeof refreshFreeQuota === 'function') refreshFreeQuota();
         // Jednorázový přihlašovací odkaz z agenta (?login_token=xxx) – automatické přihlášení
         var params = new URLSearchParams(window.location.search);
         var loginToken = params.get('login_token');
@@ -4692,6 +4778,43 @@ def _get_client_ip():
     return request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip() or request.remote_addr or ''
 
 
+def _web_check_paywall_payload(db, quota):
+    """Paywall + počítadlo pro free web kontroly (limit / e-mail bez e-mailu – podle IP, kalendářní měsíc)."""
+    basic_price = 1090
+    try:
+        if get_pricing_tarifs:
+            tarifs = get_pricing_tarifs(db)
+            basic_price = int((tarifs.get('basic') or {}).get('amount_czk') or 1090)
+    except Exception:
+        try:
+            tarifs = db.get_setting_json('pricing_tarifs', {}) or {}
+            basic_price = int((tarifs.get('basic') or {}).get('amount_czk') or 1090)
+        except Exception:
+            basic_price = 1090
+    reset = quota.get('reset_date') or ''
+    try:
+        # DD.MM.YYYY pro UI
+        y, m, d = reset.split('-')
+        reset_label = f'{int(d)}. {int(m)}. {y}'
+    except Exception:
+        reset_label = reset
+    return {
+        'limit_exceeded': True,
+        'quota': quota,
+        'error': quota.get('counter_message') or f'Vyčerpali jste {quota.get("limit", 4)} bezplatné kontroly pro tento měsíc.',
+        'paywall_title': f'Vyčerpali jste {quota.get("limit", 4)} bezplatné kontroly pro tento měsíc.',
+        'paywall_body': (
+            f'S licencí BASIC získáte neomezený počet kontrol a aplikaci Desktop Agent '
+            f'pro hromadnou kontrolu celých složek — za {basic_price:,} Kč ročně, tedy necelé 3 Kč denně.'
+        ).replace(',', ' '),
+        'paywall_cta_url': '/checkout?tarif=basic',
+        'paywall_cta_label': 'Získat licenci',
+        'reset_date': reset,
+        'reset_date_label': reset_label,
+        'reset_hint': f'Kontroly se obnoví {reset_label}',
+    }
+
+
 def _is_paid_user_from_request(db):
     """True pokud požadavek nese platný API klíč placené licence (Basic/Pro), tedy bez Web Trial limitu."""
     auth = request.headers.get('Authorization')
@@ -4714,17 +4837,37 @@ def _is_paid_user_from_request(db):
     return tier >= 1
 
 
+@app.route('/api/web-trial/status', methods=['GET'])
+def web_trial_status():
+    """Stav free limitu (IP, kalendářní měsíc) – pro počítadlo v UI. Placený uživatel = unlimited."""
+    try:
+        db = Database()
+        if _is_paid_user_from_request(db):
+            return jsonify({'paid': True, 'unlimited': True, 'remaining': None, 'limit': None, 'used': None})
+        ip = _get_client_ip()
+        block = db.get_ip_block(ip)
+        quota = db.get_web_check_quota(ip)
+        payload = {'paid': False, 'unlimited': False, **quota}
+        if block:
+            payload['blocked'] = True
+            payload['blocked_until'] = block.get('blocked_until')
+        if quota.get('exhausted'):
+            payload.update(_web_check_paywall_payload(db, quota))
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/analyze-batch', methods=['POST'])
 def analyze_batch():
     """
     Kontrola až 5 PDF v jedné dávce.
     Přihlášený placený uživatel (Authorization: Bearer): bez limitu.
-    Nepřihlášený / trial: limit dle nastavení (Web Trial) na IP.
+    Nepřihlášený / trial: limit souborů za kalendářní měsíc na IP.
     """
     ip = _get_client_ip()
     files = request.files.getlist('files') or request.files.getlist('file') or []
     if not files:
-        # fallback pro jednořádkové pole
         f = request.files.get('file')
         if f:
             files = [f]
@@ -4740,21 +4883,23 @@ def analyze_batch():
         paid_user = _is_paid_user_from_request(db)
         user_agent = request.headers.get('User-Agent', '')
         incoming_names = [f.filename for f in files if f.filename]
+        quota = None
         if not paid_user:
             block = db.get_ip_block(ip)
             if block:
-                return jsonify({
-                    'error': f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC) kvůli překročení limitu kontrol zdarma. Pro neomezené kontroly si zakupte licenci.',
-                    'limit_exceeded': True, 'blocked': True
-                }), 429
+                quota = db.get_web_check_quota(ip)
+                payload = _web_check_paywall_payload(db, quota)
+                payload['error'] = (
+                    f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC). '
+                    f'Pro neomezené kontroly si zakupte licenci.'
+                )
+                payload['blocked'] = True
+                return jsonify(payload), 429
             allowed, used, limit = db.check_web_check_file_limit(ip, incoming_files=len(files))
+            quota = db.get_web_check_quota(ip)
             if not allowed:
                 db.insert_web_check_log(ip, file_count=len(files), file_names=incoming_names, user_agent=user_agent, status='limit')
-                db.block_ip(ip, hours=24, reason='auto')
-                return jsonify({
-                    'error': f'Dosáhli jste limitu {limit} souborů zdarma za 24 hodin. Vaše IP adresa byla dočasně zablokována na 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakupte licenci.',
-                    'limit_exceeded': True
-                }), 429
+                return jsonify(_web_check_paywall_payload(db, quota)), 429
 
         results = []
         total_size = 0
@@ -4778,16 +4923,24 @@ def analyze_batch():
             db.record_web_trial_usage(ip)
             db.insert_web_check_log(ip, file_count=len(checked_names), file_names=checked_names,
                                     total_size=total_size, user_agent=user_agent, status='ok')
+            quota = db.get_web_check_quota(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=len(results))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    return jsonify({'results': results, 'count': len(results)})
+    resp = {'results': results, 'count': len(results)}
+    if not paid_user and quota:
+        resp['quota'] = quota
+        resp['counter_message'] = quota.get('counter_message')
+        if quota.get('exhausted'):
+            resp['last_free_check'] = True
+            resp['counter_message'] = 'Toto byla vaše poslední bezplatná kontrola tento měsíc.'
+    return jsonify(resp)
 
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Kontrola jednoho PDF. Přihlášený placený uživatel = bez limitu; jinak Web Trial limit na IP."""
+    """Kontrola jednoho PDF. Přihlášený placený uživatel = bez limitu; jinak měsíční limit na IP."""
     if 'file' not in request.files:
         return jsonify({'error': 'Žádný soubor'}), 400
     file = request.files['file']
@@ -4799,33 +4952,43 @@ def analyze():
         db = Database()
         paid_user = _is_paid_user_from_request(db)
         user_agent = request.headers.get('User-Agent', '')
+        quota = None
         if not paid_user:
             block = db.get_ip_block(ip)
             if block:
-                return jsonify({
-                    'error': f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC) kvůli překročení limitu kontrol zdarma. Pro neomezené kontroly si zakupte licenci.',
-                    'limit_exceeded': True, 'blocked': True
-                }), 429
+                quota = db.get_web_check_quota(ip)
+                payload = _web_check_paywall_payload(db, quota)
+                payload['error'] = (
+                    f'Vaše IP adresa je dočasně zablokovaná (do {(block.get("blocked_until") or "")[:16]} UTC). '
+                    f'Pro neomezené kontroly si zakupte licenci.'
+                )
+                payload['blocked'] = True
+                return jsonify(payload), 429
             allowed, used, limit = db.check_web_check_file_limit(ip, incoming_files=1)
             if not allowed:
+                quota = db.get_web_check_quota(ip)
                 db.insert_web_check_log(ip, file_count=1, file_names=[file.filename] if file.filename else [],
                                         user_agent=user_agent, status='limit')
-                db.block_ip(ip, hours=24, reason='auto')
-                return jsonify({
-                    'error': f'Dosáhli jste limitu {limit} souborů zdarma za 24 hodin. Vaše IP adresa byla dočasně zablokována na 24 hodin. Pro neomezené kontroly se přihlaste nebo si zakupte licenci.',
-                    'limit_exceeded': True
-                }), 429
+                return jsonify(_web_check_paywall_payload(db, quota)), 429
             db.record_web_trial_usage(ip)
             db.insert_web_check_log(ip, file_count=1, file_names=[file.filename] if file.filename else [],
                                     total_size=len(content), user_agent=user_agent, status='ok')
+            quota = db.get_web_check_quota(ip)
         db.insert_activity_log(ip_address=ip, source_type='web_trial', file_count=1)
         result = analyze_pdf_from_content(content)
         _enrich_signatures_tsa_qualified(result)
         if file.filename:
             result['name'] = file.filename
+        if not paid_user and quota:
+            result['quota'] = quota
+            result['counter_message'] = quota.get('counter_message')
+            if quota.get('exhausted'):
+                result['last_free_check'] = True
+                result['counter_message'] = 'Toto byla vaše poslední bezplatná kontrola tento měsíc.'
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/select_folder')
 def select_folder_route():

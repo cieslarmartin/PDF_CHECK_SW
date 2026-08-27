@@ -1,8 +1,19 @@
 {% extends "admin_base.html" %}
 {% block title %}DokuCheck Admin – Web kontroly (IP){% endblock %}
+{% block extra_css %}
+.wc-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.wc-sort:hover { color: #1d4ed8; }
+.wc-sort .arrow { font-size: 0.75em; opacity: 0.45; margin-left: 2px; }
+.wc-sort.sorted .arrow { opacity: 1; color: #1d4ed8; }
+.wc-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.wc-filters label { font-size: 0.85em; color: #4b5563; display: inline-flex; align-items: center; gap: 6px; }
+.wc-filters select, .wc-filters input[type="text"], .wc-filters input[type="number"] {
+    padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9em;
+}
+{% endblock %}
 {% block content %}
 <h2 style="font-size:1.2em;font-weight:600;margin-bottom:6px;">Web kontroly zdarma (podle IP)</h2>
-<p class="text-muted small mb-2">Každý, kdo zkouší kontrolu na webu bez přihlášení, je evidovaný podle IP adresy. Limit: <strong>{{ files_limit }}</strong> souborů za 24 h na IP – po překročení se IP automaticky zablokuje na 24 hodin.</p>
+<p class="text-muted small mb-2">Každý, kdo zkouší kontrolu na webu bez přihlášení, je evidovaný podle IP. Limit: <strong>{{ files_limit }}</strong> souborů / kalendářní měsíc – po vyčerpání se zobrazí paywall (obnova 1. den dalšího měsíce). Tabulku můžete řadit kliknutím na záhlaví (výchozí: nejvíce souborů nahoře).</p>
 
 {# Souhrnné statistiky dnes #}
 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
@@ -30,9 +41,9 @@
     <div class="card-body">
         <form method="post" action="{{ url_for('admin.web_checks') }}">
             <input type="hidden" name="action" value="save_web_check_limit">
-            <label for="web_check_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za 24 h na jednu IP</label>
-            <input type="number" id="web_check_limit" name="web_trial_max_files_per_24h" value="{{ files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
-            <span class="text-muted small" style="margin-left:8px;">Po překročení se IP automaticky zablokuje na 24 hodin.</span>
+            <label for="web_check_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za kalendářní měsíc na jednu IP</label>
+            <input type="number" id="web_check_limit" name="web_trial_max_files_per_month" value="{{ files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
+            <span class="text-muted small" style="margin-left:8px;">Reset 1. den měsíce. (např. 4 = výchozí trial)</span>
             <div style="margin-top:10px;">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
             </div>
@@ -40,36 +51,83 @@
     </div>
 </div>
 
-{# Vyhledávání #}
-<input type="text" id="ipSearch" class="form-control" placeholder="Hledat IP…" style="max-width:220px;margin-bottom:12px;" oninput="filterIps(this.value)">
+{# Filtry + rychlé řazení #}
+<div class="wc-filters">
+    <input type="text" id="ipSearch" class="form-control" placeholder="Hledat IP…" style="max-width:200px;" oninput="applyFilters()">
+    <label>Stav
+        <select id="filterStatus" onchange="applyFilters()">
+            <option value="all">Vše</option>
+            <option value="ok">Jen OK</option>
+            <option value="blocked">Jen blokované</option>
+        </select>
+    </label>
+    <label title="IP, které měly aktivitu ve 2 a více různých dnech">
+        <input type="checkbox" id="filterReturning" onchange="applyFilters()"> Jen vracející se (2+ dny)
+    </label>
+    <label>Min. souborů celkem
+        <input type="number" id="filterMinFiles" min="0" step="1" placeholder="0" style="width:70px;" oninput="applyFilters()">
+    </label>
+    <label>Řadit podle
+        <select id="sortSelect" onchange="sortFromSelect()">
+            <option value="total_files-desc" selected>Souborů celkem ↓</option>
+            <option value="total_files-asc">Souborů celkem ↑</option>
+            <option value="total_checks-desc">Kontrol celkem ↓</option>
+            <option value="active_days-desc">Aktivních dní ↓</option>
+            <option value="files_month-desc">Souborů tento měsíc ↓</option>
+            <option value="files_24h-desc">Souborů 24 h ↓</option>
+            <option value="limit_hits-desc">Pokusů přes limit ↓</option>
+            <option value="last_seen-desc">Poslední aktivita ↓</option>
+            <option value="first_seen-asc">První aktivita ↑</option>
+        </select>
+    </label>
+    <span id="visibleCount" class="text-muted small"></span>
+</div>
 
 <div class="table-container">
     <table class="table-dense" id="ipTable">
         <thead>
             <tr>
-                <th>IP adresa</th>
-                <th>Souborů 24 h</th>
-                <th>Kontrol 24 h</th>
-                <th>Souborů celkem</th>
-                <th>Kontrol celkem</th>
-                <th>Pokusů přes limit</th>
-                <th>První aktivita</th>
-                <th>Poslední aktivita</th>
-                <th>Stav</th>
+                <th class="wc-sort" data-sort="ip" data-type="str">IP adresa <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="files_month" data-type="num">Souborů tento měsíc <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="files_24h" data-type="num">Souborů 24 h <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="checks_24h" data-type="num">Kontrol 24 h <span class="arrow">↕</span></th>
+                <th class="wc-sort sorted" data-sort="total_files" data-type="num">Souborů celkem <span class="arrow">↓</span></th>
+                <th class="wc-sort" data-sort="total_checks" data-type="num">Kontrol celkem <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="active_days" data-type="num" title="Kolik různých dní tato IP něco kontrolovala">Aktivních dní <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="limit_hits" data-type="num">Přes limit <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="first_seen" data-type="str">První aktivita <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="last_seen" data-type="str">Poslední aktivita <span class="arrow">↕</span></th>
+                <th class="wc-sort" data-sort="blocked" data-type="num">Stav <span class="arrow">↕</span></th>
                 <th>Akce</th>
             </tr>
         </thead>
         <tbody>
             {% for row in rows %}
-            <tr {% if row.blocked_until %}style="background:#fef2f2;"{% endif %}>
+            <tr
+                data-ip="{{ row.ip_address }}"
+                data-files_month="{{ row.files_month if row.files_month is not none else -1 }}"
+                data-files_24h="{{ row.files_24h if row.files_24h is not none else -1 }}"
+                data-checks_24h="{{ row.checks_24h if row.checks_24h is not none else -1 }}"
+                data-total_files="{{ row.total_files if row.total_files is not none else (row.total_checks or 0) }}"
+                data-total_checks="{{ row.total_checks or 0 }}"
+                data-active_days="{{ row.active_days or 1 }}"
+                data-limit_hits="{{ row.limit_hits or 0 }}"
+                data-first_seen="{{ row.first_seen or '' }}"
+                data-last_seen="{{ row.last_seen or '' }}"
+                data-blocked="{{ 1 if row.blocked_until else 0 }}"
+                {% if row.blocked_until %}style="background:#fef2f2;"{% elif (row.active_days or 1) >= 3 %}style="background:#fff7ed;"{% endif %}
+            >
                 <td style="font-family:monospace;font-size:0.85em;">
                     <a href="{{ url_for('admin.web_check_ip_detail') }}?ip={{ row.ip_address }}" title="Zobrazit detail a všechny kontroly této IP"><strong>{{ row.ip_address }}</strong></a>
                     {% if row.is_legacy %}<br><small class="text-muted">starší záznam (bez detailu)</small>{% endif %}
+                    {% if (row.active_days or 1) >= 2 %}<br><small style="color:#c2410c;font-weight:600;">vrací se ({{ row.active_days }} dní)</small>{% endif %}
                 </td>
+                <td>{{ row.files_month if row.files_month is not none else '—' }}</td>
                 <td>{{ row.files_24h if row.files_24h is not none else '—' }}</td>
                 <td>{{ row.checks_24h if row.checks_24h is not none else '—' }}</td>
-                <td>{{ row.total_files if row.total_files is not none else '—' }}</td>
+                <td style="font-weight:600;">{{ row.total_files if row.total_files is not none else '—' }}</td>
                 <td>{{ row.total_checks }}</td>
+                <td {% if (row.active_days or 1) >= 2 %}style="color:#c2410c;font-weight:600;"{% endif %}>{{ row.active_days or 1 }}</td>
                 <td {% if row.limit_hits %}style="color:#b91c1c;font-weight:600;"{% endif %}>{{ row.limit_hits or 0 }}</td>
                 <td><small>{{ (row.first_seen or '—')[:16] }}</small></td>
                 <td><small>{{ (row.last_seen or '—')[:16] }}</small></td>
@@ -104,19 +162,121 @@
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Zatím žádné free kontroly z webu</td></tr>
+            <tr data-empty="1"><td colspan="12" class="text-center text-muted" style="padding:24px;">Zatím žádné free kontroly z webu</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 <script>
-function filterIps(q) {
-    q = (q || '').trim().toLowerCase();
-    document.querySelectorAll('#ipTable tbody tr').forEach(function(tr) {
-        var ip = (tr.querySelector('td') || {}).textContent || '';
-        tr.style.display = (!q || ip.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+(function() {
+    var sortKey = 'total_files';
+    var sortDir = 'desc';
+    var sortType = 'num';
+
+    function numVal(tr, key) {
+        var v = parseFloat(tr.getAttribute('data-' + key));
+        return isNaN(v) ? -1 : v;
+    }
+    function strVal(tr, key) {
+        return (tr.getAttribute('data-' + key) || '').toLowerCase();
+    }
+
+    function sortRows() {
+        var tbody = document.querySelector('#ipTable tbody');
+        if (!tbody) return;
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr')).filter(function(tr) {
+            return !tr.getAttribute('data-empty');
+        });
+        rows.sort(function(a, b) {
+            var av, bv;
+            if (sortType === 'num') {
+                av = numVal(a, sortKey);
+                bv = numVal(b, sortKey);
+            } else {
+                av = strVal(a, sortKey);
+                bv = strVal(b, sortKey);
+            }
+            if (av < bv) return sortDir === 'asc' ? -1 : 1;
+            if (av > bv) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+        rows.forEach(function(tr) { tbody.appendChild(tr); });
+        document.querySelectorAll('.wc-sort').forEach(function(th) {
+            th.classList.remove('sorted');
+            var arrow = th.querySelector('.arrow');
+            if (arrow) arrow.textContent = '↕';
+            if (th.getAttribute('data-sort') === sortKey) {
+                th.classList.add('sorted');
+                if (arrow) arrow.textContent = sortDir === 'asc' ? '↑' : '↓';
+            }
+        });
+        var sel = document.getElementById('sortSelect');
+        if (sel) {
+            var want = sortKey + '-' + sortDir;
+            if ([].some.call(sel.options, function(o) { return o.value === want; })) sel.value = want;
+        }
+    }
+
+    function applyFilters() {
+        var q = (document.getElementById('ipSearch').value || '').trim().toLowerCase();
+        var status = document.getElementById('filterStatus').value;
+        var returning = document.getElementById('filterReturning').checked;
+        var minFilesRaw = document.getElementById('filterMinFiles').value;
+        var minFiles = minFilesRaw === '' ? 0 : (parseInt(minFilesRaw, 10) || 0);
+        var visible = 0;
+        var total = 0;
+        document.querySelectorAll('#ipTable tbody tr').forEach(function(tr) {
+            if (tr.getAttribute('data-empty')) return;
+            total++;
+            var ip = (tr.getAttribute('data-ip') || '').toLowerCase();
+            var blocked = tr.getAttribute('data-blocked') === '1';
+            var days = numVal(tr, 'active_days');
+            var files = numVal(tr, 'total_files');
+            var ok = true;
+            if (q && ip.indexOf(q) < 0) ok = false;
+            if (status === 'blocked' && !blocked) ok = false;
+            if (status === 'ok' && blocked) ok = false;
+            if (returning && days < 2) ok = false;
+            if (files < minFiles) ok = false;
+            tr.style.display = ok ? '' : 'none';
+            if (ok) visible++;
+        });
+        var el = document.getElementById('visibleCount');
+        if (el) el.textContent = 'Zobrazeno ' + visible + ' / ' + total + ' IP';
+    }
+
+    function sortFromSelect() {
+        var v = (document.getElementById('sortSelect').value || 'total_files-desc').split('-');
+        sortKey = v[0];
+        sortDir = v[1] || 'desc';
+        var th = document.querySelector('.wc-sort[data-sort="' + sortKey + '"]');
+        sortType = th ? (th.getAttribute('data-type') || 'num') : 'num';
+        sortRows();
+        applyFilters();
+    }
+
+    document.querySelectorAll('.wc-sort').forEach(function(th) {
+        th.addEventListener('click', function() {
+            var key = th.getAttribute('data-sort');
+            var type = th.getAttribute('data-type') || 'num';
+            if (sortKey === key) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortKey = key;
+                sortDir = (type === 'str' && key === 'ip') ? 'asc' : 'desc';
+            }
+            sortType = type;
+            sortRows();
+            applyFilters();
+        });
     });
-}
+
+    window.applyFilters = applyFilters;
+    window.sortFromSelect = sortFromSelect;
+
+    sortRows();
+    applyFilters();
+})();
 </script>
 {% endblock %}

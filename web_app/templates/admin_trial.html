@@ -28,9 +28,9 @@
     <div class="card-body">
         <form method="post" action="{{ url_for('admin.trial') }}">
             <input type="hidden" name="action" value="save_web_trial_limit">
-            <label for="web_trial_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za 24 h na jednu IP</label>
-            <input type="number" id="web_trial_limit" name="web_trial_max_files_per_24h" value="{{ web_trial_files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
-            <span class="text-muted small" style="margin-left:8px;">Po překročení se IP automaticky zablokuje na 24 hodin.</span>
+            <label for="web_trial_limit" style="display:block;font-size:0.85em;color:#4b5563;margin-bottom:4px;">Max. počet souborů zdarma za kalendářní měsíc na jednu IP</label>
+            <input type="number" id="web_trial_limit" name="web_trial_max_files_per_month" value="{{ web_trial_files_limit }}" min="1" max="999" step="1" style="width:120px;padding:6px 8px;">
+            <span class="text-muted small" style="margin-left:8px;">Reset vždy 1. den měsíce. Po vyčerpání se zobrazí paywall (formulář zůstane viditelný).</span>
             <div style="margin-top:10px;">
                 <button type="submit" class="btn btn-primary btn-sm">Uložit</button>
                 <a href="{{ url_for('admin.web_checks') }}" class="btn btn-secondary btn-sm" style="margin-left:6px;">Podrobné statistiky a blokace IP →</a>
@@ -41,7 +41,7 @@
 
 {# A) Web Trial (online check bez přihlášení – podle IP) #}
 <h3 style="font-size:1.05em;margin-bottom:10px;color:#1f2937;">A) Web Trial – online kontroly (podle IP)</h3>
-<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení. Limit: <strong>{{ web_trial_files_limit }}</strong> souborů / 24 h na IP. Podrobný přehled včetně názvů souborů a blokací najdete v sekci <a href="{{ url_for('admin.web_checks') }}">Web kontroly (IP)</a>.</p>
+<p class="text-muted small mb-2">Každý řádek = unikátní IP adresa, která vyzkoušela online kontrolu bez přihlášení. Limit: <strong>{{ web_trial_files_limit }}</strong> souborů / kalendářní měsíc na IP. Podrobný přehled včetně názvů souborů a blokací najdete v sekci <a href="{{ url_for('admin.web_checks') }}">Web kontroly (IP)</a>.</p>
 <div class="table-container">
     <table class="table-dense">
         <thead>

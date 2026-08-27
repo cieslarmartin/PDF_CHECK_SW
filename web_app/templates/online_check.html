@@ -38,8 +38,17 @@
         </div>
         <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-6 sm:p-12 text-center bg-slate-800/50 hover:border-[#007ACC] transition cursor-pointer">
             <p class="text-slate-400 mb-2">Přetáhněte PDF sem nebo klikněte pro výběr</p>
-            <p class="text-slate-500 text-sm">Max. 5 souborů, max. 2 MB na soubor, pouze PDF</p>
+            <p class="text-slate-500 text-sm">Max. 5 souborů, max. 2 MB na soubor, pouze PDF. Bezplatně max. 4 soubory za kalendářní měsíc (podle IP).</p>
             <input type="file" id="file-input" accept=".pdf,application/pdf" multiple class="hidden">
+        </div>
+        <div id="free-quota-banner" class="mt-4 hidden p-3 rounded-lg border border-blue-300 bg-blue-50 text-blue-900 text-sm"></div>
+        <div id="free-paywall" class="mt-4 hidden p-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-900">
+            <div id="free-paywall-title" class="font-bold mb-2"></div>
+            <div id="free-paywall-body" class="mb-3 text-sm leading-relaxed"></div>
+            <div class="flex flex-wrap gap-3 items-center">
+                <a id="free-paywall-cta" href="/checkout?tarif=basic" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary text-sm">Získat licenci</a>
+                <span id="free-paywall-reset" class="text-sm text-amber-800/80"></span>
+            </div>
         </div>
         <ul id="file-list" class="mt-6 space-y-2 text-slate-300"></ul>
         <button id="btn-check" disabled class="mt-6 w-full py-3 rounded-lg font-semibold text-white btn-primary disabled:opacity-50 disabled:cursor-not-allowed transition">
@@ -78,11 +87,11 @@
         <!-- Modální okno při překročení limitu -->
         <div id="modal-limit" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
             <div class="bg-slate-800 rounded-xl p-8 max-w-md mx-4 border border-slate-600 shadow-xl">
-                <h3 class="text-xl font-bold text-white mb-4">Limit trial verze dosažen</h3>
-                <p class="text-slate-300 mb-6">Dosáhli jste limitu 3 kontrol za 24 hodin (podle IP adresy). Pro další kontroly se registrujte nebo si zakoupte licenci.</p>
-                <div class="flex gap-4">
-                    <a href="/#pricing" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary">Zakoupit licenci</a>
-                    <a href="/portal/login" class="px-4 py-2 rounded-lg font-semibold bg-slate-600 text-white hover:bg-slate-500">Přihlásit se</a>
+                <h3 id="modal-limit-title" class="text-xl font-bold text-white mb-4">Vyčerpali jste bezplatné kontroly pro tento měsíc.</h3>
+                <p id="modal-limit-body" class="text-slate-300 mb-4">S licencí BASIC získáte neomezený počet kontrol a aplikaci Desktop Agent pro hromadnou kontrolu celých složek — za 1 090 Kč ročně, tedy necelé 3 Kč denně.</p>
+                <p id="modal-limit-reset" class="text-slate-400 text-sm mb-6"></p>
+                <div class="flex gap-4 flex-wrap">
+                    <a id="modal-limit-cta" href="/checkout?tarif=basic" class="px-4 py-2 rounded-lg font-semibold text-white btn-primary">Získat licenci</a>
                     <button type="button" id="modal-close" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white">Zavřít</button>
                 </div>
             </div>
@@ -106,6 +115,54 @@
         let selectedFiles = [];
         let lastResults = [];
         let activeFilters = { pdfa: 'all', sig: 'all' };
+        let freeQuotaState = null;
+
+        function updateFreeQuotaUI(data) {
+            freeQuotaState = data || null;
+            const banner = document.getElementById('free-quota-banner');
+            const paywall = document.getElementById('free-paywall');
+            if (!banner || !paywall) return;
+            if (data && (data.paid || data.unlimited)) {
+                banner.classList.add('hidden');
+                paywall.classList.add('hidden');
+                return;
+            }
+            if (data && data.exhausted) {
+                banner.classList.add('hidden');
+                paywall.classList.remove('hidden');
+                document.getElementById('free-paywall-title').textContent = data.paywall_title || data.counter_message || '';
+                document.getElementById('free-paywall-body').textContent = data.paywall_body || '';
+                document.getElementById('free-paywall-reset').textContent = data.reset_hint || '';
+                const cta = document.getElementById('free-paywall-cta');
+                if (cta && data.paywall_cta_url) cta.href = data.paywall_cta_url;
+                return;
+            }
+            paywall.classList.add('hidden');
+            if (data && data.counter_message) {
+                banner.classList.remove('hidden');
+                banner.textContent = data.counter_message;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        async function refreshFreeQuota() {
+            try {
+                const opts = {};
+                try {
+                    const stored = localStorage.getItem('pdfcheck_user');
+                    if (stored) {
+                        const u = JSON.parse(stored);
+                        if (u && u.api_key) opts.headers = { 'Authorization': 'Bearer ' + u.api_key };
+                    }
+                } catch (e) {}
+                const r = await fetch('/api/web-trial/status', opts);
+                const data = await r.json().catch(() => ({}));
+                updateFreeQuotaUI(data);
+                updateList();
+                return data;
+            } catch (e) { return null; }
+        }
 
         function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
@@ -123,7 +180,8 @@
                 fileList.appendChild(li);
             });
             const allOk = selectedFiles.length > 0 && selectedFiles.every(f => f.size <= MAX_FILE_SIZE);
-            btnCheck.disabled = !allOk;
+            const exhausted = !!(freeQuotaState && freeQuotaState.exhausted && !(freeQuotaState.paid || freeQuotaState.unlimited));
+            btnCheck.disabled = !allOk || exhausted;
         }
 
         function addFiles(files) {
@@ -135,11 +193,24 @@
             updateList();
         }
 
-        function showModalLimit() {
+        function showModalLimit(data) {
+            if (data) {
+                const t = document.getElementById('modal-limit-title');
+                const b = document.getElementById('modal-limit-body');
+                const r = document.getElementById('modal-limit-reset');
+                const c = document.getElementById('modal-limit-cta');
+                if (t) t.textContent = data.paywall_title || data.counter_message || t.textContent;
+                if (b) b.textContent = data.paywall_body || b.textContent;
+                if (r) r.textContent = data.reset_hint || '';
+                if (c && data.paywall_cta_url) c.href = data.paywall_cta_url;
+                updateFreeQuotaUI(Object.assign({ exhausted: true }, data));
+            }
             document.getElementById('modal-limit').classList.remove('hidden');
         }
         document.getElementById('modal-close').onclick = () => document.getElementById('modal-limit').classList.add('hidden');
         document.getElementById('modal-limit').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); };
+
+        refreshFreeQuota();
 
         function renderResults(data) {
             lastResults = data.results || [];
@@ -247,8 +318,8 @@
                 const r = await fetch('/analyze-batch', opts);
                 const data = await r.json().catch(() => ({}));
                 if (r.status === 429 && data.limit_exceeded) {
-                    showModalLimit();
-                    result.innerHTML = '<span class="text-amber-400">' + (data.error || 'Limit dosažen.') + '</span>';
+                    showModalLimit(data);
+                    result.innerHTML = '<span class="text-amber-400">' + (data.paywall_title || data.error || 'Limit dosažen.') + '</span>';
                     return;
                 }
                 if (!r.ok) {
@@ -256,7 +327,10 @@
                     return;
                 }
                 const count = data.count || (data.results && data.results.length) || 0;
-                result.innerHTML = 'Kontrola dokončena. Zkontrolováno souborů: <strong>' + count + '</strong>.';
+                let msg = 'Kontrola dokončena. Zkontrolováno souborů: <strong>' + count + '</strong>.';
+                if (data.counter_message) msg += ' <span class="text-slate-400">' + data.counter_message + '</span>';
+                result.innerHTML = msg;
+                if (data.quota) updateFreeQuotaUI(Object.assign({}, data.quota, { counter_message: data.counter_message, exhausted: !!(data.quota && data.quota.exhausted) }));
                 renderResults(data);
                 filtersExport.classList.remove('hidden');
             } catch (e) {

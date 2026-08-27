@@ -2095,12 +2095,12 @@ def trial():
     db = get_db()
     if request.method == 'POST' and request.form.get('action') == 'save_web_trial_limit':
         try:
-            val = request.form.get('web_trial_max_files_per_24h', '8').strip()
-            n = int(val) if val else 8
+            val = request.form.get('web_trial_max_files_per_month', request.form.get('web_trial_max_files_per_24h', '4')).strip()
+            n = int(val) if val else 4
             if n < 1:
                 n = 1
-            db.set_global_setting('web_trial_max_files_per_24h', n)
-            flash(f'Limit Web kontrol uložen: {n} souborů zdarma za 24 h na IP.', 'success')
+            db.set_global_setting('web_trial_max_files_per_month', n)
+            flash(f'Limit Web kontrol uložen: {n} souborů zdarma za kalendářní měsíc na IP.', 'success')
         except (ValueError, TypeError):
             flash('Neplatná hodnota. Zadejte celé číslo (min. 1).', 'error')
         return redirect(url_for('admin.trial'))
@@ -2182,12 +2182,12 @@ def web_checks():
     db = get_db()
     if request.method == 'POST' and request.form.get('action') == 'save_web_check_limit':
         try:
-            val = request.form.get('web_trial_max_files_per_24h', '8').strip()
-            n = int(val) if val else 8
+            val = request.form.get('web_trial_max_files_per_month', request.form.get('web_trial_max_files_per_24h', '4')).strip()
+            n = int(val) if val else 4
             if n < 1:
                 n = 1
-            db.set_global_setting('web_trial_max_files_per_24h', n)
-            flash(f'Limit uložen: {n} souborů zdarma za 24 h na IP.', 'success')
+            db.set_global_setting('web_trial_max_files_per_month', n)
+            flash(f'Limit uložen: {n} souborů zdarma za kalendářní měsíc na IP.', 'success')
         except (ValueError, TypeError):
             flash('Neplatná hodnota. Zadejte celé číslo (min. 1).', 'error')
         return redirect(url_for('admin.web_checks'))
@@ -2201,9 +2201,11 @@ def web_checks():
                 'ip_address': l['ip_address'],
                 'total_checks': l.get('total_batches') or 0,
                 'total_files': None,
+                'files_month': None,
                 'files_24h': None,
                 'checks_24h': None,
                 'limit_hits': 0,
+                'active_days': 1,
                 'first_seen': None,
                 'last_seen': l.get('last_used'),
                 'blocked_until': (db.get_ip_block(l['ip_address']) or {}).get('blocked_until'),
@@ -2211,7 +2213,8 @@ def web_checks():
                 'is_legacy': True,
             })
     all_rows = rows + legacy
-    all_rows.sort(key=lambda r: r.get('last_seen') or '', reverse=True)
+    # Výchozí: nejvíce souborů nahoře
+    all_rows.sort(key=lambda r: (r.get('total_files') if r.get('total_files') is not None else r.get('total_checks') or 0), reverse=True)
     stats = db.get_web_check_stats_today()
     files_limit = db.get_web_trial_files_limit()
     user = session.get('admin_user') or {}

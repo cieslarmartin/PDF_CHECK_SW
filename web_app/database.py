@@ -2201,9 +2201,73 @@ class Database:
     # =========================================================================
 
     def get_web_trial_files_limit(self):
-        """Max. počet souborů zdarma za 24 h na IP (global_settings web_trial_max_files_per_24h, výchozí 8)."""
-        limit = self.get_setting_int('web_trial_max_files_per_24h', 8)
-        return limit if limit > 0 else 8
+        """Max. počet souborů zdarma za kalendářní měsíc na IP (web_trial_max_files_per_month, výchozí 4)."""
+        limit = self.get_setting_int('web_trial_max_files_per_month', 4)
+        return limit if limit > 0 else 4
+
+    def get_web_check_month_start(self):
+        """První den aktuálního kalendářního měsíce (YYYY-MM-DD)."""
+        return datetime.now().strftime('%Y-%m-01')
+
+    def get_web_check_reset_date(self):
+        """Datum obnovy limitu = 1. den následujícího měsíce (YYYY-MM-DD)."""
+        now = datetime.now()
+        if now.month == 12:
+            return f'{now.year + 1}-01-01'
+        return f'{now.year}-{now.month + 1:02d}-01'
+
+    def get_web_check_used_this_month(self, ip_address):
+        """Počet úspěšně zkontrolovaných souborů zdarma za aktuální kalendářní měsíc na IP."""
+        if not ip_address:
+            return 0
+        month_start = self.get_web_check_month_start()
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT COALESCE(SUM(file_count), 0) FROM web_check_log
+            WHERE ip_address = ? AND status = 'ok' AND DATE(timestamp) >= ?
+        ''', (ip_address, month_start))
+        used = cursor.fetchone()[0] or 0
+        conn.close()
+        return int(used)
+
+    def check_web_check_file_limit(self, ip_address, incoming_files=1):
+        """Vrátí (allowed: bool, used: int, limit: int) – limit souborů za kalendářní měsíc na IP."""
+        limit = self.get_web_trial_files_limit()
+        if not ip_address:
+            return True, 0, limit
+        used = self.get_web_check_used_this_month(ip_address)
+        return (used + max(1, int(incoming_files))) <= limit, used, limit
+
+    def get_web_check_quota(self, ip_address):
+        """Kompletní kvóta free web kontrol: used, limit, remaining, reset_date, counter_message."""
+        limit = self.get_web_trial_files_limit()
+        used = self.get_web_check_used_this_month(ip_address) if ip_address else 0
+        remaining = max(0, limit - used)
+        reset_date = self.get_web_check_reset_date()
+        return {
+            'used': used,
+            'limit': limit,
+            'remaining': remaining,
+            'reset_date': reset_date,
+            'counter_message': self.format_web_check_counter_message(remaining, limit, used),
+            'exhausted': remaining <= 0,
+        }
+
+    @staticmethod
+    def format_web_check_counter_message(remaining, limit=4, used=0):
+        """České počítadlo zbývajících bezplatných kontrol v měsíci."""
+        rem = max(0, int(remaining))
+        lim = int(limit or 4)
+        if rem <= 0:
+            return f'Vyčerpali jste {lim} bezplatné kontroly pro tento měsíc.'
+        if rem == 1:
+            if used > 0 and used >= lim - 1:
+                return 'Toto je vaše poslední bezplatná kontrola tento měsíc.'
+            return 'Zbývá vám 1 bezplatná kontrola tento měsíc.'
+        if rem in (2, 3, 4):
+            return f'Zbývají vám {rem} bezplatné kontroly tento měsíc.'
+        return f'Zbývá vám {rem} bezplatných kontrol tento měsíc.'
 
     def get_ip_block(self, ip_address):
         """Vrátí {'blocked_until', 'reason'} pokud je IP aktuálně blokovaná, jinak None."""
@@ -2271,32 +2335,19 @@ class Database:
         finally:
             conn.close()
 
-    def check_web_check_file_limit(self, ip_address, incoming_files=1):
-        """Vrátí (allowed: bool, used: int, limit: int) – limit souborů za 24 h na IP."""
-        limit = self.get_web_trial_files_limit()
-        if not ip_address:
-            return True, 0, limit
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT COALESCE(SUM(file_count), 0) FROM web_check_log
-            WHERE ip_address = ? AND status = 'ok' AND timestamp >= datetime('now', '-24 hours')
-        ''', (ip_address,))
-        used = cursor.fetchone()[0] or 0
-        conn.close()
-        return (used + max(1, int(incoming_files))) <= limit, used, limit
-
     def list_web_check_ips(self):
-        """Agregovaný přehled free web kontrol podle IP včetně stavu blokace."""
+        """Agregovaný přehled free web kontrol podle IP včetně stavu blokace a počtu aktivních dní."""
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             SELECT w.ip_address,
                    COUNT(*) AS total_checks,
                    COALESCE(SUM(CASE WHEN w.status = 'ok' THEN w.file_count ELSE 0 END), 0) AS total_files,
+                   COALESCE(SUM(CASE WHEN w.status = 'ok' AND DATE(w.timestamp) >= date('now', 'start of month') THEN w.file_count ELSE 0 END), 0) AS files_month,
                    COALESCE(SUM(CASE WHEN w.status = 'ok' AND w.timestamp >= datetime('now', '-24 hours') THEN w.file_count ELSE 0 END), 0) AS files_24h,
                    SUM(CASE WHEN w.timestamp >= datetime('now', '-24 hours') THEN 1 ELSE 0 END) AS checks_24h,
                    SUM(CASE WHEN w.status = 'limit' THEN 1 ELSE 0 END) AS limit_hits,
+                   COUNT(DISTINCT DATE(w.timestamp)) AS active_days,
                    MIN(w.timestamp) AS first_seen,
                    MAX(w.timestamp) AS last_seen,
                    b.blocked_until AS blocked_until,
@@ -2304,7 +2355,7 @@ class Database:
             FROM web_check_log w
             LEFT JOIN ip_blocks b ON b.ip_address = w.ip_address AND b.blocked_until > datetime('now')
             GROUP BY w.ip_address
-            ORDER BY last_seen DESC
+            ORDER BY total_files DESC, last_seen DESC
         ''')
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
