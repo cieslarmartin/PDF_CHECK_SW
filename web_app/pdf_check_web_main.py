@@ -151,6 +151,26 @@ def inject_mail_config_from_db():
         pass
 
 
+def _is_local_host(host: str) -> bool:
+    """Lokální / vývojová adresa – nepřesměrovávat na HTTPS ani na www.
+
+    Kromě localhost sem patří i privátní IP rozsahy: 10.0.2.2 je adresa,
+    pod kterou Android emulátor vidí tento počítač (test mobilní aplikace),
+    a 192.168.x.x / 172.16-31.x.x je běžná domácí či firemní síť.
+    """
+    h = (host or '').strip().lower()
+    if h in ('127.0.0.1', 'localhost', '::1', '0.0.0.0'):
+        return True
+    if h.endswith('.local'):
+        return True
+    parts = h.split('.')
+    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+        a, b = int(parts[0]), int(parts[1])
+        if a == 10 or a == 127 or (a == 192 and b == 168) or (a == 172 and 16 <= b <= 31):
+            return True
+    return False
+
+
 @app.before_request
 def enforce_https_and_www():
     """
@@ -159,8 +179,8 @@ def enforce_https_and_www():
     Na localhost (run_local.py) se přesměrování neprovádí – běží čistě HTTP na 8080.
     """
     host = (request.host or '').split(':')[0].lower()
-    if host in ('127.0.0.1', 'localhost'):
-        return None  # Lokální testování – žádné HTTPS/www přesměrování
+    if _is_local_host(host):
+        return None  # Lokální testování (localhost, LAN, Android emulátor) – žádné HTTPS/www přesměrování
 
     # HTTPS: za proxy (PythonAnywhere) přichází X-Forwarded-Proto
     is_https = request.is_secure or (request.headers.get('X-Forwarded-Proto') == 'https')
@@ -5104,6 +5124,13 @@ def scan_folder():
 # =============================================================================
 # Zaregistruj admin routes pro správu licencí
 app.register_blueprint(admin_bp)
+
+# Mobilní JSON API pro nativní Android aplikaci DokuCheck Admin (/api/mobile/v1/…, Bearer token zařízení)
+try:
+    from mobile_api import mobile_bp
+    app.register_blueprint(mobile_bp)
+except ImportError as _mobile_err:
+    logging.getLogger(__name__).warning('Mobilní API nebylo načteno: %s', _mobile_err)
 
 # =============================================================================
 # REGISTRACE API ENDPOINTŮ
