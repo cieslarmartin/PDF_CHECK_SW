@@ -1,7 +1,21 @@
 {% extends "admin_base.html" %}
 {% block title %}DokuCheck Admin – Diagnostika zařízení{% endblock %}
 {% block content %}
-<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">Diagnostika zařízení</h2>
+{% if linked_license and linked_license.api_key %}
+<p style="margin-bottom:10px;">
+    <a href="{{ url_for('admin.user_detail') }}?user={{ linked_license.api_key }}">&larr; Zpět na kartu uživatele ({{ linked_license.email or email_filter }})</a>
+    · <a href="{{ url_for('admin.users_licenses') }}">Objednávky a licence</a>
+</p>
+{% else %}
+<p style="margin-bottom:10px;">
+    <a href="{{ url_for('admin.users_licenses') }}">&larr; Objednávky a licence</a>
+    · tip: otevřete Diagnostiku z karty uživatele (tlačítko), nemusíte psát e-mail
+</p>
+{% endif %}
+<h2 style="font-size:1.2em;font-weight:600;margin-bottom:8px;">
+    Diagnostika zařízení
+    {% if email_filter %}<span class="text-muted" style="font-size:0.75em;font-weight:500;">· {{ email_filter }}</span>{% endif %}
+</h2>
 <p class="small text-muted" style="margin-bottom:16px;">
     Log událostí limitu PC (login / upload). Režim limitu teď:
     <strong>{{ mode }}</strong>
@@ -69,7 +83,10 @@
                     <td>{{ row.c }}</td>
                     <td>{% if row.wb %}<strong style="color:#b45309;">{{ row.wb }}</strong>{% else %}0{% endif %}</td>
                     <td>{% if row.same_host %}<strong style="color:#1d4ed8;">{{ row.same_host }}</strong>{% else %}0{% endif %}</td>
-                    <td><a class="small" href="{{ url_for('admin.device_diag', email=row.email, days=days) }}">Detail</a></td>
+                    <td style="white-space:nowrap;">
+                        <a class="small" href="{{ url_for('admin.device_diag', email=row.email, days=days) }}">Log</a>
+                        · <a class="small" href="{{ url_for('admin.users_licenses', q=row.email) }}">CRM</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

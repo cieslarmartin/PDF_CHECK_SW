@@ -892,6 +892,16 @@ def user_detail():
     devices = db.get_user_devices_list(user_id)
     logs = db.get_user_logs(user_id=user_id, limit=100, offset=0)
     billing = db.get_billing_history(user_id, limit=20)
+    email = (lic.get('email') or '').strip()
+    device_diag_events = []
+    device_diag_would_block = 0
+    if email and hasattr(db, 'get_device_diag_events'):
+        try:
+            device_diag_events = db.get_device_diag_events(limit=50, email=email, days=30) or []
+            device_diag_would_block = sum(1 for e in device_diag_events if e.get('would_block'))
+        except Exception:
+            device_diag_events = []
+            device_diag_would_block = 0
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
@@ -902,6 +912,8 @@ def user_detail():
                            daily=daily or [], recent_files=recent_files or [],
                            ips=ips or [], devices=devices or [],
                            logs=logs or [], billing=billing or [],
+                           device_diag_events=device_diag_events,
+                           device_diag_would_block=device_diag_would_block,
                            user=user, active_page='users_licenses')
 
 
@@ -2141,6 +2153,12 @@ def device_diag():
     events = db.get_device_diag_events(
         limit=300, email=email_filter or None, only_would_block=only_wb, days=days,
     )
+    linked_license = None
+    if email_filter:
+        try:
+            linked_license = db.get_license_by_email(email_filter)
+        except Exception:
+            linked_license = None
     user = session.get('admin_user') or {}
     if not user.get('display_name'):
         user = dict(user)
@@ -2156,6 +2174,7 @@ def device_diag():
         email_filter=email_filter,
         only_would_block=only_wb,
         days=days,
+        linked_license=linked_license,
     )
 
 

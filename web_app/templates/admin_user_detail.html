@@ -20,8 +20,13 @@
     {% if lic.days_remaining is defined and lic.days_remaining >= 0 %}({{ lic.days_remaining }} dní){% endif %} |
     Zařízení: {{ lic.active_devices or 0 }}/{{ lic.max_devices if lic.max_devices and lic.max_devices != -1 else '∞' }}
 </p>
-<p style="margin-bottom:20px;">
+<p style="margin-bottom:20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
     <a href="{{ url_for('admin.user_audit') }}?user={{ user_id }}" class="btn btn-secondary btn-sm">Kompletní audit log</a>
+    {% if lic.email %}
+    <a href="{{ url_for('admin.device_diag', email=lic.email, days=30) }}" class="btn btn-primary btn-sm" title="Log limitu PC / Licence limit reached pro tohoto uživatele">
+        Diagnostika zařízení{% if device_diag_would_block %} ({{ device_diag_would_block }}× would-block){% endif %}
+    </a>
+    {% endif %}
 </p>
 
 {# Souhrnné statistiky #}
@@ -97,7 +102,12 @@
 
     {# Zařízení #}
     <div class="admin-card">
-        <div class="card-header">Zařízení ({{ devices|length }})</div>
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>Zařízení ({{ devices|length }})</span>
+            {% if lic.email %}
+            <a href="{{ url_for('admin.device_diag', email=lic.email, days=30) }}" class="btn btn-sm btn-secondary">Diagnostika limitu PC</a>
+            {% endif %}
+        </div>
         <div class="card-body" style="max-height:360px;overflow-y:auto;">
             <table class="table-dense">
                 <thead><tr><th>Název</th><th>Machine-ID</th><th>Naposledy</th><th>Stav</th></tr></thead>
@@ -114,6 +124,28 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% if device_diag_events %}
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e5e7eb;">
+                <div style="font-size:0.8em;font-weight:600;color:#374151;margin-bottom:8px;">
+                    Poslední diagnostika limitu
+                    {% if device_diag_would_block %}<span style="color:#b45309;">· {{ device_diag_would_block }}× would-block</span>{% endif %}
+                </div>
+                <table class="table-dense">
+                    <thead><tr><th>Čas</th><th>Akce</th><th>Stanice</th><th>Would-block</th><th>Výsledek</th></tr></thead>
+                    <tbody>
+                        {% for e in device_diag_events[:8] %}
+                        <tr {% if e.would_block %}style="background:#fffbeb;"{% endif %}>
+                            <td><small>{{ (e.created_at or '—')[:16] }}</small></td>
+                            <td><small>{{ e.action }}</small></td>
+                            <td><small>{{ e.machine_name or '—' }}</small></td>
+                            <td>{% if e.would_block %}<strong>ANO</strong>{% else %}ne{% endif %}</td>
+                            <td><small title="{{ e.detail or '' }}">{{ e.result }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
         </div>
     </div>
 

@@ -338,6 +338,9 @@
                             <button class="action-btn" data-api-key="{{ license.api_key }}" data-email="{{ (license.email or '')|e }}" onclick="openDevicesModal(this)" title="Počítače vázané na licenci">Počítače</button>
                             <button class="action-btn primary-btn" data-api-key="{{ license.api_key }}" onclick="openWelcomePackageModal(this)">INFO</button>
                             <a href="{{ url_for('admin.user_detail') }}?user={{ license.api_key }}" class="action-btn primary-btn" title="Detail a statistiky uživatele">Detail</a>
+                            {% if license.email %}
+                            <a href="{{ url_for('admin.device_diag', email=license.email, days=30) }}" class="action-btn" title="Diagnostika limitu PC (Licence limit reached)">Diagnostika PC</a>
+                            {% endif %}
                             <a href="{{ url_for('admin.user_audit') }}?user={{ license.api_key }}" class="action-btn">Audit</a>
                             <button class="action-btn" data-api-key="{{ license.api_key }}" data-user-display="{{ (license.user_name or license.email or license.api_key)|e }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" onclick="openChangePasswordModal(this)">Heslo</button>
                             </div>
@@ -591,7 +594,10 @@
             </table>
         </div>
         <div class="modal-actions" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;">
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetAllDevices()">Vyčistit všechna zařízení</button>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetAllDevices()">Vyčistit všechna zařízení</button>
+                <a href="#" id="devicesModalDiagLink" class="btn btn-secondary btn-sm" style="display:none;">Diagnostika limitu PC</a>
+            </div>
             <div style="display:flex;gap:8px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('devicesModal')">Zavřít</button>
                 <button type="button" class="btn btn-primary" onclick="reloadDevicesModal()">Obnovit</button>
@@ -888,6 +894,15 @@ function openDevicesModal(btn) {
     var apiKey = btn.getAttribute('data-api-key');
     devicesModalEmail = btn.getAttribute('data-email') || '';
     document.getElementById('devicesModalApiKey').value = apiKey;
+    var diagLink = document.getElementById('devicesModalDiagLink');
+    if (diagLink) {
+        if (devicesModalEmail) {
+            diagLink.href = '{{ url_for("admin.device_diag") }}?email=' + encodeURIComponent(devicesModalEmail) + '&days=30';
+            diagLink.style.display = '';
+        } else {
+            diagLink.style.display = 'none';
+        }
+    }
     openModal('devicesModal');
     reloadDevicesModal();
 }
