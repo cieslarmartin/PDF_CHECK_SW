@@ -29,6 +29,11 @@ DEFAULTS = {
     "bank_iban": "",
     # Ceny a Tarify (čísla)
     "trial_limit_total_files": 10,
+    # Limit zařízení (Desktop Agent) – diagnostika
+    # enforce = tvrdé odmítnutí při limitu; soft = povolit + logovat; off = bez limitu (blokovaná zařízení stále odmítnout)
+    "device_limit_mode": "soft",
+    # E-maily sledované v diagnostice (jeden na řádek) – vždy logovat login/upload
+    "device_diag_watch_emails": "franta@fortina.cz\nabuzarad@seznam.cz",
     # Landing – hero a CTA
     "landing_hero_title": "DokuCheck: Vaše jistota při každém podání na Portál stavebníka.",
     "landing_hero_subtitle": "Získejte 100% jistotu, že vaše dokumentace splňuje standardy PDF/A-3 a náležitosti elektronických podpisů dle vyhlášky č. 131/2024 Sb. Hromadná strojová kontrola přímo na vašem disku.",
@@ -368,6 +373,33 @@ def get_checkout_pricing_texts(db) -> dict:
 def get_trial_limit_total_files(db) -> int:
     """Trial – max. souborů na zařízení. Pro api_endpoint a database."""
     return db.get_setting_int("trial_limit_total_files", 10)
+
+
+def get_device_limit_mode(db) -> str:
+    """Režim limitu zařízení: enforce | soft | off. Výchozí soft (diagnostika bez blokování limitem)."""
+    raw = ""
+    try:
+        raw = (db.get_global_setting("device_limit_mode", DEFAULTS["device_limit_mode"]) or "").strip().lower()
+    except Exception:
+        raw = ""
+    if raw not in ("enforce", "soft", "off"):
+        return "soft"
+    return raw
+
+
+def get_device_diag_watch_emails(db):
+    """Množina e-mailů (lower) pro prioritní diagnostiku zařízení."""
+    raw = ""
+    try:
+        raw = db.get_global_setting("device_diag_watch_emails", DEFAULTS["device_diag_watch_emails"]) or ""
+    except Exception:
+        raw = DEFAULTS.get("device_diag_watch_emails") or ""
+    out = set()
+    for line in str(raw).replace(",", "\n").splitlines():
+        e = line.strip().lower()
+        if e and "@" in e:
+            out.add(e)
+    return out
 
 
 def get_pricing_tarifs(db):

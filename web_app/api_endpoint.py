@@ -22,7 +22,10 @@ except ImportError:
     LICENSE_SYSTEM_AVAILABLE = False
 
 try:
-    from settings_loader import get_trial_limit_total_files, get_allowed_extensions, get_analysis_timeout_seconds
+    from settings_loader import (
+        get_trial_limit_total_files, get_allowed_extensions, get_analysis_timeout_seconds,
+        get_device_limit_mode, get_device_diag_watch_emails,
+    )
 except ImportError:
     def get_trial_limit_total_files(db):
         return getattr(db, 'TRIAL_LIMIT_TOTAL_FILES', 10)
@@ -30,11 +33,16 @@ except ImportError:
         return ['.pdf']
     def get_analysis_timeout_seconds(db):
         return 300
+    def get_device_limit_mode(db):
+        return 'soft'
+    def get_device_diag_watch_emails(db):
+        return set()
 
 logger = logging.getLogger(__name__)
 
 # Jednorázové přihlašovací tokeny (agent → web) – ukládají se do DB (sdílené mezi workery)
 _TOKEN_EXPIRY_SEC = 120
+_DEVICE_LIMIT_ERROR = 'Licence limit reached. Contact support.'
 
 
 def consume_one_time_token(token):
@@ -64,6 +72,130 @@ def _request_client_info(request):
     machine_id = (request.headers.get('X-Machine-ID') or '').strip() or None
     machine_name = (request.headers.get('X-Machine-Name') or '').strip() or None
     return ip or None, machine_id, machine_name
+
+
+def _gate_user_device(db, api_key, machine_id, machine_name, ip_address, action, license_info=None, skip_trial=False):
+    """
+    Kontrola limitu/blokace zařízení s režimem enforce|soft|off.
+    Vrací (allowed: bool, error_payload: dict|None).
+    Při allowed=True případně upsertne zařízení.
+    """
+    if not machine_id:
+        return True, None
+    if skip_trial:
+        return True, None
+
+    lic = license_info if license_info is not None else db.get_user_license(api_key)
+    if not lic:
+        return True, None
+
+    tier_name = str((lic.get('tier_name') or '')).strip().lower()
+    if tier_name == 'trial':
+        # Trial má vlastní Machine-ID kvótu souborů, ne sloty zařízení
+        return True, None
+
+    mode = get_device_limit_mode(db)
+    email = (lic.get('email') or '').strip()
+    email_l = email.lower()
+    watch = get_device_diag_watch_emails(db)
+    is_watched = email_l in watch
+
+    try:
+        max_devices = int(lic.get('max_devices', 1) if lic.get('max_devices') is not None else 1)
+    except (TypeError, ValueError):
+        max_devices = 1
+
+    devices = db.get_user_devices_list(api_key) or []
+    existing_ids = {d.get('machine_id') for d in devices if d.get('machine_id')}
+    is_new = machine_id not in existing_ids
+    active = db.count_user_devices_non_blocked(api_key)
+    was_blocked = db.is_user_device_blocked(api_key, machine_id)
+
+    host_l = (machine_name or '').strip().lower()
+    same_hostname_other_ids = 0
+    if host_l:
+        same_hostname_other_ids = sum(
+            1 for d in devices
+            if (d.get('machine_name') or '').strip().lower() == host_l
+            and d.get('machine_id') != machine_id
+        )
+
+    over_limit = bool(is_new and max_devices >= 0 and active >= max_devices)
+    would_block = bool(was_blocked or over_limit)
+
+    # Zablokované zařízení adminem: vždy hard block (i ve soft/off) – záměrná akce
+    if was_blocked:
+        result = 'blocked_device'
+        detail = 'Zařízení je v Adminu zablokované.'
+        try:
+            db.insert_device_diag_event(
+                api_key=api_key, email=email, action=action,
+                machine_id=machine_id, machine_name=machine_name, ip_address=ip_address,
+                max_devices=max_devices, active_devices=active,
+                is_new_device=is_new, same_hostname_other_ids=same_hostname_other_ids,
+                would_block=True, was_blocked=True, mode=mode, result=result, detail=detail,
+            )
+            db.insert_user_log(api_key, 'device_diag', file_count=0, total_size_kb=0,
+                               ip_address=ip_address, machine_id=machine_id, status=result)
+        except Exception as e:
+            logger.warning('device_diag log failed: %s', e)
+        return False, {'error': _DEVICE_LIMIT_ERROR, 'success': False}
+
+    if over_limit and mode == 'enforce':
+        result = 'blocked_limit'
+        detail = f'Nové zařízení při limitu {active}/{max_devices}.'
+        try:
+            db.insert_device_diag_event(
+                api_key=api_key, email=email, action=action,
+                machine_id=machine_id, machine_name=machine_name, ip_address=ip_address,
+                max_devices=max_devices, active_devices=active,
+                is_new_device=is_new, same_hostname_other_ids=same_hostname_other_ids,
+                would_block=True, was_blocked=False, mode=mode, result=result, detail=detail,
+            )
+            db.insert_user_log(api_key, 'device_diag', file_count=0, total_size_kb=0,
+                               ip_address=ip_address, machine_id=machine_id, status=result)
+        except Exception as e:
+            logger.warning('device_diag log failed: %s', e)
+        return False, {'error': _DEVICE_LIMIT_ERROR, 'success': False}
+
+    # soft / off nebo pod limitem → povolit
+    if over_limit:
+        result = 'soft_allowed_over_limit'
+        detail = (
+            f'Limit {active}/{max_devices} překročen – režim {mode}, přesto povoleno. '
+            f'same_hostname_other_ids={same_hostname_other_ids}.'
+        )
+    elif is_new:
+        result = 'allowed_new_device'
+        detail = f'Nové zařízení registrováno ({active + 1}/{max_devices if max_devices >= 0 else "∞"}).'
+    else:
+        result = 'allowed_known_device'
+        detail = 'Známé zařízení.'
+
+    # Sledované účty: logovat vždy; ostatní jen při překročení limitu
+    should_log = is_watched or over_limit
+
+    if should_log:
+        try:
+            db.insert_device_diag_event(
+                api_key=api_key, email=email, action=action,
+                machine_id=machine_id, machine_name=machine_name, ip_address=ip_address,
+                max_devices=max_devices, active_devices=active,
+                is_new_device=is_new, same_hostname_other_ids=same_hostname_other_ids,
+                would_block=over_limit, was_blocked=False, mode=mode, result=result, detail=detail,
+            )
+            if over_limit or is_watched:
+                db.insert_user_log(api_key, 'device_diag', file_count=0, total_size_kb=0,
+                                   ip_address=ip_address, machine_id=machine_id, status=result)
+        except Exception as e:
+            logger.warning('device_diag log failed: %s', e)
+
+    try:
+        db.upsert_user_device(api_key, machine_id, machine_name)
+    except Exception as e:
+        logger.warning('upsert_user_device failed: %s', e)
+
+    return True, None
 
 
 def register_api_routes(app):
@@ -168,8 +300,6 @@ def register_api_routes(app):
                 return jsonify({'error': 'Invalid API key'}), 401
 
             ip_address, machine_id, machine_name = _request_client_info(request)
-            if machine_id and db.is_user_device_blocked(api_key, machine_id):
-                return jsonify({'error': 'Licence limit reached. Contact support.'}), 403
 
             if not request.is_json:
                 return jsonify({'error': 'Content-Type must be application/json'}), 400
@@ -205,13 +335,13 @@ def register_api_routes(app):
                 # Po zpracování batch zvýšíme trial_usage (viz níže)
 
             max_files = license_info.get('max_batch_size', 5) if license_info else 5
-            max_devices = license_info.get('max_devices', 1) if license_info else 1
             if machine_id and not is_trial:
-                existing = {d['machine_id'] for d in db.get_user_devices_list(api_key)}
-                if machine_id not in existing and max_devices >= 0:
-                    if db.count_user_devices_non_blocked(api_key) >= max_devices:
-                        return jsonify({'error': 'Licence limit reached. Contact support.'}), 403
-                db.upsert_user_device(api_key, machine_id, machine_name)
+                ok_dev, err_dev = _gate_user_device(
+                    db, api_key, machine_id, machine_name, ip_address,
+                    action='upload', license_info=license_info,
+                )
+                if not ok_dev:
+                    return jsonify(err_dev or {'error': _DEVICE_LIMIT_ERROR}), 403
             # -1 = neomezeno
             if max_files >= 0 and total_submitted > max_files:
                 results = results[:max_files]  # slice – zpracuj jen povolený počet
@@ -489,16 +619,18 @@ def register_api_routes(app):
                 return jsonify({'success': False, 'error': result}), 401
             api_key = result['api_key']
             ip_address, machine_id, machine_name = _request_client_info(request)
-            if machine_id and db.is_user_device_blocked(api_key, machine_id):
-                return jsonify({'success': False, 'error': 'Licence limit reached. Contact support.'}), 403
+            license_info = db.get_user_license(api_key)
             if machine_id:
-                license_info = db.get_user_license(api_key)
-                max_devices = (license_info or {}).get('max_devices', 1)
-                existing = {d['machine_id'] for d in db.get_user_devices_list(api_key)}
-                if machine_id not in existing and max_devices >= 0:
-                    if db.count_user_devices_non_blocked(api_key) >= max_devices:
-                        return jsonify({'success': False, 'error': 'Licence limit reached. Contact support.'}), 403
-                db.upsert_user_device(api_key, machine_id, machine_name)
+                ok_dev, err_dev = _gate_user_device(
+                    db, api_key, machine_id, machine_name, ip_address,
+                    action='login', license_info=license_info,
+                )
+                if not ok_dev:
+                    payload = err_dev or {'success': False, 'error': _DEVICE_LIMIT_ERROR}
+                    if 'success' not in payload:
+                        payload = dict(payload)
+                        payload['success'] = False
+                    return jsonify(payload), 403
             db.insert_user_log(api_key, 'login', file_count=0, total_size_kb=0, ip_address=ip_address, machine_id=machine_id, status='ok')
             # max_batch_size z DB (Trial a ostatní tier definice) – agent zobrazí "Trial verze - Limit X souborů"
             return jsonify({

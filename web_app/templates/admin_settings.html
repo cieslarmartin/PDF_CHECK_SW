@@ -83,6 +83,31 @@
     </form>
 
     <form method="post" action="{{ url_for('admin.settings') }}">
+        <input type="hidden" name="action" value="save_device_limit">
+        <div class="admin-card">
+            <div class="card-header">Limit zařízení (Desktop Agent) – diagnostika</div>
+            <div class="card-body">
+                <p class="small text-muted" style="margin-bottom:12px;">
+                    Hláška „Licence limit reached“ vzniká při plném limitu PC nebo zablokovaném zařízení.
+                    Režim <strong>soft</strong> limitem neblokuje (jen loguje), záměrně zablokovaná zařízení v Adminu stále odmítne.
+                    Přehled: <a href="{{ url_for('admin.device_diag') }}">Diagnostika zařízení</a>.
+                </p>
+                <label class="admin-settings-label">Režim limitu (device_limit_mode)</label>
+                <select name="device_limit_mode" class="form-control admin-settings-input" style="max-width:320px;">
+                    <option value="soft" {{ 'selected' if (settings.device_limit_mode|default('soft')) == 'soft' else '' }}>soft – povolit nad limitem + logovat (diagnostika)</option>
+                    <option value="enforce" {{ 'selected' if settings.device_limit_mode == 'enforce' else '' }}>enforce – tvrdé odmítnutí (původní chování)</option>
+                    <option value="off" {{ 'selected' if settings.device_limit_mode == 'off' else '' }}>off – bez limitu počtu PC (blokace Adminem platí)</option>
+                </select>
+                <label class="admin-settings-label mt-2">Sledované e-maily (jeden na řádek) – vždy logovat login/upload</label>
+                <textarea name="device_diag_watch_emails" class="form-control admin-settings-textarea" rows="4" placeholder="franta@fortina.cz">{{ settings.device_diag_watch_emails|default('', true)|e }}</textarea>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary btn-sm">Uložit limit zařízení</button>
+            </div>
+        </div>
+    </form>
+
+    <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="save_basic">
         <div class="admin-card">
             <div class="card-header">Provozovatel a kontakt</div>

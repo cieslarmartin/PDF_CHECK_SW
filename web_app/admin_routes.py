@@ -2115,6 +2115,50 @@ def trial():
                           web_trial_files_limit=web_trial_files_limit, user=user, active_page='trial')
 
 
+@admin_bp.route('/admin/device-diag', methods=['GET'])
+@admin_required
+def device_diag():
+    """Diagnostika limitu zařízení: soft mode logy, would_block, sledované účty."""
+    db = get_db()
+    email_filter = (request.args.get('email') or '').strip()
+    only_wb = request.args.get('only_would_block') == '1'
+    try:
+        days = int(request.args.get('days') or 14)
+    except (TypeError, ValueError):
+        days = 14
+    if days < 1:
+        days = 1
+    if days > 90:
+        days = 90
+    try:
+        from settings_loader import get_device_limit_mode
+        mode = get_device_limit_mode(db)
+        watch = db.get_global_setting('device_diag_watch_emails', '') or ''
+    except Exception:
+        mode = 'soft'
+        watch = ''
+    summary = db.get_device_diag_summary(days=days)
+    events = db.get_device_diag_events(
+        limit=300, email=email_filter or None, only_would_block=only_wb, days=days,
+    )
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template(
+        'admin_device_diag.html',
+        user=user,
+        active_page='device_diag',
+        mode=mode,
+        watch_emails=watch,
+        summary=summary,
+        events=events or [],
+        email_filter=email_filter,
+        only_would_block=only_wb,
+        days=days,
+    )
+
+
 @admin_bp.route('/admin/analytics')
 @admin_required
 def analytics():
@@ -2396,6 +2440,15 @@ def _settings_for_admin(db):
     s['maintenance_mode'] = db.get_setting_bool('maintenance_mode', False)
     s['allow_new_registrations'] = db.get_setting_bool('allow_new_registrations', True)
     s['trial_limit_total_files'] = db.get_setting_int('trial_limit_total_files', 10)
+    try:
+        from settings_loader import get_device_limit_mode, DEFAULTS as _SL_DEFAULTS
+        s['device_limit_mode'] = get_device_limit_mode(db)
+        s['device_diag_watch_emails'] = db.get_global_setting(
+            'device_diag_watch_emails', _SL_DEFAULTS.get('device_diag_watch_emails', '')
+        ) or ''
+    except Exception:
+        s['device_limit_mode'] = 'soft'
+        s['device_diag_watch_emails'] = 'franta@fortina.cz\nabuzarad@seznam.cz'
     s['analysis_timeout_seconds'] = db.get_setting_int('analysis_timeout_seconds', 300)
     try:
         from settings_loader import get_pricing_tarifs
@@ -2474,6 +2527,14 @@ def settings():
             db.set_global_setting('maintenance_mode', maintenance)
             db.set_global_setting('allow_new_registrations', allow_reg)
             flash('Globální nastavení uloženo', 'success')
+        elif action == 'save_device_limit':
+            mode = (request.form.get('device_limit_mode') or 'soft').strip().lower()
+            if mode not in ('enforce', 'soft', 'off'):
+                mode = 'soft'
+            db.set_global_setting('device_limit_mode', mode)
+            watch = (request.form.get('device_diag_watch_emails') or '').strip()
+            db.set_global_setting('device_diag_watch_emails', watch)
+            flash('Nastavení limitu zařízení uloženo', 'success')
         elif action == 'save_contact':
             db.set_global_setting('contact_email', request.form.get('contact_email', ''))
             db.set_global_setting('contact_phone', request.form.get('contact_phone', ''))

@@ -217,6 +217,32 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_user_devices_user_id ON user_devices(user_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_user_devices_machine_id ON user_devices(machine_id)')
 
+        # Diagnostika limitu zařízení (soft mode) – login/upload události
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS device_diag_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                api_key TEXT,
+                email TEXT,
+                action TEXT NOT NULL,
+                machine_id TEXT,
+                machine_name TEXT,
+                ip_address TEXT,
+                max_devices INTEGER,
+                active_devices INTEGER,
+                is_new_device INTEGER DEFAULT 0,
+                same_hostname_other_ids INTEGER DEFAULT 0,
+                would_block INTEGER DEFAULT 0,
+                was_blocked INTEGER DEFAULT 0,
+                mode TEXT,
+                result TEXT,
+                detail TEXT
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_device_diag_created ON device_diag_events(created_at)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_device_diag_email ON device_diag_events(email)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_device_diag_would ON device_diag_events(would_block)')
+
         # Globální definice tierů (Free, Basic, Pro, Enterprise) – upravitelné v Admin
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS license_tiers (
@@ -3466,6 +3492,99 @@ class Database:
         conn.commit()
         conn.close()
         return deleted
+
+    def insert_device_diag_event(self, **kwargs):
+        """Zapíše diagnostickou událost limitu zařízení (soft/enforce)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO device_diag_events (
+                    api_key, email, action, machine_id, machine_name, ip_address,
+                    max_devices, active_devices, is_new_device, same_hostname_other_ids,
+                    would_block, was_blocked, mode, result, detail
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                kwargs.get('api_key'),
+                kwargs.get('email'),
+                kwargs.get('action') or 'unknown',
+                kwargs.get('machine_id'),
+                kwargs.get('machine_name'),
+                kwargs.get('ip_address'),
+                kwargs.get('max_devices'),
+                kwargs.get('active_devices'),
+                1 if kwargs.get('is_new_device') else 0,
+                int(kwargs.get('same_hostname_other_ids') or 0),
+                1 if kwargs.get('would_block') else 0,
+                1 if kwargs.get('was_blocked') else 0,
+                kwargs.get('mode'),
+                kwargs.get('result'),
+                kwargs.get('detail'),
+            ))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_device_diag_events(self, limit=200, email=None, only_would_block=False, days=30):
+        """Seznam diagnostických událostí zařízení pro Admin."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            sql = '''
+                SELECT * FROM device_diag_events
+                WHERE created_at >= datetime('now', ?)
+            '''
+            params = [f'-{int(days)} days']
+            if email and str(email).strip():
+                sql += ' AND lower(email) = lower(?)'
+                params.append(str(email).strip())
+            if only_would_block:
+                sql += ' AND would_block = 1'
+            sql += ' ORDER BY created_at DESC LIMIT ?'
+            params.append(int(limit))
+            cursor.execute(sql, params)
+            return [dict(row) for row in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            return []
+        finally:
+            conn.close()
+
+    def get_device_diag_summary(self, days=14):
+        """Souhrn diagnostiky: počty would_block a top e-maily."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                SELECT COUNT(*) AS c FROM device_diag_events
+                WHERE created_at >= datetime('now', ?) AND would_block = 1
+            ''', (f'-{int(days)} days',))
+            would_block_count = cursor.fetchone()['c']
+            cursor.execute('''
+                SELECT COUNT(*) AS c FROM device_diag_events
+                WHERE created_at >= datetime('now', ?)
+            ''', (f'-{int(days)} days',))
+            total = cursor.fetchone()['c']
+            cursor.execute('''
+                SELECT email, COUNT(*) AS c,
+                       SUM(CASE WHEN would_block = 1 THEN 1 ELSE 0 END) AS wb,
+                       SUM(CASE WHEN same_hostname_other_ids > 0 THEN 1 ELSE 0 END) AS same_host
+                FROM device_diag_events
+                WHERE created_at >= datetime('now', ?) AND email IS NOT NULL AND TRIM(email) != ''
+                GROUP BY lower(email)
+                ORDER BY wb DESC, c DESC
+                LIMIT 30
+            ''', (f'-{int(days)} days',))
+            by_email = [dict(row) for row in cursor.fetchall()]
+            return {
+                'days': days,
+                'total_events': total,
+                'would_block_count': would_block_count,
+                'by_email': by_email,
+            }
+        except sqlite3.OperationalError:
+            return {'days': days, 'total_events': 0, 'would_block_count': 0, 'by_email': []}
+        finally:
+            conn.close()
 
     # =========================================================================
     # ADMIN SYSTÉM (NOVÉ v41)
