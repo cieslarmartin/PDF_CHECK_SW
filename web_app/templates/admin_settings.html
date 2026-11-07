@@ -85,12 +85,14 @@
     <form method="post" action="{{ url_for('admin.settings') }}">
         <input type="hidden" name="action" value="save_device_limit">
         <div class="admin-card">
-            <div class="card-header">Limit zařízení (Desktop Agent) – diagnostika</div>
+            <div class="card-header" id="device-limit">Limit zařízení (Desktop Agent) – diagnostika</div>
             <div class="card-body">
                 <p class="small text-muted" style="margin-bottom:12px;">
+                    <strong>Tady nastavujete režim limitu PC.</strong>
                     Hláška „Licence limit reached“ vzniká při plném limitu PC nebo zablokovaném zařízení.
                     Režim <strong>soft</strong> limitem neblokuje (jen loguje), záměrně zablokovaná zařízení v Adminu stále odmítne.
-                    Přehled: <a href="{{ url_for('admin.device_diag') }}">Diagnostika zařízení</a>.
+                    Přehled logů: <a href="{{ url_for('admin.device_diag') }}">Diagnostika zařízení</a>
+                    · návod: <a href="{{ url_for('admin.admin_guide') }}#devices">Průvodce Adminem</a>.
                 </p>
                 <label class="admin-settings-label">Režim limitu (device_limit_mode)</label>
                 <select name="device_limit_mode" class="form-control admin-settings-input" style="max-width:320px;">

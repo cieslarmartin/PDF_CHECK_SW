@@ -952,8 +952,16 @@ def users_licenses():
         def get_tarif_display_name(db_, slug):
             t = normalize_tarif_slug(slug)
             return {'basic': 'Basic', 'pro': 'Pro', 'firemni': 'Firemní'}.get(t, t.capitalize())
+    # Jednorázově doplnit vazby licence ↔ číslo objednávky u starších záznamů
+    try:
+        if hasattr(db, 'backfill_license_order_links'):
+            db.backfill_license_order_links()
+    except Exception:
+        pass
+
     licenses_all = db.admin_get_all_licenses() if hasattr(db, 'admin_get_all_licenses') else []
     active_emails = {(l.get('email') or '').lower(): l for l in licenses_all if l.get('is_active') and (l.get('tier_name') or '').lower() not in ('trial', 'free')}
+    by_api = {(l.get('api_key') or ''): l for l in licenses_all}
     orders = []
     for o in (orders_raw or []):
         o_dict = dict(o)
@@ -961,18 +969,33 @@ def users_licenses():
         o_dict['tarif'] = t
         o_dict['tarif_label'] = get_tarif_display_name(db, t)
         email = (o_dict.get('email') or '').lower()
-        o_dict['has_active_license'] = email in active_emails
-        o_dict['api_key'] = active_emails.get(email, {}).get('api_key') if email in active_emails else None
+        lic_key = (o_dict.get('license_api_key') or '').strip()
+        if lic_key and lic_key in by_api:
+            o_dict['has_active_license'] = True
+            o_dict['api_key'] = lic_key
+        else:
+            o_dict['has_active_license'] = email in active_emails
+            o_dict['api_key'] = active_emails.get(email, {}).get('api_key') if email in active_emails else None
         orders.append(o_dict)
 
-    # Licence (filtry jako na dashboardu)
+    # Licence (filtry jako na dashboardu) – hledá i číslo objednávky
     licenses = list(licenses_all) if licenses_all else []
     if search:
         search_lower = search.lower()
         licenses = [l for l in licenses if (
             (l.get('email') or '').lower().find(search_lower) >= 0 or
             (l.get('user_name') or '').lower().find(search_lower) >= 0 or
-            (l.get('api_key') or '').lower().find(search_lower) >= 0
+            (l.get('api_key') or '').lower().find(search_lower) >= 0 or
+            (l.get('order_display_number') or '').lower().find(search_lower) >= 0 or
+            str(l.get('source_order_id') or '') == search.strip()
+        )]
+        # Stejný výraz filtruje i objednávky nahoře
+        orders = [o for o in orders if (
+            search_lower in (o.get('email') or '').lower() or
+            search_lower in (o.get('jmeno_firma') or '').lower() or
+            search_lower in (o.get('order_display_number') or '').lower() or
+            search_lower in (o.get('invoice_number') or '').lower() or
+            str(o.get('id') or '') == search.strip()
         )]
     if tier_filter:
         licenses = [l for l in licenses if (l.get('tier_name') or '').lower() == tier_filter.lower()]
@@ -1889,6 +1912,10 @@ def confirm_payment():
             return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
+        db.link_license_to_order(api_key, order_id)
+    except Exception:
+        pass
+    try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
         login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
@@ -1953,6 +1980,10 @@ def activate_without_invoice():
             return redirect(url_for('admin.users_licenses'))
     db.update_pending_order_status(order_id, 'ACTIVE')
     try:
+        db.link_license_to_order(api_key, order_id)
+    except Exception:
+        pass
+    try:
         from email_sender import send_activation_email, notify_admin
         download_url = db.get_global_setting('download_url', '') or 'https://www.dokucheck.cz/download'
         login_url = (db.get_global_setting('base_url') or os.environ.get('BASE_URL', 'https://www.dokucheck.cz')).rstrip('/') + '/portal'
@@ -1960,7 +1991,7 @@ def activate_without_invoice():
         if not has_password:
             set_pwd_token = secrets.token_urlsafe(32)
             db.store_set_password_token(set_pwd_token, api_key, expires_at=None)
-        
+
         notify_admin(
             'Ruční aktivace – objednávka #{}'.format(order_id),
             'Uživatel byl aktivován ručně (bez faktury). Objednávka #{} – {} ({}). '.format(order_id, user_name, email)
@@ -2125,6 +2156,17 @@ def trial():
         user['display_name'] = user.get('email') or 'Admin'
     return render_template('admin_trial.html', trial_list=trial_list or [], web_trial_list=web_trial_list or [],
                           web_trial_files_limit=web_trial_files_limit, user=user, active_page='trial')
+
+
+@admin_bp.route('/admin/pruvodce', methods=['GET'])
+@admin_required
+def admin_guide():
+    """Interní průvodce ovládáním Admin dashboardu (CRM, limit PC, ČSOB, nastavení)."""
+    user = session.get('admin_user') or {}
+    if not user.get('display_name'):
+        user = dict(user)
+        user['display_name'] = user.get('email') or 'Admin'
+    return render_template('admin_guide.html', user=user, active_page='admin_guide')
 
 
 @admin_bp.route('/admin/device-diag', methods=['GET'])

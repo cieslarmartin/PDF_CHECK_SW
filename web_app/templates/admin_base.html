@@ -497,6 +497,7 @@
 
             {# ── Systém ── #}
             <li class="nav-group-label">Systém</li>
+            <li><a href="{{ url_for('admin.admin_guide') }}" class="{{ 'active' if active_page == 'admin_guide' else '' }}" title="Návod ovládání Adminu"><span class="nav-ico">📖</span> Průvodce Adminem</a></li>
             <li><a href="{{ url_for('admin.settings') }}" class="{{ 'active' if active_page == 'settings' else '' }}"><span class="nav-ico">⚙️</span> Nastavení</a></li>
         </ul>
         <div class="user-info">

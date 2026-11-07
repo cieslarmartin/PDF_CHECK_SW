@@ -345,6 +345,10 @@ def activate_order_from_payment(db, order: dict, platba: dict, admin_id=None, so
             return {'ok': False, 'error': 'Vytvoření licence selhalo'}
 
     db.update_pending_order_status(order_id, 'ACTIVE')
+    try:
+        db.link_license_to_order(api_key, order_id)
+    except Exception:
+        pass
 
     mail_ok = False
     try:

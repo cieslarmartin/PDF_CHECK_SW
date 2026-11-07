@@ -617,6 +617,23 @@ class Database:
                     )
                 except Exception:
                     pass
+            # Vazba licence ↔ objednávka (společné číslo pro CRM)
+            if 'source_order_id' not in ak_cols:
+                cursor.execute('ALTER TABLE api_keys ADD COLUMN source_order_id INTEGER')
+            if 'order_display_number' not in ak_cols:
+                cursor.execute('ALTER TABLE api_keys ADD COLUMN order_display_number TEXT')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_api_keys_source_order ON api_keys(source_order_id)')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_api_keys_order_display ON api_keys(order_display_number)')
+        except Exception:
+            pass
+
+        # pending_orders: zpětná vazba na licenci
+        try:
+            cursor.execute("PRAGMA table_info(pending_orders)")
+            po_link_cols = {row[1] for row in cursor.fetchall()}
+            if 'license_api_key' not in po_link_cols:
+                cursor.execute('ALTER TABLE pending_orders ADD COLUMN license_api_key TEXT')
+            cursor.execute('CREATE INDEX IF NOT EXISTS idx_pending_orders_license ON pending_orders(license_api_key)')
         except Exception:
             pass
 
@@ -1807,6 +1824,109 @@ class Database:
             return cursor.rowcount > 0
         finally:
             conn.close()
+
+    def link_license_to_order(self, api_key, order_id):
+        """Propojí licenci s objednávkou: api_keys.source_order_id + order_display_number a pending_orders.license_api_key."""
+        if not api_key or not order_id:
+            return False
+        order = self.get_pending_order_by_id(order_id)
+        if not order:
+            return False
+        display = (order.get('order_display_number') or order.get('invoice_number') or '').strip() or str(order_id)
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            try:
+                cursor.execute('''
+                    UPDATE api_keys
+                    SET source_order_id = ?, order_display_number = ?
+                    WHERE api_key = ?
+                ''', (int(order_id), display, str(api_key).strip()))
+            except sqlite3.OperationalError:
+                return False
+            try:
+                cursor.execute('''
+                    UPDATE pending_orders SET license_api_key = ? WHERE id = ?
+                ''', (str(api_key).strip(), int(order_id)))
+            except sqlite3.OperationalError:
+                pass
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def backfill_license_order_links(self):
+        """Doplní vazbu licence↔objednávka u ACTIVE objednávek podle e-mailu (jen kde chybí)."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        linked = 0
+        try:
+            cursor.execute("PRAGMA table_info(api_keys)")
+            ak_cols = {row[1] for row in cursor.fetchall()}
+            if 'source_order_id' not in ak_cols:
+                return 0
+            cursor.execute('''
+                SELECT id, email, order_display_number, invoice_number, license_api_key
+                FROM pending_orders
+                WHERE UPPER(COALESCE(status, '')) = 'ACTIVE'
+                ORDER BY id DESC
+            ''')
+            orders = [dict(r) for r in cursor.fetchall()]
+            for o in orders:
+                email = (o.get('email') or '').strip().lower()
+                if not email:
+                    continue
+                oid = o['id']
+                display = (o.get('order_display_number') or o.get('invoice_number') or '').strip() or str(oid)
+                # Preferuj už uložený license_api_key
+                api_key = (o.get('license_api_key') or '').strip()
+                if not api_key:
+                    cursor.execute(
+                        'SELECT api_key, source_order_id FROM api_keys WHERE lower(email) = ? ORDER BY id DESC LIMIT 1',
+                        (email,),
+                    )
+                    row = cursor.fetchone()
+                    if not row:
+                        continue
+                    api_key = row['api_key'] if isinstance(row, sqlite3.Row) else row[0]
+                    existing_src = row['source_order_id'] if isinstance(row, sqlite3.Row) else row[1]
+                    if existing_src:
+                        # Už má jinou vazbu – jen doplň reverse na objednávku, pokud chybí
+                        try:
+                            cursor.execute(
+                                'UPDATE pending_orders SET license_api_key = ? WHERE id = ? AND (license_api_key IS NULL OR TRIM(license_api_key) = "")',
+                                (api_key, oid),
+                            )
+                        except sqlite3.OperationalError:
+                            pass
+                        continue
+                else:
+                    cursor.execute(
+                        'SELECT source_order_id FROM api_keys WHERE api_key = ?',
+                        (api_key,),
+                    )
+                    row = cursor.fetchone()
+                    if row and (row['source_order_id'] if isinstance(row, sqlite3.Row) else row[0]):
+                        continue
+                try:
+                    cursor.execute('''
+                        UPDATE api_keys SET source_order_id = ?, order_display_number = ?
+                        WHERE api_key = ? AND (source_order_id IS NULL OR source_order_id = 0)
+                    ''', (oid, display, api_key))
+                    cursor.execute(
+                        'UPDATE pending_orders SET license_api_key = ? WHERE id = ?',
+                        (api_key, oid),
+                    )
+                    if cursor.rowcount >= 0:
+                        linked += 1
+                except sqlite3.OperationalError:
+                    pass
+            conn.commit()
+        except Exception:
+            pass
+        finally:
+            conn.close()
+        return linked
 
     def update_pending_order(self, order_id, **kwargs):
         """Aktualizuje editovatelné sloupce objednávky (jmeno_firma, ico, email, tarif, ulice, mesto, psc, dic, order_display_number, amount_czk, amount_czk_final). Status se nemění."""
@@ -4660,6 +4780,8 @@ class Database:
                     ak.allow_timestamp,
                     ak.allow_excel_export,
                     ak.password_plain_stored,
+                    COALESCE(ak.source_order_id, NULL) AS source_order_id,
+                    COALESCE(ak.order_display_number, NULL) AS order_display_number,
                     lt.name AS tier_name_override,
                     (SELECT COUNT(*) FROM user_devices ud
                      WHERE ud.user_id = ak.api_key AND (ud.is_blocked = 0 OR ud.is_blocked IS NULL)) as active_devices,

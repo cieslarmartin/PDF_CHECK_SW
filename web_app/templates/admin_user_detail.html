@@ -15,6 +15,10 @@
 </h2>
 <p class="text-muted small mb-2">
     E-mail: <strong>{{ lic.email or '—' }}</strong> |
+    {% if lic.order_display_number or lic.source_order_id %}
+    Objednávka: <strong>{{ lic.order_display_number or lic.source_order_id }}</strong>
+    {% if lic.source_order_id %}<a href="{{ url_for('admin.edit_pending_order', order_id=lic.source_order_id) }}">(detail)</a>{% endif %} |
+    {% endif %}
     API klíč: <code>{{ user_id[:24] }}…</code> |
     Licence do: {{ (lic.license_expires or 'neomezeno')[:10] }}
     {% if lic.days_remaining is defined and lic.days_remaining >= 0 %}({{ lic.days_remaining }} dní){% endif %} |

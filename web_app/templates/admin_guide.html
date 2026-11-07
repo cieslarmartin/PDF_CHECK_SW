@@ -1,0 +1,144 @@
+{% extends "admin_base.html" %}
+{% block title %}DokuCheck Admin – Průvodce ovládáním{% endblock %}
+{% block content %}
+<style>
+    .guide-toc { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 20px; margin-bottom:24px; }
+    .guide-toc a { color:#1e5a8a; text-decoration:none; }
+    .guide-toc a:hover { text-decoration:underline; }
+    .guide-toc ul { margin:8px 0 0; padding-left:18px; }
+    .guide-section { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:20px 22px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+    .guide-section h2 { font-size:1.15em; color:#1e5a8a; margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid #e5e7eb; }
+    .guide-section h3 { font-size:1em; margin:16px 0 8px; color:#374151; }
+    .guide-section p, .guide-section li { font-size:0.92em; color:#374151; line-height:1.55; }
+    .guide-section code { background:#f3f4f6; padding:1px 6px; border-radius:4px; font-size:0.85em; }
+    .guide-callout { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin:12px 0; font-size:0.9em; }
+    .guide-warn { background:#fffbeb; border-color:#fde68a; }
+</style>
+
+<h1 style="font-size:1.35em;font-weight:600;margin:0 0 8px;">Průvodce Adminem DokuCheck</h1>
+<p class="text-muted" style="margin-bottom:20px;font-size:0.95em;">
+    Kde co najdete, jak řešit typické situace (objednávky, licence, limit PC, platby ČSOB).
+    Verze webu: <strong>{{ web_version|default(web_build)|default('—') }}</strong>
+</p>
+
+<nav class="guide-toc">
+    <strong>Obsah</strong>
+    <ul>
+        <li><a href="#crm">Objednávky a licence (CRM)</a></li>
+        <li><a href="#order-id">Číslo objednávky = společné ID</a></li>
+        <li><a href="#devices">Limit PC a diagnostika zařízení</a></li>
+        <li><a href="#csob">Platby ČSOB</a></li>
+        <li><a href="#settings">Důležitá nastavení</a></li>
+        <li><a href="#mobile">Mobilní Admin aplikace</a></li>
+        <li><a href="#faq">Rychlé FAQ</a></li>
+    </ul>
+</nav>
+
+<section class="guide-section" id="crm">
+    <h2>1. Objednávky a licence (CRM)</h2>
+    <p>Menu: <strong>Prodej → Objednávky a licence</strong> (<code>/admin/users-licenses</code>).</p>
+    <h3>Horní část – Objednávky</h3>
+    <ul>
+        <li>Nové objednávky z webu (checkout), stavy: Objednáno → Čeká na zaplacení → Aktivní licence.</li>
+        <li>Akce: odeslat údaje k platbě, potvrdit platbu / aktivaci, faktura, sleva, smazání.</li>
+    </ul>
+    <h3>Dolní část – Licence a uživatelé</h3>
+    <ul>
+        <li>Všechny účty (Basic / Pro / Firemní / Trial / test).</li>
+        <li>Sloupec <strong>Objednávka</strong> = číslo objednávky (stejné jako nahoře).</li>
+        <li>Vyhledávání hledá e-mail, jméno i <strong>číslo objednávky</strong> najednou (filtruje i horní tabulku).</li>
+        <li>Detail uživatele: statistiky, zařízení, IP, fakturace, diagnostika limitu PC.</li>
+    </ul>
+    <div class="guide-callout">
+        Tip: zadejte do hledání číslo objednávky (např. z e-mailu zákazníka) a uvidíte objednávku i licenci.
+    </div>
+</section>
+
+<section class="guide-section" id="order-id">
+    <h2>2. Číslo objednávky = společné ID</h2>
+    <p>
+        Po aktivaci platby se licence propojí s objednávkou (<code>source_order_id</code> + <code>order_display_number</code>).
+        U starších záznamů se vazba doplní automaticky podle e-mailu při otevření CRM (backfill).
+    </p>
+    <ul>
+        <li>U objednávky: sloupec Objednávka</li>
+        <li>U licence: sloupec Objednávka + odkaz „upravit obj.“</li>
+        <li>Na kartě uživatele: řádek Objednávka s odkazem na detail</li>
+        <li>Mobilní API: stejná pole + hledání podle čísla objednávky</li>
+    </ul>
+    <div class="guide-callout guide-warn">
+        Licence vytvořené ručně bez objednávky („Nová licence“) číslo objednávky nemají (zůstane —), dokud je nepropojíte aktivací z CRM.
+    </div>
+</section>
+
+<section class="guide-section" id="devices">
+    <h2>3. Limit PC a diagnostika zařízení</h2>
+    <h3>Kde nastavit režim limitu</h3>
+    <p>
+        <strong>Systém → Nastavení</strong> → karta <em>Limit zařízení (Desktop Agent) – diagnostika</em>
+        (nebo rovnou <a href="{{ url_for('admin.settings') }}">otevřít Nastavení</a>).
+    </p>
+    <ul>
+        <li><strong>soft</strong> (výchozí) – při plném limitu PC <em>neblokuje</em>, jen loguje (diagnostika).</li>
+        <li><strong>enforce</strong> – původní tvrdé „Licence limit reached. Contact support.“</li>
+        <li><strong>off</strong> – bez limitu počtu PC (záměrně zablokovaná zařízení v Adminu stále odmítne).</li>
+    </ul>
+    <h3>Kde číst logy (bez psaní e-mailu)</h3>
+    <ul>
+        <li>Karta uživatele → tlačítko <strong>Diagnostika zařízení</strong></li>
+        <li>CRM → u licence Akce → <strong>Diagnostika PC</strong></li>
+        <li>Modal Počítače → <strong>Diagnostika limitu PC</strong></li>
+        <li>Přehled všech: <a href="{{ url_for('admin.device_diag') }}">Provoz → Diagnostika zařízení</a></li>
+    </ul>
+    <p>
+        <strong>Would-block</strong> = situace, kdy by dřív spadla hláška limitu.
+        <strong>Stejný hostname, jiné ID</strong> = často 1 PC s nestabilním Machine-ID (VPN / update), ne nutně podvod.
+    </p>
+    <h3>Okamžitá pomoc zákazníkovi</h3>
+    <ol>
+        <li>Otevřít licenci → Počítače → případně „Vyčistit všechna zařízení“.</li>
+        <li>V soft režimu se může znovu přihlásit i bez čištění.</li>
+        <li>Kouknout na Diagnostiku na jeho kartě.</li>
+    </ol>
+</section>
+
+<section class="guide-section" id="csob">
+    <h2>4. Platby ČSOB</h2>
+    <p>Menu: <strong>Prodej → Příchozí platby ČSOB</strong>.</p>
+    <ul>
+        <li>IMAP avíza, párování podle VS (= číslo objednávky).</li>
+        <li>Přepínač autoaktivace je i nahoře na stránce Objednávky a licence.</li>
+        <li>Po aktivaci se licence propojí s číslem objednávky stejně jako při ručním potvrzení.</li>
+    </ul>
+</section>
+
+<section class="guide-section" id="settings">
+    <h2>5. Důležitá nastavení</h2>
+    <ul>
+        <li><strong>Nastavení</strong> – provozovatel, ceník, marketing texty, SMTP texty, Turnstile, limit PC.</li>
+        <li><strong>Nastavení firmy</strong> – fakturační údaje / cesty faktur.</li>
+        <li><strong>Ceník / Tarify</strong> – limity tierů včetně max. zařízení.</li>
+        <li><strong>Trial správa</strong> / <strong>Web kontroly (IP)</strong> – free limity webu.</li>
+        <li><strong>Nápověda</strong> (menu Obsah) – texty Info/Nápověda pro koncové uživatele v <code>/app</code> (to není tento průvodce).</li>
+    </ul>
+</section>
+
+<section class="guide-section" id="mobile">
+    <h2>6. Mobilní Admin aplikace</h2>
+    <p>
+        Mobilní app používá JSON API <code>/api/mobile/v1/…</code> (licence, objednávky, zařízení, KPI).
+        Nová pole <code>order_display_number</code> / <code>source_order_id</code> jsou <strong>přidaná</strong> – stará appka se nerozbije.
+        Hledání licencí v API umí i číslo objednávky.
+    </p>
+</section>
+
+<section class="guide-section" id="faq">
+    <h2>7. Rychlé FAQ</h2>
+    <h3>„Licence limit reached“ u placeného zákazníka</h3>
+    <p>Jde o limit počtu PC (ne souborů). Soft režim + Diagnostika na kartě uživatele. Případně vyčistit zařízení.</p>
+    <h3>Nevidím číslo objednávky u licence</h3>
+    <p>Otevřete CRM (proběhne backfill), nebo licence vznikla bez objednávky. Nové aktivace z CRM / ČSOB vazbu ukládají vždy.</p>
+    <h3>Kde je tento průvodce</h3>
+    <p>Menu <strong>Systém → Průvodce Adminem</strong> nebo odkaz nahoře na stránce Objednávky a licence.</p>
+</section>
+{% endblock %}

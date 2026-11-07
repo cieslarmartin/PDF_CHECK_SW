@@ -728,6 +728,8 @@ def _filter_licenses(licenses: list, search: str, tier_filter: str, status_filte
             (l.get('email') or '').lower().find(s) >= 0
             or (l.get('user_name') or '').lower().find(s) >= 0
             or (l.get('api_key') or '').lower().find(s) >= 0
+            or (l.get('order_display_number') or '').lower().find(s) >= 0
+            or str(l.get('source_order_id') or '') == search.strip()
         )]
     if tier_filter:
         out = [l for l in out if (l.get('tier_name') or '').lower() == tier_filter.lower()]

@@ -25,7 +25,11 @@
 </style>
 
 <h1 style="font-size:1.35em;font-weight:600;margin:0 0 20px;">Uživatelé a licence</h1>
-<p style="color:#6b7280;font-size:0.9em;margin-bottom:16px;">Objednávky (CRM) a seznam licencí na jednom místě. Flow: Objednáno &rarr; Odeslána platba &rarr; Aktivováno.</p>
+<p style="color:#6b7280;font-size:0.9em;margin-bottom:16px;">
+    Objednávky (CRM) a licence na jednom místě. Společné ID = <strong>číslo objednávky</strong> (u aktivních licencí ve sloupci Objednávka).
+    Flow: Objednáno &rarr; Odeslána platba &rarr; Aktivováno.
+    Návod: <a href="{{ url_for('admin.admin_guide') }}">Průvodce Adminem</a>.
+</p>
 
 <div style="border:1px solid {{ '#86efac' if auto_activate_csob else '#fca5a5' }};background:{{ '#f0fdf4' if auto_activate_csob else '#fef2f2' }};border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
     <div style="font-size:0.9em;">
@@ -213,7 +217,7 @@
         <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
             <input type="hidden" name="tier" value="{{ tier_filter }}">
             <input type="hidden" name="status" value="{{ status_filter }}">
-            <input type="text" name="q" class="form-control" style="width:160px;" placeholder="Vyhledat…" value="{{ search }}">
+            <input type="text" name="q" class="form-control" style="width:220px;" placeholder="E-mail, jméno, č. objednávky…" value="{{ search }}">
             <button type="submit" class="btn btn-sm btn-secondary">Hledat</button>
         </form>
         <form method="get" action="{{ url_for('admin.users_licenses') }}" style="display:flex;gap:6px;align-items:center;">
@@ -267,6 +271,7 @@
         <table class="table-dense table-cards">
             <thead>
                 <tr>
+                    <th>Objednávka</th>
                     <th>E-mail / Jméno</th>
                     <th>Tarif</th>
                     <th>Cena</th>
@@ -282,6 +287,16 @@
             <tbody>
                 {% for license in licenses %}
                 <tr data-api-key="{{ license.api_key }}" data-tier-id="{{ license.tier_id or '' }}" data-email="{{ (license.email or '')|e }}" data-user-name="{{ (license.user_name or '')|e }}" data-license-expires="{{ license.license_expires or '' }}" data-activated-at="{{ license.activated_at or license.created_at or '' }}" data-is-active="{{ 1 if license.is_active else 0 }}" data-is-test="{{ 1 if license.is_test else 0 }}" data-payment-method="{{ (license.payment_method or '')|e }}" data-last-payment-date="{{ license.last_payment_date or '' }}" data-password-plain="{{ (license.get('password_plain_stored') or '')|e }}" {% if license.is_expired %}style="opacity:0.85;background:#fef2f2;"{% elif license.is_test %}style="background:#fffbeb;"{% endif %}>
+                    <td data-label="Objednávka">
+                        {% if license.order_display_number or license.source_order_id %}
+                        <strong title="Společné ID s objednávkou">{{ license.order_display_number or license.source_order_id }}</strong>
+                        {% if license.source_order_id %}
+                        <br><a class="small" href="{{ url_for('admin.edit_pending_order', order_id=license.source_order_id) }}">upravit obj.</a>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
                     <td data-label="E-mail">
                         <a href="{{ url_for('admin.user_detail') }}?user={{ license.api_key }}" title="Zobrazit detail a statistiky uživatele" style="text-decoration:none;"><strong>{{ license.email or '—' }}</strong></a>
                         {% if license.user_name and license.user_name != license.email %}<br><small style="color:#6b7280;">{{ license.user_name }}</small>{% endif %}
@@ -348,7 +363,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="10" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
+                <tr><td colspan="11" class="text-center text-muted" style="padding:24px;">Žádné licence. Klikněte na „Nová licence".</td></tr>
                 {% endfor %}
             </tbody>
         </table>
